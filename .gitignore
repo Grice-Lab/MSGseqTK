@@ -26,4 +26,3 @@ config.status
 # Ignore git files
 .cproject
 .project
-.gitmodules
