@@ -1,4 +1,4 @@
-#SUBDIRS = libdivsufsort64  libcds util math
+SUBDIRS = util
 
 AM_CFLAGS = -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \

@@ -43,7 +43,8 @@ AC_CONFIG_MACRO_DIR([m4])
 #AX_BOOST_IOSTREAMS()
 
 AC_CONFIG_FILES([Makefile
-				 src/Makefile])
+				 src/Makefile
+				 src/util/Makefile])
 
 #AC_CONFIG_SUBDIRS([src/libcds
 #                   src/libdivsufsort])
