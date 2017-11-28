@@ -26,7 +26,12 @@ AC_C_INLINE
 AC_TYPE_SIZE_T
 AC_PROG_RANLIB
 
+AC_CONFIG_MACRO_DIR([m4])
+
 AM_INIT_AUTOMAKE()
+
+# Checks for autoconf-archive macros
+AX_BOOST_BASE([1.50.0])
 
 # Checks for library functions.
 
