@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.69)
-AC_INIT(MSGseqClean, 1.0)
+AC_INIT(FastSMGclean, 1.0)
 LT_INIT([shared static])
 
 AC_CANONICAL_SYSTEM

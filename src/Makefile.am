@@ -19,14 +19,14 @@ AM_CXXFLAGS = -I$(top_srcdir)/src \
 
 # Build the executables
 bin_PROGRAMS = \
-msgseqclean
+fastsmgclean
 
-msgseqclean_SOURCES = msgseqclean.cpp
-#msgseqclean_CPPFLAGS = $(OPENMP_CFLAGS) $(BOOST_CPPFLAGS)
-#msgseqclean_CXXFLAGS = $(OPENMP_CFLAGS)
-msgseqclean_LDADD = util/libEGUtil.a
+fastsmgclean_SOURCES = fastsmgclean.cpp
+#fastsmgclean_CPPFLAGS = $(OPENMP_CFLAGS) $(BOOST_CPPFLAGS)
+#fastsmgclean_CXXFLAGS = $(OPENMP_CFLAGS)
+fastsmgclean_LDADD = util/libEGUtil.a
 #math/libEGMath.a \
 #libdivsufsort/lib/libdivsufsort.a libcds/src/libcds.la \
 #$(BOOST_IOSTREAMS_LIB)
 
-#msgseqclean_LDFLAGS = $(BOOST_LDFLAGS)
+#fastsmgclean_LDFLAGS = $(BOOST_LDFLAGS)
