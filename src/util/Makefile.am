@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-AM_CXXFLAGS = $(BOOST_CPPFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS)
 
 # Build a static/shared library
 lib_LIBRARIES = libEGUtil.a
