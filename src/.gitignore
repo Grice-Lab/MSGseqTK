@@ -1,5 +1,4 @@
 ## Ignore executables
-fastsmgclean
-
+msgseqclean
 
 *.exe

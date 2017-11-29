@@ -89,7 +89,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-bin_PROGRAMS = fastsmgclean$(EXEEXT)
+bin_PROGRAMS = msgseqclean$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -104,9 +104,9 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_fastsmgclean_OBJECTS = fastsmgclean.$(OBJEXT)
-fastsmgclean_OBJECTS = $(am_fastsmgclean_OBJECTS)
-fastsmgclean_DEPENDENCIES = util/libEGUtil.a
+am_msgseqclean_OBJECTS = msgseqclean.$(OBJEXT)
+msgseqclean_OBJECTS = $(am_msgseqclean_OBJECTS)
+msgseqclean_DEPENDENCIES = util/libEGUtil.a math/libEGMath.a
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -145,8 +145,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(fastsmgclean_SOURCES)
-DIST_SOURCES = $(fastsmgclean_SOURCES)
+SOURCES = $(msgseqclean_SOURCES)
+DIST_SOURCES = $(msgseqclean_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -339,21 +339,22 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = util
+SUBDIRS = util math
 AM_CFLAGS = -I$(top_srcdir)/src \
--I$(top_srcdir)/src/util
+-I$(top_srcdir)/src/util \
+-I$(top_srcdir)/src/math
 
-#-I$(top_srcdir)/src/math \
 #-I$(top_srcdir)/src/libdivsufsort/include \
-#-I$(top_srcdir)/src/libcds/include \
-#$(BOOST_CPPFLAGS)
+#-I$(top_srcdir)/src/libcds/include
 AM_CXXFLAGS = -I$(top_srcdir)/src \
--I$(top_srcdir)/src/util
+-I$(top_srcdir)/src/util \
+-I$(top_srcdir)/src/math
 
-fastsmgclean_SOURCES = fastsmgclean.cpp
-#fastsmgclean_CPPFLAGS = $(OPENMP_CFLAGS) $(BOOST_CPPFLAGS)
-#fastsmgclean_CXXFLAGS = $(OPENMP_CFLAGS)
-fastsmgclean_LDADD = util/libEGUtil.a
+msgseqclean_SOURCES = msgseqclean.cpp
+#msgseqclean_CXXFLAGS = $(OPENMP_CXXFLAGS)
+msgseqclean_LDADD = util/libEGUtil.a \
+math/libEGMath.a
+
 all: all-recursive
 
 .SUFFIXES:
@@ -437,9 +438,9 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
-fastsmgclean$(EXEEXT): $(fastsmgclean_OBJECTS) $(fastsmgclean_DEPENDENCIES) $(EXTRA_fastsmgclean_DEPENDENCIES) 
-	@rm -f fastsmgclean$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(fastsmgclean_OBJECTS) $(fastsmgclean_LDADD) $(LIBS)
+msgseqclean$(EXEEXT): $(msgseqclean_OBJECTS) $(msgseqclean_DEPENDENCIES) $(EXTRA_msgseqclean_DEPENDENCIES) 
+	@rm -f msgseqclean$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(msgseqclean_OBJECTS) $(msgseqclean_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -447,7 +448,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fastsmgclean.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqclean.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -757,11 +758,9 @@ uninstall-am: uninstall-binPROGRAMS
 
 .PRECIOUS: Makefile
 
-#math/libEGMath.a \
 #libdivsufsort/lib/libdivsufsort.a libcds/src/libcds.la \
 #$(BOOST_IOSTREAMS_LIB)
-
-#fastsmgclean_LDFLAGS = $(BOOST_LDFLAGS)
+#msgseqclean_LDFLAGS = $(BOOST_LDFLAGS)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
