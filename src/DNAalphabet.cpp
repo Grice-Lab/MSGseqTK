@@ -11,36 +11,48 @@
 namespace EGriceLab {
 namespace MSGSeqClean {
 
-void DNAalphabet::initSym2Base(uint8_t* sym2base) {
+const uint8_t* DNAalphabet::sym2base = initSym2Base();
+const char* DNAalphabet::base2sym = initBase2Sym();
+const char* DNAalphabet::sym2comp = initSym2Comp();
+const uint8_t* DNAalphabet::base2comp = initBase2Comp();
+
+uint8_t* DNAalphabet::initSym2Base() {
+	/* sym2base will be zero initiated by default */
+	static uint8_t sym2base[CHAR_MAX];
 	/* basic symbols */
-	sym2base['N'] = sym2base['n'] = 0;
-	sym2base['A'] = sym2base['a'] = 1;
-	sym2base['C'] = sym2base['c'] = 2;
-	sym2base['G'] = sym2base['g'] = 3;
-	sym2base['T'] = sym2base['t'] = 4;
-	/* IUPAC extensions */
+	sym2base['A'] = sym2base['a'] = A;
+	sym2base['C'] = sym2base['c'] = C;
+	sym2base['G'] = sym2base['g'] = G;
+	sym2base['T'] = sym2base['t'] = T;
+	sym2base['N'] = sym2base['n'] = N;
+	/* IUPAC extensions are resolved arbitrary */
 	sym2base['U'] = sym2base['u'] = sym2base['T'];
 	sym2base['R'] = sym2base['r'] = sym2base['A']; /* R -> A/G */
 	sym2base['Y'] = sym2base['y'] = sym2base['C']; /* Y -> C/T */
-	sym2base['S'] = sym2base['s'] = sym2base['C']; /* S -> C/G */
-	sym2base['W'] = sym2base['w'] = sym2base['A']; /* W -> A/T */
+	sym2base['S'] = sym2base['s'] = sym2base['G']; /* S -> C/G */
+	sym2base['W'] = sym2base['w'] = sym2base['T']; /* W -> A/T */
 	sym2base['K'] = sym2base['k'] = sym2base['G']; /* K -> G/T */
-	sym2base['M'] = sym2base['m'] = sym2base['A']; /* M -> A/C */
-	sym2base['B'] = sym2base['b'] = sym2base['C']; /* B -> C/G/T */
+	sym2base['M'] = sym2base['m'] = sym2base['C']; /* M -> A/C */
+	sym2base['B'] = sym2base['b'] = sym2base['T']; /* B -> C/G/T */
 	sym2base['D'] = sym2base['d'] = sym2base['A']; /* D -> A/G/T */
-	sym2base['H'] = sym2base['h'] = sym2base['A']; /* H -> A/C/T */
-	sym2base['V'] = sym2base['v'] = sym2base['A']; /* V -> A/C/G */
+	sym2base['H'] = sym2base['h'] = sym2base['C']; /* H -> A/C/T */
+	sym2base['V'] = sym2base['v'] = sym2base['G']; /* V -> A/C/G */
+	return sym2base;
 }
 
-void DNAalphabet::initBase2Sym(char* base2sym) {
-	std::fill_n(base2sym, UINT8_MAX, 'N'); /* everything except 1..4 will be an N' */
-	base2sym[1] = 'A';
-	base2sym[2] = 'C';
-	base2sym[3] = 'G';
-	base2sym[4] = 'T';
+char* DNAalphabet::initBase2Sym() {
+	/* base2sym will be zero initiated by default */
+	static char base2sym[UINT8_MAX];
+	base2sym[A] = 'A';
+	base2sym[C] = 'C';
+	base2sym[G] = 'G';
+	base2sym[T] = 'T';
+	base2sym[N] = 'N';
+	return base2sym;
 }
 
-void DNAalphabet::initSym2Comp(char* sym2comp) {
+char* DNAalphabet::initSym2Comp() {
+	static char sym2comp[CHAR_MAX]; /* sym2comp  will be zero initiated */
 	/* basic symbols, upper case */
 	sym2comp['N'] = 'N';
 	sym2comp['A'] = 'T';
@@ -49,7 +61,7 @@ void DNAalphabet::initSym2Comp(char* sym2comp) {
 	sym2comp['G'] = 'C';
 	/* basic symbols, lower case */
 	sym2comp['n'] = 'n';
-	sym2comp['a'] = 'a';
+	sym2comp['a'] = 't';
 	sym2comp['t'] = 'a';
 	sym2comp['c'] = 'g';
 	sym2comp['g'] = 'c';
@@ -77,13 +89,25 @@ void DNAalphabet::initSym2Comp(char* sym2comp) {
 	sym2comp['v'] = 'b';
 	sym2comp['d'] = 'h';
 	sym2comp['h'] = 'd';
+	return sym2comp;
 }
 
-void DNAalphabet::initBase2Comp(uint8_t* base2comp) {
-	base2comp[1] = 4; /* A -> T */
-	base2comp[2] = 3; /* C -> G */
-	base2comp[3] = 2; /* G -> C */
-	base2comp[4] = 1; /* T -> A */
+uint8_t* DNAalphabet::initBase2Comp() {
+	static uint8_t base2comp[UINT8_MAX];
+	base2comp[A] = T;
+	base2comp[C] = G;
+	base2comp[G] = C;
+	base2comp[T] = A;
+	base2comp[N] = N;
+	return base2comp;
+}
+
+string DNAalphabet::revcom(const string& str) {
+	string rcStr;
+	rcStr.reserve(str.length());
+	for(string::const_reverse_iterator s = str.rbegin(); s != str.rend(); ++s)
+		rcStr.push_back(complement(*s));
+	return rcStr;
 }
 
 } /* namespace MSGSeqClean */

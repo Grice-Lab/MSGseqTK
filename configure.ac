@@ -46,10 +46,12 @@ AX_CXX_COMPILE_STDCXX(11)
 
 AC_CONFIG_FILES([Makefile
 				 src/Makefile
-				 src/util/Makefile])
+				 test/Makefile])
 
-#AC_CONFIG_SUBDIRS([src/libcds
-#                   src/libdivsufsort])
+AC_CONFIG_SUBDIRS([src/util
+                   src/math])
+                   #src/libcds
+                   #src/libdivsufsort])
 
 #AC_OPENMP
 

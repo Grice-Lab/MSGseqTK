@@ -36,17 +36,7 @@ public:
 
 	/** constructing a DNAseq from a symbol string */
 	explicit DNAseq(const string& str) {
-		append(str);
-	}
-
-	/** default copy assignment constructor */
-	DNAseq& operator=(const DNAseq& other) = default;
-
-	/** copy assignment constructor from a encoded string */
-	DNAseq& operator=(const string& str) {
-		clear();
-		append(str);
-		return *this;
+		assign(str);
 	}
 
 	/* member methods */
@@ -54,14 +44,21 @@ public:
 	 * test whether position i is a valid
 	 */
 	bool isValid(DNAseq::size_type i) const {
-		return (*this)[i] > 0;
+		return DNAalphabet::isValid((*this)[i]);
+	}
+
+	/**
+	 * test whether position i is a valid base (non-gap)
+	 */
+	bool isBase(DNAseq::size_type i) const {
+		return DNAalphabet::isBase((*this)[i]);
 	}
 
 	/**
 	 * Generate a reverse complement copy
 	 * return a new copy in reverse complement version
 	 */
-	DNAseq revcom() const noexcept;
+	DNAseq revcom() const;
 
 	/**
 	 * Get the decoded character at given position
@@ -84,6 +81,12 @@ public:
 		return decode();
 	}
 
+	/** Re-introduce all base class assign methods */
+	using basic_string<uint8_t>::assign;
+
+	/** Assign a string as a DNAseq */
+	DNAseq& assign(const string& str);
+
 	/**
 	 * Re-introduce all base class append methods
 	 */
@@ -101,12 +104,24 @@ public:
 	/** save a DNAseq to binary output */
 	ostream& save(ostream& out) const;
 
+	/** remove invalid bases (zero value) */
+	DNAseq& removeInvalid();
+
+	/** remove gap bases */
+	DNAseq& removeGaps();
+
+	/** remove genomic gaps (runs of Ns) and replace with a single N to save storage space */
+	DNAseq& compressGaps(int minNGap = MIN_GENOME_GAP);
+
 	/* non-member functions */
 	/** read a DNAseq from text input, override the old one */
 	friend istream& operator>>(istream& in, DNAseq& seq);
 
 	/** write a DNAseq to text output */
 	friend ostream& operator<<(ostream& out, const DNAseq& seq);
+
+	/* static member fields */
+	static const int MIN_GENOME_GAP = 10;
 
 };
 

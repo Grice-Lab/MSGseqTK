@@ -11,17 +11,16 @@
 namespace EGriceLab {
 namespace MSGSeqClean {
 
-PrimarySeq::PrimarySeq(const string& seqStr, const string& name, const string& desc, const string& qStr, uint8_t qShift)
-: seq(seqStr), name(name), desc(desc), qShift(qShift)
+PrimarySeq::PrimarySeq(const string& seq, const string& name, const string& desc,
+		const string& qStr, uint8_t qShift)
+: seq(seq), name(name), desc(desc), qShift(qShift)
 {
-	for(char qCh : qStr)
-		qual.push_back(qCh - qShift);
+	for(char q : qStr)
+		qual.push_back(q - qShift);
 }
 
 istream& PrimarySeq::load(istream& in) {
-	/* load seq */
-	seq.load(in);
-	/* load other info */
+	StringUtils::loadString(seq, in);
 	StringUtils::loadString(name, in);
 	StringUtils::loadString(desc, in);
 	StringUtils::loadString(qual, in);
@@ -31,9 +30,7 @@ istream& PrimarySeq::load(istream& in) {
 }
 
 ostream& PrimarySeq::save(ostream& out) const {
-	/* save seq */
-	seq.save(out);
-	/* save other info */
+	StringUtils::saveString(seq, out);
 	StringUtils::saveString(name, out);
 	StringUtils::saveString(desc, out);
 	StringUtils::saveString(qual, out);
@@ -43,8 +40,11 @@ ostream& PrimarySeq::save(ostream& out) const {
 }
 
 string PrimarySeq::getQStr() const {
+	if(qual.empty())
+		return string(seq.length(), DEFAULT_Q_SCORE + qShift);
+
 	string qStr;
-	qStr.reserve(length());
+	qStr.reserve(seq.length());
 	for(uint8_t q : qual)
 		qStr.push_back(q + qShift);
 	return qStr;

@@ -1,0 +1,9 @@
+# Ignore test temporary and binaries
+*.log
+*.trs
+*.o
+# Ignore test executables
+*_test
+# Ignore autotools files
+Makefile
+

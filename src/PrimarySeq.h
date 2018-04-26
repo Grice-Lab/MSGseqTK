@@ -11,19 +11,19 @@
 #include <string>
 #include <iostream>
 #include <cstdint>
-#include "DNAseq.h"
+#include "DNAalphabet.h"
 
 namespace EGriceLab {
 namespace MSGSeqClean {
 
+using std::basic_string;
 using std::string;
 using std::istream;
 using std::ostream;
 
 /**
- * A PrimarySeq contains a DNAseq with additional biological related information,
- * such as name, description and quality, if available
- * PrimarySeq is not a DNAseq since it doesn't support many methods and operators such as append
+ * A PrimarySeq contains a non-encoded DNA string with additional biological related information
+ * such as name, description and quality
  */
 
 class PrimarySeq {
@@ -34,18 +34,16 @@ public:
 	/** default constructor */
 	PrimarySeq() = default;
 
-	/** virtual destructor */
-	virtual ~PrimarySeq() {  };
-
 	/** constructing a PrimarySeq with given name and optional desc and encoded quality string */
-	PrimarySeq(const string& seqStr, const string& name, const string& desc = "", const string& qStr = "", uint8_t qShift = DEFAULT_Q_SHIFT);
+	PrimarySeq(const string& seq, const string& name, const string& desc = "",
+			const string& qStr = "", uint8_t qShift = DEFAULT_Q_SHIFT);
 
 	/* getters and setters */
-	const DNAseq& getSeq() const {
+	const string& getSeq() const {
 		return seq;
 	}
 
-	void setSeq(const DNAseq& seq) {
+	void setSeq(const string& seq) {
 		this->seq = seq;
 	}
 
@@ -65,18 +63,21 @@ public:
 		this->desc = desc;
 	}
 
-	const qstring& getQual() const {
-		return qual;
+	qstring getQual() const {
+		return !qual.empty() ? qual : qstring{ seq.length(), DEFAULT_Q_SCORE };
+	}
+
+	uint8_t getQShift() const {
+		return qShift;
+	}
+
+	void setQShift(uint8_t qshift) {
+		this->qShift = qShift;
 	}
 
 	void setQual(const qstring& qual) {
 		this->qual = qual;
 	}
-
-	/**
-	 * Re-introduce all base class append methods
-	 */
-	using DNAseq::append;
 
 	/**
 	 * Append a seq string and quality scores to this PrimarySeq
@@ -89,16 +90,6 @@ public:
 
 	/** save a DNAseq to binary output */
 	ostream& save(ostream& out) const;
-
-	/** get seq as string */
-	string getSeqStr() const {
-		return seq.toString();
-	}
-
-	/** set seq as given string, override old value */
-	void setSeqStr(const string& str) {
-		seq = str;
-	}
 
 	/** get qual get given position */
 	uint8_t getQual(size_t i) const {
@@ -116,6 +107,9 @@ public:
 	/** set qual using encoded string */
 	void setQStr(const string& qStr);
 
+	/** get a reverse-complement copy of this PrimarySeq object */
+	PrimarySeq revcom() const;
+
 	/* non-member functions */
 	/** check equivenent of two PrimarySeq based on all fields */
 	friend bool operator==(const PrimarySeq& lhs, const PrimarySeq& rhs);
@@ -123,11 +117,11 @@ public:
 
 	/* member fields */
 private:
-	DNAseq seq;
+	string seq;
 	string name;
 	string desc;
 	qstring qual;
-	uint8_t qShift = DEFAULT_Q_SHIFT;
+	uint8_t qShift = DEFAULT_Q_SHIFT; // C++11
 
 	/* static members */
 public:
@@ -136,12 +130,16 @@ public:
 };
 
 inline bool operator==(const PrimarySeq& lhs, const PrimarySeq& rhs) {
-	return lhs.name == rhs.name && lhs.desc == rhs.desc && lhs.qual == rhs.qual &&
-			dynamic_cast<const DNAseq&>(lhs) == dynamic_cast<const DNAseq&>(rhs);
+	return lhs.seq == rhs.seq && lhs.name == rhs.name && lhs.desc == rhs.desc && lhs.qual == rhs.qual;
 }
 
 inline bool operator!=(const PrimarySeq& lhs, const PrimarySeq& rhs) {
 	return !(lhs == rhs);
+}
+
+inline PrimarySeq PrimarySeq::revcom() const {
+	return PrimarySeq(DNAalphabet::revcom(seq), name, desc,
+			string(qual.rbegin(), qual.rend()), qShift);
 }
 
 } /* namespace MSGSeqClean */

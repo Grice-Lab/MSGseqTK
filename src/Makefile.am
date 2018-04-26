@@ -15,14 +15,27 @@ AM_CXXFLAGS = -I$(top_srcdir)/src \
 #AM_CPPFLAGS = $(BOOST_CPPFLAGS)
 #AM_LDFLAGS = $(BOOST_LDFLAGS)
 
+# Build convenient non-install libraries
+noinst_LIBRARIES = libMSGseqClean_common.a
+
+libMSGseqClean_common_a_SOURCES = \
+DNAalphabet.cpp \
+DNAseq.cpp \
+PrimarySeq.cpp \
+SeqIO.cpp
+
 # Build the executables
 bin_PROGRAMS = \
 msgseqclean
 
 msgseqclean_SOURCES = msgseqclean.cpp
 #msgseqclean_CXXFLAGS = $(OPENMP_CXXFLAGS)
-msgseqclean_LDADD = util/libEGUtil.a \
-math/libEGMath.a
-#libdivsufsort/lib/libdivsufsort.a libcds/src/libcds.la \
+msgseqclean_LDADD = \
+libMSGseqClean_common.a
+#util/libEGUtil.a \
+#math/libEGMath.a \
+#libdivsufsort/lib/libdivsufsort.a \
+#libcds/src/libcds.la \
 #$(BOOST_IOSTREAMS_LIB)
+
 #msgseqclean_LDFLAGS = $(BOOST_LDFLAGS)
