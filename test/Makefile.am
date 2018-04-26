@@ -3,8 +3,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 AM_CXXFLAGS = \
 -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
--I$(top_srcdir)/src/math
-#-I$(top_srcdir)/src/libdivsufsort/include \
+-I$(top_srcdir)/src/math \
+-I$(top_srcdir)/src/libdivsufsort/include
 #-I$(top_srcdir)/src/libcds/include \
 #$(BOOST_CPPFLAGS) \
 #$(OPENMP_CFLAGS)
@@ -27,6 +27,7 @@ SeqIO_test
 DNAseq_test_SOURCES = DNAseq_test.cpp
 DNAseq_test_LDADD = \
 $(top_srcdir)/src/libMSGseqClean_common.a
+
 
 PrimarySeq_test_SOURCES = PrimarySeq_test.cpp
 PrimarySeq_test_LDADD = \
