@@ -120,7 +120,9 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_msgseqclean_OBJECTS = msgseqclean.$(OBJEXT)
 msgseqclean_OBJECTS = $(am_msgseqclean_OBJECTS)
-msgseqclean_DEPENDENCIES = libMSGseqClean_common.a
+msgseqclean_DEPENDENCIES = libMSGseqClean_common.a util/libEGUtil.a \
+	math/libEGMath.a libdivsufsort/lib/libdivsufsort.a \
+	libcds/src/libcds.la
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -356,19 +358,19 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = util math
+SUBDIRS = libdivsufsort libcds util math
 AM_CFLAGS = -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
--I$(top_srcdir)/src/math
+-I$(top_srcdir)/src/math \
+-I$(top_srcdir)/src/libdivsufsort/include \
+-I$(top_srcdir)/src/libcds/include
 
-#-I$(top_srcdir)/src/libdivsufsort/include \
-#-I$(top_srcdir)/src/libcds/include
 AM_CXXFLAGS = -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
--I$(top_srcdir)/src/math
+-I$(top_srcdir)/src/math \
+-I$(top_srcdir)/src/libdivsufsort/include \
+-I$(top_srcdir)/src/libcds/include
 
-#-I$(top_srcdir)/src/libdivsufsort/include \
-#-I$(top_srcdir)/src/libcds/include
 
 #AM_CPPFLAGS = $(BOOST_CPPFLAGS)
 #AM_LDFLAGS = $(BOOST_LDFLAGS)
@@ -384,7 +386,11 @@ SeqIO.cpp
 msgseqclean_SOURCES = msgseqclean.cpp
 #msgseqclean_CXXFLAGS = $(OPENMP_CXXFLAGS)
 msgseqclean_LDADD = \
-libMSGseqClean_common.a
+libMSGseqClean_common.a \
+util/libEGUtil.a \
+math/libEGMath.a \
+libdivsufsort/lib/libdivsufsort.a \
+libcds/src/libcds.la
 
 all: all-recursive
 
@@ -802,10 +808,6 @@ uninstall-am: uninstall-binPROGRAMS
 
 .PRECIOUS: Makefile
 
-#util/libEGUtil.a \
-#math/libEGMath.a \
-#libdivsufsort/lib/libdivsufsort.a \
-#libcds/src/libcds.la \
 #$(BOOST_IOSTREAMS_LIB)
 
 #msgseqclean_LDFLAGS = $(BOOST_LDFLAGS)

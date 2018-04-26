@@ -49,9 +49,9 @@ AC_CONFIG_FILES([Makefile
 				 test/Makefile])
 
 AC_CONFIG_SUBDIRS([src/util
-                   src/math])
-                   #src/libcds
-                   #src/libdivsufsort])
+                   src/math
+                   src/libcds
+                   src/libdivsufsort])
 
 #AC_OPENMP
 

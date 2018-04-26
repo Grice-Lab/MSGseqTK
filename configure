@@ -788,7 +788,9 @@ CXXFLAGS
 CCC
 CXXCPP'
 ac_subdirs_all='src/util
-                   src/math'
+                   src/math
+                   src/libcds
+                   src/libdivsufsort'
 
 # Initialize some variables set by options.
 ac_init_help=
@@ -18156,10 +18158,8 @@ ac_config_files="$ac_config_files Makefile src/Makefile test/Makefile"
 
 
 
-subdirs="$subdirs src/util src/math"
+subdirs="$subdirs src/util src/math src/libcds src/libdivsufsort"
 
-                   #src/libcds
-                   #src/libdivsufsort])
 
 #AC_OPENMP
 

@@ -518,7 +518,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 AM_CXXFLAGS = \
 -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
--I$(top_srcdir)/src/math
+-I$(top_srcdir)/src/math \
+-I$(top_srcdir)/src/libdivsufsort/include
 
 DNAseq_test_SOURCES = DNAseq_test.cpp
 DNAseq_test_LDADD = \
