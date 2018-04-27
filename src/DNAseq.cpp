@@ -9,7 +9,7 @@
 #include "DNAseq.h"
 
 namespace EGriceLab {
-namespace MSGSeqClean {
+namespace MSGseqClean {
 
 string DNAseq::decode() const {
 	string seq;

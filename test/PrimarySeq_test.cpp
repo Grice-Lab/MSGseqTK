@@ -11,7 +11,7 @@
 
 using std::cout;
 using std::endl;
-using EGriceLab::MSGSeqClean::PrimarySeq;
+using EGriceLab::MSGseqClean::PrimarySeq;
 
 int main() {
 	PrimarySeq src1("ATCGNTCGANatcgntcgan", "seq1");

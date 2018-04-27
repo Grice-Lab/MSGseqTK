@@ -14,7 +14,7 @@
 #include "DNAalphabet.h"
 
 namespace EGriceLab {
-namespace MSGSeqClean {
+namespace MSGseqClean {
 
 using std::basic_string;
 using std::string;

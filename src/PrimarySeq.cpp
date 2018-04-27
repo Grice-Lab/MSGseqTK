@@ -9,7 +9,7 @@
 #include "StringUtils.h"
 
 namespace EGriceLab {
-namespace MSGSeqClean {
+namespace MSGseqClean {
 
 PrimarySeq::PrimarySeq(const string& seq, const string& name, const string& desc,
 		const string& qStr, uint8_t qShift)

@@ -10,7 +10,7 @@
 #include "StringUtils.h"
 
 namespace EGriceLab {
-namespace MSGSeqClean {
+namespace MSGseqClean {
 
 using namespace std;
 

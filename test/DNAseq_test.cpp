@@ -10,7 +10,7 @@
 
 using std::cout;
 using std::endl;
-using EGriceLab::MSGSeqClean::DNAseq;
+using EGriceLab::MSGseqClean::DNAseq;
 
 int main() {
 	DNAseq src1("ATCGNTCGANNNNNNNNNNNatcgntcga");
