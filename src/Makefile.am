@@ -22,7 +22,8 @@ libMSGseqClean_common_a_SOURCES = \
 DNAalphabet.cpp \
 DNAseq.cpp \
 PrimarySeq.cpp \
-SeqIO.cpp
+SeqIO.cpp \
+RRFMIndex.cpp
 
 # Build the executables
 bin_PROGRAMS = \
