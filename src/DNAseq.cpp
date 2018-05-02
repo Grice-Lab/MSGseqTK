@@ -60,11 +60,11 @@ DNAseq& DNAseq::removeGaps() {
 
 DNAseq& DNAseq::compressGaps(int minNGap) {
 	assert(minNGap > 1);
-	DNAseq::iterator gap_start, gap_end;
-	while((gap_start = std::search_n(begin(), end(), minNGap, DNAalphabet::N)) != end()) { /* a consecutive gap found */
-		for(gap_end = gap_start; *gap_end == DNAalphabet::N; ++gap_end) /* find gap end */
+	DNAseq::reverse_iterator gap_rstart, gap_rend;
+	while((gap_rstart = std::search_n(rbegin(), rend(), minNGap, DNAalphabet::N)) != rend()) { /* reverse gaps backward */
+		for(gap_rend = gap_rstart; *gap_rend == DNAalphabet::N; ++gap_rend) /* find gap end on reverse order */
 			continue;
-		erase(gap_start + 1, gap_end);
+		erase(gap_rend.base() + 1, gap_rstart.base());
 	}
 	return *this;
 }
