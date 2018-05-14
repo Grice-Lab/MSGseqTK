@@ -11,14 +11,15 @@
 namespace EGriceLab {
 namespace MSGseqClean {
 
-const uint8_t* DNAalphabet::sym2base = initSym2Base();
+const int8_t* DNAalphabet::sym2base = initSym2Base();
 const char* DNAalphabet::base2sym = initBase2Sym();
 const char* DNAalphabet::sym2comp = initSym2Comp();
-const uint8_t* DNAalphabet::base2comp = initBase2Comp();
+const int8_t* DNAalphabet::base2comp = initBase2Comp();
 
-uint8_t* DNAalphabet::initSym2Base() {
+int8_t* DNAalphabet::initSym2Base() {
 	/* sym2base will be zero initiated by default */
-	static uint8_t sym2base[CHAR_MAX];
+	static int8_t sym2base[CHAR_MAX + 1];
+	std::fill_n(sym2base, CHAR_MAX + 1, -1);
 	/* basic symbols */
 	sym2base['A'] = sym2base['a'] = A;
 	sym2base['C'] = sym2base['c'] = C;
@@ -42,7 +43,7 @@ uint8_t* DNAalphabet::initSym2Base() {
 
 char* DNAalphabet::initBase2Sym() {
 	/* base2sym will be zero initiated by default */
-	static char base2sym[UINT8_MAX];
+	static char base2sym[INT8_MAX + 1];
 	base2sym[A] = 'A';
 	base2sym[C] = 'C';
 	base2sym[G] = 'G';
@@ -92,8 +93,8 @@ char* DNAalphabet::initSym2Comp() {
 	return sym2comp;
 }
 
-uint8_t* DNAalphabet::initBase2Comp() {
-	static uint8_t base2comp[UINT8_MAX];
+int8_t* DNAalphabet::initBase2Comp() {
+	static int8_t base2comp[INT8_MAX];
 	base2comp[A] = T;
 	base2comp[C] = G;
 	base2comp[G] = C;

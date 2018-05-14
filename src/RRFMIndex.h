@@ -33,7 +33,7 @@ public:
 	RRFMIndex() = default;
 
 	/** Construct a RRFMIndex from a given (large) DNAseq */
-	explicit RRFMIndex(const DNAseq& seq) throw(std::length_error) {
+	explicit RRFMIndex(const DNAseq& seq) {
 		build(seq);
 	}
 
@@ -57,7 +57,7 @@ public:
 	 * @return a fresh allocated RRFMIndex
 	 * @throw std::length_error if seq length is too long
 	 */
-	RRFMIndex& build(const DNAseq& seq) throw(std::length_error);
+	RRFMIndex& build(const DNAseq& seq);
 
 	/**
 	 * save raw object data to output
@@ -87,7 +87,7 @@ private:
 
 	/* member fields */
 private:
-	saidx_t C[UINT8_MAX + 1]; /* cumulative count of each alphabet frequency, with C[0] as dummy position */
+	saidx_t C[UINT8_MAX + 1] = { 0 }; /* cumulative count of each alphabet frequency, with C[0] as dummy position */
 	// DNAseq seq (concatenated) DNAseq underlying this index
 	// uint32_t* SA = nullptr; /* 1-based sampled SA of reversed DNAseq */
 	// cds_static::BitSequence* SAidx = nullptr; /* 1-based bit index for telling whether this SA position is sampled */

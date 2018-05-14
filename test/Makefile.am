@@ -15,19 +15,19 @@ AM_CXXFLAGS = \
 #$(top_srcdir)/src/libMSGseqClean_common.a
 #$(top_srcdir)/util/libEGUtil.a \
 #$(top_srcdir)/math/libEGMath.a \
-#$(top_srcdir)/libdivsufsort/lib/libdivsufsort.a \
-#$(top_srcdir)/libcds/src/libcds.la \
+#$(top_srcdir)/src/libdivsufsort/lib/libdivsufsort.a \
+#$(top_srcdir)/src/libcds/src/libcds.la \
 #$(BOOST_IOSTREAMS_LIB)
 
 check_PROGRAMS = \
 DNAseq_test \
 PrimarySeq_test \
-SeqIO_test
+SeqIO_test \
+RRFMIndex_test
 
 DNAseq_test_SOURCES = DNAseq_test.cpp
 DNAseq_test_LDADD = \
 $(top_srcdir)/src/libMSGseqClean_common.a
-
 
 PrimarySeq_test_SOURCES = PrimarySeq_test.cpp
 PrimarySeq_test_LDADD = \
@@ -37,7 +37,14 @@ SeqIO_test_SOURCES = SeqIO_test.cpp
 SeqIO_test_LDADD = \
 $(top_srcdir)/src/libMSGseqClean_common.a
 
+RRFMIndex_test_SOURCES = RRFMIndex_test.cpp
+RRFMIndex_test_LDADD = \
+$(top_srcdir)/src/libMSGseqClean_common.a \
+$(top_srcdir)/src/libdivsufsort/lib/libdivsufsort.a \
+$(top_srcdir)/src/libcds/src/libcds.la
+
 TESTS = \
 DNAseq_test \
 PrimarySeq_test \
-SeqIO_test
+SeqIO_test \
+RRFMIndex_test

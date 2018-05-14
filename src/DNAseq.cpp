@@ -14,7 +14,7 @@ namespace MSGseqClean {
 string DNAseq::decode() const {
 	string seq;
 	seq.reserve(length());
-	for(uint8_t b : *this)
+	for(int8_t b : *this)
 		seq.push_back(DNAalphabet::decode(b));
 	return seq;
 }

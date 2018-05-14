@@ -18,31 +18,31 @@ using std::string;
 
 /**
  *  A DNA alphabet class provide static methods for encoding and decoding characters to/from small integers
- *  A => 1, C => 2, G => 3, T => 4, N => 5 and all invalid symbols as 0
+ *  N => 0, A => 1, C => 2, G => 3, T => 4 and all invalid symbols as negative values (-1)
  *  the assembly gaps (Ns) are treated specially
  *  but accept IUPAC ambiguous codes except the gaps
  */
 class DNAalphabet {
 public:
 	/* nested enum and types */
-	enum Base { INVALID, A, C, G, T, N };
+	enum Base { N, A, C, G, T };
 
 private:
 	/* static fields */
-	static const uint8_t* sym2base; /* internal map from symbol to base, static zero initiated by default */
+	static const int8_t* sym2base; /* internal map from symbol to base, static zero initiated by default */
 	static const char* base2sym; /* internal map from base to symbol, static zero initiated by default */
 	static const char* sym2comp;  /* internal complement map from symbol to symbol, static zero initiated by default */
-	static const uint8_t* base2comp;  /* internal complement map from base to base, static zero initiated by default */
+	static const int8_t* base2comp;  /* internal complement map from base to base, static zero initiated by default */
 
 	/* static methods */
 public:
 	/** encode a DNA symbol to a base value */
-	static uint8_t encode(char s) {
+	static int8_t encode(char s) {
 		return sym2base[s];
 	}
 
 	/** decode a DNA base to a symbol */
-	static char decode(uint8_t b) {
+	static char decode(int8_t b) {
 		return base2sym[b];
 	}
 
@@ -52,22 +52,22 @@ public:
 	}
 
 	/** get complement base of a given base */
-	static uint8_t complement(uint8_t b) {
+	static int8_t complement(int8_t b) {
 		return base2comp[b];
 	}
 
 	/** test whether a base is valid */
-	static bool isValid(uint8_t b) {
-		return b > 0;
+	static bool isValid(int8_t b) {
+		return b >= 0;
 	}
 
 	/** test whether a base is a valid base */
-	static bool isBase(uint8_t b) {
-		return b != INVALID && b != N;
+	static bool isBase(int8_t b) {
+		return b >= 0 && b != N;
 	}
 
 	/** test whether a base is a gap */
-	static bool isGap(uint8_t b) {
+	static bool isGap(int8_t b) {
 		return b == N;
 	}
 
@@ -91,7 +91,7 @@ public:
 
 private:
 	/** initiate the internal sym2base map */
-	static uint8_t* initSym2Base();
+	static int8_t* initSym2Base();
 
 	/** initiate the internal base2sym map */
 	static char* initBase2Sym();
@@ -100,8 +100,10 @@ private:
 	static char* initSym2Comp();
 
 	/** initiate the internal base2comp map */
-	static uint8_t* initBase2Comp();
+	static int8_t* initBase2Comp();
 
+public:
+	static const int SIZE = 5;
 };
 
 } /* namespace MSGSeqClean */
