@@ -2,7 +2,7 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* build a 64 bits version of libdivsufsort */
-/* #undef BUILD_DIVSUFSORT64 */
+#define BUILD_DIVSUFSORT64 1
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1

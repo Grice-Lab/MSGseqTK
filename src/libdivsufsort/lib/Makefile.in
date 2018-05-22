@@ -133,9 +133,20 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libdivsufsort_a_AR = $(AR) $(ARFLAGS)
 libdivsufsort_a_LIBADD =
-am_libdivsufsort_a_OBJECTS = divsufsort.$(OBJEXT) sssort.$(OBJEXT) \
-	trsort.$(OBJEXT) utils.$(OBJEXT)
+am__libdivsufsort_a_SOURCES_DIST = divsufsort.c sssort.c trsort.c \
+	utils.c
+@BUILD64_FALSE@am_libdivsufsort_a_OBJECTS = divsufsort.$(OBJEXT) \
+@BUILD64_FALSE@	sssort.$(OBJEXT) trsort.$(OBJEXT) \
+@BUILD64_FALSE@	utils.$(OBJEXT)
 libdivsufsort_a_OBJECTS = $(am_libdivsufsort_a_OBJECTS)
+libdivsufsort64_a_AR = $(AR) $(ARFLAGS)
+libdivsufsort64_a_LIBADD =
+am__libdivsufsort64_a_SOURCES_DIST = divsufsort.c sssort.c trsort.c \
+	utils.c
+@BUILD64_TRUE@am_libdivsufsort64_a_OBJECTS = divsufsort.$(OBJEXT) \
+@BUILD64_TRUE@	sssort.$(OBJEXT) trsort.$(OBJEXT) \
+@BUILD64_TRUE@	utils.$(OBJEXT)
+libdivsufsort64_a_OBJECTS = $(am_libdivsufsort64_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -164,8 +175,9 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libdivsufsort_a_SOURCES)
-DIST_SOURCES = $(libdivsufsort_a_SOURCES)
+SOURCES = $(libdivsufsort_a_SOURCES) $(libdivsufsort64_a_SOURCES)
+DIST_SOURCES = $(am__libdivsufsort_a_SOURCES_DIST) \
+	$(am__libdivsufsort64_a_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -283,8 +295,10 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
 AM_CFLAGS = -I$(top_srcdir)/include
 AM_CPPFLAGS = -I$(top_srcdir)/include
-lib_LIBRARIES = libdivsufsort.a
-libdivsufsort_a_SOURCES = divsufsort.c sssort.c trsort.c utils.c
+@BUILD64_FALSE@lib_LIBRARIES = libdivsufsort.a
+@BUILD64_TRUE@lib_LIBRARIES = libdivsufsort64.a
+@BUILD64_TRUE@libdivsufsort64_a_SOURCES = divsufsort.c sssort.c trsort.c utils.c
+@BUILD64_FALSE@libdivsufsort_a_SOURCES = divsufsort.c sssort.c trsort.c utils.c
 all: all-am
 
 .SUFFIXES:
@@ -354,6 +368,11 @@ libdivsufsort.a: $(libdivsufsort_a_OBJECTS) $(libdivsufsort_a_DEPENDENCIES) $(EX
 	$(AM_V_at)-rm -f libdivsufsort.a
 	$(AM_V_AR)$(libdivsufsort_a_AR) libdivsufsort.a $(libdivsufsort_a_OBJECTS) $(libdivsufsort_a_LIBADD)
 	$(AM_V_at)$(RANLIB) libdivsufsort.a
+
+libdivsufsort64.a: $(libdivsufsort64_a_OBJECTS) $(libdivsufsort64_a_DEPENDENCIES) $(EXTRA_libdivsufsort64_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libdivsufsort64.a
+	$(AM_V_AR)$(libdivsufsort64_a_AR) libdivsufsort64.a $(libdivsufsort64_a_OBJECTS) $(libdivsufsort64_a_LIBADD)
+	$(AM_V_at)$(RANLIB) libdivsufsort64.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
