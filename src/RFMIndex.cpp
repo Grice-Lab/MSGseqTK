@@ -93,27 +93,15 @@ RFMIndex& RFMIndex::operator+=(const RFMIndex& other) {
 	for(uint8_t i = 0; i < UINT8_MAX; ++i)
 		CMerged[i] = C[i] + other.C[i];
 
-	/* build RA */
-	saidx_t* RA = new saidx_t[N1];
+	/* build RA and interleaving bitvector */
+	BitString B(N);
+	B.setBit(1);
 
 	for(saidx_t i = 0, j = 0; (j = LF(i) - 1) != 0; i = j) {
 		saidx_t val = other.LF(bwt->access(i), val) - 1;
-		RA[j] = val;
+		B.setBit(j + 1 + val);
 		i = j;
 	}
-
-	for(saidx_t i = 0; i < N1; ++i)
-		cerr << "RA[" << i << "]: " << RA[i] << endl;
-
-	/* build interleaving bitvector */
-	BitString B(N);
-	for(saidx_t i = 0; i < N1; ++i)
-		B.setBit(i + 1 + RA[i]);
-
-	cerr << "B: ";
-	for(saidx_t i = 0; i < N; ++i)
-		cerr << B.getBit(i) << " ";
-	cerr << endl;
 
 	/* build merbed BWT */
 	sauchar_t* bwtNew = new sauchar_t[N];
