@@ -36,7 +36,7 @@ msgseqclean_LDADD = \
 libMSGseqClean_common.a \
 util/libEGUtil.a \
 math/libEGMath.a \
-libdivsufsort/lib/libdivsufsort.a \
+libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libcds/src/libcds.la
 #$(BOOST_IOSTREAMS_LIB)
 

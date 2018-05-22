@@ -18,7 +18,7 @@ AC_TYPE_INT64_T
 AC_TYPE_UINT64_T
 AC_PROG_LIBTOOL
 LT_INIT
-#AC_PROG_RANLIB
+AC_PROG_RANLIB
 AC_CHECK_HEADERS
 AC_CHECK_HEADER_STDBOOL
 
@@ -50,14 +50,17 @@ AC_CONFIG_FILES([Makefile
 
 AC_CONFIG_SUBDIRS([src/util
                    src/math
-                   src/libcds
-                   src/libdivsufsort])
-
-# customized macros
-AC_ARG_ENABLE([build64], AS_HELP_STRING([--disable-build64], [do not build a 64 bits support]),
-	[AC_DEFINE([BUILD_DIVSUFSORT64], [0], [build a 32 bits version of libdivsufsort])],
-	[AC_DEFINE([BUILD_DIVSUFSORT64], [1], [build a 64 bits version of libdivsufsort])]
+                   src/libcds])
+                   
+AX_SUBDIRS_CONFIGURE([src/libdivsufsort],
+[--enable-build64],
+[],
+[],
+[]
 )
+
+AC_SUBST(LIBDIVSUFSORT_PKG_NAME, libdivsufsort64)
+AC_DEFINE([BUILD_DIVSUFSORT64], [1], [always build a 64 bits version of libdivsufsort])
 
 #AC_OPENMP
 

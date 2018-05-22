@@ -98,6 +98,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
 	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
 	$(top_srcdir)/m4/m4_ax_cxx_compile_stdcxx.m4 \
+	$(top_srcdir)/m4/m4_ax_subdirs_configure.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
@@ -120,7 +121,7 @@ am_RFMIndex_test_OBJECTS = RFMIndex_test.$(OBJEXT)
 RFMIndex_test_OBJECTS = $(am_RFMIndex_test_OBJECTS)
 RFMIndex_test_DEPENDENCIES =  \
 	$(top_srcdir)/src/libMSGseqClean_common.a \
-	$(top_srcdir)/src/libdivsufsort/lib/libdivsufsort.a \
+	$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	$(top_srcdir)/src/libcds/src/libcds.la
 am_SeqIO_test_OBJECTS = SeqIO_test.$(OBJEXT)
 SeqIO_test_OBJECTS = $(am_SeqIO_test_OBJECTS)
@@ -432,6 +433,7 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LIBDIVSUFSORT_PKG_NAME = libdivsufsort64
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
@@ -511,6 +513,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
 subdirs = @subdirs@
+subdirs_extra = @subdirs_extra@
 sysconfdir = @sysconfdir@
 target = @target@
 target_alias = @target_alias@
@@ -542,7 +545,7 @@ $(top_srcdir)/src/libMSGseqClean_common.a
 RFMIndex_test_SOURCES = RFMIndex_test.cpp
 RFMIndex_test_LDADD = \
 $(top_srcdir)/src/libMSGseqClean_common.a \
-$(top_srcdir)/src/libdivsufsort/lib/libdivsufsort.a \
+$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 $(top_srcdir)/src/libcds/src/libcds.la
 
 all: all-am

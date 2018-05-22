@@ -25,6 +25,8 @@ PrimarySeq_test \
 SeqIO_test \
 RFMIndex_test
 
+LIBDIVSUFSORT_PKG_NAME=libdivsufsort64
+
 DNAseq_test_SOURCES = DNAseq_test.cpp
 DNAseq_test_LDADD = \
 $(top_srcdir)/src/libMSGseqClean_common.a
@@ -40,7 +42,7 @@ $(top_srcdir)/src/libMSGseqClean_common.a
 RFMIndex_test_SOURCES = RFMIndex_test.cpp
 RFMIndex_test_LDADD = \
 $(top_srcdir)/src/libMSGseqClean_common.a \
-$(top_srcdir)/src/libdivsufsort/lib/libdivsufsort.a \
+$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 $(top_srcdir)/src/libcds/src/libcds.la
 
 TESTS = \
