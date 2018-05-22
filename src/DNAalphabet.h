@@ -18,14 +18,14 @@ using std::string;
 
 /**
  *  A DNA alphabet class provide static methods for encoding and decoding characters to/from small integers
- *  N => 0, A => 1, C => 2, G => 3, T => 4 and all invalid symbols as negative values (-1)
+ *  A => 1, C => 2, G => 3, T => 4, N => 5 and all invalid symbols as 0
  *  the assembly gaps (Ns) are treated specially
  *  but accept IUPAC ambiguous codes except the gaps
  */
 class DNAalphabet {
 public:
 	/* nested enum and types */
-	enum Base { N, A, C, G, T };
+	enum Base { A = 1, C, G, T, N };
 
 private:
 	/* static fields */
@@ -58,17 +58,17 @@ public:
 
 	/** test whether a base is valid */
 	static bool isValid(int8_t b) {
-		return b >= 0;
-	}
-
-	/** test whether a base is a valid base */
-	static bool isBase(int8_t b) {
-		return b >= 0 && b != N;
+		return b > 0;
 	}
 
 	/** test whether a base is a gap */
 	static bool isGap(int8_t b) {
 		return b == N;
+	}
+
+	/** test whether a base is a valid base */
+	static bool isBase(int8_t b) {
+		return b > 0 && b != N;
 	}
 
 	/** test whether a symbol is valid */

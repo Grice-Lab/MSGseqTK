@@ -23,7 +23,7 @@ DNAalphabet.cpp \
 DNAseq.cpp \
 PrimarySeq.cpp \
 SeqIO.cpp \
-RRFMIndex.cpp
+RFMIndex.cpp
 
 # Build the executables
 bin_PROGRAMS = \

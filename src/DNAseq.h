@@ -27,9 +27,15 @@ using std::ostream;
 
 class DNAseq: public std::basic_string<int8_t> {
 public:
+	/* nested types and enums */
+	enum TRIM_MODE { FIVE_PRIME = 1, THREE_PRIME, BOTH_PRIME };
+
 	/* constructors */
 	/** default constructor */
 	DNAseq() = default;
+
+	/** copy constructor */
+	DNAseq(const DNAseq& other) = default;
 
 	/** virtual destructor */
 	virtual ~DNAseq() {  }
@@ -66,7 +72,6 @@ public:
 	 * test whether the whole sequence is all base, no gap
 	 */
 	bool allBase() const;
-
 
 	/**
 	 * Generate a reverse complement copy
@@ -127,12 +132,20 @@ public:
 	/** remove genomic gaps (runs of Ns) and replace with a single N to save storage space */
 	DNAseq& compressGaps(int minNGap = MIN_GENOME_GAP);
 
+	/** trim genomic gaps (runs of Ns) at the end of the genome to prevent BWT errors
+	 * 1 for 5', 2 for 3' and 3 for both
+	 */
+	DNAseq& trimGaps(int mode = BOTH_PRIME);
+
 	/* non-member functions */
 	/** read a DNAseq from text input, override the old one */
 	friend istream& operator>>(istream& in, DNAseq& seq);
 
 	/** write a DNAseq to text output */
 	friend ostream& operator<<(ostream& out, const DNAseq& seq);
+
+	/** concat this seq with another seq */
+	friend DNAseq operator+(const DNAseq& lhs, const DNAseq& rhs);
 
 	/* static member fields */
 	static const int MIN_GENOME_GAP = 10;
@@ -164,6 +177,13 @@ inline DNAseq& DNAseq::operator=(const string& str) {
 	assign(str);
 	return *this;
 }
+
+inline DNAseq operator+(const DNAseq& lhs, const DNAseq& rhs) {
+	DNAseq seq(lhs);
+	seq += rhs;
+	return seq;
+}
+
 
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */

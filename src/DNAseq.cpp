@@ -69,6 +69,22 @@ DNAseq& DNAseq::compressGaps(int minNGap) {
 	return *this;
 }
 
+DNAseq& DNAseq::trimGaps(int mode) {
+	if(mode | THREE_PRIME) { /* backward search */
+		DNAseq::reverse_iterator gap_rend;
+		for(gap_rend = rbegin(); DNAalphabet::isGap(*gap_rend) && gap_rend != rend(); ++gap_rend)
+			continue;
+		erase(gap_rend.base(), end());
+	}
+	if(mode | FIVE_PRIME) { /* forward search */
+		DNAseq::iterator gap_end;
+		for(gap_end = begin(); DNAalphabet::isGap(*gap_end) && gap_end != end(); ++gap_end)
+			continue;
+		erase(begin(), gap_end);
+	}
+	return *this;
+}
+
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */
 

@@ -89,9 +89,9 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 check_PROGRAMS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
-	SeqIO_test$(EXEEXT) RRFMIndex_test$(EXEEXT)
+	SeqIO_test$(EXEEXT) RFMIndex_test$(EXEEXT)
 TESTS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
-	SeqIO_test$(EXEEXT) RRFMIndex_test$(EXEEXT)
+	SeqIO_test$(EXEEXT) RFMIndex_test$(EXEEXT)
 subdir = test
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -116,9 +116,9 @@ am_PrimarySeq_test_OBJECTS = PrimarySeq_test.$(OBJEXT)
 PrimarySeq_test_OBJECTS = $(am_PrimarySeq_test_OBJECTS)
 PrimarySeq_test_DEPENDENCIES =  \
 	$(top_srcdir)/src/libMSGseqClean_common.a
-am_RRFMIndex_test_OBJECTS = RRFMIndex_test.$(OBJEXT)
-RRFMIndex_test_OBJECTS = $(am_RRFMIndex_test_OBJECTS)
-RRFMIndex_test_DEPENDENCIES =  \
+am_RFMIndex_test_OBJECTS = RFMIndex_test.$(OBJEXT)
+RFMIndex_test_OBJECTS = $(am_RFMIndex_test_OBJECTS)
+RFMIndex_test_DEPENDENCIES =  \
 	$(top_srcdir)/src/libMSGseqClean_common.a \
 	$(top_srcdir)/src/libdivsufsort/lib/libdivsufsort.a \
 	$(top_srcdir)/src/libcds/src/libcds.la
@@ -160,9 +160,9 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(DNAseq_test_SOURCES) $(PrimarySeq_test_SOURCES) \
-	$(RRFMIndex_test_SOURCES) $(SeqIO_test_SOURCES)
+	$(RFMIndex_test_SOURCES) $(SeqIO_test_SOURCES)
 DIST_SOURCES = $(DNAseq_test_SOURCES) $(PrimarySeq_test_SOURCES) \
-	$(RRFMIndex_test_SOURCES) $(SeqIO_test_SOURCES)
+	$(RFMIndex_test_SOURCES) $(SeqIO_test_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -539,8 +539,8 @@ SeqIO_test_SOURCES = SeqIO_test.cpp
 SeqIO_test_LDADD = \
 $(top_srcdir)/src/libMSGseqClean_common.a
 
-RRFMIndex_test_SOURCES = RRFMIndex_test.cpp
-RRFMIndex_test_LDADD = \
+RFMIndex_test_SOURCES = RFMIndex_test.cpp
+RFMIndex_test_LDADD = \
 $(top_srcdir)/src/libMSGseqClean_common.a \
 $(top_srcdir)/src/libdivsufsort/lib/libdivsufsort.a \
 $(top_srcdir)/src/libcds/src/libcds.la
@@ -596,9 +596,9 @@ PrimarySeq_test$(EXEEXT): $(PrimarySeq_test_OBJECTS) $(PrimarySeq_test_DEPENDENC
 	@rm -f PrimarySeq_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(PrimarySeq_test_OBJECTS) $(PrimarySeq_test_LDADD) $(LIBS)
 
-RRFMIndex_test$(EXEEXT): $(RRFMIndex_test_OBJECTS) $(RRFMIndex_test_DEPENDENCIES) $(EXTRA_RRFMIndex_test_DEPENDENCIES) 
-	@rm -f RRFMIndex_test$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(RRFMIndex_test_OBJECTS) $(RRFMIndex_test_LDADD) $(LIBS)
+RFMIndex_test$(EXEEXT): $(RFMIndex_test_OBJECTS) $(RFMIndex_test_DEPENDENCIES) $(EXTRA_RFMIndex_test_DEPENDENCIES) 
+	@rm -f RFMIndex_test$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(RFMIndex_test_OBJECTS) $(RFMIndex_test_LDADD) $(LIBS)
 
 SeqIO_test$(EXEEXT): $(SeqIO_test_OBJECTS) $(SeqIO_test_DEPENDENCIES) $(EXTRA_SeqIO_test_DEPENDENCIES) 
 	@rm -f SeqIO_test$(EXEEXT)
@@ -612,7 +612,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DNAseq_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PrimarySeq_test.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RRFMIndex_test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RFMIndex_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SeqIO_test.Po@am__quote@
 
 .cpp.o:
@@ -859,9 +859,9 @@ SeqIO_test.log: SeqIO_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-RRFMIndex_test.log: RRFMIndex_test$(EXEEXT)
-	@p='RRFMIndex_test$(EXEEXT)'; \
-	b='RRFMIndex_test'; \
+RFMIndex_test.log: RFMIndex_test$(EXEEXT)
+	@p='RFMIndex_test$(EXEEXT)'; \
+	b='RFMIndex_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

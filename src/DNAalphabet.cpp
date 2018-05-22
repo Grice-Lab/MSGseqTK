@@ -17,9 +17,7 @@ const char* DNAalphabet::sym2comp = initSym2Comp();
 const int8_t* DNAalphabet::base2comp = initBase2Comp();
 
 int8_t* DNAalphabet::initSym2Base() {
-	/* sym2base will be zero initiated by default */
-	static int8_t sym2base[CHAR_MAX + 1];
-	std::fill_n(sym2base, CHAR_MAX + 1, -1);
+	static int8_t sym2base[CHAR_MAX + 1] = {};
 	/* basic symbols */
 	sym2base['A'] = sym2base['a'] = A;
 	sym2base['C'] = sym2base['c'] = C;
