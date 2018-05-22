@@ -15,6 +15,7 @@ using EGriceLab::MSGseqClean::DNAseq;
 using EGriceLab::MSGseqClean::RFMIndex;
 
 int main() {
+	cerr << "Max_length: " << RFMIndex::MAX_LENGTH << endl;
 	DNAseq seq1("CTAGCATAGAC");
 	cout << "seq1:" << endl << seq1 << endl;
 

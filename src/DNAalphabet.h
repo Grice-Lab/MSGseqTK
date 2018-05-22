@@ -24,8 +24,9 @@ using std::string;
  */
 class DNAalphabet {
 public:
+	static const int SHIFT = 1;
 	/* nested enum and types */
-	enum Base { A = 1, C, G, T, N };
+	enum Base { A = SHIFT, C, G, T, N };
 
 private:
 	/* static fields */

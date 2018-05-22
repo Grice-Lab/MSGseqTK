@@ -17,7 +17,7 @@
 #include <stdexcept>
 #include <memory>
 #include "DNAseq.h"
-#include "divsufsort.h" /* use 32bit version */
+#include "divsufsort_private.h"
 #include "WaveletTreeNoptrs.h"
 #include "BitSequence.h"
 
@@ -126,9 +126,6 @@ private:
 	/* member fields */
 private:
 	saidx_t C[UINT8_MAX + 1] = { 0 }; /* cumulative count of each alphabet frequency, with C[0] as dummy position */
-	// DNAseq seq (concatenated) DNAseq underlying this index
-	// uint32_t* SA = nullptr; /* 1-based sampled SA of reversed DNAseq */
-	// cds_static::BitSequence* SAidx = nullptr; /* 1-based bit index for telling whether this SA position is sampled */
 	BWTRRR_ptr bwt; /* Wavelet-Tree transformed BWT string for reversed DNAseq */
 
 public:

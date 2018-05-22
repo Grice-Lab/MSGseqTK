@@ -114,7 +114,7 @@ libMSGseqClean_common_a_AR = $(AR) $(ARFLAGS)
 libMSGseqClean_common_a_LIBADD =
 am_libMSGseqClean_common_a_OBJECTS = DNAalphabet.$(OBJEXT) \
 	DNAseq.$(OBJEXT) PrimarySeq.$(OBJEXT) SeqIO.$(OBJEXT) \
-	RFMIndex.$(OBJEXT)
+	RFMIndex.$(OBJEXT) MetaGenome.$(OBJEXT)
 libMSGseqClean_common_a_OBJECTS =  \
 	$(am_libMSGseqClean_common_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
@@ -383,7 +383,8 @@ DNAalphabet.cpp \
 DNAseq.cpp \
 PrimarySeq.cpp \
 SeqIO.cpp \
-RFMIndex.cpp
+RFMIndex.cpp \
+MetaGenome.cpp
 
 msgseqclean_SOURCES = msgseqclean.cpp
 #msgseqclean_CXXFLAGS = $(OPENMP_CXXFLAGS)
@@ -497,6 +498,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DNAalphabet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DNAseq.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MetaGenome.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PrimarySeq.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RFMIndex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SeqIO.Po@am__quote@

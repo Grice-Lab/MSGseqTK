@@ -64,7 +64,7 @@ public:
 	}
 
 	qstring getQual() const {
-		return !qual.empty() ? qual : qstring{ seq.length(), DEFAULT_Q_SCORE };
+		return !qual.empty() ? qual : qstring(seq.length(), DEFAULT_Q_SCORE);
 	}
 
 	uint8_t getQShift() const {
