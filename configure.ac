@@ -25,9 +25,12 @@ AC_CHECK_FUNCS([malloc])
 AC_PROG_RANLIB
 
 # customized macros
-AC_ARG_ENABLE([build64], AS_HELP_STRING([--enable-build64], [build a 64 bits version library]),
+AC_ARG_ENABLE([build64],
+	AS_HELP_STRING([--enable-build64], [build a 64 bits version library]),
 	[AC_DEFINE([BUILD_DIVSUFSORT64], [1], [build a 64 bits version of libdivsufsort])]
 )
+
+AM_CONDITIONAL([BUILD64], [test "x$enable_build64" = "xyes"])
 
 AC_CONFIG_FILES([Makefile lib/Makefile examples/Makefile])
 AC_OUTPUT

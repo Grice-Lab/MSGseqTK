@@ -57,7 +57,7 @@
 
 static
 size_t
-read_int(FILE *fp, saidx_t *n) {
+read_int(FILE *fp, saint_t *n) {
   unsigned char c[4];
   size_t m = fread(c, sizeof(unsigned char), 4, fp);
   if(m == 4) {
@@ -160,7 +160,7 @@ main(int argc, const char *argv[]) {
 
   fprintf(stderr, "UnBWT (blocksize %" PRIdSAINT_T ") ... ", blocksize);
   start = clock();
-  for(n = 0; (m = read_int(fp, &pidx)) != 0; n += m) {
+  for(n = 0; (m = read_int(fp, (saint_t*) &pidx)) != 0; n += m) {
     /* Read blocksize bytes of data. */
     if((m != 4) || ((m = fread(T, sizeof(sauchar_t), blocksize, fp)) == 0)) {
       fprintf(stderr, "%s: %s `%s': ",
