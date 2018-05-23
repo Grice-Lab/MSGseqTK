@@ -122,7 +122,7 @@ PROGRAMS = $(bin_PROGRAMS)
 am_msgseqclean_OBJECTS = msgseqclean-msgseqclean.$(OBJEXT)
 msgseqclean_OBJECTS = $(am_msgseqclean_OBJECTS)
 am__DEPENDENCIES_1 =
-msgseqclean_DEPENDENCIES = libMSGseqClean_common.a util/libEGUtil.a \
+msgseqclean_DEPENDENCIES = libMSGseqClean.a util/libEGUtil.a \
 	math/libEGMath.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	libcds/src/libcds.la $(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -397,7 +397,7 @@ MetaGenome.cpp
 msgseqclean_SOURCES = msgseqclean.cpp
 msgseqclean_CXXFLAGS = $(OPENMP_CXXFLAGS)
 msgseqclean_LDADD = \
-libMSGseqClean_common.a \
+libMSGseqClean.a \
 util/libEGUtil.a \
 math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \

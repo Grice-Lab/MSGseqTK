@@ -108,24 +108,22 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am_DNAseq_test_OBJECTS = DNAseq_test.$(OBJEXT)
 DNAseq_test_OBJECTS = $(am_DNAseq_test_OBJECTS)
-DNAseq_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqClean_common.a
+DNAseq_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqClean.a
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 am_PrimarySeq_test_OBJECTS = PrimarySeq_test.$(OBJEXT)
 PrimarySeq_test_OBJECTS = $(am_PrimarySeq_test_OBJECTS)
-PrimarySeq_test_DEPENDENCIES =  \
-	$(top_srcdir)/src/libMSGseqClean_common.a
+PrimarySeq_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqClean.a
 am_RFMIndex_test_OBJECTS = RFMIndex_test.$(OBJEXT)
 RFMIndex_test_OBJECTS = $(am_RFMIndex_test_OBJECTS)
-RFMIndex_test_DEPENDENCIES =  \
-	$(top_srcdir)/src/libMSGseqClean_common.a \
+RFMIndex_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqClean.a \
 	$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	$(top_srcdir)/src/libcds/src/libcds.la
 am_SeqIO_test_OBJECTS = SeqIO_test.$(OBJEXT)
 SeqIO_test_OBJECTS = $(am_SeqIO_test_OBJECTS)
-SeqIO_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqClean_common.a
+SeqIO_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqClean.a
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -536,19 +534,19 @@ AM_CXXFLAGS = \
 
 DNAseq_test_SOURCES = DNAseq_test.cpp
 DNAseq_test_LDADD = \
-$(top_srcdir)/src/libMSGseqClean_common.a
+$(top_srcdir)/src/libMSGseqClean.a
 
 PrimarySeq_test_SOURCES = PrimarySeq_test.cpp
 PrimarySeq_test_LDADD = \
-$(top_srcdir)/src/libMSGseqClean_common.a
+$(top_srcdir)/src/libMSGseqClean.a
 
 SeqIO_test_SOURCES = SeqIO_test.cpp
 SeqIO_test_LDADD = \
-$(top_srcdir)/src/libMSGseqClean_common.a
+$(top_srcdir)/src/libMSGseqClean.a
 
 RFMIndex_test_SOURCES = RFMIndex_test.cpp
 RFMIndex_test_LDADD = \
-$(top_srcdir)/src/libMSGseqClean_common.a \
+$(top_srcdir)/src/libMSGseqClean.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 $(top_srcdir)/src/libcds/src/libcds.la
 

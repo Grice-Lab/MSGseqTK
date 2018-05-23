@@ -33,7 +33,7 @@ msgseqclean
 msgseqclean_SOURCES = msgseqclean.cpp
 msgseqclean_CXXFLAGS = $(OPENMP_CXXFLAGS)
 msgseqclean_LDADD = \
-libMSGseqClean_common.a \
+libMSGseqClean.a \
 util/libEGUtil.a \
 math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
