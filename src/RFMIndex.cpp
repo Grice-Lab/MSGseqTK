@@ -5,10 +5,14 @@
  *      Author: zhengqi
  */
 
-#include "RFMIndex.h"
 
 #include <algorithm>
 #include <cstddef>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
+#include "RFMIndex.h"
 #include "BitSequenceBuilder.h"
 #include "BitSequenceBuilderRRR.h"
 #include "Mapper.h"
@@ -35,8 +39,9 @@ RFMIndex& RFMIndex::build(const DNAseq& seq) {
 }
 
 void RFMIndex::buildCounts(const DNAseq& seq) {
-	for(DNAseq::value_type b : seq)
-		C[b]++;
+#pragma omp parallel for
+	for(DNAseq::const_iterator b = seq.begin(); b != seq.end(); ++b)
+		C[*b]++;
 	C['\0']++; // count null terminator
 	/* construct cumulative counts (total counts smaller than this character) */
     saidx_t prev = C[0];
@@ -151,11 +156,12 @@ void RFMIndex::buildBWT(const DNAseq& seq) {
 
 	/* build bwt */
 	sauchar_t* bwtSeq = new sauchar_t[N];
-    for(saidx_t i = 0; i < N; ++i)
+#pragma omp parallel for
+    for(saidx_t i = 0; i < N; ++i) {
         if(SA[i] == 0) // matches to the null
             bwtSeq[i] = 0; // null terminal
         else bwtSeq[i] = seq[SA[i] - 1];
-//	divbwt((const sauchar_t*) seq.c_str(), bwtSeq, SA, N);
+    }
 
 	/* construct RRR_compressed BWT */
     bwt = std::make_shared<BWTRRR>(reinterpret_cast<uint*> (bwtSeq), N, sizeof(sauchar_t) * 8,

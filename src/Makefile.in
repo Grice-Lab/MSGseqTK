@@ -111,24 +111,27 @@ AM_V_AR = $(am__v_AR_@AM_V@)
 am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
 am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
-libMSGseqClean_common_a_AR = $(AR) $(ARFLAGS)
-libMSGseqClean_common_a_LIBADD =
-am_libMSGseqClean_common_a_OBJECTS = DNAalphabet.$(OBJEXT) \
-	DNAseq.$(OBJEXT) PrimarySeq.$(OBJEXT) SeqIO.$(OBJEXT) \
-	RFMIndex.$(OBJEXT) MetaGenome.$(OBJEXT)
-libMSGseqClean_common_a_OBJECTS =  \
-	$(am_libMSGseqClean_common_a_OBJECTS)
+libMSGseqClean_a_AR = $(AR) $(ARFLAGS)
+libMSGseqClean_a_LIBADD =
+am_libMSGseqClean_a_OBJECTS = DNAalphabet.$(OBJEXT) DNAseq.$(OBJEXT) \
+	PrimarySeq.$(OBJEXT) SeqIO.$(OBJEXT) RFMIndex.$(OBJEXT) \
+	MetaGenome.$(OBJEXT)
+libMSGseqClean_a_OBJECTS = $(am_libMSGseqClean_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_msgseqclean_OBJECTS = msgseqclean.$(OBJEXT)
+am_msgseqclean_OBJECTS = msgseqclean-msgseqclean.$(OBJEXT)
 msgseqclean_OBJECTS = $(am_msgseqclean_OBJECTS)
+am__DEPENDENCIES_1 =
 msgseqclean_DEPENDENCIES = libMSGseqClean_common.a util/libEGUtil.a \
 	math/libEGMath.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-	libcds/src/libcds.la
+	libcds/src/libcds.la $(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+msgseqclean_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(msgseqclean_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -163,9 +166,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(libMSGseqClean_common_a_SOURCES) $(msgseqclean_SOURCES)
-DIST_SOURCES = $(libMSGseqClean_common_a_SOURCES) \
-	$(msgseqclean_SOURCES)
+SOURCES = $(libMSGseqClean_a_SOURCES) $(msgseqclean_SOURCES)
+DIST_SOURCES = $(libMSGseqClean_a_SOURCES) $(msgseqclean_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -242,6 +244,9 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BOOST_CPPFLAGS = @BOOST_CPPFLAGS@
+BOOST_IOSTREAMS_LIB = @BOOST_IOSTREAMS_LIB@
+BOOST_LDFLAGS = @BOOST_LDFLAGS@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -287,6 +292,7 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
+OPENMP_CXXFLAGS = @OPENMP_CXXFLAGS@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -375,13 +381,12 @@ AM_CXXFLAGS = -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libcds/include
 
-
-#AM_CPPFLAGS = $(BOOST_CPPFLAGS)
-#AM_LDFLAGS = $(BOOST_LDFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS)
 
 # Build convenient non-install libraries
-noinst_LIBRARIES = libMSGseqClean_common.a
-libMSGseqClean_common_a_SOURCES = \
+noinst_LIBRARIES = libMSGseqClean.a
+libMSGseqClean_a_SOURCES = \
 DNAalphabet.cpp \
 DNAseq.cpp \
 PrimarySeq.cpp \
@@ -390,13 +395,14 @@ RFMIndex.cpp \
 MetaGenome.cpp
 
 msgseqclean_SOURCES = msgseqclean.cpp
-#msgseqclean_CXXFLAGS = $(OPENMP_CXXFLAGS)
+msgseqclean_CXXFLAGS = $(OPENMP_CXXFLAGS)
 msgseqclean_LDADD = \
 libMSGseqClean_common.a \
 util/libEGUtil.a \
 math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libcds/src/libcds.la
+libcds/src/libcds.la \
+$(BOOST_IOSTREAMS_LIB)
 
 all: all-recursive
 
@@ -435,10 +441,10 @@ $(am__aclocal_m4_deps):
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
 
-libMSGseqClean_common.a: $(libMSGseqClean_common_a_OBJECTS) $(libMSGseqClean_common_a_DEPENDENCIES) $(EXTRA_libMSGseqClean_common_a_DEPENDENCIES) 
-	$(AM_V_at)-rm -f libMSGseqClean_common.a
-	$(AM_V_AR)$(libMSGseqClean_common_a_AR) libMSGseqClean_common.a $(libMSGseqClean_common_a_OBJECTS) $(libMSGseqClean_common_a_LIBADD)
-	$(AM_V_at)$(RANLIB) libMSGseqClean_common.a
+libMSGseqClean.a: $(libMSGseqClean_a_OBJECTS) $(libMSGseqClean_a_DEPENDENCIES) $(EXTRA_libMSGseqClean_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libMSGseqClean.a
+	$(AM_V_AR)$(libMSGseqClean_a_AR) libMSGseqClean.a $(libMSGseqClean_a_OBJECTS) $(libMSGseqClean_a_LIBADD)
+	$(AM_V_at)$(RANLIB) libMSGseqClean.a
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
@@ -491,7 +497,7 @@ clean-binPROGRAMS:
 
 msgseqclean$(EXEEXT): $(msgseqclean_OBJECTS) $(msgseqclean_DEPENDENCIES) $(EXTRA_msgseqclean_DEPENDENCIES) 
 	@rm -f msgseqclean$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(msgseqclean_OBJECTS) $(msgseqclean_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(msgseqclean_LINK) $(msgseqclean_OBJECTS) $(msgseqclean_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -505,7 +511,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PrimarySeq.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RFMIndex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SeqIO.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqclean.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqclean-msgseqclean.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -527,6 +533,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
+
+msgseqclean-msgseqclean.o: msgseqclean.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(msgseqclean_CXXFLAGS) $(CXXFLAGS) -MT msgseqclean-msgseqclean.o -MD -MP -MF $(DEPDIR)/msgseqclean-msgseqclean.Tpo -c -o msgseqclean-msgseqclean.o `test -f 'msgseqclean.cpp' || echo '$(srcdir)/'`msgseqclean.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/msgseqclean-msgseqclean.Tpo $(DEPDIR)/msgseqclean-msgseqclean.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='msgseqclean.cpp' object='msgseqclean-msgseqclean.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(msgseqclean_CXXFLAGS) $(CXXFLAGS) -c -o msgseqclean-msgseqclean.o `test -f 'msgseqclean.cpp' || echo '$(srcdir)/'`msgseqclean.cpp
+
+msgseqclean-msgseqclean.obj: msgseqclean.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(msgseqclean_CXXFLAGS) $(CXXFLAGS) -MT msgseqclean-msgseqclean.obj -MD -MP -MF $(DEPDIR)/msgseqclean-msgseqclean.Tpo -c -o msgseqclean-msgseqclean.obj `if test -f 'msgseqclean.cpp'; then $(CYGPATH_W) 'msgseqclean.cpp'; else $(CYGPATH_W) '$(srcdir)/msgseqclean.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/msgseqclean-msgseqclean.Tpo $(DEPDIR)/msgseqclean-msgseqclean.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='msgseqclean.cpp' object='msgseqclean-msgseqclean.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(msgseqclean_CXXFLAGS) $(CXXFLAGS) -c -o msgseqclean-msgseqclean.obj `if test -f 'msgseqclean.cpp'; then $(CYGPATH_W) 'msgseqclean.cpp'; else $(CYGPATH_W) '$(srcdir)/msgseqclean.cpp'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -816,9 +836,6 @@ uninstall-am: uninstall-binPROGRAMS
 
 .PRECIOUS: Makefile
 
-#$(BOOST_IOSTREAMS_LIB)
-
-#msgseqclean_LDFLAGS = $(BOOST_LDFLAGS)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

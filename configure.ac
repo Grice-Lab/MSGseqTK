@@ -37,12 +37,12 @@ AC_CONFIG_MACRO_DIR([m4])
 
 AX_CXX_COMPILE_STDCXX(11)
 
-#AC_CHECK_FUNCS([sqrt isnan floor])
-#AC_CHECK_FUNCS([strerror])
+AC_CHECK_FUNCS([sqrt isnan floor])
+AC_CHECK_FUNCS([strerror])
 
-#AX_CHECK_ZLIB()
-#AX_BOOST_BASE([1.50.0])
-#AX_BOOST_IOSTREAMS()
+AX_CHECK_ZLIB()
+AX_BOOST_BASE([1.50.0])
+AX_BOOST_IOSTREAMS()
 
 AC_CONFIG_FILES([Makefile
 				 src/Makefile
@@ -62,6 +62,6 @@ AX_SUBDIRS_CONFIGURE([src/libdivsufsort],
 AC_SUBST(LIBDIVSUFSORT_PKG_NAME, libdivsufsort64)
 AC_DEFINE([BUILD_DIVSUFSORT64], [1], [always build a 64 bits version of libdivsufsort])
 
-#AC_OPENMP
+AC_OPENMP
 
 AC_OUTPUT
