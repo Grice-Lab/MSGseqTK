@@ -56,6 +56,18 @@ public:
 		return baseCount;
 	}
 
+	const vector<string>& getGenomeNames() const {
+		return genomeNames;
+	}
+
+	const string& genomeName(size_t i) const {
+		return genomeNames[i];
+	}
+
+	size_t numGenomes() const {
+		return genomeNames.size();
+	}
+
 	MetaGenome& addGenome(const string& genomeName, const DNAseq& genomeSeq);
 
 	/** return the base-frequency array of this genome */
