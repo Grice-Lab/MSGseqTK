@@ -72,8 +72,8 @@ saidx_t RFMIndex::count(const DNAseq& pattern) const {
 	if(!pattern.allBase())
 		return 0;
 
-    saidx_t start = 1; /* 1-based start */
-    saidx_t end = length() - 1; /* 1-based end */
+    saidx_t start = 0; /* 1-based start */
+    saidx_t end = length() - 2; /* 0-based end */
 	/* search pattern left-to-right, as bwt is the reverse FM-index */
     for(DNAseq::const_reverse_iterator b = pattern.rbegin(); b != pattern.rend() && start <= end; ++b) {
     	start = LF(*b, start - 1); /* LF Mapping */
@@ -85,8 +85,10 @@ saidx_t RFMIndex::count(const DNAseq& pattern) const {
 RFMIndex& RFMIndex::operator+=(const RFMIndex& other) {
 	if(bwt == other.bwt) /* prevent self addition */
 		return *this;
-	if(!isInitiated())
-		return *this = other;
+	if(!isInitiated()) {
+		*this = other; /* shallow copy the object */
+		return *this;
+	}
 
 	/* build interleaving bitvector between *this and other */
 	const saidx_t N1 = length();
@@ -100,11 +102,16 @@ RFMIndex& RFMIndex::operator+=(const RFMIndex& other) {
 
 	/* build RA and interleaving bitvector */
 	BitString B(N);
-	B.setBit(1);
-
+	saidx_t RA = other.LF(0, 0);
+	B.setBit(RA + 1);
+	cerr << "i: 0 RA: " << RA << endl;
 	for(saidx_t i = 0, j = 0; (j = LF(i) - 1) != 0; i = j) {
-		saidx_t val = other.LF(bwt->access(i), val) - 1;
-		B.setBit(j + 1 + val);
+		sauchar_t b = bwt->access(i);
+		RA = other.LF(b, RA) - 1;
+		if(RA < 0)
+			RA = 0;
+		cerr << "i: " << i << " b: " << (int) b << " j: " << j << " RA: " << RA << endl;
+		B.setBit(j + 1 + RA);
 		i = j;
 	}
 

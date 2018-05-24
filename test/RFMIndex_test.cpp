@@ -59,4 +59,29 @@ int main() {
 	cout << "found " << count << " of " << pat << " in " << (seq1 + seq2) << endl;
 	if(count != count1 + count2)
 		return 1;
+
+	DNAseq seq3("CTAGCATTGAC");
+	cout << "seq3:" << endl << seq3 << endl;
+	RFMIndex rfm3(seq3);
+	if(rfm3.getSeq() != seq3)
+		return 1;
+
+	saidx_t count3 = rfm3.count(pat);
+	cout << "found " << count3 << " of " << pat << " in seq3 " << seq3 << endl;
+	if(count3 != 1)
+		return 1;
+
+	seq.push_back(0);
+	seq += seq3;
+	cerr << "seq:" << endl << seq << endl;
+	rfm += rfm3;
+	cout << "rfm.length(): " << rfm.length() << endl;
+	cout << "rfm.getBWT():" << endl << rfm.getBWT() << endl;
+	cout << "rfm.getSeq():" << endl << rfm.getSeq() << endl;
+	if(rfm.getSeq() != seq)
+		return 1;
+	count = rfm.count(pat);
+	cout << "found " << count << " of " << pat << " in " << seq << endl;
+	if(count != count1 + count2 + count3)
+		return 1;
 }

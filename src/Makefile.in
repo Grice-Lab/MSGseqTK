@@ -90,7 +90,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-bin_PROGRAMS = msgseqclean$(EXEEXT)
+bin_PROGRAMS = msgseqclean$(EXEEXT) msgseqclean-build$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -132,6 +132,12 @@ am__v_lt_1 =
 msgseqclean_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(msgseqclean_CXXFLAGS) \
 	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+am_msgseqclean_build_OBJECTS = msgseqclean-build.$(OBJEXT) \
+	MSGseqCleanEnv.$(OBJEXT)
+msgseqclean_build_OBJECTS = $(am_msgseqclean_build_OBJECTS)
+msgseqclean_build_DEPENDENCIES = libMSGseqClean.a util/libEGUtil.a \
+	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+	libcds/src/libcds.la $(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -166,8 +172,10 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(libMSGseqClean_a_SOURCES) $(msgseqclean_SOURCES)
-DIST_SOURCES = $(libMSGseqClean_a_SOURCES) $(msgseqclean_SOURCES)
+SOURCES = $(libMSGseqClean_a_SOURCES) $(msgseqclean_SOURCES) \
+	$(msgseqclean_build_SOURCES)
+DIST_SOURCES = $(libMSGseqClean_a_SOURCES) $(msgseqclean_SOURCES) \
+	$(msgseqclean_build_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -373,13 +381,17 @@ AM_CFLAGS = -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
--I$(top_srcdir)/src/libcds/include
+-I$(top_srcdir)/src/libcds/include \
+$(BOOST_CPPFLAGS) \
+$(OPENMP_CFLAGS)
 
 AM_CXXFLAGS = -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
--I$(top_srcdir)/src/libcds/include
+-I$(top_srcdir)/src/libcds/include \
+$(BOOST_CPPFLAGS) \
+$(OPENMP_CFLAGS)
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS)
 AM_LDFLAGS = $(BOOST_LDFLAGS)
@@ -400,6 +412,14 @@ msgseqclean_LDADD = \
 libMSGseqClean.a \
 util/libEGUtil.a \
 math/libEGMath.a \
+libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+libcds/src/libcds.la \
+$(BOOST_IOSTREAMS_LIB)
+
+msgseqclean_build_SOURCES = msgseqclean-build.cpp MSGseqCleanEnv.cpp
+msgseqclean_build_LDADD = \
+libMSGseqClean.a \
+util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libcds/src/libcds.la \
 $(BOOST_IOSTREAMS_LIB)
@@ -499,6 +519,10 @@ msgseqclean$(EXEEXT): $(msgseqclean_OBJECTS) $(msgseqclean_DEPENDENCIES) $(EXTRA
 	@rm -f msgseqclean$(EXEEXT)
 	$(AM_V_CXXLD)$(msgseqclean_LINK) $(msgseqclean_OBJECTS) $(msgseqclean_LDADD) $(LIBS)
 
+msgseqclean-build$(EXEEXT): $(msgseqclean_build_OBJECTS) $(msgseqclean_build_DEPENDENCIES) $(EXTRA_msgseqclean_build_DEPENDENCIES) 
+	@rm -f msgseqclean-build$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(msgseqclean_build_OBJECTS) $(msgseqclean_build_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -507,10 +531,12 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DNAalphabet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DNAseq.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MSGseqCleanEnv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MetaGenome.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PrimarySeq.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RFMIndex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SeqIO.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqclean-build.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqclean-msgseqclean.Po@am__quote@
 
 .cpp.o:
