@@ -102,18 +102,21 @@ RFMIndex& RFMIndex::operator+=(const RFMIndex& other) {
 
 	/* build RA and interleaving bitvector */
 	BitString B(N);
-	saidx_t RA = other.LF(0, 0);
-	B.setBit(RA + 1);
-	cerr << "i: 0 RA: " << RA << endl;
-	for(saidx_t i = 0, j = 0; (j = LF(i) - 1) != 0; i = j) {
+	saidx_t i, j;
+	saidx_t RA = 0;
+	saidx_t shift = 1;
+	B.setBit(shift + RA);
+	for(i = 0, j = LF(i) - 1; j != 0; i = j, j = LF(i) - 1) {
 		sauchar_t b = bwt->access(i);
 		RA = other.LF(b, RA) - 1;
-		if(RA < 0)
-			RA = 0;
 		cerr << "i: " << i << " b: " << (int) b << " j: " << j << " RA: " << RA << endl;
-		B.setBit(j + 1 + RA);
-		i = j;
+		B.setBit(j + shift + RA);
 	}
+
+	cerr << "B:";
+	for(saidx_t i = 0; i < N; ++i)
+		cerr << " " << B.getBit(i);
+	cerr << endl;
 
 	/* build merbed BWT */
 	sauchar_t* bwtNew = new sauchar_t[N];
