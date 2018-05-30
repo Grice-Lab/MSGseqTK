@@ -130,7 +130,7 @@ private:
 
 public:
 	static const saidx_t MAX_LENGTH = std::numeric_limits<saidx_t>::max();
-	static const char TERMINAL_SYMBOL = '$'; /* traditional terminal symbol of BWT */
+	static const char TERMINAL_SYMBOL = '$'; /* terminal symbol of BWT */
 };
 
 inline RFMIndex operator+(const RFMIndex& lhs, const RFMIndex& rhs) {

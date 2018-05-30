@@ -11,6 +11,7 @@
 
 using std::cout;
 using std::endl;
+using EGriceLab::MSGseqClean::DNAalphabet;
 using EGriceLab::MSGseqClean::DNAseq;
 using EGriceLab::MSGseqClean::RFMIndex;
 
@@ -73,7 +74,11 @@ int main() {
 
 	seq.push_back(0);
 	seq += seq3;
-	cerr << "seq:" << endl << seq << endl;
+	cout << "seq:" << endl << seq << endl;
+	RFMIndex rfmMerged = RFMIndex(seq);
+	cout << "rfmMerged.getBWT():" << endl << rfmMerged.getBWT() << endl;
+	cout << "rfmMerged.getSeq():" << endl << rfmMerged.getSeq() << endl;
+
 	rfm += rfm3;
 	cout << "rfm.length(): " << rfm.length() << endl;
 	cout << "rfm.getBWT():" << endl << rfm.getBWT() << endl;

@@ -42,7 +42,7 @@ void RFMIndex::buildCounts(const DNAseq& seq) {
 #pragma omp parallel for
 	for(DNAseq::const_iterator b = seq.begin(); b != seq.end(); ++b)
 		C[*b]++;
-	C['\0']++; // count null terminator
+	C[0]++; // always terminated with null
 	/* construct cumulative counts (total counts smaller than this character) */
     saidx_t prev = C[0];
     saidx_t tmp;
@@ -72,8 +72,8 @@ saidx_t RFMIndex::count(const DNAseq& pattern) const {
 	if(!pattern.allBase())
 		return 0;
 
-    saidx_t start = 0; /* 1-based start */
-    saidx_t end = length() - 2; /* 0-based end */
+    saidx_t start = 1;
+    saidx_t end = length() - 2;
 	/* search pattern left-to-right, as bwt is the reverse FM-index */
     for(DNAseq::const_reverse_iterator b = pattern.rbegin(); b != pattern.rend() && start <= end; ++b) {
     	start = LF(*b, start - 1); /* LF Mapping */
@@ -97,32 +97,33 @@ RFMIndex& RFMIndex::operator+=(const RFMIndex& other) {
 
 	/* build merged C[] */
 	saidx_t CMerged[UINT8_MAX + 1] = { 0 };
-	for(uint8_t i = 0; i < UINT8_MAX; ++i)
+	for(saidx_t i = 0; i <= DNAalphabet::SIZE; ++i)
 		CMerged[i] = C[i] + other.C[i];
 
 	/* build RA and interleaving bitvector */
 	BitString B(N);
-	saidx_t i, j;
-	saidx_t RA = 0;
-	saidx_t shift = 1;
-	B.setBit(shift + RA);
-	for(i = 0, j = LF(i) - 1; j != 0; i = j, j = LF(i) - 1) {
-		sauchar_t b = bwt->access(i);
-		RA = other.LF(b, RA) - 1;
-		cerr << "i: " << i << " b: " << (int) b << " j: " << j << " RA: " << RA << endl;
-		B.setBit(j + shift + RA);
+	saidx_t i = 0;
+	sauchar_t b = 0; /* F(0) must be null */
+	saidx_t RA = 1; /* number of suffix on other that smaller than this */
+	do {
+		RA = b != 0 ? other.LF(b, RA - 1): 1;
+		B.setBit(i + RA);
+		/* LF mapping */
+		b = bwt->access(i);
+		cerr << "i: " << i << " c: " << DNAalphabet::decode(b) << " RA: " << RA << endl;
+		i = LF(i) - 1;
+		cerr << "B:";
+		for(saidx_t i = 0; i < N; ++i)
+			cerr << " " << B.getBit(i);
+		cerr << endl;
 	}
-
-	cerr << "B:";
-	for(saidx_t i = 0; i < N; ++i)
-		cerr << " " << B.getBit(i);
-	cerr << endl;
+	while(i != 0);
 
 	/* build merbed BWT */
 	sauchar_t* bwtNew = new sauchar_t[N];
-	for(saidx_t i = 0, j = 0, k = 0; k < N; ++k) {
-		bwtNew[k] = B.getBit(k) /* use this or other */ ? bwt->access(i++) : other.bwt->access(j++);
-	}
+	for(saidx_t i = 0, j = 0, k = 0; k < N; ++k)
+		bwtNew[k] = B.getBit(k) ? bwt->access(i++) : other.bwt->access(j++);
+
     BWTRRR_ptr bwtMerged = std::make_shared<BWTRRR>(reinterpret_cast<uint*> (bwtNew), N, sizeof(sauchar_t) * 8,
     		new BitSequenceBuilderRRR(RRR_SAMPLE_RATE), /* smart ptr */
 			new MapperNone() /* smart ptr */,
@@ -150,8 +151,12 @@ DNAseq RFMIndex::getSeq() const {
 	/* get Seq by LF-mapping transverse */
 	DNAseq seq;
 	seq.reserve(length() - 1);
-	for(saidx_t i = 0; seq.length() < length() - 1; i = LF(i) - 1)
-		seq.push_back(bwt->access(i));
+	for(saidx_t i = 0; seq.length() < length() - 1;) {
+		sauchar_t b = bwt->access(i);
+		seq.push_back(b);
+		cout << "i: " << i << " c: " << DNAalphabet::decode(b) << endl;
+		i = LF(i) - 1;
+	}
 	std::reverse(seq.begin(), seq.end());
 	return seq;
 }
