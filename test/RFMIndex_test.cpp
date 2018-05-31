@@ -61,7 +61,7 @@ int main() {
 	if(count != count1 + count2)
 		return 1;
 
-	DNAseq seq3("CTAGCATTGAC");
+	DNAseq seq3("CTAGCATGGAC");
 	cout << "seq3:" << endl << seq3 << endl;
 	RFMIndex rfm3(seq3);
 	if(rfm3.getSeq() != seq3)
@@ -74,19 +74,38 @@ int main() {
 
 	seq.push_back(0);
 	seq += seq3;
-	cout << "seq:" << endl << seq << endl;
-	RFMIndex rfmMerged = RFMIndex(seq);
-	cout << "rfmMerged.getBWT():" << endl << rfmMerged.getBWT() << endl;
-	cout << "rfmMerged.getSeq():" << endl << rfmMerged.getSeq() << endl;
-
 	rfm += rfm3;
 	cout << "rfm.length(): " << rfm.length() << endl;
 	cout << "rfm.getBWT():" << endl << rfm.getBWT() << endl;
 	cout << "rfm.getSeq():" << endl << rfm.getSeq() << endl;
 	if(rfm.getSeq() != seq)
 		return 1;
+
 	count = rfm.count(pat);
 	cout << "found " << count << " of " << pat << " in " << seq << endl;
 	if(count != count1 + count2 + count3)
+		return 1;
+
+	DNAseq seq4("CTAGCATTGAC");
+	cout << "seq4:" << endl << seq4 << endl;
+	RFMIndex rfm4(seq4);
+	if(rfm4.getSeq() != seq4)
+		return 1;
+	cout << "rfm4.getBWT():" << endl << rfm4.getBWT() << endl;
+
+	saidx_t count4 = rfm4.count(pat);
+	cout << "found " << count4 << " of " << pat << " in seq4 " << seq4 << endl;
+	if(count4 != 1)
+		return 1;
+
+	seq.push_back(0);
+	seq += seq4;
+	rfm += rfm4;
+	cout << "rfm.length(): " << rfm.length() << endl;
+	cout << "rfm.getBWT():" << endl << rfm.getBWT() << endl;
+
+	count = rfm.count(pat);
+	cout << "found " << count << " of " << pat << " in " << seq << endl;
+	if(count != count1 + count2 + count3 + count4)
 		return 1;
 }

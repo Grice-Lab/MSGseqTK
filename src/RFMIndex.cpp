@@ -72,12 +72,18 @@ saidx_t RFMIndex::count(const DNAseq& pattern) const {
 	if(!pattern.allBase())
 		return 0;
 
-    saidx_t start = 1;
-    saidx_t end = length() - 2;
+    saidx_t start = 0;
+    saidx_t end = length() - 1;
 	/* search pattern left-to-right, as bwt is the reverse FM-index */
     for(DNAseq::const_reverse_iterator b = pattern.rbegin(); b != pattern.rend() && start <= end; ++b) {
-    	start = LF(*b, start - 1); /* LF Mapping */
-    	end = LF(*b, end) - 1; /* LF Mapping */
+    	if(start == 0) {
+    		start = C[*b];
+    		end = C[*b + 1] - 1;
+    	}
+    	else {
+    		start = LF(*b, start - 1); /* LF Mapping */
+    		end = LF(*b, end) - 1; /* LF Mapping */
+    	}
     }
     return start <= end ? end - start + 1 : 0;
 }
@@ -105,17 +111,20 @@ RFMIndex& RFMIndex::operator+=(const RFMIndex& other) {
 	saidx_t i = 0;
 	sauchar_t b = 0; /* F(0) must be null */
 	saidx_t RA = 1; /* number of suffix on other that smaller than this */
+	saidx_t shift = 0;
+
 	do {
 		RA = b != 0 ? other.LF(b, RA - 1): 1;
 		B.setBit(i + RA);
 		/* LF mapping */
 		b = bwt->access(i);
 		cerr << "i: " << i << " c: " << DNAalphabet::decode(b) << " RA: " << RA << endl;
+//		i = b != 0 ? LF(i) - 1 : shift++;
 		i = LF(i) - 1;
-		cerr << "B:";
-		for(saidx_t i = 0; i < N; ++i)
-			cerr << " " << B.getBit(i);
-		cerr << endl;
+//		cerr << "B:";
+//		for(saidx_t i = 0; i < N; ++i)
+//			cerr << " " << B.getBit(i);
+//		cerr << endl;
 	}
 	while(i != 0);
 
@@ -151,11 +160,10 @@ DNAseq RFMIndex::getSeq() const {
 	/* get Seq by LF-mapping transverse */
 	DNAseq seq;
 	seq.reserve(length() - 1);
-	for(saidx_t i = 0; seq.length() < length() - 1;) {
+	for(saidx_t i = 0, shift = 0; seq.length() < length() - 1;) {
 		sauchar_t b = bwt->access(i);
 		seq.push_back(b);
-		cout << "i: " << i << " c: " << DNAalphabet::decode(b) << endl;
-		i = LF(i) - 1;
+		i = b != 0 ? LF(i) - 1 : ++shift;
 	}
 	std::reverse(seq.begin(), seq.end());
 	return seq;
