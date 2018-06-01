@@ -148,6 +148,8 @@ int main() {
 	cout << "rfm.getBWT():" << endl << rfm.getBWT() << endl;
 	cout << "rfm.getSeq():" << endl << rfm.getSeq() << endl;
 	saidx_t count = rfm.count(pat);
+	if(rfm.getSeq() != seqM)
+		return 1;
 	cout << "found " << count << " of " << pat << " in " << seqM << endl;
 	if(count != count1 + count2)
 		return 1;

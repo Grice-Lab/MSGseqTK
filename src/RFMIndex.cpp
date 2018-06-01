@@ -102,16 +102,16 @@ RFMIndex& RFMIndex::operator+=(const RFMIndex& other) {
 
 	/* build RA and interleaving bitvector */
 	BitString B(N);
-	for(saidx_t i = 0, j = 0, shift = 0, RA = 0; j < N1; ++j) {
-		B.setBit(i + RA + 1);
+	for(saidx_t i = 0, j = 0, shift = 0, RA = other.C[0 + 1]; j < N1; ++j) {
+		B.setBit(i + RA);
 		/* LF mapping */
 		sauchar_t b = bwt->access(i);
 		if(b == 0) {
-			RA = 0;
+			RA = other.C[0 + 1];
 			i = ++shift;
 		}
 		else {
-			RA = other.LF(b, RA) - 1;
+			RA = other.LF(b, RA - 1);
 			i = LF(i) - 1;
 		}
 //		cerr << "i: " << i << " c: " << DNAalphabet::decode(b) << " RA: " << RA << endl;
