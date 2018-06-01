@@ -5,9 +5,8 @@
  *      Author: zhengqi
  */
 
-#include "../src/RFMIndex.h"
-
 #include <iostream>
+#include "RFMIndex.h"
 
 using std::cout;
 using std::endl;
@@ -17,95 +16,82 @@ using EGriceLab::MSGseqClean::RFMIndex;
 
 int main() {
 	cerr << "Max_length: " << RFMIndex::MAX_LENGTH << endl;
-	DNAseq seq1("CTAGCATAGAC");
-	cout << "seq1:" << endl << seq1 << endl;
-
-	RFMIndex rfm1(seq1);
-	cout << "rfm1.length(): " << rfm1.length() << endl;
-	cout << "rfm1.getBWT():" << endl << rfm1.getBWT() << endl;
-	cout << "rfm1.getSeq():" << endl << rfm1.getSeq() << endl;
-	if(rfm1.getSeq() != seq1)
-		return 1;
-
+	DNAseq seq;
+	RFMIndex rfm;
+	saidx_t count = 0;
 	DNAseq pat("CTAG");
-	saidx_t count1 = rfm1.count(pat);
-	cout << "found " << count1 << " of " << pat << " in seq1 " << seq1 << endl;
-	if(count1 != 1)
-		return 1;
 
-	DNAseq seq2("CTAGCATCGAC");
-	cout << "seq2:" << endl << seq2 << endl;
-	RFMIndex rfm2(seq2);
-	cout << "rfm2.length(): " << rfm2.length() << endl;
-	cout << "rfm2.getBWT():" << endl << rfm2.getBWT() << endl;
-	cout << "rfm2.getSeq():" << endl << rfm2.getSeq() << endl;
-	if(rfm2.getSeq() != seq2)
-		return 1;
-
-	saidx_t count2 = rfm2.count(pat);
-	cout << "found " << count2 << " of " << pat << " in seq2 " << seq2 << endl;
-	if(count2 != 1)
-		return 1;
-
-	RFMIndex rfm = rfm1 + rfm2;
+	DNAseq seq1("CTAGCATTGAC");
+	cout << "seq1:" << endl << seq1 << endl;
+	seq += seq1;
+	rfm += RFMIndex(seq1);
 	cout << "rfm.length(): " << rfm.length() << endl;
 	cout << "rfm.getBWT():" << endl << rfm.getBWT() << endl;
 	cout << "rfm.getSeq():" << endl << rfm.getSeq() << endl;
-	DNAseq seq = seq1;
-	seq.push_back(0);
-	seq += seq2;
 	if(rfm.getSeq() != seq)
 		return 1;
-	saidx_t count = rfm.count(pat);
-	cout << "found " << count << " of " << pat << " in " << (seq1 + seq2) << endl;
-	if(count != count1 + count2)
+	count = rfm.count(pat);
+	cout << "found " << count << " of " << pat << " in " << seq << endl;
+	if(count != 1)
+		return 1;
+
+	DNAseq seq2("CTAGCATAGAC");
+	cout << "seq2:" << endl << seq2 << endl;
+	seq.push_back(0);
+	seq += seq2;
+	rfm += RFMIndex(seq2);
+	cout << "rfm.length(): " << rfm.length() << endl;
+	cout << "rfm.getBWT():" << endl << rfm.getBWT() << endl;
+	cout << "rfm.getSeq():" << endl << rfm.getSeq() << endl;
+	if(rfm.getSeq() != seq)
+		return 1;
+	count = rfm.count(pat);
+	cout << "found " << count << " of " << pat << " in " << seq << endl;
+	if(count != 2)
 		return 1;
 
 	DNAseq seq3("CTAGCATGGAC");
 	cout << "seq3:" << endl << seq3 << endl;
-	RFMIndex rfm3(seq3);
-	if(rfm3.getSeq() != seq3)
-		return 1;
-
-	saidx_t count3 = rfm3.count(pat);
-	cout << "found " << count3 << " of " << pat << " in seq3 " << seq3 << endl;
-	if(count3 != 1)
-		return 1;
-
 	seq.push_back(0);
 	seq += seq3;
-	rfm += rfm3;
+	rfm += RFMIndex(seq3);
 	cout << "rfm.length(): " << rfm.length() << endl;
 	cout << "rfm.getBWT():" << endl << rfm.getBWT() << endl;
 	cout << "rfm.getSeq():" << endl << rfm.getSeq() << endl;
 	if(rfm.getSeq() != seq)
 		return 1;
-
 	count = rfm.count(pat);
 	cout << "found " << count << " of " << pat << " in " << seq << endl;
-	if(count != count1 + count2 + count3)
+	if(count != 3)
 		return 1;
 
-	DNAseq seq4("CTAGCATTGAC");
+	DNAseq seq4("CTAGCATCGAC");
 	cout << "seq4:" << endl << seq4 << endl;
-	RFMIndex rfm4(seq4);
-	if(rfm4.getSeq() != seq4)
-		return 1;
-	cout << "rfm4.getBWT():" << endl << rfm4.getBWT() << endl;
-
-	saidx_t count4 = rfm4.count(pat);
-	cout << "found " << count4 << " of " << pat << " in seq4 " << seq4 << endl;
-	if(count4 != 1)
-		return 1;
-
 	seq.push_back(0);
 	seq += seq4;
-	rfm += rfm4;
+	rfm += RFMIndex(seq4);
 	cout << "rfm.length(): " << rfm.length() << endl;
 	cout << "rfm.getBWT():" << endl << rfm.getBWT() << endl;
-
+	cout << "rfm.getSeq():" << endl << rfm.getSeq() << endl;
+	if(rfm.getSeq() != seq)
+		return 1;
 	count = rfm.count(pat);
 	cout << "found " << count << " of " << pat << " in " << seq << endl;
-	if(count != count1 + count2 + count3 + count4)
+	if(count != 4)
+		return 1;
+
+	DNAseq seq5("CTAGCATCTAG");
+	cout << "seq5:" << endl << seq5 << endl;
+	seq.push_back(0);
+	seq += seq5;
+	rfm += RFMIndex(seq5);
+	cout << "rfm.length(): " << rfm.length() << endl;
+	cout << "rfm.getBWT():" << endl << rfm.getBWT() << endl;
+	cout << "rfm.getSeq():" << endl << rfm.getSeq() << endl;
+	if(rfm.getSeq() != seq)
+		return 1;
+	count = rfm.count(pat);
+	cout << "found " << count << " of " << pat << " in " << seq << endl;
+	if(count != 6)
 		return 1;
 }

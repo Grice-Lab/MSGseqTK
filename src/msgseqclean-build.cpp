@@ -9,6 +9,7 @@
 #include <string>
 #include <cstdlib>
 #include <algorithm>
+#include <cassert>
 #include <boost/algorithm/string.hpp> /* for boost string algorithms */
 #include <boost/iostreams/filtering_stream.hpp> /* basic boost streams */
 #include <boost/iostreams/device/file.hpp> /* file sink and source */
@@ -54,9 +55,6 @@ void printUsage(const string& progName) {
 		 << "SEQ-FILE  FILE                   : genome sequence file with one file per-genome in FASTA format" << ZLIB_SUPPORT << endl
 		 << "Options:    -n  STR              : database name (prefix)" << endl
 		 << "            -l  FILE             : tab-delimited list with 1st field sample-names and 2nd field sequence filenames" << endl
-#ifdef _OPENMP
-		 << "            -p|--process INT     : number of threads/CPUs for parallel processing" << endl
-#endif
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
 		 << "            -h|--help            : print this message and exit" << endl;
@@ -103,13 +101,6 @@ int main(int argc, char* argv[]) {
 	if(cmdOpts.hasOpt("-l"))
 		listFn = cmdOpts.getOpt("-l");
 
-#ifdef _OPENMP
-	if(cmdOpts.hasOpt("-p"))
-		nThreads = ::atoi(cmdOpts.getOptStr("-p"));
-	if(cmdOpts.hasOpt("--process"))
-		nThreads = ::atoi(cmdOpts.getOptStr("--process"));
-#endif
-
 	if(cmdOpts.hasOpt("-v"))
 		INCREASE_LEVEL(cmdOpts.getOpt("-v").length());
 
@@ -118,14 +109,6 @@ int main(int argc, char* argv[]) {
 		cerr << "-n must be specified" << endl;
 		return EXIT_FAILURE;
 	}
-
-#ifdef _OPENMP
-	if(!(nThreads > 0)) {
-		cerr << "-p|--process must be positive" << endl;
-		return EXIT_FAILURE;
-	}
-	omp_set_num_threads(nThreads);
-#endif
 
 	/* open inputs */
 	if(!listFn.empty()) {
@@ -217,8 +200,10 @@ int main(int argc, char* argv[]) {
 
 		/* incremental update */
 		mtg.addGenome(genomeName, genomeSeq);
+		infoLog << "Merging into database ... ";
 		rfm += RFMIndex(genomeSeq);
-		infoLog << "Overal MetaGenome size: " << mtg.getSize() << endl;
+		assert(mtg.getSize() + mtg.numGenomes() == rfm.length());
+		infoLog << " done. # of MetaGenome: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
 	}
 
 	infoLog << "Saving database files ..." << endl;

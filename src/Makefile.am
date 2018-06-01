@@ -16,8 +16,8 @@ AM_CXXFLAGS = -I$(top_srcdir)/src \
 $(BOOST_CPPFLAGS) \
 $(OPENMP_CFLAGS)
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS)
-AM_LDFLAGS = $(BOOST_LDFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENMP_CXXFLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS) $(OPENMP_CXXFLAGS)
 
 # Build convenient non-install libraries
 noinst_LIBRARIES = libMSGseqClean.a
@@ -36,7 +36,6 @@ msgseqclean \
 msgseqclean-build
 
 msgseqclean_SOURCES = msgseqclean.cpp
-msgseqclean_CXXFLAGS = $(OPENMP_CXXFLAGS)
 msgseqclean_LDADD = \
 libMSGseqClean.a \
 util/libEGUtil.a \

@@ -5,13 +5,8 @@
  *      Author: zhengqi
  */
 
-
 #include <algorithm>
 #include <cstddef>
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
 #include "RFMIndex.h"
 #include "BitSequenceBuilder.h"
 #include "BitSequenceBuilderRRR.h"
@@ -39,8 +34,7 @@ RFMIndex& RFMIndex::build(const DNAseq& seq) {
 }
 
 void RFMIndex::buildCounts(const DNAseq& seq) {
-#pragma omp parallel for
-	for(DNAseq::const_iterator b = seq.begin(); b != seq.end(); ++b)
+	for(DNAseq::const_iterator b = seq.begin(); b < seq.end(); ++b)
 		C[*b]++;
 	C[0]++; // always terminated with null
 	/* construct cumulative counts (total counts smaller than this character) */
@@ -108,25 +102,20 @@ RFMIndex& RFMIndex::operator+=(const RFMIndex& other) {
 
 	/* build RA and interleaving bitvector */
 	BitString B(N);
-	saidx_t i = 0;
-	sauchar_t b = 0; /* F(0) must be null */
-	saidx_t RA = 1; /* number of suffix on other that smaller than this */
-	saidx_t shift = 0;
-
-	do {
-		RA = b != 0 ? other.LF(b, RA - 1): 1;
+	for(saidx_t i = 0, j = 0, shift = 0, RA = 1; j < N1; ++j) {
 		B.setBit(i + RA);
 		/* LF mapping */
-		b = bwt->access(i);
-		cerr << "i: " << i << " c: " << DNAalphabet::decode(b) << " RA: " << RA << endl;
-//		i = b != 0 ? LF(i) - 1 : shift++;
-		i = LF(i) - 1;
-//		cerr << "B:";
-//		for(saidx_t i = 0; i < N; ++i)
-//			cerr << " " << B.getBit(i);
-//		cerr << endl;
+		sauchar_t b = bwt->access(i);
+		if(b == 0) {
+			RA = 1;
+			i = ++shift;
+		}
+		else {
+			RA = other.LF(b, RA - 1);
+			i = LF(i) - 1;
+		}
+//		cerr << "i: " << i << " c: " << DNAalphabet::decode(b) << " RA: " << RA << endl;
 	}
-	while(i != 0);
 
 	/* build merbed BWT */
 	sauchar_t* bwtNew = new sauchar_t[N];

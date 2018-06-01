@@ -97,6 +97,9 @@ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
 	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
+	$(top_srcdir)/m4/m4_ax_boost_base.m4 \
+	$(top_srcdir)/m4/m4_ax_boost_iostreams.m4 \
+	$(top_srcdir)/m4/m4_ax_check_zlib.m4 \
 	$(top_srcdir)/m4/m4_ax_cxx_compile_stdcxx.m4 \
 	$(top_srcdir)/m4/m4_ax_subdirs_configure.m4 \
 	$(top_srcdir)/configure.ac
@@ -449,7 +452,7 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
-OPENMP_CXXFLAGS = @OPENMP_CXXFLAGS@
+OPENMP_CFLAGS = @OPENMP_CFLAGS@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -526,12 +529,26 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
+AM_CFLAGS = \
+-I$(top_srcdir)/src \
+-I$(top_srcdir)/src/util \
+-I$(top_srcdir)/src/math \
+-I$(top_srcdir)/src/libdivsufsort/include \
+-I$(top_srcdir)/src/libcds/include \
+$(BOOST_CPPFLAGS) \
+$(OPENMP_CFLAGS)
+
 AM_CXXFLAGS = \
 -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/math \
--I$(top_srcdir)/src/libdivsufsort/include
+-I$(top_srcdir)/src/libdivsufsort/include \
+-I$(top_srcdir)/src/libcds/include \
+$(BOOST_CPPFLAGS) \
+$(OPENMP_CFLAGS)
 
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENMP_CXXFLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS) $(OPENMP_CXXFLAGS)
 DNAseq_test_SOURCES = DNAseq_test.cpp
 DNAseq_test_LDADD = \
 $(top_srcdir)/src/libMSGseqClean.a

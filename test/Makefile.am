@@ -1,23 +1,25 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
+AM_CFLAGS = \
+-I$(top_srcdir)/src \
+-I$(top_srcdir)/src/util \
+-I$(top_srcdir)/src/math \
+-I$(top_srcdir)/src/libdivsufsort/include \
+-I$(top_srcdir)/src/libcds/include \
+$(BOOST_CPPFLAGS) \
+$(OPENMP_CFLAGS)
+
 AM_CXXFLAGS = \
 -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/math \
--I$(top_srcdir)/src/libdivsufsort/include
-#-I$(top_srcdir)/src/libcds/include \
-#$(BOOST_CPPFLAGS) \
-#$(OPENMP_CFLAGS)
+-I$(top_srcdir)/src/libdivsufsort/include \
+-I$(top_srcdir)/src/libcds/include \
+$(BOOST_CPPFLAGS) \
+$(OPENMP_CFLAGS)
 
-#AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENMP_CFLAGS)
-#AM_LDFLAGS = $(BOOST_LDFLAGS) $(OPENMP_CFLAGS)
-
-#$(top_srcdir)/src/libMSGseqClean_common.a
-#$(top_srcdir)/util/libEGUtil.a \
-#$(top_srcdir)/math/libEGMath.a \
-#$(top_srcdir)/src/libdivsufsort/lib/libdivsufsort.a \
-#$(top_srcdir)/src/libcds/src/libcds.la \
-#$(BOOST_IOSTREAMS_LIB)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENMP_CXXFLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS) $(OPENMP_CXXFLAGS)
 
 check_PROGRAMS = \
 DNAseq_test \
