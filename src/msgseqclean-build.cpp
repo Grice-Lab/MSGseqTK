@@ -164,23 +164,23 @@ int main(int argc, char* argv[]) {
 	RFMIndex rfm;
 
 	/* process each file */
-	for(const string& inFn : inFns) {
-		string genomeName = genomeFn2Name.at(inFn);
+	for(vector<string>::const_reverse_iterator inFn = inFns.rbegin(); inFn != inFns.rend(); ++inFn) {
+		string genomeName = genomeFn2Name.at(*inFn);
 		infoLog << "Processing genome " << genomeName << endl;
 
 		/* open genome file */
 		boost::iostreams::filtering_istream genomeIn;
 #ifdef HAVE_LIBZ
-		if(StringUtils::endsWith(inFn, GZIP_FILE_SUFFIX))
+		if(StringUtils::endsWith(*inFn, GZIP_FILE_SUFFIX))
 			genomeIn.push(boost::iostreams::gzip_decompressor());
-		else if(StringUtils::endsWith(inFn, BZIP2_FILE_SUFFIX))
+		else if(StringUtils::endsWith(*inFn, BZIP2_FILE_SUFFIX))
 			genomeIn.push(boost::iostreams::bzip2_decompressor());
 		else { }
 #endif
 
-		genomeIn.push(boost::iostreams::file_source(inFn));
+		genomeIn.push(boost::iostreams::file_source(*inFn));
 		if(genomeIn.bad()) {
-			cerr << "Unable to open genome seq file '" << inFn << "' " << ::strerror(errno) << endl;
+			cerr << "Unable to open genome seq file '" << *inFn << "' " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
 
@@ -201,7 +201,10 @@ int main(int argc, char* argv[]) {
 		/* incremental update */
 		mtg.addGenome(genomeName, genomeSeq);
 		infoLog << "Merging into database ... ";
-		rfm += RFMIndex(genomeSeq);
+		if(rfm.isInitiated())
+			rfm = RFMIndex(genomeSeq) + rfm;
+		else
+			rfm = RFMIndex(genomeSeq);
 		assert(mtg.getSize() + mtg.numGenomes() == rfm.length());
 		infoLog << " done. # of MetaGenome: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
 	}
