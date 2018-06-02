@@ -28,7 +28,7 @@ using namespace Eigen;
  * Print introduction of this program
  */
 void printIntro(void) {
-	cerr << "Build an MetaGenomics database from one or more genomic sequence files" << endl;
+	cerr << "Build a database from one or more genomic sequence files" << endl;
 }
 
 /**
