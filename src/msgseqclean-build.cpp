@@ -24,9 +24,6 @@ using namespace EGriceLab;
 using namespace EGriceLab::MSGseqClean;
 using namespace Eigen;
 
-/* default values */
-static const int DEFAULT_NUM_THREADS = 1;
-
 /**
  * Print introduction of this program
  */
