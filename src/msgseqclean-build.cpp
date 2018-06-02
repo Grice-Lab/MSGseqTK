@@ -28,9 +28,7 @@ using namespace Eigen;
  * Print introduction of this program
  */
 void printIntro(void) {
-	cerr << "MetaGenomics Shotgun Sequencing cleaning by removing host contamination reads,"
-		 << " based on Reduced-FM-index (RFM-index) powered Maximal Exact Matched Seeds (MEMS) searches"
-		 << " and Baysian inference of background/target origin using multinomial models" << endl;
+	cerr << "Build an MetaGenomics database from one or more genomic sequence files" << endl;
 }
 
 /**
