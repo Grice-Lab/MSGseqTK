@@ -44,6 +44,7 @@ istream& MetaGenome::load(istream& in) {
 	/* load chromosomes */
 	size_t NGenome = 0;
 	in.read((char *) &NGenome, sizeof(size_t));
+	genomeNames.resize(NGenome);
 	for(size_t i = 0; i < NGenome; ++i)
 		StringUtils::loadString(genomeNames[i], in);
 	/* load base counts */

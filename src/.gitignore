@@ -1,4 +1,5 @@
 ## Ignore executables
 msgseqclean
 msgseqclean-build
+msgseqclean-inspect
 *.exe

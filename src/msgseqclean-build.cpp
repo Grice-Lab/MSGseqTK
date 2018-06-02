@@ -57,7 +57,6 @@ int main(int argc, char* argv[]) {
 	ifstream listIn;
 	ofstream mtgOut, rfmOut;
 	const string fmt = "fasta";
-	int nThreads = DEFAULT_NUM_THREADS;
 
 	/* parse options */
 	CommandOptions cmdOpts(argc, argv);

@@ -90,7 +90,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-bin_PROGRAMS = msgseqclean$(EXEEXT) msgseqclean-build$(EXEEXT)
+bin_PROGRAMS = msgseqclean$(EXEEXT) msgseqclean-build$(EXEEXT) \
+	msgseqclean-inspect$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -138,6 +139,12 @@ msgseqclean_build_OBJECTS = $(am_msgseqclean_build_OBJECTS)
 msgseqclean_build_DEPENDENCIES = libMSGseqClean.a util/libEGUtil.a \
 	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	libcds/src/libcds.la $(am__DEPENDENCIES_1)
+am_msgseqclean_inspect_OBJECTS = msgseqclean-inspect.$(OBJEXT) \
+	MSGseqCleanEnv.$(OBJEXT)
+msgseqclean_inspect_OBJECTS = $(am_msgseqclean_inspect_OBJECTS)
+msgseqclean_inspect_DEPENDENCIES = libMSGseqClean.a util/libEGUtil.a \
+	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+	libcds/src/libcds.la
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -173,9 +180,9 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(libMSGseqClean_a_SOURCES) $(msgseqclean_SOURCES) \
-	$(msgseqclean_build_SOURCES)
+	$(msgseqclean_build_SOURCES) $(msgseqclean_inspect_SOURCES)
 DIST_SOURCES = $(libMSGseqClean_a_SOURCES) $(msgseqclean_SOURCES) \
-	$(msgseqclean_build_SOURCES)
+	$(msgseqclean_build_SOURCES) $(msgseqclean_inspect_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -423,6 +430,13 @@ libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libcds/src/libcds.la \
 $(BOOST_IOSTREAMS_LIB)
 
+msgseqclean_inspect_SOURCES = msgseqclean-inspect.cpp MSGseqCleanEnv.cpp
+msgseqclean_inspect_LDADD = \
+libMSGseqClean.a \
+util/libEGUtil.a \
+libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+libcds/src/libcds.la
+
 all: all-recursive
 
 .SUFFIXES:
@@ -522,6 +536,10 @@ msgseqclean-build$(EXEEXT): $(msgseqclean_build_OBJECTS) $(msgseqclean_build_DEP
 	@rm -f msgseqclean-build$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(msgseqclean_build_OBJECTS) $(msgseqclean_build_LDADD) $(LIBS)
 
+msgseqclean-inspect$(EXEEXT): $(msgseqclean_inspect_OBJECTS) $(msgseqclean_inspect_DEPENDENCIES) $(EXTRA_msgseqclean_inspect_DEPENDENCIES) 
+	@rm -f msgseqclean-inspect$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(msgseqclean_inspect_OBJECTS) $(msgseqclean_inspect_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -536,6 +554,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RFMIndex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SeqIO.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqclean-build.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqclean-inspect.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqclean.Po@am__quote@
 
 .cpp.o:

@@ -33,7 +33,8 @@ MetaGenome.cpp
 # Build the executables
 bin_PROGRAMS = \
 msgseqclean \
-msgseqclean-build
+msgseqclean-build \
+msgseqclean-inspect
 
 msgseqclean_SOURCES = msgseqclean.cpp
 msgseqclean_LDADD = \
@@ -51,3 +52,10 @@ util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libcds/src/libcds.la \
 $(BOOST_IOSTREAMS_LIB)
+
+msgseqclean_inspect_SOURCES = msgseqclean-inspect.cpp MSGseqCleanEnv.cpp
+msgseqclean_inspect_LDADD = \
+libMSGseqClean.a \
+util/libEGUtil.a \
+libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+libcds/src/libcds.la
