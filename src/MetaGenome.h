@@ -34,22 +34,10 @@ class MetaGenome {
 public:
 	/* constructors */
 	/** default constructor */
-	MetaGenome() = default;
-
-	/** construct an empty MetaGenome with a given name */
-	explicit MetaGenome(const string& name) : name(name)
-	{  }
+//	MetaGenome() = default;
 
 	uint64_t getSize() const {
 		return size;
-	}
-
-	const string& getName() const {
-		return name;
-	}
-
-	void setName(const string& name) {
-		this->name = name;
 	}
 
 	const Vector4l& getBaseCount() const {
@@ -96,10 +84,9 @@ public:
 
 	/* member fields */
 private:
-	string name; /* MetaGenome name */
 	uint64_t size = 0;
 	vector<string> genomeNames; /* individual genome names */
-	Vector4l baseCount;
+	Vector4l baseCount = Vector4l::Zero();
 };
 
 } /* namespace MSGseqClean */

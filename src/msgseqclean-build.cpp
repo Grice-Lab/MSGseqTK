@@ -53,8 +53,8 @@ void printUsage(const string& progName) {
 
 	cerr << "Usage:    " << progName << "  <SEQ-FILE1> [SEQ-FILE2 SEQ-FILE3 ...] <-n DBNAME> [options]" << endl
 		 << "SEQ-FILE  FILE                   : genome sequence file with one file per-genome in FASTA format" << ZLIB_SUPPORT << endl
-		 << "Options:    -n  STR              : database name (prefix)" << endl
-		 << "            -l  FILE             : tab-delimited list with 1st field sample-names and 2nd field sequence filenames" << endl
+		 << "Options:    -n  STR              : database name" << endl
+		 << "            -l  FILE             : tab-delimited list with 1st field sample-names and 2nd field genome filenames/paths" << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
 		 << "            -h|--help            : print this message and exit" << endl;
@@ -160,31 +160,32 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	MetaGenome mtg(dbName);
+	MetaGenome mtg;
 	RFMIndex rfm;
 
 	/* process each file */
-	for(vector<string>::const_reverse_iterator inFn = inFns.rbegin(); inFn != inFns.rend(); ++inFn) {
-		string genomeName = genomeFn2Name.at(*inFn);
-		infoLog << "Processing genome " << genomeName << endl;
+	for(const string& inFn : inFns) {
+		string genomeName = genomeFn2Name.at(inFn);
 
 		/* open genome file */
 		boost::iostreams::filtering_istream genomeIn;
 #ifdef HAVE_LIBZ
-		if(StringUtils::endsWith(*inFn, GZIP_FILE_SUFFIX))
+		if(StringUtils::endsWith(inFn, GZIP_FILE_SUFFIX))
 			genomeIn.push(boost::iostreams::gzip_decompressor());
-		else if(StringUtils::endsWith(*inFn, BZIP2_FILE_SUFFIX))
+		else if(StringUtils::endsWith(inFn, BZIP2_FILE_SUFFIX))
 			genomeIn.push(boost::iostreams::bzip2_decompressor());
 		else { }
 #endif
 
-		genomeIn.push(boost::iostreams::file_source(*inFn));
+		genomeIn.push(boost::iostreams::file_source(inFn));
 		if(genomeIn.bad()) {
-			cerr << "Unable to open genome seq file '" << *inFn << "' " << ::strerror(errno) << endl;
+			cerr << "Unable to open genome seq file '" << inFn << "' " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
 
 		/* read in genome sequence, concatenated with Ns */
+		infoLog << "Reading genome '" << genomeName << "'" << endl;
+
 		DNAseq genomeSeq;
 		SeqIO seqI(&genomeIn, fmt);
 		while(seqI.hasNext()) {
@@ -201,13 +202,12 @@ int main(int argc, char* argv[]) {
 		/* incremental update */
 		mtg.addGenome(genomeName, genomeSeq);
 		infoLog << "Merging into database ... ";
-		if(rfm.isInitiated())
-			rfm = RFMIndex(genomeSeq) + rfm;
-		else
-			rfm = RFMIndex(genomeSeq);
+		rfm = RFMIndex(genomeSeq) + rfm; /* always use ther fresh object as lhs */
 		assert(mtg.getSize() + mtg.numGenomes() == rfm.length());
-		infoLog << " done. # of MetaGenome: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
+		infoLog << " done. currrent size: " << mtg.getSize() << endl;
 	}
+
+	infoLog << "MetaGenomics database build. # of Genomes: " << mtg.numGenomes() << " baseCount: " << mtg.getBaseCount().transpose() << endl;
 
 	infoLog << "Saving database files ..." << endl;
 	/* write database files, all with prepend program info */

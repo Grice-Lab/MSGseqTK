@@ -6,7 +6,6 @@
  */
 
 #include "MetaGenome.h"
-
 #include "StringUtils.h"
 
 namespace EGriceLab {
@@ -25,7 +24,6 @@ MetaGenome& MetaGenome::addGenome(const string& genomeName, const DNAseq& genome
 
 ostream& MetaGenome::save(ostream& out) const {
 	/* save basic info */
-	StringUtils::saveString(name, out);
 	out.write((const char*) &size, sizeof(uint64_t));
 	/* save chromosomes */
 	size_t NGenome = genomeNames.size();
@@ -42,7 +40,6 @@ ostream& MetaGenome::save(ostream& out) const {
 
 istream& MetaGenome::load(istream& in) {
 	/* load basic info */
-	StringUtils::loadString(name, in);
 	in.read((char*) &size, sizeof(uint64_t));
 	/* load chromosomes */
 	size_t NGenome = 0;
@@ -56,7 +53,7 @@ istream& MetaGenome::load(istream& in) {
 	return in;
 }
 
-MetaGenome& MetaGenome::operator +=(const MetaGenome& other) {
+MetaGenome& MetaGenome::operator+=(const MetaGenome& other) {
 	genomeNames.insert(genomeNames.end(), other.genomeNames.begin(), other.genomeNames.end());
 	size += other.getSize();
 	baseCount += other.baseCount;

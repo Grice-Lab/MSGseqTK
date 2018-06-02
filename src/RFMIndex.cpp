@@ -83,7 +83,7 @@ saidx_t RFMIndex::count(const DNAseq& pattern) const {
 }
 
 RFMIndex& RFMIndex::operator+=(const RFMIndex& other) {
-	if(bwt == other.bwt) /* prevent self addition */
+	if(!other.isInitiated()) /* cannot merge */
 		return *this;
 	if(!isInitiated()) {
 		*this = other; /* shallow copy the object */
