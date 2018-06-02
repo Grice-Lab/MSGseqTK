@@ -24,12 +24,6 @@ using namespace EGriceLab;
 using namespace EGriceLab::MSGseqClean;
 using namespace Eigen;
 
-#include <boost/iostreams/filtering_stream.hpp> /* basic boost streams */
-#include <boost/iostreams/device/file.hpp> /* file sink and source */
-#include <boost/iostreams/filter/zlib.hpp> /* for zlib support */
-#include <boost/iostreams/filter/gzip.hpp>
-#include <boost/iostreams/filter/bzip2.hpp> /* for bzip2 support */
-
 /* default values */
 static const int DEFAULT_NUM_THREADS = 1;
 
