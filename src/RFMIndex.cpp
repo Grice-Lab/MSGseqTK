@@ -41,7 +41,7 @@ void RFMIndex::buildCounts(const DNAseq& seq) {
     saidx_t prev = C[0];
     saidx_t tmp;
     C[0] = 0;
-    for (int i = 1; i <= DNAalphabet::SIZE; ++i) {
+    for (int i = 1; i < DNAalphabet::SIZE; ++i) {
       tmp = C[i];
       C[i] = C[i-1] + prev;
       prev = tmp;
@@ -97,7 +97,7 @@ RFMIndex& RFMIndex::operator+=(const RFMIndex& other) {
 
 	/* build merged C[] */
 	saidx_t CMerged[UINT8_MAX + 1] = { 0 };
-	for(saidx_t i = 0; i <= DNAalphabet::SIZE; ++i)
+	for(saidx_t i = 0; i < DNAalphabet::SIZE; ++i)
 		CMerged[i] = C[i] + other.C[i];
 
 	/* build RA and interleaving bitvector */
