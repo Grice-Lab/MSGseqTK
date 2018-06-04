@@ -71,7 +71,7 @@ public:
 
 	/** get the length of this index */
 	saidx_t length() const {
-		return bwt->getLength();
+		return bwt != nullptr ? bwt->getLength() : 0;
 	}
 
 	/**

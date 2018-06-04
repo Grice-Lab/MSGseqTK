@@ -2,4 +2,5 @@
 msgseqclean
 msgseqclean-build
 msgseqclean-inspect
+msgseqclean-merge
 *.exe

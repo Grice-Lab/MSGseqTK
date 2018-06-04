@@ -34,7 +34,8 @@ MetaGenome.cpp
 bin_PROGRAMS = \
 msgseqclean \
 msgseqclean-build \
-msgseqclean-inspect
+msgseqclean-inspect \
+msgseqclean-merge
 
 msgseqclean_SOURCES = msgseqclean.cpp
 msgseqclean_LDADD = \
@@ -59,3 +60,11 @@ libMSGseqClean.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libcds/src/libcds.la
+
+msgseqclean_merge_SOURCES = msgseqclean-merge.cpp MSGseqCleanEnv.cpp
+msgseqclean_merge_LDADD = \
+libMSGseqClean.a \
+util/libEGUtil.a \
+libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+libcds/src/libcds.la
+

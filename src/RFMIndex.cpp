@@ -118,15 +118,15 @@ RFMIndex& RFMIndex::operator+=(const RFMIndex& other) {
 	}
 
 	/* build merbed BWT */
-	sauchar_t* bwtNew = new sauchar_t[N];
+	sauchar_t* bwtM= new sauchar_t[N];
 	for(saidx_t i = 0, j = 0, k = 0; k < N; ++k)
-		bwtNew[k] = B.getBit(k) ? bwt->access(i++) : other.bwt->access(j++);
+		bwtM[k] = B.getBit(k) ? bwt->access(i++) : other.bwt->access(j++);
 
-    BWTRRR_ptr bwtMerged = std::make_shared<BWTRRR>(reinterpret_cast<uint*> (bwtNew), N, sizeof(sauchar_t) * 8,
+    BWTRRR_ptr bwtMerged = std::make_shared<BWTRRR>(reinterpret_cast<uint*> (bwtM), N, sizeof(sauchar_t) * 8,
     		new BitSequenceBuilderRRR(RRR_SAMPLE_RATE), /* smart ptr */
 			new MapperNone() /* smart ptr */,
 			false); // do not free the bwtNew after use
-    delete[] bwtNew;
+    delete[] bwtM;
 
     /* swap data */
     std::swap(C, CMerged);

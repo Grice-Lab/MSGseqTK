@@ -192,10 +192,10 @@ int main(int argc, char* argv[]) {
 		infoLog << "Merging into database ... ";
 		rfm = RFMIndex(genomeSeq) + rfm; /* always use ther fresh object as lhs */
 		assert(mtg.getSize() + mtg.numGenomes() == rfm.length());
-		infoLog << " done. currrent size: " << mtg.getSize() << endl;
+		infoLog << " done. Currrent # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
 	}
 
-	infoLog << "MetaGenomics database build. # of Genomes: " << mtg.numGenomes() << " baseCount: " << mtg.getBaseCount().transpose() << endl;
+	infoLog << "MetaGenomics database build. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
 
 	infoLog << "Saving database files ..." << endl;
 	/* write database files, all with prepend program info */
