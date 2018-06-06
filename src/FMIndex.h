@@ -114,8 +114,13 @@ public:
 	 */
 	FMIndex& operator+=(const FMIndex& other);
 
+	/** get the encoded BWT of the original seq */
+	DNAseq getBWT() const;
+
 	/** get the BWT string of the original seq */
-	string getBWT() const;
+	string getBWTStr() const {
+		return getBWT().toString();
+	}
 
 	/** get the original seq */
 	DNAseq getSeq() const;
@@ -161,7 +166,6 @@ private:
 
 public:
 	static const saidx_t MAX_LENGTH = std::numeric_limits<saidx_t>::max();
-	static const char TERMINAL_SYMBOL = '$'; /* terminal symbol of BWT */
 };
 
 inline FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {

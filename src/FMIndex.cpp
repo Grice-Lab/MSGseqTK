@@ -53,9 +53,9 @@ void FMIndex::buildCounts(const DNAseq& seq) {
 ostream& FMIndex::save(ostream& out) const {
 	out.write((const char*) C, (UINT8_MAX + 1) * sizeof(saidx_t));
 	bool SAflag = !SAsampled.empty() && SAbit != nullptr;
-	out.write((const char*) SAflag, sizeof(bool));
+	out.write((const char*) &SAflag, sizeof(bool));
 	if(SAflag) {
-		assert(SAsampled.size() == length() / SA_SAMPLE_RATE + 1);
+		assert(SAsampled.size() == length() / SA_SAMPLE_RATE + C[0 + 1] + 1);
 		StringUtils::saveString(SAsampled, out);
 		SAbit->save(out);
 	}
@@ -68,7 +68,6 @@ istream& FMIndex::load(istream& in) {
 	bool SAflag;
 	in.read((char*) &SAflag, sizeof(bool));
 	if(SAflag) {
-		SAsampled.reserve(length() / SA_SAMPLE_RATE + 1);
 		StringUtils::loadString(SAsampled, in);
 		SAbit.reset(BitSequenceRRR::load(in));
 	}
@@ -155,14 +154,12 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
 	return *this;
 }
 
-string FMIndex::getBWT() const {
-	string bwtStr;
-	bwtStr.reserve(length());
-	for(saidx_t i = 0; i < length(); ++i) {
-		uint b = bwt->access(i);
-		bwtStr.push_back(b != '\0' ? DNAalphabet::decode(b) : TERMINAL_SYMBOL);
-	}
-	return bwtStr;
+DNAseq FMIndex::getBWT() const {
+	DNAseq bwt;
+	bwt.reserve(length());
+	for(saidx_t i = 0; i < length(); ++i)
+		bwt.push_back(this->bwt->access(i));
+	return bwt;
 }
 
 DNAseq FMIndex::getSeq() const {
