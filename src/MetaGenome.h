@@ -12,8 +12,11 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <deque>
+#include <algorithm>
 #include <eigen3/Eigen/Dense>
 #include "DNAseq.h"
+#include "Genome.h"
 
 namespace EGriceLab {
 namespace MSGseqClean {
@@ -22,9 +25,8 @@ using std::string;
 using std::istream;
 using std::ostream;
 using std::vector;
+using std::deque;
 using Eigen::Vector4d;
-
-typedef Eigen::Matrix<uint64_t, 4, 1> Vector4l;
 
 /**
  * class representing a genome basic information
@@ -35,31 +37,55 @@ public:
 	/** default constructor */
 //	MetaGenome() = default;
 
-	uint64_t getSize() const {
-		return size;
-	}
+	/** get total size of this MetaGenome */
+	uint64_t getSize() const;
 
-	const Vector4l& getBaseCount() const {
-		return baseCount;
-	}
+	/** get the aggregate base count */
+	Vector4l getBaseCount() const;
 
-	const vector<string>& getGenomeNames() const {
-		return genomeNames;
-	}
-
-	const string& genomeName(size_t i) const {
-		return genomeNames[i];
-	}
-
+	/** get total number of genomes */
 	size_t numGenomes() const {
-		return genomeNames.size();
+		return genomes.size();
 	}
 
-	MetaGenome& addGenome(const string& genomeName, const DNAseq& genomeSeq);
+	/** get all Genomes in this MetaGenome */
+	vector<Genome> getGenomes() const;
+
+	/** get all genome names */
+	vector<string> getGenomeNames() const;
+
+	/**
+	 * get the genome index at given location, or -1 if not found
+	 * @param loc  0-based location on the MetaGenome
+	 * @return  the index of the genome that covers this loc
+	 */
+	size_t getGenomeIndex(uint64_t loc) const;
+
+	/**
+	 * get the genome at given location, or throws out_of_range exception
+	 */
+	const Genome& getGenome(uint64_t loc) const {
+		return genomes.at(getGenomeIndex(loc));
+	}
+
+	/**
+	 * add a genome at the end of this MetaGenome
+	 */
+	void push_back(const Genome& genome) {
+		genomes.push_back(genome);
+	}
+
+	/**
+	 * add a genome at the beginning of this MetaGenome
+	 */
+	void push_front(const Genome& genome) {
+		genomes.push_front(genome);
+	}
 
 	/** return the base-frequency array of this genome */
 	Eigen::Vector4d getBaseFreq() const {
-		return baseCount.cast<double>() / static_cast<double> (baseCount.sum());
+		Vector4l count = getBaseCount();
+		return count.cast<double>() / static_cast<double> (count.sum());
 	}
 
 	/** save this object to binary output */
@@ -83,9 +109,7 @@ public:
 
 	/* member fields */
 private:
-	uint64_t size = 0;
-	vector<string> genomeNames; /* individual genome names */
-	Vector4l baseCount = Vector4l::Zero();
+	deque<Genome> genomes;
 };
 
 } /* namespace MSGseqClean */

@@ -12,52 +12,64 @@ namespace EGriceLab {
 namespace MSGseqClean {
 using Eigen::Map;
 
-MetaGenome& MetaGenome::addGenome(const string& genomeName, const DNAseq& genomeSeq) {
-	genomeNames.push_back(genomeName);
-	size += genomeSeq.length();
-	for(DNAseq::value_type b : genomeSeq)
-		if(DNAalphabet::isBase(b))
-			baseCount[b - DNAalphabet::A]++;
+uint64_t MetaGenome::getSize() const {
+	uint64_t size = 0;
+	for(const deque<Genome>::value_type & genome : genomes)
+		size += genome.getSize();
+	return size;
+}
 
-	return *this;
+Vector4l MetaGenome::getBaseCount() const {
+	Vector4l count = Vector4l::Zero();
+	for(const deque<Genome>::value_type& genome : genomes)
+		count += genome.getBaseCount();
+	return count;
+}
+
+vector<Genome> MetaGenome::getGenomes() const {
+	vector<Genome> genomes;
+	std::copy(this->genomes.begin(), this->genomes.end(), genomes.begin());
+	return genomes;
+}
+
+vector<string> MetaGenome::getGenomeNames() const {
+	vector<string> names;
+	for(const deque<Genome>::value_type genome : genomes)
+		names.push_back(genome.getName());
+	return names;
+}
+
+size_t MetaGenome::getGenomeIndex(uint64_t loc) const {
+	uint64_t start = 0;
+	for(deque<Genome>::const_iterator genome = genomes.begin(); genome != genomes.end(); ++genome) {
+		if(start <= loc && loc <= start + genome->getSize() + 1) /* an additional null terminal included */
+			return genome - genomes.begin();
+		start += genome->getSize() + 1;
+	}
+	return -1;
 }
 
 ostream& MetaGenome::save(ostream& out) const {
-	/* save basic info */
-	out.write((const char*) &size, sizeof(uint64_t));
-	/* save chromosomes */
-	size_t NGenome = genomeNames.size();
-	out.write((const char*) &NGenome, sizeof(size_t));
-	for(const string& chr : genomeNames)
-		StringUtils::saveString(chr, out);
-	/* save base counts */
-	uint64_t bufi[4];
-	Map<Vector4l> baseCountMap(bufi);
-	baseCountMap = baseCount; /* copy data */
-	out.write((const char*) bufi, sizeof(uint64_t) * 4);
+	size_t N = numGenomes();
+	out.write((const char*) &N, sizeof(size_t));
+	for(const deque<Genome>::value_type& genome : genomes)
+		genome.save(out);
 	return out;
 }
 
 istream& MetaGenome::load(istream& in) {
-	/* load basic info */
-	in.read((char*) &size, sizeof(uint64_t));
-	/* load chromosomes */
-	size_t NGenome = 0;
-	in.read((char *) &NGenome, sizeof(size_t));
-	genomeNames.resize(NGenome);
-	for(size_t i = 0; i < NGenome; ++i)
-		StringUtils::loadString(genomeNames[i], in);
-	/* load base counts */
-	uint64_t bufi[4];
-	in.read((char*) bufi, sizeof(uint64_t) * 4);
-	baseCount = Map<Vector4l>(bufi); /* copy data */
+	size_t N = 0;
+	in.read((char*) &N, sizeof(size_t));
+	for(size_t i = 0; i < N; ++i) {
+		Genome genome;
+		genome.load(in);
+		push_back(genome);
+	}
 	return in;
 }
 
 MetaGenome& MetaGenome::operator+=(const MetaGenome& other) {
-	genomeNames.insert(genomeNames.end(), other.genomeNames.begin(), other.genomeNames.end());
-	size += other.getSize();
-	baseCount += other.baseCount;
+	genomes.insert(genomes.end(), other.genomes.begin(), other.genomes.end());
 	return *this;
 }
 

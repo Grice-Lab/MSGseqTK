@@ -25,7 +25,8 @@ check_PROGRAMS = \
 DNAseq_test \
 PrimarySeq_test \
 SeqIO_test \
-FMIndex_test
+FMIndex_test \
+Genome_test
 
 LIBDIVSUFSORT_PKG_NAME=libdivsufsort64
 
@@ -47,8 +48,13 @@ $(top_srcdir)/src/libMSGseqClean.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 $(top_srcdir)/src/libcds/src/libcds.la
 
+Genome_test_SOURCES = Genome_test.cpp
+Genome_test_LDADD = \
+$(top_srcdir)/src/libMSGseqClean.a
+
 TESTS = \
 DNAseq_test \
 PrimarySeq_test \
 SeqIO_test \
-FMIndex_test
+FMIndex_test \
+Genome_test

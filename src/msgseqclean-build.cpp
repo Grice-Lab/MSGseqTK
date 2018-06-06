@@ -187,8 +187,8 @@ int main(int argc, char* argv[]) {
 		/* reverse genome sequence */
 		std::reverse(genomeSeq.begin(), genomeSeq.end());
 
-		/* incremental update */
-		mtg.addGenome(genomeName, genomeSeq);
+		/* incremental update backward */
+		mtg.push_front(Genome(genomeName, genomeSeq));
 		infoLog << "Merging into database ... ";
 		rfm = FMIndex(genomeSeq) + rfm; /* always use ther fresh object as lhs */
 		assert(mtg.getSize() + mtg.numGenomes() == rfm.length());
