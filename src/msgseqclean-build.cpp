@@ -149,7 +149,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	MetaGenome mtg;
-	RFMIndex rfm;
+	FMIndex rfm;
 
 	/* process each file */
 	for(const string& inFn : inFns) {
@@ -190,7 +190,7 @@ int main(int argc, char* argv[]) {
 		/* incremental update */
 		mtg.addGenome(genomeName, genomeSeq);
 		infoLog << "Merging into database ... ";
-		rfm = RFMIndex(genomeSeq) + rfm; /* always use ther fresh object as lhs */
+		rfm = FMIndex(genomeSeq) + rfm; /* always use ther fresh object as lhs */
 		assert(mtg.getSize() + mtg.numGenomes() == rfm.length());
 		infoLog << " done. Currrent # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
 	}

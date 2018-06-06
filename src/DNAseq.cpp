@@ -19,12 +19,15 @@ string DNAseq::decode() const {
 	return seq;
 }
 
-DNAseq DNAseq::revcom() const {
-	DNAseq rcSeq;
-	rcSeq.reserve(length());
-	for(DNAseq::const_reverse_iterator b = rbegin(); b != rend(); ++b)
-		rcSeq.push_back(DNAalphabet::complement(*b));
-	return rcSeq;
+DNAseq& DNAseq::reverse() {
+	std::reverse(begin(), end());
+	return *this;
+}
+
+DNAseq& DNAseq::complement() {
+	for(DNAseq::size_type i = 0; i < length(); ++i)
+		(*this)[i] = DNAalphabet::complement((*this)[i]);
+	return *this;
 }
 
 DNAseq& DNAseq::assign(const string& str) {

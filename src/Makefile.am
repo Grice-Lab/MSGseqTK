@@ -27,7 +27,9 @@ DNAalphabet.cpp \
 DNAseq.cpp \
 PrimarySeq.cpp \
 SeqIO.cpp \
-RFMIndex.cpp \
+Loc.cpp \
+FMIndex.cpp \
+Genome.cpp \
 MetaGenome.cpp
 
 # Build the executables

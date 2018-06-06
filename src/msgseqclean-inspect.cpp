@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
 
 	/* load data */
 	MetaGenome mtg;
-	RFMIndex rfm;
+	FMIndex rfm;
 
 	infoLog << "Loading MetaGenome info ..." << endl;
 	loadProgInfo(mtgIn);

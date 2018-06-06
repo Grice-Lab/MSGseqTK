@@ -73,11 +73,36 @@ public:
 	 */
 	bool allBase() const;
 
+	/** reverse this object */
+	DNAseq& reverse();
+
+	/** Get a reverse copy */
+	DNAseq reverse() const {
+		DNAseq rSeq(*this);
+		return rSeq.reverse();
+	}
+
+	/** Get a complement of this object */
+	DNAseq& complement();
+
+	/** Get a complement copy of */
+	DNAseq complement() const {
+		DNAseq cSeq(*this);
+		return cSeq.complement();
+	}
+
+	/** reverse complement this object */
+	DNAseq& revcom() {
+		return reverse().complement();
+	}
+
 	/**
 	 * Generate a reverse complement copy
-	 * return a new copy in reverse complement version
 	 */
-	DNAseq revcom() const;
+	DNAseq revcom() const {
+		DNAseq rcSeq(*this);
+		return rcSeq.revcom();
+	}
 
 	/**
 	 * Get the decoded character at given position

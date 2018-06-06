@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	MetaGenome mtg;
-	RFMIndex rfm;
+	FMIndex rfm;
 
 	/* process each database */
 	for(const string& inDB : inDBNames) {
@@ -112,7 +112,7 @@ int main(int argc, char* argv[]) {
 		/* read in genome sequence, concatenated with Ns */
 		infoLog << "Loading database '" << inDB << "'" << endl;
 		MetaGenome mtgPart;
-		RFMIndex rfmPart;
+		FMIndex rfmPart;
 		loadProgInfo(mtgIn);
 		if(!mtgIn.bad())
 			mtgPart.load(mtgIn);

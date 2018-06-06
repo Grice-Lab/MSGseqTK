@@ -19,7 +19,6 @@ namespace EGriceLab {
 namespace MSGseqClean {
 
 using std::string;
-using std::array;
 using std::istream;
 using std::ostream;
 using std::vector;

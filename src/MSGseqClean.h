@@ -10,9 +10,9 @@
 
 #include "DNAalphabet.h"
 #include "DNAseq.h"
+#include "FMIndex.h"
 #include "PrimarySeq.h"
 #include "SeqIO.h"
-#include "RFMIndex.h"
 #include "MetaGenome.h"
 #include "MSGseqCleanConst.h"
 

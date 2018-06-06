@@ -5,11 +5,12 @@
  *      Author: zhengqi
  */
 
-#ifndef SRC_RFMINDEX_H_
-#define SRC_RFMINDEX_H_
+#ifndef SRC_FMINDEX_H_
+#define SRC_FMINDEX_H_
 
 #include <vector>
 #include <iostream>
+#include <string>
 #include <set>
 #include <algorithm>
 #include <cstdint> // C++11
@@ -17,33 +18,36 @@
 #include <stdexcept>
 #include <memory>
 #include "DNAseq.h"
+#include "Loc.h"
 #include "divsufsort_private.h"
 #include "WaveletTreeNoptrs.h"
 #include "BitSequence.h"
 
 namespace EGriceLab {
 namespace MSGseqClean {
-
+using std::vector;
 /**
- * A reduced FM-index with no locate function
- * but with merging support
+ * FM-index with merge support
  */
-class RFMIndex {
+class FMIndex {
 	typedef cds_static::WaveletTreeNoptrs BWTRRR;
 	typedef std::shared_ptr<BWTRRR> BWTRRR_ptr;
+	typedef std::basic_string<saidx_t> sastring_t;
+	typedef std::shared_ptr<cds_static::BitSequenceRRR> sabit_ptr;
 
 public:
 	/* constructors */
 	/** Default constructor */
-	RFMIndex() = default;
+	FMIndex() = default;
 
 	/** Construct a RRFMIndex from a given (large) DNAseq */
-	explicit RFMIndex(const DNAseq& seq) {
+	explicit FMIndex(const DNAseq& seq, bool keepSA = false)
+	: keepSA(keepSA) {
 		build(seq);
 	}
 
 	/** destructor */
-	virtual ~RFMIndex() { 	}
+	virtual ~FMIndex() { 	}
 
 	/**
 	 * LF-mapping given position and character
@@ -80,7 +84,7 @@ public:
 	 * @return a fresh allocated RRFMIndex
 	 * @throw std::length_error if seq length is too long
 	 */
-	RFMIndex& build(const DNAseq& seq);
+	FMIndex& build(const DNAseq& seq);
 
 	/**
 	 * save raw object data to output
@@ -92,6 +96,13 @@ public:
 	 */
 	istream& load(istream& in);
 
+	/*
+	 * Access SA at given position, either by directly searching the stored value or the next sampled value
+	 * @param i  0-based on SA
+	 * @return  0-based position on original seq
+	 */
+	saidx_t accessSA(saidx_t i) const;
+
 	/**
 	 * count present times of a DNAseq pattern in forward version
 	 */
@@ -101,7 +112,7 @@ public:
 	 * using the BWT-merge algorithm described in
 	 * Burrows-Wheeler transform for terabases, Jouni Sirén, 2016 Data Compression Conference
 	 */
-	RFMIndex& operator+=(const RFMIndex& other);
+	FMIndex& operator+=(const FMIndex& other);
 
 	/** get the BWT string of the original seq */
 	string getBWT() const;
@@ -110,7 +121,17 @@ public:
 	DNAseq getSeq() const;
 
 	/* non-member functions */
-	friend RFMIndex operator+(const RFMIndex& lhs, const RFMIndex& rhs);
+	friend FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs);
+
+	bool isKeepSa() const {
+		return keepSA;
+	}
+
+	void setKeepSa(bool keepSa = false) {
+		keepSA = keepSa;
+	}
+
+	vector<Loc> locateAll(const DNAseq& pattern) const;
 
 private:
 	/**
@@ -121,11 +142,21 @@ private:
 	/** build BWT on the reversed string of seq */
 	void buildBWT(const DNAseq& seq);
 
-	static const unsigned RRR_SAMPLE_RATE = 8; /* RRR sample rate for BWT */
+	/** build SAbit and SAsampled from the original seq and an full SA of known length and known gaps */
+	void buildSA(const saidx_t* SA, saidx_t N, saidx_t K);
+
+	/** build SAbit and SAsampled from the internal BWT */
+	void buildSA();
+
+	static const int RRR_SAMPLE_RATE = 8; /* RRR sample rate for BWT */
+	static const int SA_SAMPLE_RATE = 16;  /* sample rate for SA */
 
 	/* member fields */
 private:
 	saidx_t C[UINT8_MAX + 1] = { 0 }; /* cumulative count of each alphabet frequency, with C[0] as dummy position */
+	bool keepSA = false; /* whether to keep SAidx and SAsampled during building */
+	sabit_ptr SAbit; /* BitSequence index telling whether a SA was sampled */
+	sastring_t SAsampled; /* sampled SA vector */
 	BWTRRR_ptr bwt; /* Wavelet-Tree transformed BWT string for reversed DNAseq */
 
 public:
@@ -133,12 +164,12 @@ public:
 	static const char TERMINAL_SYMBOL = '$'; /* terminal symbol of BWT */
 };
 
-inline RFMIndex operator+(const RFMIndex& lhs, const RFMIndex& rhs) {
-	RFMIndex rrfm(lhs);
+inline FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {
+	FMIndex rrfm(lhs);
 	return rrfm += rhs;
 }
 
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */
 
-#endif /* SRC_RFMINDEX_H_ */
+#endif /* SRC_FMINDEX_H_ */
