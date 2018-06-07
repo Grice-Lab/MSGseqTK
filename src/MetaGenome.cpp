@@ -73,5 +73,14 @@ MetaGenome& MetaGenome::operator+=(const MetaGenome& other) {
 	return *this;
 }
 
+bool operator==(const MetaGenome& lhs, const MetaGenome& rhs) {
+	if(lhs.genomes.size() != rhs.genomes.size())
+		return false;
+	for(deque<Genome>::size_type i = 0; i < lhs.genomes.size(); ++i)
+		if(lhs.genomes[i] != rhs.genomes[i])
+			return false;
+	return true;
+}
+
 } /* namespace MSGseqClean */
 } /* namespace EGriceLab */

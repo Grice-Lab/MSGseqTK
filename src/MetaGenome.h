@@ -107,10 +107,20 @@ public:
 		return mgMerged;
 	}
 
+	/**
+	 * test whether two MeteGenomes are equal
+	 * @return  true if and only if all their Genomes are equal and in same order
+	 */
+	friend bool operator==(const MetaGenome& lhs, const MetaGenome& rhs);
+
 	/* member fields */
 private:
 	deque<Genome> genomes;
 };
+
+inline bool operator!=(const MetaGenome& lhs, const MetaGenome& rhs) {
+	return !(lhs == rhs);
+}
 
 } /* namespace MSGseqClean */
 } /* namespace EGriceLab */
