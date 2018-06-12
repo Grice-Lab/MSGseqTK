@@ -102,11 +102,8 @@ void SeqIO::writeFastaSeq(const PrimarySeq& seq) {
 		*out << " " << seq.getDesc();
 	*out << endl;
 	if(maxLine > 0) {
-		const char* seqPtr = seq.getSeq().c_str();
-		for(size_t i = 0, r = seq.getSeq().length(); i < seq.getSeq().length(); i += maxLine, r -= maxLine) {
-			out->write(seqPtr + i, r >= maxLine ? maxLine : r); /* use unformated write for performance */
-			out->put('\n'); // do not flush for faster performance
-		}
+		for(size_t i = 0; i < seq.length(); i += maxLine)
+			*out << seq.getSeq().substr(i, maxLine) << endl;
 	}
 	else
 		*out << seq.getSeq() << endl;

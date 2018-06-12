@@ -4,7 +4,7 @@
  *  Created on: Jan 26, 2018
  *      Author: zhengqi
  */
-
+#include <algorithm>
 #include "PrimarySeq.h"
 #include "StringUtils.h"
 
@@ -20,22 +20,20 @@ PrimarySeq::PrimarySeq(const string& seq, const string& name, const string& desc
 }
 
 istream& PrimarySeq::load(istream& in) {
-	StringUtils::loadString(seq, in);
+	seq.load(in);
 	StringUtils::loadString(name, in);
 	StringUtils::loadString(desc, in);
 	StringUtils::loadString(qual, in);
 	in.read((char *) &qShift, sizeof(uint8_t));
-
 	return in;
 }
 
 ostream& PrimarySeq::save(ostream& out) const {
-	StringUtils::saveString(seq, out);
+	seq.save(out);
 	StringUtils::saveString(name, out);
 	StringUtils::saveString(desc, out);
 	StringUtils::saveString(qual, out);
 	out.write((const char*) &qShift, sizeof(uint8_t));
-
 	return out;
 }
 
@@ -55,6 +53,17 @@ void PrimarySeq::setQStr(const string& qStr) {
 	qual.reserve(qStr.length());
 	for(char qCh : qStr)
 		qual.push_back(qCh - qShift);
+}
+
+PrimarySeq& PrimarySeq::reverse() {
+	seq.reverse();
+	std::reverse(qual.begin(), qual.end());
+	return *this;
+}
+
+PrimarySeq& PrimarySeq::complement() {
+	seq.complement();
+	return *this;
 }
 
 } /* namespace MSGSeqClean */

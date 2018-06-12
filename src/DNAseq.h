@@ -10,6 +10,7 @@
 
 #include <string>
 #include <iostream>
+#include <algorithm>
 #include "DNAalphabet.h"
 #include "StringUtils.h"
 
@@ -102,6 +103,14 @@ public:
 	DNAseq revcom() const {
 		DNAseq rcSeq(*this);
 		return rcSeq.revcom();
+	}
+
+	/** get a substr copy of this object */
+	DNAseq substr(size_t pos = 0, size_t len = npos) const {
+		DNAseq seg;
+		for(size_t i = pos; i < length() && i < pos + len; ++i)
+			seg.push_back((*this)[i]);
+		return seg;
 	}
 
 	/**

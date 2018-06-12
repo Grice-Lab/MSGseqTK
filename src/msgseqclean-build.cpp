@@ -177,15 +177,13 @@ int main(int argc, char* argv[]) {
 		DNAseq genomeSeq;
 		SeqIO seqI(&genomeIn, fmt);
 		while(seqI.hasNext()) {
-			DNAseq chrSeq( seqI.nextSeq().getSeq() );
+			DNAseq chrSeq = seqI.nextSeq().reverse().getSeq(); /* always use reversed sequences */
 			chrSeq.compressGaps(); /* remove unnecessary Ns */
+
 			if(!genomeSeq.empty()) /* not the first chrom */
 				genomeSeq.push_back(DNAalphabet::N); /* add a gap between every chrosome */
 			genomeSeq += chrSeq;
 		}
-
-		/* reverse genome sequence */
-		std::reverse(genomeSeq.begin(), genomeSeq.end());
 
 		/* incremental update backward */
 		mtg.push_front(Genome(genomeName, genomeSeq));

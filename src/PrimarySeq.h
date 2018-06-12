@@ -11,7 +11,7 @@
 #include <string>
 #include <iostream>
 #include <cstdint>
-#include "DNAalphabet.h"
+#include "DNAseq.h"
 
 namespace EGriceLab {
 namespace MSGseqClean {
@@ -39,11 +39,11 @@ public:
 			const string& qStr = "", uint8_t qShift = DEFAULT_Q_SHIFT);
 
 	/* getters and setters */
-	const string& getSeq() const {
+	const DNAseq& getSeq() const {
 		return seq;
 	}
 
-	void setSeq(const string& seq) {
+	void setSeq(const DNAseq& seq) {
 		this->seq = seq;
 	}
 
@@ -79,11 +79,9 @@ public:
 		this->qual = qual;
 	}
 
-	/**
-	 * Append a seq string and quality scores to this PrimarySeq
-	 * return the modified object
-	 */
-	PrimarySeq& append(const string& str, const string& qStr);
+	size_t length() const {
+		return seq.length();
+	}
 
 	/** load a DNAseq from binary input, override the old one */
 	istream& load(istream& in);
@@ -107,8 +105,34 @@ public:
 	/** set qual using encoded string */
 	void setQStr(const string& qStr);
 
+	/** reverse this Primary seq */
+	PrimarySeq& reverse();
+
+	/** get a reverse copy of this Primary seq */
+	PrimarySeq reverse() const {
+		PrimarySeq rSeq(*this);
+		return rSeq.reverse();
+	}
+
+	/** complement this Primary Seq */
+	PrimarySeq& complement();
+
+	/** get a complement copy of this Primary Seq */
+	PrimarySeq complement() const {
+		PrimarySeq cSeq(*this);
+		return cSeq.complement();
+	}
+
+	/** reverse-complement this object */
+	PrimarySeq& revcom() {
+		return reverse().complement();
+	}
+
 	/** get a reverse-complement copy of this PrimarySeq object */
-	PrimarySeq revcom() const;
+	PrimarySeq revcom() const {
+		PrimarySeq rcSeq(*this);
+		return rcSeq.revcom();
+	}
 
 	/* non-member functions */
 	/** check equivenent of two PrimarySeq based on all fields */
@@ -117,7 +141,7 @@ public:
 
 	/* member fields */
 private:
-	string seq;
+	DNAseq seq;
 	string name;
 	string desc;
 	qstring qual;
@@ -135,11 +159,6 @@ inline bool operator==(const PrimarySeq& lhs, const PrimarySeq& rhs) {
 
 inline bool operator!=(const PrimarySeq& lhs, const PrimarySeq& rhs) {
 	return !(lhs == rhs);
-}
-
-inline PrimarySeq PrimarySeq::revcom() const {
-	return PrimarySeq(DNAalphabet::revcom(seq), name, desc,
-			string(qual.rbegin(), qual.rend()), qShift);
 }
 
 } /* namespace MSGSeqClean */
