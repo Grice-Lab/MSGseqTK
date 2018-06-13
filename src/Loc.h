@@ -31,33 +31,31 @@ struct Loc {
 	}
 
 	/** save this loc to binary output */
-	ostream& save(ostream& out) const;
+	virtual ostream& save(ostream& out) const;
 
 	/** load a loc from a binary input */
-	istream& load(istream& in);
+	virtual istream& load(istream& in);
 
-	friend std::ostream& operator<<(std::ostream& out, const Loc& loc);
-	friend std::istream& operator>>(std::istream& in, Loc& loc);
+	/** write this loc to text output */
+	virtual ostream& write(ostream& out) const;
+
+	/** read this loc from text output */
+	virtual istream& read(istream& in);
+
+	/* non-member methods */
+	friend ostream& operator<<(ostream& out, const Loc& loc);
+	friend istream& operator>>(istream& in, Loc& loc);
 
 	uint64_t start; /* 0-based */
 	uint64_t end;   /* 1-based */
 };
 
-inline std::ostream& operator<<(std::ostream& out, const Loc& loc) {
-	out << "[" << loc.start << ", " << loc.end << ")"; /* [start, end) */
-	return out;
+inline ostream& operator<<(ostream& out, const Loc& loc) {
+	return loc.write(out); /* call virtual member method */
 }
 
-inline ostream& Loc::save(ostream& out) const {
-	out.write((const char*) &start, sizeof(uint64_t));
-	out.write((const char*) &end, sizeof(uint64_t));
-	return out;
-}
-
-inline istream& Loc::load(istream& in) {
-	in.read((char*) &start, sizeof(uint64_t));
-	in.read((char*) &end, sizeof(uint64_t));
-	return in;
+inline istream& operator>>(istream& in, Loc& loc) {
+	return loc.read(in);
 }
 
 } /* namespace MSGseqClean */

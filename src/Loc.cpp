@@ -10,11 +10,28 @@
 namespace EGriceLab {
 namespace MSGseqClean {
 
-std::istream& operator>>(std::istream& in, Loc& loc) {
+ostream& Loc::save(ostream& out) const {
+	out.write((const char*) &start, sizeof(uint64_t));
+	out.write((const char*) &end, sizeof(uint64_t));
+	return out;
+}
+
+istream& Loc::load(istream& in) {
+	in.read((char*) &start, sizeof(uint64_t));
+	in.read((char*) &end, sizeof(uint64_t));
+	return in;
+}
+
+ostream& Loc::write(ostream& out) const {
+	out << "[" << start << ", " << end << ")"; /* [start, end) */
+	return out;
+}
+
+istream& Loc::read(istream& in) {
 	in.ignore(1, '[');
-	in >> loc.start;
+	in >> start;
 	in.ignore(1, ',');
-	in >> loc.end; /* automatical ignore additional space */
+	in >> end; /* automatical ignore additional space */
 	in.ignore(1, ')');
 	return in;
 }

@@ -29,6 +29,3 @@ int main() {
 	else
 		cout << "src1.revcom():" << endl << dest1.getSeq() << endl;
 }
-
-
-
