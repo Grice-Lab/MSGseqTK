@@ -26,6 +26,12 @@ using cds_static::BitSequenceBuilderRRR;
 using cds_static::WaveletTreeNoptrs;
 using cds_static::BitString;
 
+Vector4l FMIndex::getBaseCount() const {
+	Vector4l baseCount = Vector4l::Zero();
+	for(int8_t b = DNAalphabet::A; b < DNAalphabet::SIZE; b++)
+		baseCount(b - DNAalphabet::A) = B[b];
+}
+
 FMIndex& FMIndex::build(const DNAseq& seq) {
 	if(seq.length() > MAX_LENGTH)
 		throw std::length_error("DNAseq length exceeding the max allowed length");
@@ -37,21 +43,20 @@ FMIndex& FMIndex::build(const DNAseq& seq) {
 }
 
 void FMIndex::buildCounts(const DNAseq& seq) {
-	for(DNAseq::const_iterator b = seq.begin(); b < seq.end(); ++b)
-		C[*b]++;
-	C[0]++; // always terminated with null
-	/* construct cumulative counts (total counts smaller than this character) */
-    saidx_t prev = C[0];
-    saidx_t tmp;
-    C[0] = 0;
-    for (int i = 1; i <= DNAalphabet::SIZE; ++i) {
-      tmp = C[i];
-      C[i] = C[i-1] + prev;
-      prev = tmp;
+	for(DNAseq::value_type b : seq)
+		B[b]++;
+	B[0]++; // count terminal null
+
+	/* calculate cumulative counts (total counts smaller than this character) */
+    saidx_t sum = 0;
+    for(int i = 0; i <= DNAalphabet::SIZE; ++i) {
+    	C[i] = sum; /* use sum before adding current B[i] */
+    	sum += B[i];
     }
 }
 
 ostream& FMIndex::save(ostream& out) const {
+	out.write((const char*) B, (UINT8_MAX + 1) * sizeof(saidx_t));
 	out.write((const char*) C, (UINT8_MAX + 1) * sizeof(saidx_t));
 	bool SAflag = !SAsampled.empty() && SAbit != nullptr;
 	out.write((const char*) &SAflag, sizeof(bool));
@@ -65,6 +70,7 @@ ostream& FMIndex::save(ostream& out) const {
 }
 
 istream& FMIndex::load(istream& in) {
+	in.read((char*) B, (UINT8_MAX + 1) * sizeof(saidx_t));
 	in.read((char*) C, (UINT8_MAX + 1) * sizeof(saidx_t));
 	bool SAflag;
 	in.read((char*) &SAflag, sizeof(bool));
@@ -112,15 +118,18 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
 	const saidx_t N2 = other.length();
 	const saidx_t N = N1 + N2;
 
-	/* build merged C[] */
+	/* build merged B[] and C[] */
+	saidx_t BMerged[UINT8_MAX + 1] = { 0 };
 	saidx_t CMerged[UINT8_MAX + 1] = { 0 };
-	for(saidx_t i = 0; i <= DNAalphabet::SIZE; ++i)
+	for(saidx_t i = 0; i <= DNAalphabet::SIZE; ++i) {
+		BMerged[i] = B[i] + other.B[i];
 		CMerged[i] = C[i] + other.C[i];
+	}
 
 	/* build RA and interleaving bitvector */
-	BitString B(N);
+	BitString bitStr(N);
 	for(saidx_t i = 0, j = 0, shift = 0, RA = other.C[0 + 1]; j < N1; ++j) {
-		B.setBit(i + RA);
+		bitStr.setBit(i + RA);
 		/* LF mapping */
 		sauchar_t b = bwt->access(i);
 		if(b == 0) {
@@ -137,7 +146,7 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
 	/* build merbed BWT */
 	sauchar_t* bwtM= new sauchar_t[N];
 	for(saidx_t i = 0, j = 0, k = 0; k < N; ++k)
-		bwtM[k] = B.getBit(k) ? bwt->access(i++) : other.bwt->access(j++);
+		bwtM[k] = bitStr.getBit(k) ? bwt->access(i++) : other.bwt->access(j++);
 
     BWTRRR_ptr bwtMerged = std::make_shared<BWTRRR>(reinterpret_cast<uint*> (bwtM), N, sizeof(sauchar_t) * 8,
     		new BitSequenceBuilderRRR(RRR_SAMPLE_RATE), /* smart ptr */
@@ -146,6 +155,7 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
     delete[] bwtM;
 
     /* swap data */
+    std::swap(B, BMerged);
     std::swap(C, CMerged);
     std::swap(bwt, bwtMerged);
 
@@ -211,12 +221,12 @@ void FMIndex::buildSA() {
 	const saidx_t N = length();
 	/* build BitVector in the 1st pass */
 	{
-		BitString B(N);
+		BitString bitStr(N);
 		for(saidx_t i = 0; i < N; ++i) {
 			if(bwt->access(i) == 0 || i % SA_SAMPLE_RATE == 0)
-				B.setBit(i);
+				bitStr.setBit(i);
 		}
-		SAbit.reset(new BitSequenceRRR(B, RRR_SAMPLE_RATE)); /* use RRR implementation */
+		SAbit.reset(new BitSequenceRRR(bitStr, RRR_SAMPLE_RATE)); /* use RRR implementation */
 	}
 
 	/* build SAsampled in the 2nd pass */

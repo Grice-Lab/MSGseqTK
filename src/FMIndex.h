@@ -28,6 +28,9 @@
 namespace EGriceLab {
 namespace MSGseqClean {
 using std::vector;
+using Eigen::Vector4d;
+
+typedef Eigen::Matrix<uint64_t, 4, 1> Vector4l;
 
 /**
  * FM-index with merge support
@@ -79,6 +82,15 @@ public:
 	/** get the length of this index */
 	saidx_t length() const {
 		return bwt != nullptr ? bwt->getLength() : 0;
+	}
+
+	/** get baseCount of this index */
+	Vector4l getBaseCount() const;
+
+	/** get baseFreq of this index */
+	Vector4d getBaseFreq() const {
+		Vector4l baseCount = getBaseCount();
+		return baseCount.cast<double>() / static_cast<double> (baseCount.sum());
 	}
 
 	/**
@@ -186,7 +198,8 @@ private:
 
 	/* member fields */
 private:
-	saidx_t C[UINT8_MAX + 1] = { 0 }; /* cumulative count of each alphabet frequency, with C[0] as dummy position */
+	saidx_t B[UINT8_MAX + 1] = { 0 }; /* base count of each alphabetbase */
+	saidx_t C[UINT8_MAX + 1] = { 0 }; /* cumulative count of each alphabet base, C[i] = B(0) + B(1) + ... + B(i-1) */
 	bool keepSA = false; /* whether to keep SAidx and SAsampled during building */
 	sabit_ptr SAbit; /* BitSequence index telling whether a SA was sampled */
 	sastring_t SAsampled; /* sampled SA vector */
