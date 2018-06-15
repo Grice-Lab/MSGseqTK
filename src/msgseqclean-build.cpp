@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
 	map<string, string> genomeFn2Name;
 	string dbName, listFn;
 	ifstream listIn;
-	ofstream mtgOut, rfmOut;
+	ofstream mtgOut, fmidxOut;
 	const string fmt = "fasta";
 
 	/* parse options */
@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
 
 	/* set dbName */
 	string mtgFn = dbName + METAGENOME_FILE_SUFFIX;
-	string rfmFn = dbName + RFMINDEX_FILE_SUFFIX;
+	string fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
 
 	/* open output files */
 	mtgOut.open(mtgFn.c_str(), ios_base::out | ios_base::binary);
@@ -142,14 +142,14 @@ int main(int argc, char* argv[]) {
 		cerr << "Unable to write to '" << mtgFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	rfmOut.open(rfmFn.c_str(), ios_base::out | ios_base::binary);
-	if(!rfmOut.is_open()) {
-		cerr << "Unable to write to '" << rfmFn << "': " << ::strerror(errno) << endl;
+	fmidxOut.open(fmidxFn.c_str(), ios_base::out | ios_base::binary);
+	if(!fmidxOut.is_open()) {
+		cerr << "Unable to write to '" << fmidxFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
 	MetaGenome mtg;
-	FMIndex rfm;
+	FMIndex fmidx;
 
 	/* process each file */
 	for(const string& inFn : inFns) {
@@ -188,8 +188,8 @@ int main(int argc, char* argv[]) {
 		/* incremental update backward */
 		mtg.push_front(Genome(genomeName, genomeSeq));
 		infoLog << "Merging into database ... ";
-		rfm = FMIndex(genomeSeq) + rfm; /* always use ther fresh object as lhs */
-		assert(mtg.getSize() + mtg.numGenomes() == rfm.length());
+		fmidx = FMIndex(genomeSeq) + fmidx; /* always use ther fresh object as lhs */
+		assert(mtg.getSize() + mtg.numGenomes() == fmidx.length());
 		infoLog << " done. Currrent # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
 	}
 
@@ -205,9 +205,9 @@ int main(int argc, char* argv[]) {
 	}
 	infoLog << "MetaGenome info saved" << endl;
 
-	saveProgInfo(rfmOut);
-	rfm.save(rfmOut);
-	if(rfmOut.bad()) {
+	saveProgInfo(fmidxOut);
+	fmidx.save(fmidxOut);
+	if(fmidxOut.bad()) {
 		cerr << "Unable to save RFM-index: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}

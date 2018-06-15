@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
 	/* check options */
 	/* set dbName */
 	string mtgFn = dbName + METAGENOME_FILE_SUFFIX;
-	string rfmFn = dbName + RFMINDEX_FILE_SUFFIX;
+	string rfmFn = dbName + FMINDEX_FILE_SUFFIX;
 
 	/* open inputs */
 	mtgIn.open(mtgFn.c_str(), ios_base::binary);
@@ -106,19 +106,19 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	infoLog << "Loading RFM-index ..." << endl;
+	infoLog << "Loading FM-index ..." << endl;
 	loadProgInfo(rfmIn);
 	if(!rfmIn.bad())
 		fmidx.load(rfmIn);
 	if(rfmIn.bad()) {
-		cerr << "Unable to load RFM-index: " << ::strerror(errno) << endl;
+		cerr << "Unable to load FM-index: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
 	cout << "MetaGenome info: # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
-	cout << "RFM-index info: length: " << fmidx.length() << endl;
-	for(int8_t b = 0; b < 4; ++b)
-		cout << " " << DNAalphabet::decode(DNAalphabet::A + b) << ":" << fmidx.getBaseCount()(b);
+	cout << "FM-index info: length: " << fmidx.length() << endl;
+	for(int8_t b = DNAalphabet::A; b < DNAalphabet::SIZE; ++b)
+		cout << " " << DNAalphabet::decode(b) << ":" << fmidx.getBaseCount(b);
 	cout << endl;
 
 	if(listOut.is_open()) {

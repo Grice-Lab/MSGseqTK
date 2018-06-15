@@ -10,7 +10,7 @@
 
 #include <vector>
 #include <cmath>
-#include <Eigen/Dense>
+#include <algorithm>
 #include "Loc.h"
 #include "DNAseq.h"
 #include "QualStr.h"
@@ -23,33 +23,39 @@ namespace MSGseqClean {
  * Maximal Exact Match betwen a DNAseq and a FM-index database
  */
 using std::vector;
-using Eigen::Vector4d;
 
 struct MEM {
 	/** default constructor */
 	MEM() = default;
 
 	/** construct an MEM with all info */
-	MEM(uint64_t from, uint64_t to,
-			const DNAseq* seq, const QualStr* qual, const vector<Loc>& locs)
-	: from(from), to(to), seq(seq), qual(qual), locs(locs)
-	{  }
+	MEM(uint64_t from, uint64_t to, const DNAseq* seq, const QualStr* qual,
+			int64_t N, const int64_t* B,
+			const vector<Loc>& locs)
+	: from(from), to(to), seq(seq), qual(qual), N(N), locs(locs)
+	{
+		std::copy(B, B + UINT8_MAX + 1, this->B);
+	}
 
 	/** construct an MEM with all info but not locs */
-	MEM(uint64_t from, uint64_t to,
-			const DNAseq* seq, const QualStr* qual)
-	: from(from), to(to), seq(seq), qual(qual)
-	{  }
+	MEM(uint64_t from, uint64_t to, const DNAseq* seq, const QualStr* qual,
+			int64_t N, const int64_t* B)
+	: from(from), to(to), seq(seq), qual(qual), N(N)
+	{
+		std::copy(B, B + UINT8_MAX + 1, this->B);
+	}
 
 	/** delegating construct an MEM with all info but not qual */
-	MEM(uint64_t from, uint64_t to,
-			const DNAseq* seq, const vector<Loc>& locs)
-	: MEM(from, to, seq, nullptr, locs)
+	MEM(uint64_t from, uint64_t to, const DNAseq* seq,
+			int64_t N, const int64_t* B,
+			const vector<Loc>& locs)
+	: MEM(from, to, seq, nullptr, N, B, locs)
 	{  }
 
 	/** delegating construct an MEM with all info but not qual and locs */
-	MEM(uint64_t from, uint64_t to, const DNAseq* seq)
-	: MEM(from, to, seq, nullptr)
+	MEM(uint64_t from, uint64_t to, const DNAseq* seq,
+			int64_t N, const int64_t* B)
+	: MEM(from, to, seq, nullptr, N, B)
 	{  }
 
 	/* member methods */
@@ -77,23 +83,27 @@ struct MEM {
 	 * @param  baseFreq  base frequency used to determine the loglik, default equal base frequency
 	 * @return  loglik using the observed sequence and quality
 	 */
-	double loglik(const Vector4d& baseFreq = Vector4d::Constant(1.0 / 4)) const;
+	double loglik() const;
 
 	/** get the likelihood of this MEM */
-	double liklihood(const Vector4d& baseFreq = Vector4d::Constant(1.0 / 4)) const {
-		return ::exp(loglik(baseFreq));
+	double liklihood() const {
+		return ::exp(loglik());
 	}
 
 	/** get the E-value of observing this MEM on a known size database */
-	double evalue(uint64_t N, const Vector4d& baseFreq = Vector4d::Constant(1.0 / 4)) const {
-		return N * liklihood(baseFreq);
+	double evalue(uint64_t L) const {
+		return L * liklihood();
 	}
 
 	/* member fields */
-	uint64_t from = 0; /* 0-based relative start on seq */
-	uint64_t to = 0;   /* 1-based relative end on seq */
+	int64_t from = 0; /* 0-based relative start on seq */
+	int64_t to = 0;   /* 1-based relative end on seq */
 	const DNAseq* seq = nullptr;    // using pointers for fewer overhead,
 	const QualStr* qual = nullptr;  // assumes their existence
+
+	int64_t N = 0; /* database size */
+	int64_t B[UINT8_MAX + 1] = { 0 }; /* database base count */
+
 	vector<Loc> locs; /* all Loc this MEM matches to w/ reversed coordinates */
 
 };

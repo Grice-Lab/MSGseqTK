@@ -27,13 +27,14 @@ int main() {
 	MEM mem;
 	int i = 0;
 	while( mem.to < read.length() ) {
-		mem = fmidx.getMEM(read, qual, i == 0 || !mem.empty() ? mem.to : mem.to + 1);
+		mem = fmidx.findMEM(read, qual, i == 0 || !mem.empty() ? mem.to : mem.to + 1);
 		cout << "mem " << i << " between db: " << genomeDB.reverse() << " and read: " << read << " found at from: " << mem.from << " to: " << mem.to << endl;
 		cout << "all matched locs:" << endl;
 		for(const Loc& loc : mem.locs)
 			cout << " " << loc;
 		cout << endl;
-		cout << "loglik: " << mem.loglik() << " likelihood: " << mem.liklihood() << " evalue: " << mem.evalue(fmidx.length()) << endl;
+		cout << "loglik: " << mem.loglik() << " likelihood: " << mem.liklihood()
+				<< " evalue: " << mem.evalue(fmidx.length()) << endl;
 		if(!isValidMEM(genomeDB.reverse(), mem))
 			return EXIT_FAILURE;
 		i++;
@@ -44,13 +45,14 @@ int main() {
 	read = "TACGNACGT";
 	i = 0;
 	while( mem.to < read.length() ) {
-		mem = fmidx.getMEM(read, i == 0 || !mem.empty() ? mem.to : mem.to + 1);
+		mem = fmidx.findMEM(read, i == 0 || !mem.empty() ? mem.to : mem.to + 1);
 		cout << "N containing mem " << i << " between db: " << genomeDB.reverse() << " and read: " << read << " found at from: " << mem.from << " to: " << mem.to << endl;
 		cout << "all matched locs:" << endl;
 		for(const Loc& loc : mem.locs)
 			cout << " " << loc;
 		cout << endl;
-		cout << "loglik: " << mem.loglik() << " likelihood: " << mem.liklihood() << " evalue: " << mem.evalue(fmidx.length()) << endl;
+		cout << "loglik: " << mem.loglik() << " likelihood: " << mem.liklihood()
+				<< " evalue: " << mem.evalue(fmidx.length()) << endl;
 		if(!isValidMEM(genomeDB.reverse(), mem))
 			return EXIT_FAILURE;
 		i++;

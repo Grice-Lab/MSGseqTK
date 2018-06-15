@@ -26,10 +26,11 @@ using cds_static::BitSequenceBuilderRRR;
 using cds_static::WaveletTreeNoptrs;
 using cds_static::BitString;
 
-Vector4l FMIndex::getBaseCount() const {
-	Vector4l baseCount = Vector4l::Zero();
-	for(int8_t b = DNAalphabet::A; b < DNAalphabet::SIZE; b++)
-		baseCount(b - DNAalphabet::A) = B[b];
+const saidx_t FMIndex::totalBases() const {
+	saidx_t N = 0;
+	for(int8_t i = DNAalphabet::A; i < DNAalphabet::SIZE; i++)
+		N += B[i];
+	return N;
 }
 
 FMIndex& FMIndex::build(const DNAseq& seq) {
@@ -281,7 +282,7 @@ Loc FMIndex::reverseLoc(const Loc& loc) const {
 	return Loc(reverseLoc(loc.end - 1) - 1, reverseLoc(loc.start));
 }
 
-MEM FMIndex::getMEM(const DNAseq&read, saidx_t from) const {
+MEM FMIndex::findMEM(const DNAseq&read, saidx_t from) const {
 	uint64_t start = 0;
 	uint64_t end = 0;
 	uint64_t nextStart = start;
@@ -306,7 +307,7 @@ MEM FMIndex::getMEM(const DNAseq&read, saidx_t from) const {
 	}
 
 	/* construct MEM with basic matching info */
-	MEM mem(from, to, &read, nullptr);
+	MEM mem(from, to, &read, nullptr, totalBases(), B);
 	if(start == 0 && end == 0)
 		return mem;
 	/* adding all matching locs */
@@ -318,8 +319,8 @@ MEM FMIndex::getMEM(const DNAseq&read, saidx_t from) const {
 	return mem;
 }
 
-MEM FMIndex::getMEM(const DNAseq&read, const QualStr& qual, saidx_t from) const {
-	MEM mem = getMEM(read, from);
+MEM FMIndex::findMEM(const DNAseq&read, const QualStr& qual, saidx_t from) const {
+	MEM mem = findMEM(read, from);
 	mem.qual = &qual;
 	return mem;
 }

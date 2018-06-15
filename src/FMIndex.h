@@ -28,9 +28,6 @@
 namespace EGriceLab {
 namespace MSGseqClean {
 using std::vector;
-using Eigen::Vector4d;
-
-typedef Eigen::Matrix<uint64_t, 4, 1> Vector4l;
 
 /**
  * FM-index with merge support
@@ -85,13 +82,17 @@ public:
 	}
 
 	/** get baseCount of this index */
-	Vector4l getBaseCount() const;
-
-	/** get baseFreq of this index */
-	Vector4d getBaseFreq() const {
-		Vector4l baseCount = getBaseCount();
-		return baseCount.cast<double>() / static_cast<double> (baseCount.sum());
+	const saidx_t* getBaseCount() const {
+		return B;
 	}
+
+	/** get baseCount of given base */
+	saidx_t getBaseCount(sauchar_t b) const {
+		return B[b];
+	}
+
+	/** get total bases in this FM-index excluding gaps */
+	const saidx_t totalBases() const;
 
 	/**
 	 * Build an RRFMIndex from a MSA object, old data is removed
@@ -168,7 +169,7 @@ public:
 	 * @param read  read to search, must be in reversed orientation of this FM-index
 	 * @param i  relative position of the seq
 	 */
-	MEM getMEM(const DNAseq& read, saidx_t from = 0) const;
+	MEM findMEM(const DNAseq& read, saidx_t from = 0) const;
 
 	/**
 	 * get an MEM of a given seq starting at given position relative to the seq and given quality info
@@ -176,7 +177,7 @@ public:
 	 * @param qual  quality string, can be null
 	 * @param i  relative position of the seq
 	 */
-	MEM getMEM(const DNAseq& read, const QualStr& qual, saidx_t from = 0) const;
+	MEM findMEM(const DNAseq& read, const QualStr& qual, saidx_t from = 0) const;
 
 	/* non-member functions */
 	friend FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs);

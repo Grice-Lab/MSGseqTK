@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
 	/* variable declarations */
 	vector<string> inDBNames;
 	string dbName;
-	ofstream mtgOut, rfmOut;
+	ofstream mtgOut, fmidxOut;
 
 	/* parse options */
 	CommandOptions cmdOpts(argc, argv);
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 
 	/* set dbName */
 	string mtgFn = dbName + METAGENOME_FILE_SUFFIX;
-	string rfmFn = dbName + RFMINDEX_FILE_SUFFIX;
+	string fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
 
 	/* open outputs */
 	mtgOut.open(mtgFn.c_str(), ios_base::out | ios_base::binary);
@@ -84,35 +84,35 @@ int main(int argc, char* argv[]) {
 		cerr << "Unable to write to '" << mtgFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	rfmOut.open(rfmFn.c_str(), ios_base::out | ios_base::binary);
-	if(!rfmOut.is_open()) {
-		cerr << "Unable to write to '" << rfmFn << "': " << ::strerror(errno) << endl;
+	fmidxOut.open(fmidxFn.c_str(), ios_base::out | ios_base::binary);
+	if(!fmidxOut.is_open()) {
+		cerr << "Unable to write to '" << fmidxFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
 	MetaGenome mtg;
-	FMIndex rfm;
+	FMIndex fmidx;
 
 	/* process each database */
 	for(const string& inDB : inDBNames) {
 		string mtgInfn = inDB + METAGENOME_FILE_SUFFIX;
-		string rfmInfn = inDB + RFMINDEX_FILE_SUFFIX;
+		string fmidxInfn = inDB + FMINDEX_FILE_SUFFIX;
 		/* open DB files */
 		ifstream mtgIn(mtgInfn.c_str(), ios_base::binary);
 		if(!mtgIn.is_open()) {
 			cerr << "Unable to open '" << mtgInfn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
-		ifstream rfmIn(rfmInfn.c_str(), ios_base::binary);
-		if(!rfmIn.is_open()) {
-			cerr << "Unable to open '" << rfmInfn << "': " << ::strerror(errno) << endl;
+		ifstream fmidxIn(fmidxInfn.c_str(), ios_base::binary);
+		if(!fmidxIn.is_open()) {
+			cerr << "Unable to open '" << fmidxInfn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
 
 		/* read in genome sequence, concatenated with Ns */
 		infoLog << "Loading database '" << inDB << "'" << endl;
 		MetaGenome mtgPart;
-		FMIndex rfmPart;
+		FMIndex fmidxPart;
 		loadProgInfo(mtgIn);
 		if(!mtgIn.bad())
 			mtgPart.load(mtgIn);
@@ -121,22 +121,22 @@ int main(int argc, char* argv[]) {
 			return EXIT_FAILURE;
 		}
 
-		loadProgInfo(rfmIn);
-		if(!rfmIn.bad())
-			rfmPart.load(rfmIn);
-		if(rfmIn.bad()) {
-			cerr << "Unable to load '" << rfmInfn << "': " << ::strerror(errno) << endl;
+		loadProgInfo(fmidxIn);
+		if(!fmidxIn.bad())
+			fmidxPart.load(fmidxIn);
+		if(fmidxIn.bad()) {
+			cerr << "Unable to load '" << fmidxInfn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
 
 		/* incremental update */
 		infoLog << "Merging into new database ... ";
 		mtg += mtgPart;
-		if(rfm.length() < rfmPart.length())
-			rfm += rfmPart;
+		if(fmidx.length() < fmidxPart.length())
+			fmidx += fmidxPart;
 		else
-			rfm = rfmPart + rfm;
-		assert(mtg.getSize() + mtg.numGenomes() == rfm.length());
+			fmidx = fmidxPart + fmidx;
+		assert(mtg.getSize() + mtg.numGenomes() == fmidx.length());
 		infoLog << " done. currrent size: " << mtg.getSize() << endl;
 	}
 
@@ -152,9 +152,9 @@ int main(int argc, char* argv[]) {
 	}
 	infoLog << "MetaGenome info saved" << endl;
 
-	saveProgInfo(rfmOut);
-	rfm.save(rfmOut);
-	if(rfmOut.bad()) {
+	saveProgInfo(fmidxOut);
+	fmidx.save(fmidxOut);
+	if(fmidxOut.bad()) {
 		cerr << "Unable to save RFM-index: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
