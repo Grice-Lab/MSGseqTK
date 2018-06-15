@@ -25,9 +25,11 @@ noinst_LIBRARIES = libMSGseqClean.a
 libMSGseqClean_a_SOURCES = \
 DNAalphabet.cpp \
 DNAseq.cpp \
+QualStr.cpp \
 PrimarySeq.cpp \
 SeqIO.cpp \
 Loc.cpp \
+MEM.cpp \
 FMIndex.cpp \
 Genome.cpp \
 MetaGenome.cpp

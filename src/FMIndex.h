@@ -18,7 +18,9 @@
 #include <stdexcept>
 #include <memory>
 #include "DNAseq.h"
+#include "QualStr.h"
 #include "Loc.h"
+#include "MEM.h"
 #include "divsufsort_private.h"
 #include "WaveletTreeNoptrs.h"
 #include "BitSequence.h"
@@ -26,6 +28,7 @@
 namespace EGriceLab {
 namespace MSGseqClean {
 using std::vector;
+
 /**
  * FM-index with merge support
  */
@@ -125,9 +128,6 @@ public:
 	/** get the original seq */
 	DNAseq getSeq() const;
 
-	/* non-member functions */
-	friend FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs);
-
 	bool isKeepSa() const {
 		return keepSA;
 	}
@@ -136,7 +136,38 @@ public:
 		keepSA = keepSa;
 	}
 
+	/** locate all matches to given pattern */
 	vector<Loc> locateAll(const DNAseq& pattern) const;
+
+	/**
+	 * reverse a loc on this FM-index
+	 * @param i  0-based loc
+	 * @return  1-based loc on the reversed direction of the original seq
+	 */
+	saidx_t reverseLoc(saidx_t i) const {
+		return length() - i - 1;
+	}
+
+	/** reverse the coordinates of a Loc on this FM-index */
+	Loc reverseLoc(const Loc& loc) const;
+
+	/**
+	 * get an MEM of a given seq starting at given position relative to the seq
+	 * @param read  read to search, must be in reversed orientation of this FM-index
+	 * @param i  relative position of the seq
+	 */
+	MEM getMEM(const DNAseq& read, saidx_t from = 0) const;
+
+	/**
+	 * get an MEM of a given seq starting at given position relative to the seq and given quality info
+	 * @param read  read to search, must be in reversed orientation of this FM-index
+	 * @param qual  quality string, can be null
+	 * @param i  relative position of the seq
+	 */
+	MEM getMEM(const DNAseq& read, const QualStr& qual, saidx_t from = 0) const;
+
+	/* non-member functions */
+	friend FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs);
 
 private:
 	/**
@@ -146,9 +177,6 @@ private:
 
 	/** build BWT on the reversed string of seq */
 	void buildBWT(const DNAseq& seq);
-
-	/** build SAbit and SAsampled from the original seq and an full SA of known length and known gaps */
-	void buildSA(const saidx_t* SA, saidx_t N, saidx_t K);
 
 	/** build SAbit and SAsampled from the internal BWT */
 	void buildSA();

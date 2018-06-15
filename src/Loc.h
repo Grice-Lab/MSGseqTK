@@ -18,10 +18,10 @@ using std::istream;
 using std::ostream;
 
 struct Loc {
-	/* default constructor */
+	/** default constructor */
 	Loc() = default;
 
-	/* constructor from given values */
+	/** constructor from given values */
 	Loc(uint64_t start, uint64_t end) : start(start), end(end)
 	{  }
 
@@ -31,21 +31,22 @@ struct Loc {
 	}
 
 	/** save this loc to binary output */
-	virtual ostream& save(ostream& out) const;
+	ostream& save(ostream& out) const;
 
 	/** load a loc from a binary input */
-	virtual istream& load(istream& in);
+	istream& load(istream& in);
 
 	/** write this loc to text output */
-	virtual ostream& write(ostream& out) const;
+	ostream& write(ostream& out) const;
 
 	/** read this loc from text output */
-	virtual istream& read(istream& in);
+	istream& read(istream& in);
 
 	/* non-member methods */
 	friend ostream& operator<<(ostream& out, const Loc& loc);
 	friend istream& operator>>(istream& in, Loc& loc);
 
+	/* member fields */
 	uint64_t start; /* 0-based */
 	uint64_t end;   /* 1-based */
 };

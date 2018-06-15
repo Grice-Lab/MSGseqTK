@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cassert>
 #include "BitSequenceBuilder.h"
 #include "BitSequenceBuilderRRR.h"
 #include "Mapper.h"
@@ -43,7 +44,7 @@ void FMIndex::buildCounts(const DNAseq& seq) {
     saidx_t prev = C[0];
     saidx_t tmp;
     C[0] = 0;
-    for (int i = 1; i < DNAalphabet::SIZE; ++i) {
+    for (int i = 1; i <= DNAalphabet::SIZE; ++i) {
       tmp = C[i];
       C[i] = C[i-1] + prev;
       prev = tmp;
@@ -113,7 +114,7 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
 
 	/* build merged C[] */
 	saidx_t CMerged[UINT8_MAX + 1] = { 0 };
-	for(saidx_t i = 0; i < DNAalphabet::SIZE; ++i)
+	for(saidx_t i = 0; i <= DNAalphabet::SIZE; ++i)
 		CMerged[i] = C[i] + other.C[i];
 
 	/* build RA and interleaving bitvector */
@@ -179,12 +180,9 @@ void FMIndex::buildBWT(const DNAseq& seq) {
 	const size_t N =  seq.length() + 1;
 	/* construct SA */
     saidx_t* SA = new saidx_t[N];
-    saidx_t errn = divsufsort((const sauchar_t*) seq.c_str(), SA, N);
+    saidx_t errn = divsufsort((const sauchar_t*) (seq.c_str()), SA, N);
 	if(errn != 0)
 		throw runtime_error("Error: Cannot build suffix-array on DNAseq");
-
-	if(keepSA) /* if intermediate SA need to be kept */
-		buildSA(SA, N, C[1]);
 
 	/* build bwt */
 	sauchar_t* bwtSeq = new sauchar_t[N];
@@ -203,18 +201,9 @@ void FMIndex::buildBWT(const DNAseq& seq) {
 
     delete[] bwtSeq;
     delete[] SA;
-}
 
-void FMIndex::buildSA(const saidx_t* SA, saidx_t N, saidx_t K) {
-	SAsampled.resize(N / SA_SAMPLE_RATE + K + 1);
-	BitString B(N);
-	for(saidx_t i = 0, j = 0; i < N; ++i) {
-		if(SA[i] < K || i % SA_SAMPLE_RATE == 0) { /* sample at all Ns and fix rate */
-			SAsampled[j++] = SA[i];
-			B.setBit(i);
-		}
-	}
-	SAbit.reset(new BitSequenceRRR(B, RRR_SAMPLE_RATE)); /* use RRR implementation */
+	if(keepSA) /* if intermediate SA need to be kept */
+		buildSA();
 }
 
 void FMIndex::buildSA() {
@@ -259,7 +248,7 @@ vector<Loc> FMIndex::locateAll(const DNAseq& pattern) const {
 
     saidx_t start = 0; /* 0-based */
     saidx_t end = length() - 1; /* 1-based */
-	/* search pattern left-to-right, as bwt is the reverse FM-index */
+	/* backward pattern search */
     for(DNAseq::const_reverse_iterator b = pattern.rbegin(); b != pattern.rend() && start <= end; ++b) {
     	if(start == 0) {
     		start = C[*b];
@@ -276,6 +265,53 @@ vector<Loc> FMIndex::locateAll(const DNAseq& pattern) const {
     	locs.push_back(Loc(SAstart, SAstart + pattern.length()));
     }
     return locs;
+}
+
+Loc FMIndex::reverseLoc(const Loc& loc) const {
+	return Loc(reverseLoc(loc.end - 1) - 1, reverseLoc(loc.start));
+}
+
+MEM FMIndex::getMEM(const DNAseq&read, saidx_t from) const {
+	uint64_t start = 0;
+	uint64_t end = 0;
+	uint64_t nextStart = start;
+	uint64_t nextEnd = end;
+	uint64_t to;
+	/* search read left-to-right */
+	for(to = from; to < read.length(); ++to, start = nextStart, end = nextEnd) {
+		sauchar_t b = read[to];
+		if(b == 0) /* null gap */
+			break;
+		if(start == 0) {
+			nextStart = C[b];
+			nextEnd = C[b + 1] - 1;
+		}
+		else {
+			nextStart = LF(b, start - 1);
+			nextEnd = LF(b, end) - 1;
+		}
+
+		if(nextStart > nextEnd)
+			break;
+	}
+
+	/* construct MEM with basic matching info */
+	MEM mem(from, to, &read, nullptr);
+	if(start == 0 && end == 0)
+		return mem;
+	/* adding all matching locs */
+	for(saidx_t i = start; i <= end; ++i) {
+		saidx_t SAstart = accessSA(i);
+		mem.locs.push_back(Loc(SAstart, SAstart + to - from));
+	}
+
+	return mem;
+}
+
+MEM FMIndex::getMEM(const DNAseq&read, const QualStr& qual, saidx_t from) const {
+	MEM mem = getMEM(read, from);
+	mem.qual = &qual;
+	return mem;
 }
 
 } /* namespace MSGSeqClean */

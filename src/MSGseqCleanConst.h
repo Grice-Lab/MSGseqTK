@@ -21,6 +21,7 @@ const string METAGENOME_FILE_SUFFIX = ".mtg";
 const string RFMINDEX_FILE_SUFFIX = ".rfm";
 
 const int MAX_NAME_LENGTH = 4096;
+const double PHRED_LOG_BASE = 10;
 
 }
 }

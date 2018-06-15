@@ -110,9 +110,11 @@ void SeqIO::writeFastaSeq(const PrimarySeq& seq) {
 }
 
 void SeqIO::writeFastqSeq(const PrimarySeq& seq) {
-	*out << fastqHead << seq.getName() << (!seq.getDesc().empty() ? " " + seq.getDesc() : "") << endl;
+	*out << fastqHead << seq.getName();
+	if(!seq.getDesc().empty())
+		*out << " " + seq.getDesc() << endl;
 	*out << seq.getSeq() << endl;
-	*out << fastqSep << endl << seq.getQStr() << endl;
+	*out << fastqSep << endl << seq.getQual() << endl;
 }
 
 } /* namespace HmmUFOtu */

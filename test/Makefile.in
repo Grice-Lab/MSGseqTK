@@ -89,9 +89,11 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 check_PROGRAMS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
-	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) Genome_test$(EXEEXT)
+	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
+	MEM_test$(EXEEXT)
 TESTS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
-	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) Genome_test$(EXEEXT)
+	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
+	MEM_test$(EXEEXT)
 subdir = test
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -124,6 +126,11 @@ FMIndex_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqClean.a \
 am_Genome_test_OBJECTS = Genome_test.$(OBJEXT)
 Genome_test_OBJECTS = $(am_Genome_test_OBJECTS)
 Genome_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqClean.a
+am_MEM_test_OBJECTS = MEM_test.$(OBJEXT)
+MEM_test_OBJECTS = $(am_MEM_test_OBJECTS)
+MEM_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqClean.a \
+	$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+	$(top_srcdir)/src/libcds/src/libcds.la
 am_PrimarySeq_test_OBJECTS = PrimarySeq_test.$(OBJEXT)
 PrimarySeq_test_OBJECTS = $(am_PrimarySeq_test_OBJECTS)
 PrimarySeq_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqClean.a
@@ -165,11 +172,11 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(DNAseq_test_SOURCES) $(FMIndex_test_SOURCES) \
-	$(Genome_test_SOURCES) $(PrimarySeq_test_SOURCES) \
-	$(SeqIO_test_SOURCES)
+	$(Genome_test_SOURCES) $(MEM_test_SOURCES) \
+	$(PrimarySeq_test_SOURCES) $(SeqIO_test_SOURCES)
 DIST_SOURCES = $(DNAseq_test_SOURCES) $(FMIndex_test_SOURCES) \
-	$(Genome_test_SOURCES) $(PrimarySeq_test_SOURCES) \
-	$(SeqIO_test_SOURCES)
+	$(Genome_test_SOURCES) $(MEM_test_SOURCES) \
+	$(PrimarySeq_test_SOURCES) $(SeqIO_test_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -576,6 +583,12 @@ Genome_test_SOURCES = Genome_test.cpp
 Genome_test_LDADD = \
 $(top_srcdir)/src/libMSGseqClean.a
 
+MEM_test_SOURCES = MEM_test.cpp
+MEM_test_LDADD = \
+$(top_srcdir)/src/libMSGseqClean.a \
+$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+$(top_srcdir)/src/libcds/src/libcds.la
+
 all: all-am
 
 .SUFFIXES:
@@ -631,6 +644,10 @@ Genome_test$(EXEEXT): $(Genome_test_OBJECTS) $(Genome_test_DEPENDENCIES) $(EXTRA
 	@rm -f Genome_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(Genome_test_OBJECTS) $(Genome_test_LDADD) $(LIBS)
 
+MEM_test$(EXEEXT): $(MEM_test_OBJECTS) $(MEM_test_DEPENDENCIES) $(EXTRA_MEM_test_DEPENDENCIES) 
+	@rm -f MEM_test$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(MEM_test_OBJECTS) $(MEM_test_LDADD) $(LIBS)
+
 PrimarySeq_test$(EXEEXT): $(PrimarySeq_test_OBJECTS) $(PrimarySeq_test_DEPENDENCIES) $(EXTRA_PrimarySeq_test_DEPENDENCIES) 
 	@rm -f PrimarySeq_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(PrimarySeq_test_OBJECTS) $(PrimarySeq_test_LDADD) $(LIBS)
@@ -648,6 +665,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DNAseq_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FMIndex_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Genome_test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MEM_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PrimarySeq_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SeqIO_test.Po@am__quote@
 
@@ -905,6 +923,13 @@ FMIndex_test.log: FMIndex_test$(EXEEXT)
 Genome_test.log: Genome_test$(EXEEXT)
 	@p='Genome_test$(EXEEXT)'; \
 	b='Genome_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+MEM_test.log: MEM_test$(EXEEXT)
+	@p='MEM_test$(EXEEXT)'; \
+	b='MEM_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

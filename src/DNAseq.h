@@ -35,9 +35,6 @@ public:
 	/** default constructor */
 	DNAseq() = default;
 
-	/** copy constructor */
-	DNAseq(const DNAseq& other) = default;
-
 	/** virtual destructor */
 	virtual ~DNAseq() {  }
 
@@ -191,7 +188,6 @@ inline ostream& operator<<(ostream& out, const DNAseq& seq) {
 }
 
 inline istream& DNAseq::load(istream& in) {
-	clear();
 	return StringUtils::loadString(*this, in);
 }
 

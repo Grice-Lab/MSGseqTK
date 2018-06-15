@@ -12,6 +12,8 @@
 #include <iostream>
 #include <cstdint>
 #include "DNAseq.h"
+#include "QualStr.h"
+#include "MSGseqCleanConst.h"
 
 namespace EGriceLab {
 namespace MSGseqClean {
@@ -27,16 +29,14 @@ using std::ostream;
  */
 
 class PrimarySeq {
-	typedef basic_string<uint8_t> qstring;
-
 public:
 	/* constructors */
 	/** default constructor */
 	PrimarySeq() = default;
 
-	/** constructing a PrimarySeq with given name and optional desc and encoded quality string */
-	PrimarySeq(const string& seq, const string& name, const string& desc = "",
-			const string& qStr = "", uint8_t qShift = DEFAULT_Q_SHIFT);
+	/** construct a PrimarySeq with given seq, qual, name and optional desc and encoded quality string */
+	PrimarySeq(const string& seqStr, const string& name, const string& desc = "",
+			const string& qStr = "", uint8_t qShift = QualStr::DEFAULT_Q_SHIFT);
 
 	/* getters and setters */
 	const DNAseq& getSeq() const {
@@ -63,19 +63,9 @@ public:
 		this->desc = desc;
 	}
 
-	qstring getQual() const {
-		return !qual.empty() ? qual : qstring(seq.length(), DEFAULT_Q_SCORE);
-	}
+	QualStr getQual() const;
 
-	uint8_t getQShift() const {
-		return qShift;
-	}
-
-	void setQShift(uint8_t qshift) {
-		this->qShift = qShift;
-	}
-
-	void setQual(const qstring& qual) {
+	void setQual(const QualStr& qual) {
 		this->qual = qual;
 	}
 
@@ -83,27 +73,15 @@ public:
 		return seq.length();
 	}
 
+	bool empty() const {
+		return seq.empty();
+	}
+
 	/** load a DNAseq from binary input, override the old one */
 	istream& load(istream& in);
 
 	/** save a DNAseq to binary output */
 	ostream& save(ostream& out) const;
-
-	/** get qual get given position */
-	uint8_t getQual(size_t i) const {
-		return qual[i];
-	}
-
-	/** set qual at given position */
-	void setQual(size_t i, uint8_t q) {
-		qual[i] = q;
-	}
-
-	/** get encoded quality string */
-	string getQStr() const;
-
-	/** set qual using encoded string */
-	void setQStr(const string& qStr);
 
 	/** reverse this Primary seq */
 	PrimarySeq& reverse();
@@ -138,19 +116,12 @@ public:
 	/** check equivenent of two PrimarySeq based on all fields */
 	friend bool operator==(const PrimarySeq& lhs, const PrimarySeq& rhs);
 
-
 	/* member fields */
 private:
 	DNAseq seq;
 	string name;
 	string desc;
-	qstring qual;
-	uint8_t qShift = DEFAULT_Q_SHIFT; // C++11
-
-	/* static members */
-public:
-	static const uint8_t DEFAULT_Q_SCORE = 30;
-	static const uint8_t DEFAULT_Q_SHIFT = 33;
+	QualStr qual;
 };
 
 inline bool operator==(const PrimarySeq& lhs, const PrimarySeq& rhs) {

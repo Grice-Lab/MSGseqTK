@@ -13,18 +13,22 @@ namespace MSGseqClean {
 
 PrimarySeq::PrimarySeq(const string& seq, const string& name, const string& desc,
 		const string& qStr, uint8_t qShift)
-: seq(seq), name(name), desc(desc), qShift(qShift)
-{
-	for(char q : qStr)
-		qual.push_back(q - qShift);
+: seq(seq), name(name), desc(desc), qual(qStr, qShift)
+{   }
+
+QualStr PrimarySeq::getQual() const {
+	if(qual.length() == seq.length())
+		return qual;
+	else {
+		return QualStr(seq.length(), QualStr::DEFAULT_Q_SCORE);
+	}
 }
 
 istream& PrimarySeq::load(istream& in) {
 	seq.load(in);
 	StringUtils::loadString(name, in);
 	StringUtils::loadString(desc, in);
-	StringUtils::loadString(qual, in);
-	in.read((char *) &qShift, sizeof(uint8_t));
+	qual.load(in);
 	return in;
 }
 
@@ -32,27 +36,8 @@ ostream& PrimarySeq::save(ostream& out) const {
 	seq.save(out);
 	StringUtils::saveString(name, out);
 	StringUtils::saveString(desc, out);
-	StringUtils::saveString(qual, out);
-	out.write((const char*) &qShift, sizeof(uint8_t));
+	qual.save(out);
 	return out;
-}
-
-string PrimarySeq::getQStr() const {
-	if(qual.empty())
-		return string(seq.length(), DEFAULT_Q_SCORE + qShift);
-
-	string qStr;
-	qStr.reserve(seq.length());
-	for(uint8_t q : qual)
-		qStr.push_back(q + qShift);
-	return qStr;
-}
-
-void PrimarySeq::setQStr(const string& qStr) {
-	qual.clear();
-	qual.reserve(qStr.length());
-	for(char qCh : qStr)
-		qual.push_back(qCh - qShift);
 }
 
 PrimarySeq& PrimarySeq::reverse() {
