@@ -46,7 +46,7 @@ uint64_t Genome::getSize() const {
 	uint64_t size = 0;
 	for(const chrmap_t::value_type& pair : chromSize)
 		size += pair.second;
-	return size;
+	return size + numChroms(); /* add one null gap after each chromosome */
 }
 
 bool operator==(const Genome& lhs, const Genome& rhs) {

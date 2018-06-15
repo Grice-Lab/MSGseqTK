@@ -91,8 +91,8 @@ struct MEM {
 	}
 
 	/** get the E-value of observing this MEM on a known size database */
-	double evalue(uint64_t L) const {
-		return L * liklihood();
+	double evalue() const {
+		return N * liklihood();
 	}
 
 	/* member fields */

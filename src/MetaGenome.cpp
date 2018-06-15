@@ -35,7 +35,7 @@ vector<string> MetaGenome::getGenomeNames() const {
 size_t MetaGenome::getGenomeIndex(uint64_t loc) const {
 	uint64_t start = 0;
 	for(deque<Genome>::const_iterator genome = genomes.begin(); genome != genomes.end(); ++genome) {
-		if(start <= loc && loc <= start + genome->getSize() + 1) /* an additional null terminal included */
+		if(start <= loc && loc <= start + genome->getSize() + 1)
 			return genome - genomes.begin();
 		start += genome->getSize() + 1;
 	}

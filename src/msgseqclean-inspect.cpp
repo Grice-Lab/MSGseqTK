@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	cout << "MetaGenome info: # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
-	cout << "FM-index info: length: " << fmidx.length() << endl;
+	cout << "FM-index info: length: " << fmidx.length() << " baseCount: ";
 	for(int8_t b = DNAalphabet::A; b < DNAalphabet::SIZE; ++b)
 		cout << " " << DNAalphabet::decode(b) << ":" << fmidx.getBaseCount(b);
 	cout << endl;

@@ -131,11 +131,8 @@ int main(int argc, char* argv[]) {
 
 		/* incremental update */
 		infoLog << "Merging into new database ... ";
-		mtg += mtgPart;
-		if(fmidx.length() < fmidxPart.length())
-			fmidx += fmidxPart;
-		else
-			fmidx = fmidxPart + fmidx;
+		mtg = mtgPart + mtg;
+		fmidx = fmidxPart + fmidx;
 		assert(mtg.getSize() + mtg.numGenomes() == fmidx.length());
 		infoLog << " done. currrent size: " << mtg.getSize() << endl;
 	}

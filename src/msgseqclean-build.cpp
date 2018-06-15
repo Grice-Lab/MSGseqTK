@@ -174,21 +174,25 @@ int main(int argc, char* argv[]) {
 		/* read in genome sequence, concatenated with Ns */
 		infoLog << "Reading genome '" << genomeName << "'" << endl;
 
-		DNAseq genomeSeq;
+		Genome genome(genomeName);
 		SeqIO seqI(&genomeIn, fmt);
+		DNAseq genomeSeq;
 		while(seqI.hasNext()) {
-			DNAseq chrSeq = seqI.nextSeq().reverse().getSeq(); /* always use reversed sequences */
-			chrSeq.compressGaps(); /* remove unnecessary Ns */
+			PrimarySeq chr = seqI.nextSeq().reverse(); /* alwasy use reversed sequence */
+			string chrName = chr.getName();
+			DNAseq chrSeq = chr.getSeq();
+			chrSeq.compressGaps();
+			genome.addChrom(chrName, chrSeq.length());
 
-			if(!genomeSeq.empty()) /* not the first chrom */
-				genomeSeq.push_back(DNAalphabet::N); /* add a gap between every chrosome */
 			genomeSeq += chrSeq;
+			genomeSeq.push_back(DNAalphabet::N); /* add a null terminal after each chrom */
 		}
 
 		/* incremental update backward */
-		mtg.push_front(Genome(genomeName, genomeSeq));
+		mtg.push_front(genome);
 		infoLog << "Merging into database ... ";
 		fmidx = FMIndex(genomeSeq) + fmidx; /* always use ther fresh object as lhs */
+
 		assert(mtg.getSize() + mtg.numGenomes() == fmidx.length());
 		infoLog << " done. Currrent # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
 	}

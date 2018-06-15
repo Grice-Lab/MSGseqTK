@@ -35,9 +35,14 @@ public:
 	/** default constructor */
 	Genome() = default;
 
-	/** construct using a single chrom and seq */
-	Genome(const string& chr, const DNAseq& seq) {
-		addChrom(chr, seq);
+	/** construct genome with given name */
+	Genome(const string& name) : name(name)
+	{  }
+
+	/** construct a single chrom genome, name the genome with this chr */
+	Genome(const string& chr, const DNAseq& seq) : Genome(chr)
+	{
+		addChrom(chr, seq.length());
 	}
 
 	/* member methods */
@@ -71,7 +76,7 @@ public:
 	uint64_t getSize() const;
 
 	/** add a new chromosome with given seq */
-	void addChrom(const string& chr, const DNAseq& seq);
+	void addChrom(const string& chr, uint64_t size);
 
 	/** save this object to binary output */
 	ostream& save(ostream& out) const;
@@ -87,8 +92,8 @@ private:
 	chrmap_t chromSize;
 };
 
-inline void Genome::addChrom(const string& chr, const DNAseq& seq) {
-	chromSize[chr] = seq.length();
+inline void Genome::addChrom(const string& chr, uint64_t size) {
+	chromSize[chr] = size;
 }
 
 inline bool operator!=(const Genome& lhs, const Genome& rhs) {
