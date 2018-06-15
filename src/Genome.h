@@ -9,41 +9,38 @@
 #define SRC_GENOME_H_
 
 #include <string>
+#include <vector>
+#include <map>
 #include <iostream>
 #include <cstdint> // C++11
-#include <Eigen/Dense>
 #include "DNAseq.h"
 
 namespace EGriceLab {
 namespace MSGseqClean {
 
 using std::string;
+using std::map;
+using std::vector;
 using std::istream;
 using std::ostream;
-using Eigen::Vector4d;
-
-typedef Eigen::Matrix<uint64_t, 4, 1> Vector4l;
 
 /**
  * Basic information of a genome (within a MetaGenome)
  */
 class Genome {
+	typedef map<string, uint64_t> chrmap_t;
+
 public:
 	/* constructors */
 	/** default constructor */
 	Genome() = default;
 
-	/** construct from a name and given DNAseq */
-	Genome(const string& name, const DNAseq& seq);
-
-	/* member methods */
-	/* non-member functions */
-	friend bool operator==(const Genome& lhs, const Genome& rhs);
-
-	const Vector4l& getBaseCount() const {
-		return baseCount;
+	/** construct using a single chrom and seq */
+	Genome(const string& chr, const DNAseq& seq) {
+		addChrom(chr, seq);
 	}
 
+	/* member methods */
 	const string& getName() const {
 		return name;
 	}
@@ -52,14 +49,29 @@ public:
 		this->name = name;
 	}
 
-	uint64_t getSize() const {
-		return size;
+	/** get number of chromosomes */
+	size_t numChroms() const {
+		return chromSize.size();
 	}
 
-	/** return the base-frequency of this genome */
-	Vector4d getBaseFreq() const {
-		return baseCount.cast<double>() / static_cast<double> (baseCount.sum());
+	/** get all chromosomes */
+	vector<string> getChroms() const;
+
+	/** get chromosome size map */
+	const chrmap_t& getChromSize() const {
+		return chromSize;
 	}
+
+	/** get a single chromsome size */
+	uint64_t getChromSize(const string& chr) const {
+		return chromSize.at(chr);
+	}
+
+	/** get the overall size of this genome */
+	uint64_t getSize() const;
+
+	/** add a new chromosome with given seq */
+	void addChrom(const string& chr, const DNAseq& seq);
 
 	/** save this object to binary output */
 	ostream& save(ostream& out) const;
@@ -67,14 +79,16 @@ public:
 	/** load an object from binary input */
 	istream& load(istream& in);
 
+	/* non-member functions */
+	friend bool operator==(const Genome& lhs, const Genome& rhs);
+
 private:
 	string name;
-	uint64_t size = 0;
-	Vector4l baseCount = Vector4l::Zero();
+	chrmap_t chromSize;
 };
 
-inline bool operator==(const Genome& lhs, const Genome& rhs) {
-	return lhs.name == rhs.name && lhs.size == rhs.size && lhs.baseCount == rhs.baseCount;
+inline void Genome::addChrom(const string& chr, const DNAseq& seq) {
+	chromSize[chr] = seq.length();
 }
 
 inline bool operator!=(const Genome& lhs, const Genome& rhs) {

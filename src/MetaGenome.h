@@ -40,9 +40,6 @@ public:
 	/** get total size of this MetaGenome */
 	uint64_t getSize() const;
 
-	/** get the aggregate base count */
-	Vector4l getBaseCount() const;
-
 	/** get total number of genomes */
 	size_t numGenomes() const {
 		return genomes.size();
@@ -80,12 +77,6 @@ public:
 	 */
 	void push_front(const Genome& genome) {
 		genomes.push_front(genome);
-	}
-
-	/** return the base-frequency array of this genome */
-	Eigen::Vector4d getBaseFreq() const {
-		Vector4l count = getBaseCount();
-		return count.cast<double>() / static_cast<double> (count.sum());
 	}
 
 	/** save this object to binary output */

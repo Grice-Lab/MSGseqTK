@@ -14,21 +14,16 @@ namespace MSGseqClean {
 
 using namespace EGriceLab::Math;
 
-double MEM::loglik() const {
+double MEM::loglik(const Vector4d& baseFreq) const {
+	Vector4d logBaseFreq = baseFreq.array().log();
 	double ll = 0; /* ll is always in base 10 in phred system */
 	for(uint64_t i = from; i < to; ++i) {
-		uint8_t q = qual != nullptr ? (*qual)[i] : QualStr::DEFAULT_Q_SCORE;
-		ll += ::log(1 - q2p(q)); /* matching liklihood is 1 - error */
+		ll += logBaseFreq((*seq)[i] - DNAalphabet::A); /* use observed base frequency */
+
+		if(qual != nullptr) /* quality is in use */
+			ll += ::log(1 - q2p((*qual)[i])); /* matching liklihood is 1 - error */
 	}
 	return ll;
-}
-
-Vector4d MEM::baseFreq() const {
-	Vector4d baseFreq = Vector4d::Zero();
-	for(DNAseq::value_type b : *seq)
-		if(DNAalphabet::isBase(b))
-			baseFreq(b - DNAalphabet::A)++;
-	return baseFreq / baseFreq.sum();
 }
 
 } /* namespace MSGseqClean */

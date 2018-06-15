@@ -74,17 +74,20 @@ struct MEM {
 
 	/**
 	 * get loglikelihood of this MEM
+	 * @param  baseFreq  base frequency used to determine the loglik, default equal base frequency
 	 * @return  loglik using the observed sequence and quality
 	 */
-	double loglik() const;
+	double loglik(const Vector4d& baseFreq = Vector4d::Constant(1.0 / 4)) const;
 
 	/** get the likelihood of this MEM */
-	double liklihood() const {
-		return ::exp(loglik());
+	double liklihood(const Vector4d& baseFreq = Vector4d::Constant(1.0 / 4)) const {
+		return ::exp(loglik(baseFreq));
 	}
 
-	/** get the baseFrequency of this MEM */
-	Vector4d baseFreq() const;
+	/** get the E-value of observing this MEM on a known size database */
+	double evalue(uint64_t N, const Vector4d& baseFreq = Vector4d::Constant(1.0 / 4)) const {
+		return N * liklihood(baseFreq);
+	}
 
 	/* member fields */
 	uint64_t from = 0; /* 0-based relative start on seq */
@@ -92,6 +95,7 @@ struct MEM {
 	const DNAseq* seq = nullptr;    // using pointers for fewer overhead,
 	const QualStr* qual = nullptr;  // assumes their existence
 	vector<Loc> locs; /* all Loc this MEM matches to w/ reversed coordinates */
+
 };
 
 } /* namespace MSGseqClean */

@@ -70,10 +70,6 @@ int main() {
 		cerr << "Merged MetaGenome size doesn't match" << endl;
 		return EXIT_FAILURE;
 	}
-	if(mtg.getBaseCount() != mtg1.getBaseCount() + mtg2.getBaseCount()) {
-		cerr << "Merged MetaGenome base count doesn't match" << endl;
-		return EXIT_FAILURE;
-	}
 
 	mtg.save(out);
 	if(out.bad()) {

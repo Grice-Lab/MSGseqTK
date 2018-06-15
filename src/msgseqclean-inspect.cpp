@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
 
 	/* load data */
 	MetaGenome mtg;
-	FMIndex rfm;
+	FMIndex fmidx;
 
 	infoLog << "Loading MetaGenome info ..." << endl;
 	loadProgInfo(mtgIn);
@@ -109,18 +109,17 @@ int main(int argc, char* argv[]) {
 	infoLog << "Loading RFM-index ..." << endl;
 	loadProgInfo(rfmIn);
 	if(!rfmIn.bad())
-		rfm.load(rfmIn);
+		fmidx.load(rfmIn);
 	if(rfmIn.bad()) {
 		cerr << "Unable to load RFM-index: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
-	cout << "MetaGenome info: # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << " baseCount:";
+	cout << "MetaGenome info: # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
+	cout << "RFM-index info: length: " << fmidx.length() << endl;
 	for(int8_t b = 0; b < 4; ++b)
-		cout << " " << DNAalphabet::decode(DNAalphabet::A + b) << ":" << mtg.getBaseCount()(b);
+		cout << " " << DNAalphabet::decode(DNAalphabet::A + b) << ":" << fmidx.getBaseCount()(b);
 	cout << endl;
-
-	cout << "RFM-index info: length: " << rfm.length() << endl;
 
 	if(listOut.is_open()) {
 		for(const string& genomeName : mtg.getGenomeNames())

@@ -19,13 +19,6 @@ uint64_t MetaGenome::getSize() const {
 	return size;
 }
 
-Vector4l MetaGenome::getBaseCount() const {
-	Vector4l count = Vector4l::Zero();
-	for(const deque<Genome>::value_type& genome : genomes)
-		count += genome.getBaseCount();
-	return count;
-}
-
 vector<Genome> MetaGenome::getGenomes() const {
 	vector<Genome> genomes;
 	std::copy(this->genomes.begin(), this->genomes.end(), genomes.begin());
