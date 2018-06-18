@@ -78,6 +78,9 @@ public:
 	/** add a new chromosome with given seq */
 	void addChrom(const string& chr, uint64_t size);
 
+	/** get chromosome index given a relative loc of this Genome */
+	uint64_t getChromIndex(uint64_t loc) const;
+
 	/** save this object to binary output */
 	ostream& save(ostream& out) const;
 

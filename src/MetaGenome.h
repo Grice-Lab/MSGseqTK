@@ -59,6 +59,13 @@ public:
 	size_t getGenomeIndex(uint64_t loc) const;
 
 	/**
+	 * get the chromosome index at given location, or -1 if not found
+	 * @param loc  0-based chromosome location
+	 * @return  the index of the genome that covers this loc
+	 */
+	size_t getChromIndex(uint64_t loc) const;
+
+	/**
 	 * get the genome at given location, or throws out_of_range exception
 	 */
 	const Genome& getGenome(uint64_t loc) const {

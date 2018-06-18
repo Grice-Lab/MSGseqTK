@@ -181,7 +181,6 @@ int main(int argc, char* argv[]) {
 			PrimarySeq chr = seqI.nextSeq().reverse(); /* alwasy use reversed sequence */
 			string chrName = chr.getName();
 			DNAseq chrSeq = chr.getSeq();
-			chrSeq.compressGaps();
 			genome.addChrom(chrName, chrSeq.length());
 
 			genomeSeq += chrSeq;

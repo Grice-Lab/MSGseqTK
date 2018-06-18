@@ -42,6 +42,11 @@ size_t MetaGenome::getGenomeIndex(uint64_t loc) const {
 	return -1;
 }
 
+size_t MetaGenome::getChromIndex(uint64_t loc) const {
+
+}
+
+
 ostream& MetaGenome::save(ostream& out) const {
 	size_t N = numGenomes();
 	out.write((const char*) &N, sizeof(size_t));
