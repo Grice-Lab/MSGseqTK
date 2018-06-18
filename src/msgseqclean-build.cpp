@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
 		infoLog << "Merging into database ... ";
 		fmidx = FMIndex(genomeSeq) + fmidx; /* always use ther fresh object as lhs */
 
-		assert(mtg.getSize() + mtg.numGenomes() == fmidx.length());
+		assert(mtg.getSize() == fmidx.length());
 		infoLog << " done. Currrent # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
 	}
 

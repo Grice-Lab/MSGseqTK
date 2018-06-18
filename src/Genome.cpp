@@ -38,9 +38,12 @@ uint64_t Genome::getChromSize(const string& chrName) const {
 }
 
 size_t Genome::getChromIndex(uint64_t loc) const {
-	for(size_t i = 0, start = 0; i < chroms.size(); ++i, start += chroms[i].size + 1)
-		if(i <= loc && loc <= i + chroms[i].size) /* include null terminal */
-			return i;
+	uint64_t start = 0;
+	for(vector<Chrom>::const_iterator chr = chroms.begin(); chr != chroms.end(); ++chr) {
+		if(start <= loc && loc <= start + chr->size) /* include null terminal */
+			return chr - chroms.begin();
+		start += chr->size + 1;
+	}
 	return -1;
 }
 

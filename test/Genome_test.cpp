@@ -100,6 +100,29 @@ int main() {
 		return EXIT_FAILURE;
 	}
 
+	size_t j1, j2;
+
+	if((i1 = mtg1.getGenomeIndex(0)) != 0 && (j1 = mtg1.getChromIndex(0)) != 0) {
+		cerr << "genomeIndex and chromIndex of mt1 at loc 0 should be 0, 0 but found " << i1 << ", " << j1 << endl;
+		return EXIT_FAILURE;
+	}
+	if((i1 = mtg1.getGenomeIndex(25)) != 0 && (j1 = mtg1.getChromIndex(25)) != 1) {
+		cerr << "genomeIndex and chromIndex of mt1 at loc 25 should be 0, 1 but found " << i1 << ", " << j1 << endl;
+		return EXIT_FAILURE;
+	}
+	if((i1 = mtg1.getGenomeIndex(51)) != 1 && (j1 = mtg1.getChromIndex(51)) != 0) {
+		cerr << "genomeIndex and chromIndex of mt1 at loc 51 should be 1, 0 but found " << i1 << ", " << j1 << endl;
+		return EXIT_FAILURE;
+	}
+	if((i1 = mtg1.getGenomeIndex(71)) != 1 && (j1 = mtg1.getChromIndex(71)) != 0) {
+		cerr << "genomeIndex and chromIndex of mt1 at loc 67 should be 1, 0 but found " << i1 << ", " << j1 << endl;
+		return EXIT_FAILURE;
+	}
+	if((i1 = mtg1.getGenomeIndex(72)) != 1 && (j1 = mtg1.getChromIndex(72)) != 1) {
+		cerr << "genomeIndex and chromIndex of mt1 at loc 72 should be 1, 1 but found " << i1 << ", " << j1 << endl;
+		return EXIT_FAILURE;
+	}
+
 	MetaGenome mtg = mtg1 + mtg2;
 	if(mtg.getSize() != mtg1.getSize() + mtg1.getSize()) {
 		cerr << "Merged MetaGenome size doesn't match" << endl;
