@@ -16,8 +16,13 @@ using namespace EGriceLab::MSGseqClean;
 
 int main() {
 	/* part 1, Genome test */
-	Genome g1("Staphylococcus aureus", DNAseq("ATCGNatcgnTCGANtcga"));
-	Genome g2("Homo sapiens", DNAseq("AAAAANgggggNCCCCCNttttt"));
+	Genome g1("Staphylococcus aureus");
+	g1.addChrom("chr1", DNAseq("ATCGNatcgnTCGANtcgan").length());
+	g1.addChrom("chr2", DNAseq("TCGANtcganATCGNatcgn").length());
+
+	Genome g2("Homo sapiens");
+	g2.addChrom("chr1", DNAseq("AAAAANgggggNCCCCCNtttttn").length());
+	g2.addChrom("chr2", DNAseq("TTTTTNcccccNGGGGGNaaaaan").length());
 
 	ostringstream out;
 	g1.save(out);
@@ -43,6 +48,7 @@ int main() {
 		cerr << "Failed to load g2N: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
+
 	if(g1N != g1) {
 		cerr << "loaded genome g1 differs from original copy" << endl;
 		return EXIT_FAILURE;
@@ -51,7 +57,36 @@ int main() {
 		cerr << "loaded genome g2 differs from original copy" << endl;
 		return EXIT_FAILURE;
 	}
-	cout << "Genome IO tests passed" << endl;
+
+	size_t i1;
+	if((i1 = g1.getChromIndex(0)) != 0) {
+		cerr << "chromIndex of g1 at loc 0 should be 0 but found " << i1 << endl;
+		return EXIT_FAILURE;
+	}
+	if((i1 = g1.getChromIndex(20)) != 0) {
+		cerr << "chromIndex of g1 at loc 20 should be 0 but found " << i1 << endl;
+		return EXIT_FAILURE;
+	}
+	if((i1 = g1.getChromIndex(21)) != 1) {
+		cerr << "chromIndex of g1 at loc 21 should be 1 but found " << i1 << endl;
+		return EXIT_FAILURE;
+	}
+
+	size_t i2;
+	if((i2 = g2.getChromIndex(0)) != 0) {
+		cerr << "chromIndex of g2 at loc 0 should be 0 but found " << i2 << endl;
+		return EXIT_FAILURE;
+	}
+	if((i2 = g2.getChromIndex(24)) != 0) {
+		cerr << "chromIndex of g2 at loc 24 should be 0 but found " << i2 << endl;
+		return EXIT_FAILURE;
+	}
+	if((i2 = g2.getChromIndex(25)) != 1) {
+		cerr << "chromIndex of g2 at loc 25 should be 1 but found " << i2 << endl;
+		return EXIT_FAILURE;
+	}
+
+	cout << "Genome tests passed" << endl;
 
 	/* part 2, MetaGenome test */
 	out.str("");
@@ -87,5 +122,6 @@ int main() {
 		cerr << "loaded MetaGenome mtg differs from original copy" << endl;
 		return EXIT_FAILURE;
 	}
-	cout << "MetaGenome IO tests passed" << endl;
+	cout << "MetaGenome tests passed" << endl;
+
 }

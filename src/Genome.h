@@ -28,9 +28,29 @@ using std::ostream;
  * Basic information of a genome (within a MetaGenome)
  */
 class Genome {
-	typedef map<string, uint64_t> chrmap_t;
-
 public:
+	/* nested types and enums */\
+	struct Chrom {
+		/** default constructor */
+		Chrom() = default;
+
+		/** construct from given info */
+		Chrom(const string& name, uint64_t size) : name(name), size(size)
+		{  }
+
+		/** save this Chrom to binary output */
+		ostream& save(ostream& out) const;
+
+		/** load a Chrom from binary input */
+		istream& load(istream& in);
+
+		/* non-member functions */
+		friend bool operator==(const Chrom& lhs, const Chrom& rhs);
+
+		string name;
+		uint64_t size;
+	};
+
 	/* constructors */
 	/** default constructor */
 	Genome() = default;
@@ -39,11 +59,9 @@ public:
 	Genome(const string& name) : name(name)
 	{  }
 
-	/** construct a single chrom genome, name the genome with this chr */
-	Genome(const string& chr, const DNAseq& seq) : Genome(chr)
-	{
-		addChrom(chr, seq.length());
-	}
+	/** construct a genome with given name chromosomes */
+	Genome(const string& name, const vector<Chrom>& chroms) : name(name), chroms(chroms)
+	{  }
 
 	/* member methods */
 	const string& getName() const {
@@ -56,30 +74,39 @@ public:
 
 	/** get number of chromosomes */
 	size_t numChroms() const {
-		return chromSize.size();
+		return chroms.size();
 	}
 
 	/** get all chromosomes */
-	vector<string> getChroms() const;
-
-	/** get chromosome size map */
-	const chrmap_t& getChromSize() const {
-		return chromSize;
+	const vector<Chrom>& getChroms() const {
+		return chroms;
 	}
 
-	/** get a single chromsome size */
-	uint64_t getChromSize(const string& chr) const {
-		return chromSize.at(chr);
-	}
+	/** test whether this chrom name exists */
+	bool hasChrom(const string& chrName) const;
+
+	/** get a single chromsome size, or 0 if not found */
+	uint64_t getChromSize(const string& chrName) const;
 
 	/** get the overall size of this genome */
 	uint64_t getSize() const;
 
-	/** add a new chromosome with given seq */
-	void addChrom(const string& chr, uint64_t size);
+	/** add a new chrom object at the end */
+	void addChrom(const Chrom& chr) {
+		chroms.push_back(chr);
+	}
 
-	/** get chromosome index given a relative loc of this Genome */
-	uint64_t getChromIndex(uint64_t loc) const;
+	/** add a new chromosome with given name and size */
+	void addChrom(const string& chrName, uint64_t size) {
+		addChrom(Chrom(chrName, size));
+	}
+
+	/**
+	 * get chromosome index given a relative loc of this Genome
+	 * @param  loc  0-based loc relative to this Genome
+	 * @return  0-based relative order, or -1 if not exists
+	 */
+	size_t getChromIndex(uint64_t loc) const;
 
 	/** save this object to binary output */
 	ostream& save(ostream& out) const;
@@ -92,11 +119,15 @@ public:
 
 private:
 	string name;
-	chrmap_t chromSize;
+	vector<Chrom> chroms;
 };
 
-inline void Genome::addChrom(const string& chr, uint64_t size) {
-	chromSize[chr] = size;
+inline bool operator==(const Genome::Chrom& lhs, const Genome::Chrom& rhs) {
+	return lhs.name == rhs.name && lhs.size == rhs.size;
+}
+
+inline bool operator!=(const Genome::Chrom& lhs, const Genome::Chrom& rhs) {
+	return !(lhs == rhs);
 }
 
 inline bool operator!=(const Genome& lhs, const Genome& rhs) {
