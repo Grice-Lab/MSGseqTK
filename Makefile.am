@@ -1,4 +1,5 @@
 # This is the Makefile for the EGUtil library
+SUBDIRS = . UCSC
 
 ACLOCAL_AMFLAGS = -I m4
 
