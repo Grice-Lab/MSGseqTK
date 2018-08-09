@@ -13,7 +13,7 @@ namespace UCSC {
 
 void GFF3::readAttributes(const string& attrStr) {
 	vector<string> attrs;
-	boost::split(attrs, attrStr, boost::is_any_of(" =;"), boost::token_compress_on);
+	boost::split(attrs, attrStr, boost::is_any_of("=;"), boost::token_compress_on);
 	for(vector<string>::size_type i = 0; i < attrs.size(); i += 2)
 		setAttr(attrs[i], attrs[i+1]);
 }
