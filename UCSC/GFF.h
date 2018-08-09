@@ -169,6 +169,10 @@ public:
 	static const string GFF_SUFFIX;
 	static const string GTF_SUFFIX;
 	static const string GFF3_SUFFIX;
+	static const double INVALID_SCORE;
+	static const int INVALID_FRAME = -1;
+	static const char INVALID_FLAG = '.';
+	static const string INVALID_TOKEN;
 
 	/* static methods */
 	static VERSION guessVersion(const string& fn);

@@ -5,6 +5,8 @@
  *      Author: zhengqi
  */
 
+#include <math.h> // requires C99
+#include <boost/lexical_cast.hpp>
 #include "StringUtils.h"
 #include "GFF.h"
 
@@ -16,6 +18,8 @@ const string GFF::GFF_SUFFIX = ".gff";
 const string GFF::GTF_SUFFIX = ".gtf";
 const string GFF::GFF3_SUFFIX = ".gff3";
 
+const double GFF::INVALID_SCORE = NAN;
+const string GFF::INVALID_TOKEN = ".";
 
 istream& GFF::load(istream& in) {
 	StringUtils::loadString(seqname, in);
@@ -56,10 +60,20 @@ ostream& GFF::save(ostream& out) const {
 }
 
 istream& operator>>(istream& in, GFF& record) {
+	string token;
 	std::getline(in, record.seqname, GFF::SEP);
 	std::getline(in, record.source, GFF::SEP);
 	std::getline(in, record.type, GFF::SEP);
-	in >> record.start >> record.end >> record.score >> record.strand >> record.frame;
+	in >> record.start >> record.end;
+	/* safe-guard invalid fields */
+	in >> token;
+	record.score = token != GFF::INVALID_TOKEN ? boost::lexical_cast<double>(token) : GFF::INVALID_SCORE;
+
+	in >> record.strand;
+
+	in >> token;
+	record.frame = token != GFF::INVALID_TOKEN ? boost::lexical_cast<int>(token) : GFF::INVALID_FRAME;
+
 	string attrStr;
 	std::getline(in, attrStr);
 	record.readAttributes(attrStr);
@@ -68,8 +82,10 @@ istream& operator>>(istream& in, GFF& record) {
 
 ostream& operator<<(ostream& out, const GFF& record) {
 	out << record.seqname << GFF::SEP << record.source << GFF::SEP << record.type << GFF::SEP
-		<< record.start << GFF::SEP << record.end << GFF::SEP << record.score << GFF::SEP
-		<< record.strand << GFF::SEP << record.frame << GFF::SEP
+		<< record.start << GFF::SEP << record.end << GFF::SEP
+		<< (::isnan(record.score) ? GFF::INVALID_FLAG : record.score) << GFF::SEP
+		<< record.strand << GFF::SEP
+		<< (record.frame == GFF::INVALID_FRAME ? GFF::INVALID_FLAG : record.frame) << GFF::SEP
 		<< record.writeAttributes();
 	return out;
 }

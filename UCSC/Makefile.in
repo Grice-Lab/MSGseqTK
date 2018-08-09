@@ -138,7 +138,7 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libEGUCSC_a_AR = $(AR) $(ARFLAGS)
 libEGUCSC_a_DEPENDENCIES = $(top_srcdir)/libEGUtil.a
-am_libEGUCSC_a_OBJECTS = GFF.$(OBJEXT)
+am_libEGUCSC_a_OBJECTS = GFF.$(OBJEXT) GTF.$(OBJEXT)
 libEGUCSC_a_OBJECTS = $(am_libEGUCSC_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -333,11 +333,13 @@ top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = -I$(top_srcdir)
 AM_CXXFLAGS = -I$(top_srcdir)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS)
 
 # Build a static/shared library
 lib_LIBRARIES = libEGUCSC.a
 libEGUCSC_a_SOURCES = \
-GFF.cpp
+GFF.cpp \
+GTF.cpp
 
 libEGUCSC_a_LIBADD = \
 $(top_srcdir)/libEGUtil.a
@@ -419,6 +421,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GFF.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GTF.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
