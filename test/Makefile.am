@@ -3,6 +3,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 AM_CFLAGS = \
 -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
+-I$(top_srcdir)/src/util/UCSC \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libcds/include \
@@ -12,6 +13,7 @@ $(OPENMP_CFLAGS)
 AM_CXXFLAGS = \
 -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
+-I$(top_srcdir)/src/util/UCSC \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libcds/include \
@@ -51,6 +53,7 @@ $(top_srcdir)/src/libcds/src/libcds.la
 
 Genome_test_SOURCES = Genome_test.cpp
 Genome_test_LDADD = \
+$(top_srcdir)/src/util/libEGUtil.a \
 $(top_srcdir)/src/libMSGseqTK.a
 
 MEM_test_SOURCES = MEM_test.cpp
