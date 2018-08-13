@@ -232,6 +232,8 @@ inline bool operator!=(const GFF& lhs, const GFF& rhs) {
 }
 
 inline void GFF::readAttributes(const string& attrStr) {
+	if(attrStr.empty())
+		return;
 	switch(ver) {
 	case GTF:
 		return readGTFAttributes(attrStr);
