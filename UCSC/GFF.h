@@ -48,8 +48,7 @@ public:
 	  start(start), end(end), score(score), strand(strand), frame(frame) {
 		if(ver == UNK)
 			throw std::invalid_argument("Unknown GFF version");
-		if(!attrStr.empty())
-			readAttributes(attrStr);
+		readAttributes(attrStr);
 	}
 
 	const vector<string>& getAttrNames() const {
@@ -233,6 +232,8 @@ inline bool operator!=(const GFF& lhs, const GFF& rhs) {
 }
 
 inline void GFF::readAttributes(const string& attrStr) {
+	if(attrStr.empty())
+		return;
 	switch(ver) {
 	case GTF:
 		return readGTFAttributes(attrStr);
