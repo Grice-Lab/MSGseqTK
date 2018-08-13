@@ -26,7 +26,7 @@
 #include "BitSequence.h"
 
 namespace EGriceLab {
-namespace MSGseqClean {
+namespace MSGseqTK {
 using std::vector;
 
 /**
@@ -119,6 +119,9 @@ public:
 	 */
 	saidx_t accessSA(saidx_t i) const;
 
+	/** build SAbit and SAsampled from the internal BWT */
+	void buildSA();
+
 	/**
 	 * count present times of a DNAseq pattern in forward version
 	 */
@@ -182,6 +185,7 @@ public:
 	/* non-member functions */
 	friend FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs);
 
+
 private:
 	/**
 	 * build alphabet counts from a DNAseq
@@ -191,8 +195,6 @@ private:
 	/** build BWT on the reversed string of seq */
 	void buildBWT(const DNAseq& seq);
 
-	/** build SAbit and SAsampled from the internal BWT */
-	void buildSA();
 
 	static const int RRR_SAMPLE_RATE = 8; /* RRR sample rate for BWT */
 	static const int SA_SAMPLE_RATE = 16;  /* sample rate for SA */

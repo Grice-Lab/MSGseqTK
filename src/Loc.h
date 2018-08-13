@@ -12,7 +12,7 @@
 #include <iostream>
 
 namespace EGriceLab {
-namespace MSGseqClean {
+namespace MSGseqTK {
 
 using std::istream;
 using std::ostream;
@@ -22,7 +22,7 @@ struct Loc {
 	Loc() = default;
 
 	/** constructor from given values */
-	Loc(uint64_t start, uint64_t end) : start(start), end(end)
+	Loc(int64_t start, int64_t end) : start(start), end(end)
 	{  }
 
 	/* member methods */
@@ -42,13 +42,16 @@ struct Loc {
 	/** read this loc from text output */
 	istream& read(istream& in);
 
+	/** static member methods */
+	static int64_t dist(const Loc& loc1, const Loc& loc2);
+
 	/* non-member methods */
 	friend ostream& operator<<(ostream& out, const Loc& loc);
 	friend istream& operator>>(istream& in, Loc& loc);
 
 	/* member fields */
-	uint64_t start; /* 0-based */
-	uint64_t end;   /* 1-based */
+	int64_t start; /* 0-based */
+	int64_t end;   /* 1-based */
 };
 
 inline ostream& operator<<(ostream& out, const Loc& loc) {

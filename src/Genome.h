@@ -16,7 +16,7 @@
 #include "DNAseq.h"
 
 namespace EGriceLab {
-namespace MSGseqClean {
+namespace MSGseqTK {
 
 using std::string;
 using std::map;

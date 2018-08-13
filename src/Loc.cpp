@@ -8,17 +8,17 @@
 #include "Loc.h"
 
 namespace EGriceLab {
-namespace MSGseqClean {
+namespace MSGseqTK {
 
 ostream& Loc::save(ostream& out) const {
-	out.write((const char*) &start, sizeof(uint64_t));
-	out.write((const char*) &end, sizeof(uint64_t));
+	out.write((const char*) &start, sizeof(int64_t));
+	out.write((const char*) &end, sizeof(int64_t));
 	return out;
 }
 
 istream& Loc::load(istream& in) {
-	in.read((char*) &start, sizeof(uint64_t));
-	in.read((char*) &end, sizeof(uint64_t));
+	in.read((char*) &start, sizeof(int64_t));
+	in.read((char*) &end, sizeof(int64_t));
 	return in;
 }
 
@@ -34,6 +34,13 @@ istream& Loc::read(istream& in) {
 	in >> end; /* automatical ignore additional space */
 	in.ignore(1, ')');
 	return in;
+}
+
+int64_t Loc::dist(const Loc& loc1, const Loc& loc2) {
+	int64_t d = loc1.start < loc2.start ? loc2.start - loc1.end + 1: loc1.start - loc2.end + 1;
+	if(d < 0)
+		d = 0;
+	return d;
 }
 
 } /* namespace MSGseqClean */

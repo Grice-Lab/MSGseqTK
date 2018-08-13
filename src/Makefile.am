@@ -20,9 +20,9 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENMP_CXXFLAGS)
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(OPENMP_CXXFLAGS)
 
 # Build convenient non-install libraries
-noinst_LIBRARIES = libMSGseqClean.a
+noinst_LIBRARIES = libMSGseqTK.a
 
-libMSGseqClean_a_SOURCES = \
+libMSGseqTK_a_SOURCES = \
 DNAalphabet.cpp \
 DNAseq.cpp \
 QualStr.cpp \
@@ -36,39 +36,38 @@ MetaGenome.cpp
 
 # Build the executables
 bin_PROGRAMS = \
-msgseqclean \
-msgseqclean-build \
-msgseqclean-inspect \
-msgseqclean-merge
+msgseqtk-clean \
+msgseqtk-build \
+msgseqtk-inspect \
+msgseqtk-mergedb
 
-msgseqclean_SOURCES = msgseqclean.cpp
-msgseqclean_LDADD = \
-libMSGseqClean.a \
+msgseqtk_clean_SOURCES = msgseqtk-clean.cpp
+msgseqtk_clean_LDADD = \
+libMSGseqTK.a \
 util/libEGUtil.a \
 math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libcds/src/libcds.la \
 $(BOOST_IOSTREAMS_LIB)
 
-msgseqclean_build_SOURCES = msgseqclean-build.cpp MSGseqCleanEnv.cpp
-msgseqclean_build_LDADD = \
-libMSGseqClean.a \
+msgseqtk_build_SOURCES = msgseqtk-build.cpp MSGseqTKEnv.cpp
+msgseqtk_build_LDADD = \
+libMSGseqTK.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libcds/src/libcds.la \
 $(BOOST_IOSTREAMS_LIB)
 
-msgseqclean_inspect_SOURCES = msgseqclean-inspect.cpp MSGseqCleanEnv.cpp
-msgseqclean_inspect_LDADD = \
-libMSGseqClean.a \
+msgseqtk_inspect_SOURCES = msgseqtk-inspect.cpp MSGseqTKEnv.cpp
+msgseqtk_inspect_LDADD = \
+libMSGseqTK.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libcds/src/libcds.la
 
-msgseqclean_merge_SOURCES = msgseqclean-merge.cpp MSGseqCleanEnv.cpp
-msgseqclean_merge_LDADD = \
-libMSGseqClean.a \
+msgseqtk_mergedb_SOURCES = msgseqtk-mergedb.cpp MSGseqTKEnv.cpp
+msgseqtk_mergedb_LDADD = \
+libMSGseqTK.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libcds/src/libcds.la
-

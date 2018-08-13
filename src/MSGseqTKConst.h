@@ -5,13 +5,13 @@
  *      Author: zhengqi
  */
 
-#ifndef SRC_MSGSEQCLEANCONST_H_
-#define SRC_MSGSEQCLEANCONST_H_
+#ifndef SRC_MSGSEQTKCONST_H_
+#define SRC_MSGSEQTKCONST_H_
 
 #include <string>
 
 namespace EGriceLab {
-namespace MSGseqClean {
+namespace MSGseqTK {
 
 using std::string;
 
@@ -28,4 +28,4 @@ const double PHRED_LOG_BASE = 10;
 
 
 
-#endif /* SRC_MSGSEQCLEANCONST_H_ */
+#endif /* SRC_MSGSEQTKCONST_H_ */

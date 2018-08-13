@@ -12,7 +12,7 @@
 #include "MetaGenome.h"
 
 using namespace std;
-using namespace EGriceLab::MSGseqClean;
+using namespace EGriceLab::MSGseqTK;
 
 int main() {
 	/* part 1, Genome test */

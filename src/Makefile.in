@@ -90,8 +90,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-bin_PROGRAMS = msgseqclean$(EXEEXT) msgseqclean-build$(EXEEXT) \
-	msgseqclean-inspect$(EXEEXT) msgseqclean-merge$(EXEEXT)
+bin_PROGRAMS = msgseqtk-clean$(EXEEXT) msgseqtk-build$(EXEEXT) \
+	msgseqtk-inspect$(EXEEXT) msgseqtk-mergedb$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -115,41 +115,41 @@ AM_V_AR = $(am__v_AR_@AM_V@)
 am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
 am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
-libMSGseqClean_a_AR = $(AR) $(ARFLAGS)
-libMSGseqClean_a_LIBADD =
-am_libMSGseqClean_a_OBJECTS = DNAalphabet.$(OBJEXT) DNAseq.$(OBJEXT) \
+libMSGseqTK_a_AR = $(AR) $(ARFLAGS)
+libMSGseqTK_a_LIBADD =
+am_libMSGseqTK_a_OBJECTS = DNAalphabet.$(OBJEXT) DNAseq.$(OBJEXT) \
 	QualStr.$(OBJEXT) PrimarySeq.$(OBJEXT) SeqIO.$(OBJEXT) \
 	Loc.$(OBJEXT) MEM.$(OBJEXT) FMIndex.$(OBJEXT) Genome.$(OBJEXT) \
 	MetaGenome.$(OBJEXT)
-libMSGseqClean_a_OBJECTS = $(am_libMSGseqClean_a_OBJECTS)
+libMSGseqTK_a_OBJECTS = $(am_libMSGseqTK_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_msgseqclean_OBJECTS = msgseqclean.$(OBJEXT)
-msgseqclean_OBJECTS = $(am_msgseqclean_OBJECTS)
+am_msgseqtk_build_OBJECTS = msgseqtk-build.$(OBJEXT) \
+	MSGseqTKEnv.$(OBJEXT)
+msgseqtk_build_OBJECTS = $(am_msgseqtk_build_OBJECTS)
 am__DEPENDENCIES_1 =
-msgseqclean_DEPENDENCIES = libMSGseqClean.a util/libEGUtil.a \
-	math/libEGMath.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+msgseqtk_build_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
+	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	libcds/src/libcds.la $(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-am_msgseqclean_build_OBJECTS = msgseqclean-build.$(OBJEXT) \
-	MSGseqCleanEnv.$(OBJEXT)
-msgseqclean_build_OBJECTS = $(am_msgseqclean_build_OBJECTS)
-msgseqclean_build_DEPENDENCIES = libMSGseqClean.a util/libEGUtil.a \
-	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+am_msgseqtk_clean_OBJECTS = msgseqtk-clean.$(OBJEXT)
+msgseqtk_clean_OBJECTS = $(am_msgseqtk_clean_OBJECTS)
+msgseqtk_clean_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
+	math/libEGMath.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	libcds/src/libcds.la $(am__DEPENDENCIES_1)
-am_msgseqclean_inspect_OBJECTS = msgseqclean-inspect.$(OBJEXT) \
-	MSGseqCleanEnv.$(OBJEXT)
-msgseqclean_inspect_OBJECTS = $(am_msgseqclean_inspect_OBJECTS)
-msgseqclean_inspect_DEPENDENCIES = libMSGseqClean.a util/libEGUtil.a \
+am_msgseqtk_inspect_OBJECTS = msgseqtk-inspect.$(OBJEXT) \
+	MSGseqTKEnv.$(OBJEXT)
+msgseqtk_inspect_OBJECTS = $(am_msgseqtk_inspect_OBJECTS)
+msgseqtk_inspect_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
 	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	libcds/src/libcds.la
-am_msgseqclean_merge_OBJECTS = msgseqclean-merge.$(OBJEXT) \
-	MSGseqCleanEnv.$(OBJEXT)
-msgseqclean_merge_OBJECTS = $(am_msgseqclean_merge_OBJECTS)
-msgseqclean_merge_DEPENDENCIES = libMSGseqClean.a util/libEGUtil.a \
+am_msgseqtk_mergedb_OBJECTS = msgseqtk-mergedb.$(OBJEXT) \
+	MSGseqTKEnv.$(OBJEXT)
+msgseqtk_mergedb_OBJECTS = $(am_msgseqtk_mergedb_OBJECTS)
+msgseqtk_mergedb_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
 	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	libcds/src/libcds.la
 AM_V_P = $(am__v_P_@AM_V@)
@@ -186,12 +186,12 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(libMSGseqClean_a_SOURCES) $(msgseqclean_SOURCES) \
-	$(msgseqclean_build_SOURCES) $(msgseqclean_inspect_SOURCES) \
-	$(msgseqclean_merge_SOURCES)
-DIST_SOURCES = $(libMSGseqClean_a_SOURCES) $(msgseqclean_SOURCES) \
-	$(msgseqclean_build_SOURCES) $(msgseqclean_inspect_SOURCES) \
-	$(msgseqclean_merge_SOURCES)
+SOURCES = $(libMSGseqTK_a_SOURCES) $(msgseqtk_build_SOURCES) \
+	$(msgseqtk_clean_SOURCES) $(msgseqtk_inspect_SOURCES) \
+	$(msgseqtk_mergedb_SOURCES)
+DIST_SOURCES = $(libMSGseqTK_a_SOURCES) $(msgseqtk_build_SOURCES) \
+	$(msgseqtk_clean_SOURCES) $(msgseqtk_inspect_SOURCES) \
+	$(msgseqtk_mergedb_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -413,8 +413,8 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENMP_CXXFLAGS)
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(OPENMP_CXXFLAGS)
 
 # Build convenient non-install libraries
-noinst_LIBRARIES = libMSGseqClean.a
-libMSGseqClean_a_SOURCES = \
+noinst_LIBRARIES = libMSGseqTK.a
+libMSGseqTK_a_SOURCES = \
 DNAalphabet.cpp \
 DNAseq.cpp \
 QualStr.cpp \
@@ -426,33 +426,33 @@ FMIndex.cpp \
 Genome.cpp \
 MetaGenome.cpp
 
-msgseqclean_SOURCES = msgseqclean.cpp
-msgseqclean_LDADD = \
-libMSGseqClean.a \
+msgseqtk_clean_SOURCES = msgseqtk-clean.cpp
+msgseqtk_clean_LDADD = \
+libMSGseqTK.a \
 util/libEGUtil.a \
 math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libcds/src/libcds.la \
 $(BOOST_IOSTREAMS_LIB)
 
-msgseqclean_build_SOURCES = msgseqclean-build.cpp MSGseqCleanEnv.cpp
-msgseqclean_build_LDADD = \
-libMSGseqClean.a \
+msgseqtk_build_SOURCES = msgseqtk-build.cpp MSGseqTKEnv.cpp
+msgseqtk_build_LDADD = \
+libMSGseqTK.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libcds/src/libcds.la \
 $(BOOST_IOSTREAMS_LIB)
 
-msgseqclean_inspect_SOURCES = msgseqclean-inspect.cpp MSGseqCleanEnv.cpp
-msgseqclean_inspect_LDADD = \
-libMSGseqClean.a \
+msgseqtk_inspect_SOURCES = msgseqtk-inspect.cpp MSGseqTKEnv.cpp
+msgseqtk_inspect_LDADD = \
+libMSGseqTK.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libcds/src/libcds.la
 
-msgseqclean_merge_SOURCES = msgseqclean-merge.cpp MSGseqCleanEnv.cpp
-msgseqclean_merge_LDADD = \
-libMSGseqClean.a \
+msgseqtk_mergedb_SOURCES = msgseqtk-mergedb.cpp MSGseqTKEnv.cpp
+msgseqtk_mergedb_LDADD = \
+libMSGseqTK.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libcds/src/libcds.la
@@ -494,10 +494,10 @@ $(am__aclocal_m4_deps):
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
 
-libMSGseqClean.a: $(libMSGseqClean_a_OBJECTS) $(libMSGseqClean_a_DEPENDENCIES) $(EXTRA_libMSGseqClean_a_DEPENDENCIES) 
-	$(AM_V_at)-rm -f libMSGseqClean.a
-	$(AM_V_AR)$(libMSGseqClean_a_AR) libMSGseqClean.a $(libMSGseqClean_a_OBJECTS) $(libMSGseqClean_a_LIBADD)
-	$(AM_V_at)$(RANLIB) libMSGseqClean.a
+libMSGseqTK.a: $(libMSGseqTK_a_OBJECTS) $(libMSGseqTK_a_DEPENDENCIES) $(EXTRA_libMSGseqTK_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libMSGseqTK.a
+	$(AM_V_AR)$(libMSGseqTK_a_AR) libMSGseqTK.a $(libMSGseqTK_a_OBJECTS) $(libMSGseqTK_a_LIBADD)
+	$(AM_V_at)$(RANLIB) libMSGseqTK.a
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
@@ -548,21 +548,21 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
-msgseqclean$(EXEEXT): $(msgseqclean_OBJECTS) $(msgseqclean_DEPENDENCIES) $(EXTRA_msgseqclean_DEPENDENCIES) 
-	@rm -f msgseqclean$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(msgseqclean_OBJECTS) $(msgseqclean_LDADD) $(LIBS)
+msgseqtk-build$(EXEEXT): $(msgseqtk_build_OBJECTS) $(msgseqtk_build_DEPENDENCIES) $(EXTRA_msgseqtk_build_DEPENDENCIES) 
+	@rm -f msgseqtk-build$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(msgseqtk_build_OBJECTS) $(msgseqtk_build_LDADD) $(LIBS)
 
-msgseqclean-build$(EXEEXT): $(msgseqclean_build_OBJECTS) $(msgseqclean_build_DEPENDENCIES) $(EXTRA_msgseqclean_build_DEPENDENCIES) 
-	@rm -f msgseqclean-build$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(msgseqclean_build_OBJECTS) $(msgseqclean_build_LDADD) $(LIBS)
+msgseqtk-clean$(EXEEXT): $(msgseqtk_clean_OBJECTS) $(msgseqtk_clean_DEPENDENCIES) $(EXTRA_msgseqtk_clean_DEPENDENCIES) 
+	@rm -f msgseqtk-clean$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(msgseqtk_clean_OBJECTS) $(msgseqtk_clean_LDADD) $(LIBS)
 
-msgseqclean-inspect$(EXEEXT): $(msgseqclean_inspect_OBJECTS) $(msgseqclean_inspect_DEPENDENCIES) $(EXTRA_msgseqclean_inspect_DEPENDENCIES) 
-	@rm -f msgseqclean-inspect$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(msgseqclean_inspect_OBJECTS) $(msgseqclean_inspect_LDADD) $(LIBS)
+msgseqtk-inspect$(EXEEXT): $(msgseqtk_inspect_OBJECTS) $(msgseqtk_inspect_DEPENDENCIES) $(EXTRA_msgseqtk_inspect_DEPENDENCIES) 
+	@rm -f msgseqtk-inspect$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(msgseqtk_inspect_OBJECTS) $(msgseqtk_inspect_LDADD) $(LIBS)
 
-msgseqclean-merge$(EXEEXT): $(msgseqclean_merge_OBJECTS) $(msgseqclean_merge_DEPENDENCIES) $(EXTRA_msgseqclean_merge_DEPENDENCIES) 
-	@rm -f msgseqclean-merge$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(msgseqclean_merge_OBJECTS) $(msgseqclean_merge_LDADD) $(LIBS)
+msgseqtk-mergedb$(EXEEXT): $(msgseqtk_mergedb_OBJECTS) $(msgseqtk_mergedb_DEPENDENCIES) $(EXTRA_msgseqtk_mergedb_DEPENDENCIES) 
+	@rm -f msgseqtk-mergedb$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(msgseqtk_mergedb_OBJECTS) $(msgseqtk_mergedb_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -576,15 +576,15 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Genome.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Loc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MEM.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MSGseqCleanEnv.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MSGseqTKEnv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MetaGenome.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PrimarySeq.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QualStr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SeqIO.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqclean-build.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqclean-inspect.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqclean-merge.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqclean.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqtk-build.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqtk-clean.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqtk-inspect.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqtk-mergedb.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

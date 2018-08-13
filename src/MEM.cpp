@@ -6,15 +6,16 @@
  */
 
 #include <cmath>
+#include <cassert>
 #include "MEM.h"
 #include "Stats.h"
 
 namespace EGriceLab {
-namespace MSGseqClean {
+namespace MSGseqTK {
 
 using namespace EGriceLab::Math;
 
-double MEM::loglik() const {
+double MEM::logP() const {
 	double ll = 0; /* ll is always in base 10 in phred system */
 	for(uint64_t i = from; i < to; ++i) {
 		ll += ::log(B[(*seq)[i]]) - ::log(N); /* use observed base frequency */
@@ -23,6 +24,26 @@ double MEM::loglik() const {
 			ll += ::log(1 - q2p((*qual)[i])); /* matching liklihood is 1 - error */
 	}
 	return ll;
+}
+
+int64_t MEM::readDist(const MEM& mem1, const MEM& mem2) {
+	assert(mem1.seq == mem2.seq);
+	int64_t d = mem1.from < mem2.from ? mem2.from - mem1.to + 1 : mem1.from - mem2.to + 1;
+	if(d < 0)
+		d == 0;
+	return d;
+}
+
+int64_t MEM::dbDist(const MEM& mem1, const MEM& mem2) {
+	int64_t minD = -1;
+	for(const Loc& loc1 : mem1.locs) {
+		for(const Loc& loc2 : mem2.locs) {
+			int64_t d = Loc::dist(loc1, loc2);
+			if(minD == -1 || d < minD)
+				minD = d;
+		}
+	}
+	return minD;
 }
 
 } /* namespace MSGseqClean */

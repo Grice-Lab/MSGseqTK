@@ -9,7 +9,7 @@
 #include "StringUtils.h"
 
 namespace EGriceLab {
-namespace MSGseqClean {
+namespace MSGseqTK {
 using Eigen::Map;
 
 uint64_t MetaGenome::getSize() const {

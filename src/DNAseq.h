@@ -15,7 +15,7 @@
 #include "StringUtils.h"
 
 namespace EGriceLab {
-namespace MSGseqClean {
+namespace MSGseqTK {
 
 using std::string;
 using std::istream;

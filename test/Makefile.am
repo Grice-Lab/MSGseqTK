@@ -33,29 +33,29 @@ LIBDIVSUFSORT_PKG_NAME=libdivsufsort64
 
 DNAseq_test_SOURCES = DNAseq_test.cpp
 DNAseq_test_LDADD = \
-$(top_srcdir)/src/libMSGseqClean.a
+$(top_srcdir)/src/libMSGseqTK.a
 
 PrimarySeq_test_SOURCES = PrimarySeq_test.cpp
 PrimarySeq_test_LDADD = \
-$(top_srcdir)/src/libMSGseqClean.a
+$(top_srcdir)/src/libMSGseqTK.a
 
 SeqIO_test_SOURCES = SeqIO_test.cpp
 SeqIO_test_LDADD = \
-$(top_srcdir)/src/libMSGseqClean.a
+$(top_srcdir)/src/libMSGseqTK.a
 
 FMIndex_test_SOURCES = FMIndex_test.cpp
 FMIndex_test_LDADD = \
-$(top_srcdir)/src/libMSGseqClean.a \
+$(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 $(top_srcdir)/src/libcds/src/libcds.la
 
 Genome_test_SOURCES = Genome_test.cpp
 Genome_test_LDADD = \
-$(top_srcdir)/src/libMSGseqClean.a
+$(top_srcdir)/src/libMSGseqTK.a
 
 MEM_test_SOURCES = MEM_test.cpp
 MEM_test_LDADD = \
-$(top_srcdir)/src/libMSGseqClean.a \
+$(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 $(top_srcdir)/src/libcds/src/libcds.la
 

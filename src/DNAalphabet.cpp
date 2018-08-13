@@ -9,7 +9,7 @@
 #include "DNAalphabet.h"
 
 namespace EGriceLab {
-namespace MSGseqClean {
+namespace MSGseqTK {
 
 const int8_t* DNAalphabet::sym2base = initSym2Base();
 const char* DNAalphabet::base2sym = initBase2Sym();

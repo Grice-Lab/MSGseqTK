@@ -9,7 +9,7 @@
 #include "StringUtils.h"
 
 namespace EGriceLab {
-namespace MSGseqClean {
+namespace MSGseqTK {
 
 ostream& Genome::Chrom::save(ostream& out) const {
 	StringUtils::saveString(name, out);

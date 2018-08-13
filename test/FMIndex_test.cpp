@@ -11,7 +11,7 @@
 #include "FMIndex.h"
 
 using namespace std;
-using namespace EGriceLab::MSGseqClean;
+using namespace EGriceLab::MSGseqTK;
 
 bool isValidLocs(const DNAseq& seq, const DNAseq& pat, const vector<Loc>& locs);
 

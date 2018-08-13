@@ -17,11 +17,11 @@
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filter/bzip2.hpp> /* for bzip2 support */
 #include "EGUtil.h"
-#include "MSGseqClean.h"
+#include "MSGseqTK.h"
 
 using namespace std;
 using namespace EGriceLab;
-using namespace EGriceLab::MSGseqClean;
+using namespace EGriceLab::MSGseqTK;
 using namespace Eigen;
 
 /**
@@ -195,6 +195,8 @@ int main(int argc, char* argv[]) {
 		assert(mtg.getSize() == fmidx.length());
 		infoLog << " done. Currrent # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
 	}
+	infoLog << "Building the final SA ..." << endl;
+	fmidx.buildSA();
 
 	infoLog << "MetaGenomics database build. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
 

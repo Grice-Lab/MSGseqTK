@@ -13,11 +13,11 @@
 #include <algorithm>
 #include "Loc.h"
 #include "DNAseq.h"
+#include "MSGseqTKConst.h"
 #include "QualStr.h"
-#include "MSGseqCleanConst.h"
 
 namespace EGriceLab {
-namespace MSGseqClean {
+namespace MSGseqTK {
 
 /*
  * Maximal Exact Match betwen a DNAseq and a FM-index database
@@ -81,18 +81,42 @@ struct MEM {
 	/**
 	 * get loglikelihood of this MEM
 	 * @param  baseFreq  base frequency used to determine the loglik, default equal base frequency
-	 * @return  loglik using the observed sequence and quality
+	 * @return  log-pvalue of observing this MEM by random, using base-frequency and optionally base quality
 	 */
-	double loglik() const;
+	double logP() const;
 
-	/** get the likelihood of this MEM */
-	double liklihood() const {
-		return ::exp(loglik());
+	/** get the pvalue of observing this MEM by random */
+	double pvalue() const {
+		return ::exp(logP());
 	}
 
 	/** get the E-value of observing this MEM on a known size database */
 	double evalue() const {
-		return N * liklihood();
+		return N * pvalue();
+	}
+
+	/* static member methods */
+	/** get the read-distance of two mem,
+	 * return 0 if they are overlapping, or -1 if they map to different read
+	 */
+	static int64_t readDist(const MEM& mem1, const MEM& mem2);
+
+	/** get the DB-distance of two mem,
+	 * return 0 if they are overlapping,
+	 * or -1 both locs are empty
+	 */
+	static int64_t dbDist(const MEM& mem1, const MEM& mem2);
+
+	/** get the number of indeals of two MEM
+	 * return positive number if insertion, negative if deletion, or 0 if none
+	 */
+	static int64_t nindel(const MEM& mem1, const MEM& mem2) {
+		return readDist(mem1, mem2) - dbDist(mem2, mem2);
+	}
+
+	/** get the indel rate relative to the size of their mapped read */
+	static double rindel(const MEM& mem1, const MEM& mem2) {
+		return nindel(mem1, mem2) / static_cast<double> (mem1.seq->length());
 	}
 
 	/* member fields */

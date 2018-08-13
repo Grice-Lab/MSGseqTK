@@ -9,7 +9,7 @@
 #include "QualStr.h"
 
 namespace EGriceLab {
-namespace MSGseqClean {
+namespace MSGseqTK {
 
 QualStr& QualStr::assign(const string& str) {
 	clear();

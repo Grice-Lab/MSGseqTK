@@ -13,7 +13,7 @@
 #include <cstdint> // C++11
 
 namespace EGriceLab {
-namespace MSGseqClean {
+namespace MSGseqTK {
 using std::string;
 
 /**

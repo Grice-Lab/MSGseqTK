@@ -113,30 +113,30 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am_DNAseq_test_OBJECTS = DNAseq_test.$(OBJEXT)
 DNAseq_test_OBJECTS = $(am_DNAseq_test_OBJECTS)
-DNAseq_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqClean.a
+DNAseq_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 am_FMIndex_test_OBJECTS = FMIndex_test.$(OBJEXT)
 FMIndex_test_OBJECTS = $(am_FMIndex_test_OBJECTS)
-FMIndex_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqClean.a \
+FMIndex_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
 	$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	$(top_srcdir)/src/libcds/src/libcds.la
 am_Genome_test_OBJECTS = Genome_test.$(OBJEXT)
 Genome_test_OBJECTS = $(am_Genome_test_OBJECTS)
-Genome_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqClean.a
+Genome_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a
 am_MEM_test_OBJECTS = MEM_test.$(OBJEXT)
 MEM_test_OBJECTS = $(am_MEM_test_OBJECTS)
-MEM_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqClean.a \
+MEM_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
 	$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	$(top_srcdir)/src/libcds/src/libcds.la
 am_PrimarySeq_test_OBJECTS = PrimarySeq_test.$(OBJEXT)
 PrimarySeq_test_OBJECTS = $(am_PrimarySeq_test_OBJECTS)
-PrimarySeq_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqClean.a
+PrimarySeq_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a
 am_SeqIO_test_OBJECTS = SeqIO_test.$(OBJEXT)
 SeqIO_test_OBJECTS = $(am_SeqIO_test_OBJECTS)
-SeqIO_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqClean.a
+SeqIO_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -563,29 +563,29 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENMP_CXXFLAGS)
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(OPENMP_CXXFLAGS)
 DNAseq_test_SOURCES = DNAseq_test.cpp
 DNAseq_test_LDADD = \
-$(top_srcdir)/src/libMSGseqClean.a
+$(top_srcdir)/src/libMSGseqTK.a
 
 PrimarySeq_test_SOURCES = PrimarySeq_test.cpp
 PrimarySeq_test_LDADD = \
-$(top_srcdir)/src/libMSGseqClean.a
+$(top_srcdir)/src/libMSGseqTK.a
 
 SeqIO_test_SOURCES = SeqIO_test.cpp
 SeqIO_test_LDADD = \
-$(top_srcdir)/src/libMSGseqClean.a
+$(top_srcdir)/src/libMSGseqTK.a
 
 FMIndex_test_SOURCES = FMIndex_test.cpp
 FMIndex_test_LDADD = \
-$(top_srcdir)/src/libMSGseqClean.a \
+$(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 $(top_srcdir)/src/libcds/src/libcds.la
 
 Genome_test_SOURCES = Genome_test.cpp
 Genome_test_LDADD = \
-$(top_srcdir)/src/libMSGseqClean.a
+$(top_srcdir)/src/libMSGseqTK.a
 
 MEM_test_SOURCES = MEM_test.cpp
 MEM_test_LDADD = \
-$(top_srcdir)/src/libMSGseqClean.a \
+$(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 $(top_srcdir)/src/libcds/src/libcds.la
 

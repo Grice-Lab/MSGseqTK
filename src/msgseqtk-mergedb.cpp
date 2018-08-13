@@ -11,11 +11,11 @@
 #include <algorithm>
 #include <cassert>
 #include "EGUtil.h"
-#include "MSGseqClean.h"
+#include "MSGseqTK.h"
 
 using namespace std;
 using namespace EGriceLab;
-using namespace EGriceLab::MSGseqClean;
+using namespace EGriceLab::MSGseqTK;
 
 /**
  * Print introduction of this program

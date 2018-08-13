@@ -16,7 +16,7 @@
 #include "MapperNone.h"
 
 namespace EGriceLab {
-namespace MSGseqClean {
+namespace MSGseqTK {
 using std::vector;
 using cds_static::Mapper;
 using cds_static::MapperNone;
@@ -145,7 +145,7 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
 	}
 
 	/* build merbed BWT */
-	sauchar_t* bwtM= new sauchar_t[N];
+	sauchar_t* bwtM = new sauchar_t[N];
 	for(saidx_t i = 0, j = 0, k = 0; k < N; ++k)
 		bwtM[k] = bitStr.getBit(k) ? bwt->access(i++) : other.bwt->access(j++);
 

@@ -12,11 +12,11 @@
 #include <iostream>
 #include <cstdint>
 #include "DNAseq.h"
+#include "MSGseqTKConst.h"
 #include "QualStr.h"
-#include "MSGseqCleanConst.h"
 
 namespace EGriceLab {
-namespace MSGseqClean {
+namespace MSGseqTK {
 
 using std::basic_string;
 using std::string;

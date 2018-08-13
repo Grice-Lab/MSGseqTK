@@ -12,7 +12,7 @@
 #include "FMIndex.h"
 
 using namespace std;
-using namespace EGriceLab::MSGseqClean;
+using namespace EGriceLab::MSGseqTK;
 
 static bool isValidMEM(const DNAseq& db, const MEM& mem);
 
@@ -33,7 +33,7 @@ int main() {
 		for(const Loc& loc : mem.locs)
 			cout << " " << loc;
 		cout << endl;
-		cout << "loglik: " << mem.loglik() << " likelihood: " << mem.liklihood()
+		cout << "loglik: " << mem.logP() << " likelihood: " << mem.pvalue()
 				<< " evalue: " << mem.evalue() << endl;
 		if(!isValidMEM(genomeDB.reverse(), mem))
 			return EXIT_FAILURE;
@@ -51,7 +51,7 @@ int main() {
 		for(const Loc& loc : mem.locs)
 			cout << " " << loc;
 		cout << endl;
-		cout << "loglik: " << mem.loglik() << " likelihood: " << mem.liklihood()
+		cout << "loglik: " << mem.logP() << " likelihood: " << mem.pvalue()
 				<< " evalue: " << mem.evalue() << endl;
 		if(!isValidMEM(genomeDB.reverse(), mem))
 			return EXIT_FAILURE;

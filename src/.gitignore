@@ -1,6 +1,6 @@
 ## Ignore executables
-msgseqclean
-msgseqclean-build
-msgseqclean-inspect
-msgseqclean-merge
+msgseqtk-clean
+msgseqtk-build
+msgseqtk-inspect
+msgseqtk-mergedb
 *.exe

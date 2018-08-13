@@ -5,8 +5,8 @@
  *      Author: zhengqi
  */
 
-#ifndef SRC_MSGSEQCLEAN_H_
-#define SRC_MSGSEQCLEAN_H_
+#ifndef SRC_MSGSEQTK_H_
+#define SRC_MSGSEQTK_H_
 
 #include "DNAalphabet.h"
 #include "DNAseq.h"
@@ -14,6 +14,6 @@
 #include "PrimarySeq.h"
 #include "SeqIO.h"
 #include "MetaGenome.h"
-#include "MSGseqCleanConst.h"
+#include "MSGseqTKConst.h"
 
-#endif /* SRC_MSGSEQCLEAN_H_ */
+#endif /* SRC_MSGSEQTK_H_ */
