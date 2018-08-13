@@ -106,7 +106,7 @@ ostream& operator<<(ostream& out, const GFF& record) {
 	return out;
 }
 
-GFF::VERSION GFF::guessVersion(const string& fn) {
+GFF::Version GFF::guessVersion(const string& fn) {
 	if(StringUtils::endsWith(fn, GTF_SUFFIX))
 		return GTF;
 	else if(StringUtils::endsWith(fn, GFF_SUFFIX) || StringUtils::endsWith(fn, GFF3_SUFFIX))
