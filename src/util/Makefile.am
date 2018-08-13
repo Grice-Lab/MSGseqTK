@@ -20,8 +20,8 @@ UCSC/GFF.cpp
 check_PROGRAMS = \
 GFF_test 
 
-GFF_test_SOURCES = UCSC/GFF_test.cpp
-GFF_test_LDADD = libEGUtil.a
+GFF_test_SOURCES = $(top_srcdir)/UCSC/GFF_test.cpp
+GFF_test_LDADD = $(top_srcdir)/libEGUtil.a
 
 TESTS = \
 GFF_test
