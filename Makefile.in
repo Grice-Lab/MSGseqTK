@@ -148,9 +148,9 @@ am_libEGUtil_a_OBJECTS = CommandOptions.$(OBJEXT) ProgLog.$(OBJEXT) \
 	StringUtils.$(OBJEXT) TSVRecord.$(OBJEXT) TSVScanner.$(OBJEXT) \
 	VersionSequence.$(OBJEXT) ProgEnv.$(OBJEXT) UCSC/GFF.$(OBJEXT)
 libEGUtil_a_OBJECTS = $(am_libEGUtil_a_OBJECTS)
-am_GFF_test_OBJECTS = UCSC/GFF_test.$(OBJEXT)
+am_GFF_test_OBJECTS = $(top_srcdir)/UCSC/GFF_test.$(OBJEXT)
 GFF_test_OBJECTS = $(am_GFF_test_OBJECTS)
-GFF_test_DEPENDENCIES = libEGUtil.a
+GFF_test_DEPENDENCIES = $(top_srcdir)/libEGUtil.a
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -554,8 +554,8 @@ VersionSequence.cpp \
 ProgEnv.cpp \
 UCSC/GFF.cpp
 
-GFF_test_SOURCES = UCSC/GFF_test.cpp
-GFF_test_LDADD = libEGUtil.a
+GFF_test_SOURCES = $(top_srcdir)/UCSC/GFF_test.cpp
+GFF_test_LDADD = $(top_srcdir)/libEGUtil.a
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -662,8 +662,15 @@ clean-checkPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
-UCSC/GFF_test.$(OBJEXT): UCSC/$(am__dirstamp) \
-	UCSC/$(DEPDIR)/$(am__dirstamp)
+$(top_srcdir)/UCSC/$(am__dirstamp):
+	@$(MKDIR_P) $(top_srcdir)/UCSC
+	@: > $(top_srcdir)/UCSC/$(am__dirstamp)
+$(top_srcdir)/UCSC/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) $(top_srcdir)/UCSC/$(DEPDIR)
+	@: > $(top_srcdir)/UCSC/$(DEPDIR)/$(am__dirstamp)
+$(top_srcdir)/UCSC/GFF_test.$(OBJEXT):  \
+	$(top_srcdir)/UCSC/$(am__dirstamp) \
+	$(top_srcdir)/UCSC/$(DEPDIR)/$(am__dirstamp)
 
 GFF_test$(EXEEXT): $(GFF_test_OBJECTS) $(GFF_test_DEPENDENCIES) $(EXTRA_GFF_test_DEPENDENCIES) 
 	@rm -f GFF_test$(EXEEXT)
@@ -671,11 +678,13 @@ GFF_test$(EXEEXT): $(GFF_test_OBJECTS) $(GFF_test_DEPENDENCIES) $(EXTRA_GFF_test
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f $(top_srcdir)/UCSC/*.$(OBJEXT)
 	-rm -f UCSC/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@$(top_srcdir)/UCSC/$(DEPDIR)/GFF_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CommandOptions.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ProgEnv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ProgLog.Po@am__quote@
@@ -684,7 +693,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TSVScanner.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/VersionSequence.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@UCSC/$(DEPDIR)/GFF.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@UCSC/$(DEPDIR)/GFF_test.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -1144,6 +1152,8 @@ distclean-generic:
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f UCSC/$(DEPDIR)/$(am__dirstamp)
 	-rm -f UCSC/$(am__dirstamp)
+	-test -z "$(top_srcdir)/UCSC/$(DEPDIR)/$(am__dirstamp)" || rm -f $(top_srcdir)/UCSC/$(DEPDIR)/$(am__dirstamp)
+	-test -z "$(top_srcdir)/UCSC/$(am__dirstamp)" || rm -f $(top_srcdir)/UCSC/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -1155,7 +1165,7 @@ clean-am: clean-checkPROGRAMS clean-generic clean-libLIBRARIES \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf ./$(DEPDIR) UCSC/$(DEPDIR)
+	-rm -rf $(top_srcdir)/UCSC/$(DEPDIR) ./$(DEPDIR) UCSC/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -1203,7 +1213,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf ./$(DEPDIR) UCSC/$(DEPDIR)
+	-rm -rf $(top_srcdir)/UCSC/$(DEPDIR) ./$(DEPDIR) UCSC/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
