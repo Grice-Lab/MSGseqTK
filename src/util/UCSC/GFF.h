@@ -41,15 +41,14 @@ public:
 			throw std::invalid_argument("Unknown GFF version");
 	}
 
-	/** construct a GFF record with given info */
+	/** construct a GFF record with all given info */
 	GFF(VERSION ver, const string& seqname, const string& source, const string& type,
-			long start, long end, double score, char strand, int frame, const string& attrStr = "")
+			long start, long end, double score, char strand, int frame, const string& attrStr)
 	: ver(ver), seqname(seqname), source(source), type(type),
 	  start(start), end(end), score(score), strand(strand), frame(frame) {
 		if(ver == UNK)
 			throw std::invalid_argument("Unknown GFF version");
-		if(!attrStr.empty())
-			readAttributes(attrStr);
+		readAttributes(attrStr);
 	}
 
 	const vector<string>& getAttrNames() const {
