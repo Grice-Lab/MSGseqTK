@@ -92,6 +92,9 @@ public:
 	/** load an object from binary input */
 	istream& load(istream& in);
 
+	/** write this object to text output in GFF format */
+	ostream& writeGFF(ostream& out, UCSC::GFF::Version ver = UCSC::GFF::GFF3) const;
+
 	/** merge this MetaGenome with another one,
 	 * with its name unchanged
 	 */

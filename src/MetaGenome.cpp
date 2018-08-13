@@ -7,6 +7,7 @@
 
 #include "MetaGenome.h"
 #include "StringUtils.h"
+#include "ProgEnv.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
@@ -83,6 +84,17 @@ bool operator==(const MetaGenome& lhs, const MetaGenome& rhs) {
 		if(lhs.genomes[i] != rhs.genomes[i])
 			return false;
 	return true;
+}
+
+ostream& MetaGenome::writeGFF(ostream& out, UCSC::GFF::Version ver) const {
+	/* write each genome */
+	size_t shift = 0;
+	for(const Genome& genome : genomes) {
+		genome.writeGFF(out, ver, shift);
+		shift += genome.getSize() + 1;
+	}
+
+	return out;
 }
 
 } /* namespace MSGseqClean */

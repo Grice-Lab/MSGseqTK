@@ -5,6 +5,7 @@
  *      Author: zhengqi
  */
 
+#include "ProgEnv.h"
 #include "Genome.h"
 #include "StringUtils.h"
 
@@ -84,6 +85,24 @@ bool operator==(const Genome& lhs, const Genome& rhs) {
 		if(lhs.chroms[i] != rhs.chroms[i])
 			return false;
 	return true;
+}
+
+ostream& Genome::writeGFF(ostream& out, UCSC::GFF::Version ver, size_t shift) const {
+	/* write genome as first-level feature */
+	UCSC::GFF genomeGff(ver, name, progName, "genome", shift + 1, shift + getSize(), UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
+	genomeGff.setAttr("ID", name);
+	genomeGff.setAttr("Name", name);
+	out << genomeGff << endl;
+	/* write each chromosome as second-level feature */
+	size_t chrShift = shift;
+	for(const Chrom& chr : chroms) {
+		UCSC::GFF chrGff(ver, name, progName, "chromosome", chrShift + 1, chrShift + chr.size, UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
+		chrGff.setAttr("Parent", name);
+		out << chrGff << endl;
+		chrShift += chr.size + 1; /* including null terminal */
+	}
+
+	return out;
 }
 
 } /* namespace MSGseqClean */

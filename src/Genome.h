@@ -14,6 +14,7 @@
 #include <iostream>
 #include <cstdint> // C++11
 #include "DNAseq.h"
+#include "GFF.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
@@ -113,6 +114,9 @@ public:
 
 	/** load an object from binary input */
 	istream& load(istream& in);
+
+	/** write this object to text output in GFF format */
+	ostream& writeGFF(ostream& out, UCSC::GFF::Version ver = UCSC::GFF::GFF3, size_t shift = 0) const;
 
 	/* non-member functions */
 	friend bool operator==(const Genome& lhs, const Genome& rhs);

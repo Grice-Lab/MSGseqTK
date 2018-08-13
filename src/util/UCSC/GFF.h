@@ -32,17 +32,17 @@ public:
 	typedef vector<string> attr_list;
 	typedef map<string, string> attr_map;
 
-	enum VERSION { UNK = 1, GTF, GFF3 };
+	enum Version { UNK = 1, GTF, GFF3 };
 
 	/* constructors */
 	/** construct am empty GFF with given version */
-	explicit GFF(VERSION ver) : ver(ver) {
+	explicit GFF(Version ver) : ver(ver) {
 		if(ver == UNK)
 			throw std::invalid_argument("Unknown GFF version");
 	}
 
 	/** construct a GFF record with given info */
-	GFF(VERSION ver, const string& seqname, const string& source, const string& type,
+	GFF(Version ver, const string& seqname, const string& source, const string& type,
 			long start, long end, double score, char strand, int frame, const string& attrStr = "")
 	: ver(ver), seqname(seqname), source(source), type(type),
 	  start(start), end(end), score(score), strand(strand), frame(frame) {
@@ -123,11 +123,11 @@ public:
 		this->type = type;
 	}
 
-	VERSION getVer() const {
+	Version getVer() const {
 		return ver;
 	}
 
-	void setVer(VERSION ver) {
+	void setVer(Version ver) {
 		this->ver = ver;
 	}
 
@@ -210,7 +210,7 @@ private:
 	vector<string> attrNames; /* attr names in original order */
 	attr_map attrValues; /* attribute name->value map */
 
-	VERSION ver;
+	Version ver;
 
 public:
 	/* class constants */
@@ -224,7 +224,7 @@ public:
 	static const string INVALID_TOKEN;
 
 	/* static methods */
-	static VERSION guessVersion(const string& fn);
+	static Version guessVersion(const string& fn);
 };
 
 inline bool operator!=(const GFF& lhs, const GFF& rhs) {
