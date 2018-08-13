@@ -36,6 +36,5 @@ AX_BOOST_BASE([1.50.0])
 
 # Checks for library functions.
 
-AC_CONFIG_FILES([Makefile]
-				[UCSC/Makefile])
+AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

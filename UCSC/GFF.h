@@ -11,6 +11,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <stdexcept>
 
 namespace EGriceLab {
 namespace UCSC {
@@ -33,8 +34,26 @@ public:
 
 	enum VERSION { UNK = 1, GTF, GFF3 };
 
-	/** virtual destructor */
-	virtual ~GFF() {  }
+	/* constructors */
+	/** construct am empty GFF with given version */
+	explicit GFF(VERSION ver) : ver(ver) {
+		if(ver == UNK)
+			throw std::invalid_argument("Unknown GFF version");
+	}
+
+	/** construct a GFF record with all given info */
+	GFF(VERSION ver, const string& seqname, const string& source, const string& type,
+			long start, long end, double score, char strand, int frame, const string& attrStr)
+	: ver(ver), seqname(seqname), source(source), type(type),
+	  start(start), end(end), score(score), strand(strand), frame(frame) {
+		if(ver == UNK)
+			throw std::invalid_argument("Unknown GFF version");
+		readAttributes(attrStr);
+	}
+
+	const vector<string>& getAttrNames() const {
+		return attrNames;
+	}
 
 	const attr_map& getAttrValues() const {
 		return attrValues;
@@ -104,10 +123,28 @@ public:
 		this->type = type;
 	}
 
+	VERSION getVer() const {
+		return ver;
+	}
+
+	void setVer(VERSION ver) {
+		this->ver = ver;
+	}
+
 	/* member methods */
+	/** test whether this GFF is valid */
+	bool isValid() const {
+		return start > 0 && start <= end && attrNames.size() == attrValues.size();
+	}
+
+	/** get length of this GFF record */
+	long length() const {
+		return end - start + 1;
+	}
+
 	/** get number of attrs */
 	size_t numAttrs() const {
-		return attrValues.size();
+		return attrNames.size();
 	}
 
 	/** get the attr value given its name */
@@ -116,9 +153,7 @@ public:
 	}
 
 	/** set the attr value with given name, create if not already exists */
-	void setAttr(const string& name, const string& val) {
-		attrValues[name] = val;
-	}
+	void setAttr(const string& name, const string& val);
 
 	/** test whether this attr name exists */
 	bool hasAttr(const string& name) const {
@@ -131,12 +166,23 @@ public:
 	/** save object to binary output */
 	ostream& save(ostream& out) const;
 
-	/* abstract methods */
 	/** read attrs from formated text */
-	virtual void readAttributes(const string& attrStr) = 0;
+	void readAttributes(const string& attrStr);
 
 	/** write attrs to formated text */
-	virtual string writeAttributes() const = 0;
+	string writeAttributes() const;
+
+	/** read attrs from formated text in GTF format */
+	void readGTFAttributes(const string& attrStr);
+
+	/** write attrs to formated text in GTF format */
+	string writeGTFAttributes() const;
+
+	/** read attrs from formated text in GFF3 format */
+	void readGFF3Attributes(const string& attrStr);
+
+	/** write attrs to formated text in GFF3 format */
+	string writeGFF3Attributes() const;
 
 	/* non-member operators */
 	/* unformated read */
@@ -156,12 +202,15 @@ private:
 	string seqname;
 	string source;
 	string type;
-	long start;
-	long end;
+	long start; /* 1-based */
+	long end;   /* 1-based */
 	double score;
 	char strand;
 	int frame;
+	vector<string> attrNames; /* attr names in original order */
 	attr_map attrValues; /* attribute name->value map */
+
+	VERSION ver;
 
 public:
 	/* class constants */
@@ -180,6 +229,26 @@ public:
 
 inline bool operator!=(const GFF& lhs, const GFF& rhs) {
 	return !(lhs == rhs);
+}
+
+inline void GFF::readAttributes(const string& attrStr) {
+	switch(ver) {
+	case GTF:
+		return readGTFAttributes(attrStr);
+	case GFF3:
+		return readGFF3Attributes(attrStr);
+	}
+}
+
+inline string GFF::writeAttributes() const {
+	switch(ver) {
+	case GTF:
+		return writeGTFAttributes();
+	case GFF3:
+		return writeGFF3Attributes();
+	default:
+		return "";
+	}
 }
 
 } /* namespace UCSC */

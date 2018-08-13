@@ -6,7 +6,9 @@
  */
 
 #include <math.h> // requires C99
+#include <limits>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 #include "StringUtils.h"
 #include "GFF.h"
 
@@ -20,6 +22,12 @@ const string GFF::GFF3_SUFFIX = ".gff3";
 
 const double GFF::INVALID_SCORE = NAN;
 const string GFF::INVALID_TOKEN = ".";
+
+void GFF::setAttr(const string& name, const string& val) {
+	if(attrValues.count(name) == 0) /* not exists yet */
+		attrNames.push_back(name);
+	attrValues[name] = val;
+}
 
 istream& GFF::load(istream& in) {
 	StringUtils::loadString(seqname, in);
@@ -74,6 +82,7 @@ istream& operator>>(istream& in, GFF& record) {
 	in >> token;
 	record.frame = token != GFF::INVALID_TOKEN ? boost::lexical_cast<int>(token) : GFF::INVALID_FRAME;
 
+	in.ignore(std::numeric_limits<streamsize>::max(), GFF::SEP);
 	string attrStr;
 	std::getline(in, attrStr);
 	record.readAttributes(attrStr);
@@ -82,11 +91,18 @@ istream& operator>>(istream& in, GFF& record) {
 
 ostream& operator<<(ostream& out, const GFF& record) {
 	out << record.seqname << GFF::SEP << record.source << GFF::SEP << record.type << GFF::SEP
-		<< record.start << GFF::SEP << record.end << GFF::SEP
-		<< (::isnan(record.score) ? GFF::INVALID_FLAG : record.score) << GFF::SEP
-		<< record.strand << GFF::SEP
-		<< (record.frame == GFF::INVALID_FRAME ? GFF::INVALID_FLAG : record.frame) << GFF::SEP
-		<< record.writeAttributes();
+		<< record.start << GFF::SEP << record.end << GFF::SEP;
+	if(::isnan(record.score))
+		out << GFF::INVALID_FLAG;
+	else
+		out << record.score;
+	out << GFF::SEP << record.strand << GFF::SEP;
+	if(record.frame == GFF::INVALID_FRAME)
+		out << GFF::INVALID_FLAG;
+	else
+		out << record.frame;
+	out << GFF::SEP << record.writeAttributes();
+
 	return out;
 }
 
@@ -96,6 +112,44 @@ GFF::VERSION GFF::guessVersion(const string& fn) {
 	else if(StringUtils::endsWith(fn, GFF_SUFFIX) || StringUtils::endsWith(fn, GFF3_SUFFIX))
 		return GFF3;
 	else return UNK;
+}
+
+void GFF::readGTFAttributes(const string& attrStr) {
+	vector<string> attrs;
+	boost::split(attrs, attrStr, boost::is_any_of(" \";"), boost::token_compress_on);
+	for(vector<string>::size_type i = 0; i < attrs.size(); i += 2)
+		if(!attrs[i].empty())
+			setAttr(attrs[i], attrs[i+1]);
+}
+
+string GFF::writeGTFAttributes() const {
+	string attrStr;
+	const vector<string>& attrNames = getAttrNames();
+	for(vector<string>::const_iterator name = attrNames.begin(); name != attrNames.end(); ++name) {
+		if(!attrStr.empty()) /* non-first */
+			attrStr += "; ";
+		attrStr += (*name) + " \"" + getAttr(*name) + "\"";
+	}
+	return attrStr;
+}
+
+void GFF::readGFF3Attributes(const string& attrStr) {
+	vector<string> attrs;
+	boost::split(attrs, attrStr, boost::is_any_of("=;"), boost::token_compress_on);
+	for(vector<string>::size_type i = 0; i < attrs.size(); i += 2)
+		if(!attrs[i].empty())
+			setAttr(attrs[i], attrs[i+1]);
+}
+
+string GFF::writeGFF3Attributes() const {
+	string attrStr;
+	const vector<string>& attrNames = getAttrNames();
+	for(vector<string>::const_iterator name = attrNames.begin(); name != attrNames.end(); ++name) {
+		if(!attrStr.empty()) /* non-first */
+			attrStr += ";";
+		attrStr += (*name) + "=" + getAttr(*name);
+	}
+	return attrStr;
 }
 
 } /* namespace UCSC */

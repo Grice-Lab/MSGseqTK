@@ -1,5 +1,5 @@
 # This is the Makefile for the EGUtil library
-SUBDIRS = . UCSC
+AUTOMAKE_OPTIONS = subdir-objects
 
 ACLOCAL_AMFLAGS = -I m4
 
@@ -14,4 +14,14 @@ StringUtils.cpp \
 TSVRecord.cpp \
 TSVScanner.cpp \
 VersionSequence.cpp \
-ProgEnv.cpp
+ProgEnv.cpp \
+UCSC/GFF.cpp
+
+check_PROGRAMS = \
+GFF_test 
+
+GFF_test_SOURCES = UCSC/GFF_test.cpp
+GFF_test_LDADD = libEGUtil.a
+
+TESTS = \
+GFF_test
