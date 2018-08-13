@@ -41,7 +41,7 @@ public:
 			throw std::invalid_argument("Unknown GFF version");
 	}
 
-	/** construct a GFF record with all given info */
+	/** construct a GFF record with given info */
 	GFF(VERSION ver, const string& seqname, const string& source, const string& type,
 			long start, long end, double score, char strand, int frame, const string& attrStr = "")
 	: ver(ver), seqname(seqname), source(source), type(type),
