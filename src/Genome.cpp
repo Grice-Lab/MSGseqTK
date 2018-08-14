@@ -5,12 +5,13 @@
  *      Author: zhengqi
  */
 
-#include "ProgEnv.h"
+#include "MSGseqTKConst.h"
 #include "Genome.h"
 #include "StringUtils.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
+using namespace std;
 
 ostream& Genome::Chrom::save(ostream& out) const {
 	StringUtils::saveString(name, out);
@@ -87,16 +88,16 @@ bool operator==(const Genome& lhs, const Genome& rhs) {
 	return true;
 }
 
-ostream& Genome::writeGFF(ostream& out, UCSC::GFF::Version ver, size_t shift) const {
+ostream& Genome::writeGFF(ostream& out, const string& src, UCSC::GFF::Version ver, size_t shift) const {
 	/* write genome as first-level feature */
-	UCSC::GFF genomeGff(ver, name, progName, "genome", shift + 1, shift + getSize(), UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
+	UCSC::GFF genomeGff(ver, name, src, "genome", shift + 1, shift + getSize(), UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
 	genomeGff.setAttr("ID", name);
 	genomeGff.setAttr("Name", name);
 	out << genomeGff << endl;
 	/* write each chromosome as second-level feature */
 	size_t chrShift = shift;
 	for(const Chrom& chr : chroms) {
-		UCSC::GFF chrGff(ver, name, progName, "chromosome", chrShift + 1, chrShift + chr.size, UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
+		UCSC::GFF chrGff(ver, name, src, "chromosome", chrShift + 1, chrShift + chr.size, UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
 		chrGff.setAttr("Parent", name);
 		out << chrGff << endl;
 		chrShift += chr.size + 1; /* including null terminal */

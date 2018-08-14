@@ -9,11 +9,10 @@
 #define SRC_MSGSEQTKCONST_H_
 
 #include <string>
+using std::string;
 
 namespace EGriceLab {
 namespace MSGseqTK {
-
-using std::string;
 
 const string GZIP_FILE_SUFFIX = ".gz";
 const string BZIP2_FILE_SUFFIX = ".bz2";

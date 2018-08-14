@@ -116,7 +116,7 @@ public:
 	istream& load(istream& in);
 
 	/** write this object to text output in GFF format */
-	ostream& writeGFF(ostream& out, UCSC::GFF::Version ver = UCSC::GFF::GFF3, size_t shift = 0) const;
+	ostream& writeGFF(ostream& out, const string& src, UCSC::GFF::Version ver = UCSC::GFF::GFF3, size_t shift = 0) const;
 
 	/* non-member functions */
 	friend bool operator==(const Genome& lhs, const Genome& rhs);

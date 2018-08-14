@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstring>
+#include "ProgEnv.h"
 #include "Genome.h"
 #include "MetaGenome.h"
 

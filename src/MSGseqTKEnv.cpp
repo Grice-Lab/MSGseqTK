@@ -13,8 +13,8 @@ namespace EGriceLab {
 
 using std::string;
 
-const string progName = "MSGseqClean";
+const string progName = "MSGseqTK";
 const VersionSequence progVer("v1.1.1");
-const string projectURL = "https://github.com/Grice-Lab/MSGseqClean";
+const string projectURL = "https://github.com/Grice-Lab/MSGseqTK";
 
 } /* namespace EGriceLab */
