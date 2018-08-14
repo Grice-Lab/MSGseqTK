@@ -13,6 +13,7 @@
 #include <map>
 #include <iostream>
 #include <cstdint> // C++11
+#include <boost/algorithm/string/regex.hpp>
 #include "DNAseq.h"
 #include "GFF.h"
 
@@ -36,7 +37,7 @@ public:
 		Chrom() = default;
 
 		/** construct from given info */
-		Chrom(const string& name, uint64_t size) : name(name), size(size)
+		Chrom(const string& name, uint64_t size) : name(formatName(name)), size(size)
 		{  }
 
 		/** save this Chrom to binary output */
@@ -57,11 +58,11 @@ public:
 	Genome() = default;
 
 	/** construct genome with given name */
-	Genome(const string& name) : name(name)
+	Genome(const string& name) : name(formatName(name))
 	{  }
 
 	/** construct a genome with given name chromosomes */
-	Genome(const string& name, const vector<Chrom>& chroms) : name(name), chroms(chroms)
+	Genome(const string& name, const vector<Chrom>& chroms) : name(formatName(name)), chroms(chroms)
 	{  }
 
 	/* member methods */
@@ -70,7 +71,7 @@ public:
 	}
 
 	void setName(const string& name) {
-		this->name = name;
+		this->name = formatName(name);
 	}
 
 	/** get number of chromosomes */
@@ -121,9 +122,17 @@ public:
 	/* non-member functions */
 	friend bool operator==(const Genome& lhs, const Genome& rhs);
 
+	/* member fields */
 private:
 	string name;
 	vector<Chrom> chroms;
+
+	/* class members */
+public:
+	static const boost::regex INVALID_NAME_PATTERN;
+	static const string REPLACEMENT_STR;
+
+	static string formatName(const string& name);
 };
 
 inline bool operator==(const Genome::Chrom& lhs, const Genome::Chrom& rhs) {

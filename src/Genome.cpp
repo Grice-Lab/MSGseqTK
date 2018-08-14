@@ -5,6 +5,8 @@
  *      Author: zhengqi
  */
 
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/regex.hpp>
 #include "MSGseqTKConst.h"
 #include "Genome.h"
 #include "StringUtils.h"
@@ -12,6 +14,9 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 using namespace std;
+
+const boost::regex Genome::INVALID_NAME_PATTERN = boost::regex("[^\\w.:^*$@!+?-|]");
+const string Genome::REPLACEMENT_STR = ".";
 
 ostream& Genome::Chrom::save(ostream& out) const {
 	StringUtils::saveString(name, out);
@@ -98,12 +103,18 @@ ostream& Genome::writeGFF(ostream& out, UCSC::GFF::Version ver, const string& sr
 	size_t chrShift = shift;
 	for(const Chrom& chr : chroms) {
 		UCSC::GFF chrGff(ver, name, src, "chromosome", chrShift + 1, chrShift + chr.size, UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
+		chrGff.setAttr("ID", "chr:" + name + ":" + chr.name);
+		chrGff.setAttr("Name", chr.name);
 		chrGff.setAttr("Parent", name);
 		out << chrGff << endl;
 		chrShift += chr.size + 1; /* including null terminal */
 	}
 
 	return out;
+}
+
+string Genome::formatName(const string& name) {
+	return boost::replace_all_regex_copy(name, INVALID_NAME_PATTERN, REPLACEMENT_STR);
 }
 
 } /* namespace MSGseqTK */

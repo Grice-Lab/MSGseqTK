@@ -43,6 +43,7 @@ AC_CHECK_FUNCS([strerror])
 AX_CHECK_ZLIB()
 AX_BOOST_BASE([1.50.0])
 AX_BOOST_IOSTREAMS()
+AX_BOOST_REGEX()
 
 AC_CONFIG_FILES([Makefile
 				 src/Makefile

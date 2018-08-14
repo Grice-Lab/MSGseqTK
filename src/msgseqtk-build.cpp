@@ -189,7 +189,7 @@ int main(int argc, char* argv[]) {
 
 		/* incremental update backward */
 		mtg.push_front(genome);
-		infoLog << "Merging into database ... ";
+		infoLog << "Adding into database ... ";
 		fmidx = FMIndex(genomeSeq) + fmidx; /* always use ther fresh object as lhs */
 
 		assert(mtg.getSize() == fmidx.length());

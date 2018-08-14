@@ -95,6 +95,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
 	$(top_srcdir)/m4/m4_ax_boost_base.m4 \
 	$(top_srcdir)/m4/m4_ax_boost_iostreams.m4 \
+	$(top_srcdir)/m4/m4_ax_boost_regex.m4 \
 	$(top_srcdir)/m4/m4_ax_check_zlib.m4 \
 	$(top_srcdir)/m4/m4_ax_cxx_compile_stdcxx.m4 \
 	$(top_srcdir)/m4/m4_ax_subdirs_configure.m4 \
@@ -220,6 +221,7 @@ AWK = @AWK@
 BOOST_CPPFLAGS = @BOOST_CPPFLAGS@
 BOOST_IOSTREAMS_LIB = @BOOST_IOSTREAMS_LIB@
 BOOST_LDFLAGS = @BOOST_LDFLAGS@
+BOOST_REGEX_LIB = @BOOST_REGEX_LIB@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
