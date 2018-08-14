@@ -1,5 +1,5 @@
 /*
- * msgseqclean-inspect.cpp
+ * msgseqtk-inspect.cpp
  *
  *  Created on: Jun 1, 2018
  *      Author: zhengqi

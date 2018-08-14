@@ -1,5 +1,5 @@
 /*
- * msgseqclean-merge.cpp
+ * msgseqtk-merge.cpp
  *
  *  Created on: Jun 1, 2018
  *      Author: zhengqi
