@@ -44,6 +44,7 @@ void printUsage(const string& progName) {
 		 << "SEQ-FILE  FILE                   : genome sequence file with one file per-genome in FASTA format" << ZLIB_SUPPORT << endl
 		 << "Options:    -n  STR              : database name" << endl
 		 << "            -l  FILE             : tab-delimited list with 1st field sample-names and 2nd field genome filenames/paths" << endl
+		 << "            -g|--gff3  FLAG      : write an additional metagenome annotation file in GFF3 format" << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
 		 << "            -h|--help            : print this message and exit" << endl;
@@ -53,9 +54,10 @@ int main(int argc, char* argv[]) {
 	/* variable declarations */
 	vector<string> inFns;
 	map<string, string> genomeFn2Name;
-	string dbName, listFn;
+	string dbName, listFn, gffFn;
 	ifstream listIn;
-	ofstream mtgOut, fmidxOut;
+
+	ofstream mtgOut, fmidxOut, gffOut;
 	const string fmt = "fasta";
 
 	/* parse options */
@@ -135,6 +137,8 @@ int main(int argc, char* argv[]) {
 	/* set dbName */
 	string mtgFn = dbName + METAGENOME_FILE_SUFFIX;
 	string fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
+	if(cmdOpts.hasOpt("-g") || cmdOpts.hasOpt("--gff3"))
+		gffFn = dbName + GFF3_FILE_SUFFIX;
 
 	/* open output files */
 	mtgOut.open(mtgFn.c_str(), ios_base::out | ios_base::binary);
@@ -146,6 +150,14 @@ int main(int argc, char* argv[]) {
 	if(!fmidxOut.is_open()) {
 		cerr << "Unable to write to '" << fmidxFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
+	}
+
+	if(!gffFn.empty()) {
+		gffOut.open(gffFn.c_str());
+		if(!gffOut.is_open()) {
+			cerr << "Unable to write to '" << gffFn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
 	}
 
 	MetaGenome mtg;
@@ -217,4 +229,9 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 	infoLog << "RFM-index saved" << endl;
+
+	if(gffOut.is_open()) {
+		mtg.writeGFF(gffOut, UCSC::GFF::GFF3, progName);
+		infoLog << "GFF3 annotation file written" << endl;
+	}
 }
