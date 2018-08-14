@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.69)
-AC_INIT(MSGseqClean, 1.0)
+AC_INIT(MSGseqTK, 1.0)
 LT_INIT([shared static])
 
 AC_CANONICAL_SYSTEM
@@ -24,7 +24,7 @@ AC_CHECK_HEADER_STDBOOL
 
 AM_INIT_AUTOMAKE()
 
-#AC_LANG(C++)
+AC_LANG(C++)
 AC_PROG_CXX
 AC_PROG_AWK
 AC_PROG_CC

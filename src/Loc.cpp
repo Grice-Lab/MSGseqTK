@@ -43,5 +43,5 @@ int64_t Loc::dist(const Loc& loc1, const Loc& loc2) {
 	return d;
 }
 
-} /* namespace MSGseqClean */
+} /* namespace MSGseqTK */
 } /* namespace EGriceLab */

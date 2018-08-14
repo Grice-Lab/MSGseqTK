@@ -106,5 +106,5 @@ ostream& Genome::writeGFF(ostream& out, const string& src, UCSC::GFF::Version ve
 	return out;
 }
 
-} /* namespace MSGseqClean */
+} /* namespace MSGseqTK */
 } /* namespace EGriceLab */

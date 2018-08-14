@@ -62,7 +62,7 @@ inline istream& operator>>(istream& in, Loc& loc) {
 	return loc.read(in);
 }
 
-} /* namespace MSGseqClean */
+} /* namespace MSGseqTK */
 } /* namespace EGriceLab */
 
 #endif /* SRC_LOC_H_ */

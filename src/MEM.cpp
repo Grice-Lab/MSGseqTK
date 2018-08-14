@@ -46,7 +46,7 @@ int64_t MEM::dbDist(const MEM& mem1, const MEM& mem2) {
 	return minD;
 }
 
-} /* namespace MSGseqClean */
+} /* namespace MSGseqTK */
 } /* namespace EGriceLab */
 
 

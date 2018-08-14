@@ -123,7 +123,7 @@ inline bool operator!=(const MetaGenome& lhs, const MetaGenome& rhs) {
 	return !(lhs == rhs);
 }
 
-} /* namespace MSGseqClean */
+} /* namespace MSGseqTK */
 } /* namespace EGriceLab */
 
 #endif /* SRC_METAGENOME_H_ */

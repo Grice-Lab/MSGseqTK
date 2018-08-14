@@ -98,7 +98,7 @@ inline ostream& operator<<(ostream& out, const QualStr& qual) {
 	return out << qual.decode();
 }
 
-} /* namespace MSGseqClean */
+} /* namespace MSGseqTK */
 } /* namespace EGriceLab */
 
 #endif /* SRC_QUALSTR_H_ */

@@ -97,5 +97,5 @@ ostream& MetaGenome::writeGFF(ostream& out, const string& src, UCSC::GFF::Versio
 	return out;
 }
 
-} /* namespace MSGseqClean */
+} /* namespace MSGseqTK */
 } /* namespace EGriceLab */

@@ -38,5 +38,5 @@ QualStr& QualStr::reverse() {
 	return *this;
 }
 
-} /* namespace MSGseqClean */
+} /* namespace MSGseqTK */
 } /* namespace EGriceLab */

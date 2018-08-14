@@ -1,5 +1,5 @@
 /*
- * MSGseqCleanConst.h
+ * MSGseqTKConst.h
  *
  *  Created on: May 16, 2018
  *      Author: zhengqi

@@ -123,12 +123,10 @@ FMIndex_test_OBJECTS = $(am_FMIndex_test_OBJECTS)
 FMIndex_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
 	$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	$(top_srcdir)/src/libcds/src/libcds.la
-am__dirstamp = $(am__leading_dot)dirstamp
-am_Genome_test_OBJECTS = Genome_test.$(OBJEXT) \
-	$(top_srcdir)/MSGseqTKEnv.$(OBJEXT)
+am_Genome_test_OBJECTS = Genome_test.$(OBJEXT)
 Genome_test_OBJECTS = $(am_Genome_test_OBJECTS)
-Genome_test_DEPENDENCIES = $(top_srcdir)/src/util/libEGUtil.a \
-	$(top_srcdir)/src/libMSGseqTK.a
+Genome_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
+	$(top_srcdir)/src/util/libEGUtil.a
 am_MEM_test_OBJECTS = MEM_test.$(OBJEXT)
 MEM_test_OBJECTS = $(am_MEM_test_OBJECTS)
 MEM_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
@@ -467,7 +465,7 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
-OPENMP_CFLAGS = @OPENMP_CFLAGS@
+OPENMP_CXXFLAGS = @OPENMP_CXXFLAGS@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -547,7 +545,6 @@ AUTOMAKE_OPTIONS = subdir-objects
 AM_CFLAGS = \
 -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
--I$(top_srcdir)/src/util/UCSC \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libcds/include \
@@ -557,7 +554,6 @@ $(OPENMP_CFLAGS)
 AM_CXXFLAGS = \
 -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
--I$(top_srcdir)/src/util/UCSC \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libcds/include \
@@ -584,12 +580,10 @@ $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 $(top_srcdir)/src/libcds/src/libcds.la
 
-Genome_test_SOURCES = Genome_test.cpp \
-$(top_srcdir)/MSGseqTKEnv.cpp
-
+Genome_test_SOURCES = Genome_test.cpp
 Genome_test_LDADD = \
-$(top_srcdir)/src/util/libEGUtil.a \
-$(top_srcdir)/src/libMSGseqTK.a
+$(top_srcdir)/src/libMSGseqTK.a \
+$(top_srcdir)/src/util/libEGUtil.a
 
 MEM_test_SOURCES = MEM_test.cpp
 MEM_test_LDADD = \
@@ -647,14 +641,6 @@ DNAseq_test$(EXEEXT): $(DNAseq_test_OBJECTS) $(DNAseq_test_DEPENDENCIES) $(EXTRA
 FMIndex_test$(EXEEXT): $(FMIndex_test_OBJECTS) $(FMIndex_test_DEPENDENCIES) $(EXTRA_FMIndex_test_DEPENDENCIES) 
 	@rm -f FMIndex_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(FMIndex_test_OBJECTS) $(FMIndex_test_LDADD) $(LIBS)
-$(top_srcdir)/$(am__dirstamp):
-	@$(MKDIR_P) $(top_srcdir)
-	@: > $(top_srcdir)/$(am__dirstamp)
-$(top_srcdir)/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) $(top_srcdir)/$(DEPDIR)
-	@: > $(top_srcdir)/$(DEPDIR)/$(am__dirstamp)
-$(top_srcdir)/MSGseqTKEnv.$(OBJEXT): $(top_srcdir)/$(am__dirstamp) \
-	$(top_srcdir)/$(DEPDIR)/$(am__dirstamp)
 
 Genome_test$(EXEEXT): $(Genome_test_OBJECTS) $(Genome_test_DEPENDENCIES) $(EXTRA_Genome_test_DEPENDENCIES) 
 	@rm -f Genome_test$(EXEEXT)
@@ -674,12 +660,10 @@ SeqIO_test$(EXEEXT): $(SeqIO_test_OBJECTS) $(SeqIO_test_DEPENDENCIES) $(EXTRA_Se
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
-	-rm -f $(top_srcdir)/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@$(top_srcdir)/$(DEPDIR)/MSGseqTKEnv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DNAseq_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FMIndex_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Genome_test.Po@am__quote@
@@ -1032,8 +1016,6 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
-	-test -z "$(top_srcdir)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(top_srcdir)/$(DEPDIR)/$(am__dirstamp)
-	-test -z "$(top_srcdir)/$(am__dirstamp)" || rm -f $(top_srcdir)/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -1044,7 +1026,7 @@ clean-am: clean-checkPROGRAMS clean-generic clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf $(top_srcdir)/$(DEPDIR) ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1090,7 +1072,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf $(top_srcdir)/$(DEPDIR) ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

@@ -132,7 +132,7 @@ struct MEM {
 
 };
 
-} /* namespace MSGseqClean */
+} /* namespace MSGseqTK */
 } /* namespace EGriceLab */
 
 #endif /* SRC_MEM_H_ */

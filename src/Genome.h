@@ -138,7 +138,7 @@ inline bool operator!=(const Genome& lhs, const Genome& rhs) {
 	return !(lhs == rhs);
 }
 
-} /* namespace MSGseqClean */
+} /* namespace MSGseqTK */
 } /* namespace EGriceLab */
 
 #endif /* SRC_GENOME_H_ */
