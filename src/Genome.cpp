@@ -88,7 +88,7 @@ bool operator==(const Genome& lhs, const Genome& rhs) {
 	return true;
 }
 
-ostream& Genome::writeGFF(ostream& out, const string& src, UCSC::GFF::Version ver, size_t shift) const {
+ostream& Genome::writeGFF(ostream& out, UCSC::GFF::Version ver, const string& src, size_t shift) const {
 	/* write genome as first-level feature */
 	UCSC::GFF genomeGff(ver, name, src, "genome", shift + 1, shift + getSize(), UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
 	genomeGff.setAttr("ID", name);

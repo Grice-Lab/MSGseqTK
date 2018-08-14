@@ -86,11 +86,11 @@ bool operator==(const MetaGenome& lhs, const MetaGenome& rhs) {
 	return true;
 }
 
-ostream& MetaGenome::writeGFF(ostream& out, const string& src, UCSC::GFF::Version ver) const {
+ostream& MetaGenome::writeGFF(ostream& out, UCSC::GFF::Version ver, const string& src) const {
 	/* write each genome */
 	size_t shift = 0;
 	for(const Genome& genome : genomes) {
-		genome.writeGFF(out, src, ver, shift);
+		genome.writeGFF(out, ver, src, shift);
 		shift += genome.getSize() + 1;
 	}
 
