@@ -11,11 +11,6 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 
-PrimarySeq::PrimarySeq(const string& seq, const string& name, const string& desc,
-		const string& qStr, uint8_t qShift)
-: seq(seq), name(name), desc(desc), qual(qStr, qShift)
-{   }
-
 QualStr PrimarySeq::getQual() const {
 	if(qual.length() == seq.length())
 		return qual;

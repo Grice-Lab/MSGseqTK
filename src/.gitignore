@@ -3,4 +3,5 @@ msgseqtk-clean
 msgseqtk-build
 msgseqtk-inspect
 msgseqtk-mergedb
+msgseqtk-sim
 *.exe

@@ -35,8 +35,16 @@ public:
 	PrimarySeq() = default;
 
 	/** construct a PrimarySeq with given seq, qual, name and optional desc and encoded quality string */
+	PrimarySeq(const DNAseq& seq, const string& name, const string& desc = "",
+			const string& qStr = "", uint8_t qShift = QualStr::DEFAULT_Q_SHIFT)
+	: seq(seq), name(name), desc(desc), qual(qStr, qShift)
+	{  }
+
+	/** construct using a seq string instead of DNAseq */
 	PrimarySeq(const string& seqStr, const string& name, const string& desc = "",
-			const string& qStr = "", uint8_t qShift = QualStr::DEFAULT_Q_SHIFT);
+			const string& qStr = "", uint8_t qShift = QualStr::DEFAULT_Q_SHIFT)
+	: seq(seqStr), name(name), desc(desc), qual(qStr, qShift)
+	{  }
 
 	/* getters and setters */
 	const DNAseq& getSeq() const {

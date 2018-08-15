@@ -84,6 +84,11 @@ public:
 		return chroms;
 	}
 
+	/** get chromosome by index */
+	const Chrom& getChrom(size_t i) const {
+		return chroms[i];
+	}
+
 	/** test whether this chrom name exists */
 	bool hasChrom(const string& chrName) const;
 

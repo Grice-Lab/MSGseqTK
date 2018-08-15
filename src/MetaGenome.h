@@ -68,8 +68,13 @@ public:
 	/**
 	 * get the genome at given location, or throws out_of_range exception
 	 */
-	const Genome& getGenome(uint64_t loc) const {
+	const Genome& getGenomeAtLoc(uint64_t loc) const {
 		return genomes.at(getGenomeIndex(loc));
+	}
+
+	/** get genome by index */
+	const Genome& getGenome(size_t i) const {
+		return genomes[i];
 	}
 
 	/**

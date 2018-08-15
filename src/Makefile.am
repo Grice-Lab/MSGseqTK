@@ -39,7 +39,8 @@ bin_PROGRAMS = \
 msgseqtk-clean \
 msgseqtk-build \
 msgseqtk-inspect \
-msgseqtk-mergedb
+msgseqtk-mergedb \
+msgseqtk-sim
 
 msgseqtk_clean_SOURCES = msgseqtk-clean.cpp
 msgseqtk_clean_LDADD = \
@@ -71,3 +72,11 @@ libMSGseqTK.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libcds/src/libcds.la
+
+msgseqtk_sim_SOURCES = msgseqtk-sim.cpp MSGseqTKEnv.cpp
+msgseqtk_sim_LDADD = \
+libMSGseqTK.a \
+util/libEGUtil.a \
+libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+libcds/src/libcds.la \
+$(BOOST_IOSTREAMS_LIB)
