@@ -158,7 +158,7 @@ int main(int argc, char* argv[]) {
 
 	/* try to open existing DB */
 	if(!oldDBName.empty()) { /* is an update */
-		infoLog << "Loading old database '" << dbName << "'" << endl;
+		infoLog << "Loading old database '" << oldDBName << "'" << endl;
 		/* set oldDBName */
 		mtgFn = oldDBName + METAGENOME_FILE_SUFFIX;
 		fmidxFn = oldDBName + FMINDEX_FILE_SUFFIX;
@@ -191,7 +191,7 @@ int main(int argc, char* argv[]) {
 	for(const string& inFn : inFns) {
 		string genomeName = genomeFn2Name.at(inFn);
 		if(!isForce && mtg.hasGenome(genomeName)) {
-			warningLog << "Genome '" << genomeName << "' already exists in the database, ignored" << endl;
+			warningLog << "Genome '" << genomeName << "' already exists in the database, ignore" << endl;
 			continue;
 		}
 

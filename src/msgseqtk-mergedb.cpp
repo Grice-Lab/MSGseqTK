@@ -74,6 +74,11 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
+	if(std::find(inDBNames.begin(), inDBNames.end(), dbName) != inDBNames.end()) {
+		cerr << "new DB name '" << dbName << " cannot be the same as any old DB name, abort merging" << endl;
+		return EXIT_FAILURE;
+	}
+
 	/* set dbName */
 	string mtgFn = dbName + METAGENOME_FILE_SUFFIX;
 	string fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
@@ -91,7 +96,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	MetaGenome mtg;
-	FMIndex fmidx;
+	FMIndex fmidx; /* keepSA == false */
 
 	/* process each database */
 	for(const string& inDB : inDBNames) {
@@ -133,12 +138,14 @@ int main(int argc, char* argv[]) {
 		infoLog << "Merging into new database ... ";
 		mtg = mtgPart + mtg;
 		fmidx = fmidxPart + fmidx;
-		assert(mtg.getSize() + mtg.numGenomes() == fmidx.length());
+		assert(mtg.getSize() == fmidx.length());
 		infoLog << " done. currrent size: " << mtg.getSize() << endl;
 	}
 
-	infoLog << "MetaGenomics database merged. # of Genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
+	infoLog << "Building the final SA ..." << endl;
+	fmidx.buildSA();
 
+	infoLog << "MetaGenomics database merged. # of Genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
 	infoLog << "Saving database files ..." << endl;
 	/* write database files, all with prepend program info */
 	saveProgInfo(mtgOut);
