@@ -91,8 +91,7 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 bin_PROGRAMS = msgseqtk-clean$(EXEEXT) msgseqtk-build$(EXEEXT) \
-	msgseqtk-inspect$(EXEEXT) msgseqtk-mergedb$(EXEEXT) \
-	msgseqtk-sim$(EXEEXT)
+	msgseqtk-inspect$(EXEEXT) msgseqtk-mergedb$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -154,11 +153,6 @@ msgseqtk_mergedb_OBJECTS = $(am_msgseqtk_mergedb_OBJECTS)
 msgseqtk_mergedb_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
 	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	libcds/src/libcds.la
-am_msgseqtk_sim_OBJECTS = msgseqtk-sim.$(OBJEXT) MSGseqTKEnv.$(OBJEXT)
-msgseqtk_sim_OBJECTS = $(am_msgseqtk_sim_OBJECTS)
-msgseqtk_sim_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
-	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-	libcds/src/libcds.la $(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -195,10 +189,10 @@ am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(libMSGseqTK_a_SOURCES) $(msgseqtk_build_SOURCES) \
 	$(msgseqtk_clean_SOURCES) $(msgseqtk_inspect_SOURCES) \
-	$(msgseqtk_mergedb_SOURCES) $(msgseqtk_sim_SOURCES)
+	$(msgseqtk_mergedb_SOURCES)
 DIST_SOURCES = $(libMSGseqTK_a_SOURCES) $(msgseqtk_build_SOURCES) \
 	$(msgseqtk_clean_SOURCES) $(msgseqtk_inspect_SOURCES) \
-	$(msgseqtk_mergedb_SOURCES) $(msgseqtk_sim_SOURCES)
+	$(msgseqtk_mergedb_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -465,14 +459,6 @@ util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libcds/src/libcds.la
 
-msgseqtk_sim_SOURCES = msgseqtk-sim.cpp MSGseqTKEnv.cpp
-msgseqtk_sim_LDADD = \
-libMSGseqTK.a \
-util/libEGUtil.a \
-libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libcds/src/libcds.la \
-$(BOOST_IOSTREAMS_LIB)
-
 all: all-recursive
 
 .SUFFIXES:
@@ -580,10 +566,6 @@ msgseqtk-mergedb$(EXEEXT): $(msgseqtk_mergedb_OBJECTS) $(msgseqtk_mergedb_DEPEND
 	@rm -f msgseqtk-mergedb$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(msgseqtk_mergedb_OBJECTS) $(msgseqtk_mergedb_LDADD) $(LIBS)
 
-msgseqtk-sim$(EXEEXT): $(msgseqtk_sim_OBJECTS) $(msgseqtk_sim_DEPENDENCIES) $(EXTRA_msgseqtk_sim_DEPENDENCIES) 
-	@rm -f msgseqtk-sim$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(msgseqtk_sim_OBJECTS) $(msgseqtk_sim_LDADD) $(LIBS)
-
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -605,7 +587,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqtk-clean.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqtk-inspect.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqtk-mergedb.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqtk-sim.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
