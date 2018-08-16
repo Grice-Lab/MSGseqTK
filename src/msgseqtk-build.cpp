@@ -28,7 +28,7 @@ using namespace Eigen;
  * Print introduction of this program
  */
 void printIntro(void) {
-	cerr << "Build a database from one or more genomic sequence files" << endl;
+	cerr << "Build/update a database from one or more genomic sequence files" << endl;
 }
 
 /**
@@ -44,6 +44,8 @@ void printUsage(const string& progName) {
 		 << "SEQ-FILE  FILE                   : genome sequence file with one file per-genome in FASTA format" << ZLIB_SUPPORT << endl
 		 << "Options:    -n  STR              : database name" << endl
 		 << "            -l  FILE             : tab-delimited list with 1st field sample-names and 2nd field genome filenames/paths" << endl
+		 << "            -r|--update  STR     : update database based on this old DB, it can be the same name as -n, which will overwrite the old database" << endl
+		 << "            -f  FLAG             : during building/updating genomes already exist with the same names will be ignored, set this flag to force adding them" << endl
 		 << "            -g|--gff3  FLAG      : write an additional metagenome annotation file in GFF3 format" << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
@@ -54,11 +56,15 @@ int main(int argc, char* argv[]) {
 	/* variable declarations */
 	vector<string> inFns;
 	map<string, string> genomeFn2Name;
-	string dbName, listFn, gffFn;
-	ifstream listIn;
+	string dbName, oldDBName;
+	string listFn, gffFn, mtgFn, fmidxFn;
+
+	ifstream listIn, mtgIn, fmidxIn;
 
 	ofstream mtgOut, fmidxOut, gffOut;
 	const string fmt = "fasta";
+
+	bool isForce = false;
 
 	/* parse options */
 	CommandOptions cmdOpts(argc, argv);
@@ -91,6 +97,17 @@ int main(int argc, char* argv[]) {
 	if(cmdOpts.hasOpt("-l"))
 		listFn = cmdOpts.getOpt("-l");
 
+	if(cmdOpts.hasOpt("-g") || cmdOpts.hasOpt("--gff3"))
+		gffFn = dbName + GFF3_FILE_SUFFIX;
+
+	if(cmdOpts.hasOpt("-r"))
+		oldDBName = cmdOpts.getOpt("-r");
+	if(cmdOpts.hasOpt("--update"))
+		oldDBName = cmdOpts.getOpt("--update");
+
+	if(cmdOpts.hasOpt("-f"))
+		isForce = true;
+
 	if(cmdOpts.hasOpt("-v"))
 		INCREASE_LEVEL(cmdOpts.getOpt("-v").length());
 
@@ -99,6 +116,8 @@ int main(int argc, char* argv[]) {
 		cerr << "-n must be specified" << endl;
 		return EXIT_FAILURE;
 	}
+	if(dbName == oldDBName)
+		warningLog << "Warning: old database '" << oldDBName << "' will be overwritten!" << endl;
 
 	/* open inputs */
 	if(!listFn.empty()) {
@@ -134,38 +153,47 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	/* set dbName */
-	string mtgFn = dbName + METAGENOME_FILE_SUFFIX;
-	string fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
-	if(cmdOpts.hasOpt("-g") || cmdOpts.hasOpt("--gff3"))
-		gffFn = dbName + GFF3_FILE_SUFFIX;
-
-	/* open output files */
-	mtgOut.open(mtgFn.c_str(), ios_base::out | ios_base::binary);
-	if(!mtgOut.is_open()) {
-		cerr << "Unable to write to '" << mtgFn << "': " << ::strerror(errno) << endl;
-		return EXIT_FAILURE;
-	}
-	fmidxOut.open(fmidxFn.c_str(), ios_base::out | ios_base::binary);
-	if(!fmidxOut.is_open()) {
-		cerr << "Unable to write to '" << fmidxFn << "': " << ::strerror(errno) << endl;
-		return EXIT_FAILURE;
-	}
-
-	if(!gffFn.empty()) {
-		gffOut.open(gffFn.c_str());
-		if(!gffOut.is_open()) {
-			cerr << "Unable to write to '" << gffFn << "': " << ::strerror(errno) << endl;
-			return EXIT_FAILURE;
-		}
-	}
-
 	MetaGenome mtg;
 	FMIndex fmidx;
 
+	/* try to open existing DB */
+	if(!oldDBName.empty()) { /* is an update */
+		infoLog << "Loading old database '" << dbName << "'" << endl;
+		/* set oldDBName */
+		mtgFn = oldDBName + METAGENOME_FILE_SUFFIX;
+		fmidxFn = oldDBName + FMINDEX_FILE_SUFFIX;
+
+		mtgIn.open(mtgFn.c_str(), ios_base::binary);
+		fmidxIn.open(fmidxFn.c_str(), ios_base::binary);
+
+		loadProgInfo(mtgIn);
+		if(!mtgIn.bad())
+			mtg.load(mtgIn);
+		if(mtgIn.bad()) {
+			cerr << "Unable to load '" << mtgFn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
+
+		loadProgInfo(fmidxIn);
+		if(!fmidxIn.bad())
+			fmidx.load(fmidxIn);
+		if(fmidxIn.bad()) {
+			cerr << "Unable to load '" << fmidxFn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
+
+		mtgIn.close();
+		fmidxIn.close();
+	}
+
 	/* process each file */
+	size_t nProcessed = 0;
 	for(const string& inFn : inFns) {
 		string genomeName = genomeFn2Name.at(inFn);
+		if(!isForce && mtg.hasGenome(genomeName)) {
+			warningLog << "Genome '" << genomeName << "' already exists in the database, ignored" << endl;
+			continue;
+		}
 
 		/* open genome file */
 		boost::iostreams::filtering_istream genomeIn;
@@ -206,32 +234,66 @@ int main(int argc, char* argv[]) {
 
 		assert(mtg.getSize() == fmidx.length());
 		infoLog << " done. Currrent # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
+		nProcessed++;
 	}
-	infoLog << "Building the final SA ..." << endl;
-	fmidx.buildSA();
 
-	infoLog << "MetaGenomics database build. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
-
-	infoLog << "Saving database files ..." << endl;
-	/* write database files, all with prepend program info */
-	saveProgInfo(mtgOut);
-	mtg.save(mtgOut);
-	if(mtgOut.bad()) {
-		cerr << "Unable to save MetaGenome: " << ::strerror(errno) << endl;
-		return EXIT_FAILURE;
+	if(oldDBName.empty() || nProcessed > 0) { /* original db not modified */
+		infoLog << "Building the final SA ..." << endl;
+		fmidx.buildSA();
 	}
-	infoLog << "MetaGenome info saved" << endl;
 
-	saveProgInfo(fmidxOut);
-	fmidx.save(fmidxOut);
-	if(fmidxOut.bad()) {
-		cerr << "Unable to save RFM-index: " << ::strerror(errno) << endl;
-		return EXIT_FAILURE;
-	}
-	infoLog << "RFM-index saved" << endl;
+	if(oldDBName.empty())
+		infoLog << "MetaGenomics database build. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
+	else
+		infoLog << "MetaGenomics database updated. Newly added # of genomes: " << nProcessed << " total # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
 
-	if(gffOut.is_open()) {
-		mtg.writeGFF(gffOut, UCSC::GFF::GFF3, progName);
-		infoLog << "GFF3 annotation file written" << endl;
+	if(dbName != oldDBName || nProcessed > 0) { /* building new or updated database */
+		/* set db file names */
+		mtgFn = dbName + METAGENOME_FILE_SUFFIX;
+		fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
+		/* open output files */
+		mtgOut.open(mtgFn.c_str(), ios_base::out | ios_base::binary);
+		if(!mtgOut.is_open()) {
+			cerr << "Unable to write to '" << mtgFn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
+		fmidxOut.open(fmidxFn.c_str(), ios_base::out | ios_base::binary);
+		if(!fmidxOut.is_open()) {
+			cerr << "Unable to write to '" << fmidxFn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
+
+		if(!gffFn.empty()) {
+			gffOut.open(gffFn.c_str());
+			if(!gffOut.is_open()) {
+				cerr << "Unable to write to '" << gffFn << "': " << ::strerror(errno) << endl;
+				return EXIT_FAILURE;
+			}
+		}
+
+		infoLog << "Saving database files ..." << endl;
+		/* write database files, all with prepend program info */
+		saveProgInfo(mtgOut);
+		mtg.save(mtgOut);
+		if(mtgOut.bad()) {
+			cerr << "Unable to save MetaGenome: " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
+		infoLog << "MetaGenome info saved" << endl;
+
+		saveProgInfo(fmidxOut);
+		fmidx.save(fmidxOut);
+		if(fmidxOut.bad()) {
+			cerr << "Unable to save RFM-index: " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
+		infoLog << "RFM-index saved" << endl;
+
+		if(gffOut.is_open()) {
+			mtg.writeGFF(gffOut, UCSC::GFF::GFF3, progName);
+			infoLog << "GFF3 annotation file written" << endl;
+		}
 	}
+	else
+		infoLog << "Database was not modified" << endl;
 }

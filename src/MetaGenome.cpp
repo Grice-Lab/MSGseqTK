@@ -5,6 +5,7 @@
  *      Author: zhengqi
  */
 
+#include <algorithm>
 #include "MetaGenome.h"
 #include "StringUtils.h"
 #include "ProgEnv.h"
@@ -95,6 +96,23 @@ ostream& MetaGenome::writeGFF(ostream& out, UCSC::GFF::Version ver, const string
 	}
 
 	return out;
+}
+
+size_t MetaGenome::countGenome(const string& genomeName) const {
+	string gname = Genome::formatName(genomeName);
+	size_t c = 0;
+	for(const Genome& genome : genomes)
+		if(genome.getName() == gname)
+			c++;
+	return c;
+}
+
+bool MetaGenome::hasGenome(const string& genomeName) const {
+	string gname = Genome::formatName(genomeName);
+	for(const Genome& genome : genomes)
+		if(genome.getName() == gname)
+			return true;
+	return false;
 }
 
 } /* namespace MSGseqTK */

@@ -77,6 +77,12 @@ public:
 		return genomes[i];
 	}
 
+	/** count the number of genomes with a given name */
+	size_t countGenome(const string& genomeName) const;
+
+	/** check whether this genome with given name exists */
+	bool hasGenome(const string& genomeName) const;
+
 	/**
 	 * add a genome at the end of this MetaGenome
 	 */
