@@ -62,7 +62,7 @@ void printUsage(const string& progName) {
 	cerr << "Usage:    " << progName << "  <SEQ-FILE1> [SEQ-FILE2 SEQ-FILE3 ...] <-n DBNAME> [options]" << endl
 		 << "SEQ-FILE  FILE                   : genome sequence file with one file per-genome in FASTA format" << ZLIB_SUPPORT << endl
 		 << "Options:    -n  STR              : database name" << endl
-		 << "            -l  FILE             : tab-delimited list with 1st field sample-names and 2nd field genome filenames/paths" << endl
+		 << "            -l  FILE             : tab-delimited list with 1st field genome-names and 2nd field genomic file paths/names" << endl
 		 << "            -r|--update  STR     : update database based on this old DB, it can be the same name as -n, which will overwrite the old database" << endl
 		 << "            -f  FLAG             : during building/updating genomes already exist with the same names will be ignored, set this flag to force adding them" << endl
 		 << "            -g|--gff3  FLAG      : write an additional metagenome annotation file in GFF3 format" << endl
