@@ -26,18 +26,258 @@
 //============================================================================
 
 #include <iostream>
+#include <ctime>
+#include <cstdlib>
+#include <boost/iostreams/filtering_stream.hpp> /* basic boost streams */
+#include <boost/iostreams/device/file.hpp> /* file sink and source */
+#include <boost/iostreams/filter/zlib.hpp> /* for zlib support */
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filter/bzip2.hpp> /* for bzip2 support */
+#include "MSGseqTK.h"
+#include "EGUtil.h"
+
 using namespace std;
+using namespace EGriceLab;
+using namespace EGriceLab::MSGseqTK;
+using namespace Eigen;
+
+/* program default values */
+static const double DEFAULT_MIN_QVAL = 0;
+static const double MAX_EVAL = 1;
+static const int DEFAULT_STRAND = 3;
 
 /**
  * Print introduction of this program
  */
 void printIntro(void) {
-	cerr << "MetaGenomics Shotgun Sequencing cleaning by removing host contamination reads,"
-		 << " based on Reduced-FM-index (RFM-index) powered Maximal Exact Matched Seeds (MEMS) searches"
-		 << " and Baysian inference of background/target origin using multinomial models" << endl;
+	cerr << "Clean/remove background (i.e. host contamination) reads from Metagenomics Shot-Gun (MSG) sequencing data,"
+		 << " based on Maximal Exact Matched Seeds (MEMS) searches and Baysian inference" << endl;
 }
 
-int main() {
-	cout << "Hello World" << endl; // prints Hello World
-	return 0;
+/**
+ * Print the usage information
+ */
+void printUsage(const string& progName) {
+	string ZLIB_SUPPORT;
+	#ifdef HAVE_LIBZ
+	ZLIB_SUPPORT = ", support .gz or .bz2 compressed file";
+	#endif
+
+	cerr << "Usage:    " << progName << "  <READ-FILE> [MATE-FILE] <-r|--ref REF-DB> <-b|--bg BG-DB> <-o READ-OUT> [-p MATE-OUT] [other-options]" << endl
+		 << "READ-FILE  FILE                  : single-end/forward read file need to be cleaned" << ZLIB_SUPPORT << endl
+		 << "MATE-FILE  FILE                  : mate/reverse read file need to be cleaned" << ZLIB_SUPPORT << endl
+	     << "Options:    -r|--ref  STR        : name of reference/target database from which WGS reads need to be kept" << endl
+		 << "            -b|--bg  STR         : name of background/host database from which WGS reads need to be removed" << endl
+		 << "            -o  FILE             : output of cleaned single-end/forward reads" << ZLIB_SUPPORT << endl
+		 << "            -p  FILE             : output of cleaned mate/reverse reads" << ZLIB_SUPPORT << endl
+		 << "            --info  FILE         : write an additional TSV file with the calculated posterior probability and assignment information for each read" << endl
+		 << "            -q  DBL              : minimum q-value (as -log10(postP)) required to determine a read/pair as reference [" << DEFAULT_MIN_QVAL << "]" << endl
+//		 << "            -e  DBL              : maximum e-value allowed to consider an MEM between datbase and a read as significance [" << MAX_EVAL << "]" << endl
+		 << "            -s|--strand  INT     : read/pair strand to search, 1 for sense, 2 for anti-sense, 3 for both [" << DEFAULT_STRAND << "]" << endl
+		 << "            -S|--seed  INT       : random seed used for determing MEMS, for debug only" << endl
+		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
+		 << "            --version            : show program version and exit" << endl
+		 << "            -h|--help            : print this message and exit" << endl;
+}
+
+int main(int argc, char* argv[]) {
+	/* variable declarations */
+	string fwdInFn, revInFn;
+	string refDB, bgDB;
+	string fwdOutFn, revOutFn, infoFn;
+
+	boost::iostreams::filtering_istream fwdIn, revIn;
+	boost::iostreams::filtering_ostream fwdOut, revOut;
+
+	double minQual = DEFAULT_MIN_QVAL;
+	int checkStrand = DEFAULT_STRAND;
+	unsigned seed = time(NULL); // using time as default seed
+
+	/* parse options */
+	CommandOptions cmdOpts(argc, argv);
+	if(cmdOpts.empty() || cmdOpts.hasOpt("-h") || cmdOpts.hasOpt("--help")) {
+		printIntro();
+		printUsage(argv[0]);
+		return EXIT_SUCCESS;
+	}
+
+	if(cmdOpts.hasOpt("--version")) {
+		printVersion(argv[0]);
+		return EXIT_SUCCESS;
+	}
+
+	if(!(1 <= cmdOpts.numMainOpts() && cmdOpts.numMainOpts() <= 2)) {
+		cerr << "Error:" << endl;
+		printUsage(argv[0]);
+		return EXIT_FAILURE;
+	}
+
+	fwdInFn = cmdOpts.getMainOpt(0);
+	if(cmdOpts.numMainOpts() == 2)
+		revInFn = cmdOpts.getMainOpt(1);
+
+	if(cmdOpts.hasOpt("-r"))
+		refDB = cmdOpts.getOpt("-r");
+	if(cmdOpts.hasOpt("--ref"))
+		refDB = cmdOpts.getOpt("--ref");
+
+	if(cmdOpts.hasOpt("-b"))
+		bgDB = cmdOpts.getOpt("-b");
+	if(cmdOpts.hasOpt("--bg"))
+		bgDB = cmdOpts.getOpt("--bg");
+
+	if(cmdOpts.hasOpt("-o"))
+		fwdOutFn = cmdOpts.getOpt("-o");
+	if(cmdOpts.hasOpt("-p"))
+		revOutFn = cmdOpts.getOpt("-p");
+
+	if(cmdOpts.hasOpt("--info"))
+		infoFn = cmdOpts.getOpt("--info");
+
+	if(cmdOpts.hasOpt("-q"))
+		minQual = ::atof(cmdOpts.getOptStr("-q"));
+
+	if(cmdOpts.hasOpt("-s"))
+		checkStrand = ::atoi(cmdOpts.getOptStr("-s"));
+
+	if(cmdOpts.hasOpt("-S"))
+		seed = ::atoi(cmdOpts.getOptStr("-S"));
+	if(cmdOpts.hasOpt("--seed"))
+		seed = ::atoi(cmdOpts.getOptStr("--seed"));
+	srand(seed); /* set seed */
+
+	if(cmdOpts.hasOpt("-v"))
+		INCREASE_LEVEL(cmdOpts.getOpt("-v").length());
+
+	/* check options */
+	if(refDB.empty()) {
+		cerr << "reference DB must be specified" << endl;
+		return EXIT_FAILURE;
+	}
+
+	if(bgDB.empty()) {
+		cerr << "background must be specified" << endl;
+		return EXIT_FAILURE;
+	}
+
+	if(fwdOutFn.empty()) {
+		cerr << "-o must be specified" << endl;
+		return EXIT_FAILURE;
+	}
+
+	if(!revInFn.empty() && revOutFn.empty()) {
+		cerr << "-p must be specified when reverse read file provided" << endl;
+		return EXIT_FAILURE;
+	}
+
+	if(!(minQual >= 0)) {
+		cerr << "-q must be non-negative" << endl;
+		return EXIT_FAILURE;
+	}
+
+	/* guess input seq format */
+	string fmt = SeqIO::guessFormat(fwdInFn);
+	if(!(fmt == "fasta" || fmt == "fastq")) {
+		cerr << "Unrecognized sequence format for file '" << fwdInFn << "'" << endl;
+		return EXIT_FAILURE;
+	}
+
+	/* open inputs */
+#ifdef HAVE_LIBZ
+	if(StringUtils::endsWith(fwdInFn, GZIP_FILE_SUFFIX))
+		fwdIn.push(boost::iostreams::gzip_decompressor());
+	else if(StringUtils::endsWith(fwdInFn, BZIP2_FILE_SUFFIX))
+		fwdIn.push(boost::iostreams::bzip2_decompressor());
+	else { }
+#endif
+	fwdIn.push(boost::iostreams::file_source(fwdInFn));
+	if(fwdIn.bad()) {
+		cerr << "Unable to open '" << fwdInFn << "' " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+
+	if(!revInFn.empty()) {
+#ifdef HAVE_LIBZ
+		if(StringUtils::endsWith(revInFn, GZIP_FILE_SUFFIX))
+			revIn.push(boost::iostreams::gzip_decompressor());
+		else if(StringUtils::endsWith(revInFn, BZIP2_FILE_SUFFIX))
+			revIn.push(boost::iostreams::bzip2_decompressor());
+		else { }
+#endif
+		revIn.push(boost::iostreams::file_source(revInFn));
+		if(revIn.bad()) {
+			cerr << "Unable to open '" << revInFn << "' " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
+	}
+
+	/* open SeqIO input */
+	SeqIO fwdI(dynamic_cast<istream*>(&fwdIn), fmt);
+	SeqIO revI(dynamic_cast<istream*>(&revIn), fmt);
+
+	string refMtgFn = refDB + METAGENOME_FILE_SUFFIX;
+	string refFmidxFn = refDB + FMINDEX_FILE_SUFFIX;
+	string bgMtgFn = bgDB + METAGENOME_FILE_SUFFIX;
+	string bgFmidxFn = bgDB + FMINDEX_FILE_SUFFIX;
+
+	ifstream refMtgIn, bgMtgIn;
+	ifstream refFmidxIn, bgFmidxIn;
+
+	MetaGenome refMtg, bgMtg;
+	FMIndex refFmidx, bgFmidx;
+
+	refMtgIn.open(refMtgFn.c_str(), ios_base::binary);
+	if(!refMtgIn.is_open()) {
+		cerr << "Unable to open '" << refMtgFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	refFmidxIn.open(refFmidxFn.c_str(), ios_base::binary);
+	if(!refFmidxIn.is_open()) {
+		cerr << "Unable to open '" << refFmidxFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	bgMtgIn.open(bgMtgFn.c_str(), ios_base::binary);
+	if(!bgMtgIn.is_open()) {
+		cerr << "Unable to open '" << bgMtgFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	bgFmidxIn.open(bgFmidxFn.c_str(), ios_base::binary);
+	if(!bgFmidxIn.is_open()) {
+		cerr << "Unable to open '" << bgFmidxFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+
+	/* open outputs */
+#ifdef HAVE_LIBZ
+	if(StringUtils::endsWith(fwdOutFn, GZIP_FILE_SUFFIX)) /* empty outFn won't match */
+		fwdOut.push(boost::iostreams::gzip_compressor());
+	else if(StringUtils::endsWith(fwdOutFn, BZIP2_FILE_SUFFIX)) /* empty outFn won't match */
+		fwdOut.push(boost::iostreams::bzip2_compressor());
+	else { }
+#endif
+	fwdOut.push(boost::iostreams::file_sink(fwdOutFn));
+	if(fwdOut.bad()) {
+		cerr << "Unable to write to '" << fwdOutFn << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+
+	if(!revOutFn.empty()) {
+#ifdef HAVE_LIBZ
+		if(StringUtils::endsWith(revOutFn, GZIP_FILE_SUFFIX)) /* empty outFn won't match */
+			revOut.push(boost::iostreams::gzip_compressor());
+		else if(StringUtils::endsWith(revOutFn, BZIP2_FILE_SUFFIX)) /* empty outFn won't match */
+			revOut.push(boost::iostreams::bzip2_compressor());
+		else { }
+#endif
+		revOut.push(boost::iostreams::file_sink(revOutFn));
+		if(revOut.bad()) {
+			cerr << "Unable to write to '" << revOutFn << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
+	}
+
+	/* open SeqIO output */
+	SeqIO fwdO(dynamic_cast<ostream*>(&fwdOut), fmt);
+	SeqIO revO(dynamic_cast<ostream*>(&revOut), fmt);
+
 }
