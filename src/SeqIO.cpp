@@ -7,6 +7,7 @@
 
 #include <fstream>
 #include "SeqIO.h"
+#include "MSGseqTKConst.h"
 #include "StringUtils.h"
 
 namespace EGriceLab {
@@ -115,6 +116,20 @@ void SeqIO::writeFastqSeq(const PrimarySeq& seq) {
 		*out << " " + seq.getDesc() << endl;
 	*out << seq.getSeq() << endl;
 	*out << fastqSep << endl << seq.getQual() << endl;
+}
+
+string SeqIO::guessFormat(const string& name) {
+	string fn(name); /* use local copy */
+	/* remove potential zip extensions */
+	StringUtils::removeEnd(fn, GZIP_FILE_SUFFIX);
+	StringUtils::removeEnd(fn, BZIP2_FILE_SUFFIX);
+	if(StringUtils::endsWith(fn, ".fasta") || StringUtils::endsWith(fn, ".fa") ||
+			StringUtils::endsWith(fn, ".fas") || StringUtils::endsWith(fn, ".fna"))
+		return "fasta";
+	else if(StringUtils::endsWith(fn, ".fastq") || StringUtils::endsWith(fn, ".fq"))
+		return "fastq";
+	else
+		return "unk";
 }
 
 } /* namespace HmmUFOtu */

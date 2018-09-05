@@ -139,10 +139,14 @@ private:
 	ostream* out; /* output */
 
 	/* static members */
+public:
 	static const char fastaHead = '>';
 	static const char fastqHead = '@';
 	static const int DEFAULT_MAX_LINE = 60;
 	static const char fastqSep = '+';
+
+	/** guess sequence file format by its extension */
+	static string guessFormat(const string& name);
 };
 
 inline bool SeqIO::hasNext() {
