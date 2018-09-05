@@ -117,7 +117,7 @@ int main(int argc, char* argv[]) {
 		listFn = cmdOpts.getOpt("-l");
 
 	if(cmdOpts.hasOpt("-g") || cmdOpts.hasOpt("--gff3"))
-		gffFn = dbName + GFF3_FILE_SUFFIX;
+		gffFn = dbName + UCSC::GFF::GFF3_SUFFIX;
 
 	if(cmdOpts.hasOpt("-r"))
 		oldDBName = cmdOpts.getOpt("-r");
