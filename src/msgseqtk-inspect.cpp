@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
 	string dbName;
 	string listFn;
 	string gffFn;
-	ifstream mtgIn, rfmIn;
+	ifstream mtgIn, fmidxIn;
 	ofstream listOut, gffOut;
 
 	/* parse options */
@@ -104,8 +104,8 @@ int main(int argc, char* argv[]) {
 		cerr << "Unable to open '" << mtgFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	rfmIn.open(rfmFn.c_str(), ios_base::binary);
-	if(!rfmIn.is_open()) {
+	fmidxIn.open(rfmFn.c_str(), ios_base::binary);
+	if(!fmidxIn.is_open()) {
 		cerr << "Unable to open '" << rfmFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
@@ -141,10 +141,10 @@ int main(int argc, char* argv[]) {
 	}
 
 	infoLog << "Loading FM-index ..." << endl;
-	loadProgInfo(rfmIn);
-	if(!rfmIn.bad())
-		fmidx.load(rfmIn);
-	if(rfmIn.bad()) {
+	loadProgInfo(fmidxIn);
+	if(!fmidxIn.bad())
+		fmidx.load(fmidxIn);
+	if(fmidxIn.bad()) {
 		cerr << "Unable to load FM-index: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
