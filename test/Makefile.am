@@ -41,7 +41,8 @@ $(top_srcdir)/src/libMSGseqTK.a
 
 SeqIO_test_SOURCES = SeqIO_test.cpp
 SeqIO_test_LDADD = \
-$(top_srcdir)/src/libMSGseqTK.a
+$(top_srcdir)/src/libMSGseqTK.a \
+$(top_srcdir)/src/util/libEGUtil.a
 
 FMIndex_test_SOURCES = FMIndex_test.cpp
 FMIndex_test_LDADD = \

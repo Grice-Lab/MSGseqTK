@@ -136,7 +136,8 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-am_msgseqtk_clean_OBJECTS = msgseqtk-clean.$(OBJEXT)
+am_msgseqtk_clean_OBJECTS = msgseqtk-clean.$(OBJEXT) \
+	MSGseqTKEnv.$(OBJEXT)
 msgseqtk_clean_OBJECTS = $(am_msgseqtk_clean_OBJECTS)
 msgseqtk_clean_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
 	math/libEGMath.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
@@ -428,7 +429,7 @@ FMIndex.cpp \
 Genome.cpp \
 MetaGenome.cpp
 
-msgseqtk_clean_SOURCES = msgseqtk-clean.cpp
+msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTKEnv.cpp
 msgseqtk_clean_LDADD = \
 libMSGseqTK.a \
 util/libEGUtil.a \
