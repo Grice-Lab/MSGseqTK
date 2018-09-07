@@ -28,10 +28,10 @@ double MEM::logP() const {
 
 int64_t MEM::readDist(const MEM& mem1, const MEM& mem2) {
 	assert(mem1.seq == mem2.seq);
-	int64_t d = mem1.from < mem2.from ? mem2.from - mem1.to + 1 : mem1.from - mem2.to + 1;
-	if(d < 0)
-		d == 0;
-	return d;
+	if(isOverlap(mem1, mem2))
+		return 0;
+	else
+		return mem1.from < mem2.from ? mem2.from - mem1.to + 1 : mem1.from - mem2.to + 1;
 }
 
 int64_t MEM::dbDist(const MEM& mem1, const MEM& mem2) {

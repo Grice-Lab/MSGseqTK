@@ -96,6 +96,11 @@ struct MEM {
 	}
 
 	/* static member methods */
+	/** test whether two MEM overlap on the read */
+	static bool isOverlap(const MEM& mem1, const MEM& mem2) {
+		return mem1.from < mem2.to && mem1.to > mem2.from;
+	}
+
 	/** get the read-distance of two mem,
 	 * return 0 if they are overlapping, or -1 if they map to different read
 	 */
@@ -114,7 +119,9 @@ struct MEM {
 		return readDist(mem1, mem2) - dbDist(mem2, mem2);
 	}
 
-	/** get the indel rate relative to the size of their mapped read */
+	/** get the indel rate relative to the size of their mapped read
+	 * return positive number if insertion, negative if deletion, or 0 if none
+	 */
 	static double rindel(const MEM& mem1, const MEM& mem2) {
 		return nindel(mem1, mem2) / static_cast<double> (mem1.seq->length());
 	}

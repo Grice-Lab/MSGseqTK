@@ -43,6 +43,10 @@ struct Loc {
 	istream& read(istream& in);
 
 	/** static member methods */
+	static bool isOverlap(const Loc& loc1, const Loc& loc2) {
+		return loc1.start < loc2.end && loc1.end > loc2.start;
+	}
+
 	static int64_t dist(const Loc& loc1, const Loc& loc2);
 
 	/* non-member methods */

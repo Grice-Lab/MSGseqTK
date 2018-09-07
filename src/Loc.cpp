@@ -37,10 +37,10 @@ istream& Loc::read(istream& in) {
 }
 
 int64_t Loc::dist(const Loc& loc1, const Loc& loc2) {
-	int64_t d = loc1.start < loc2.start ? loc2.start - loc1.end + 1: loc1.start - loc2.end + 1;
-	if(d < 0)
-		d = 0;
-	return d;
+	if(isOverlap(loc1, loc2))
+		return 0;
+	else
+		return loc1.start < loc2.start ? loc2.start - loc1.end + 1: loc1.start - loc2.end + 1;
 }
 
 } /* namespace MSGseqTK */
