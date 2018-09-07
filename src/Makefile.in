@@ -137,7 +137,7 @@ am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 am_msgseqtk_clean_OBJECTS = msgseqtk-clean.$(OBJEXT) \
-	MSGseqTKEnv.$(OBJEXT)
+	MSGseqTK_main.$(OBJEXT) MSGseqTKEnv.$(OBJEXT)
 msgseqtk_clean_OBJECTS = $(am_msgseqtk_clean_OBJECTS)
 msgseqtk_clean_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
 	math/libEGMath.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
@@ -429,7 +429,7 @@ FMIndex.cpp \
 Genome.cpp \
 MetaGenome.cpp
 
-msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTKEnv.cpp
+msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTK_main.cpp MSGseqTKEnv.cpp
 msgseqtk_clean_LDADD = \
 libMSGseqTK.a \
 util/libEGUtil.a \
@@ -580,6 +580,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Loc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MEM.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MSGseqTKEnv.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MSGseqTK_main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MetaGenome.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PrimarySeq.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QualStr.Po@am__quote@

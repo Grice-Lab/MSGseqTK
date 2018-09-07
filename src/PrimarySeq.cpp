@@ -12,7 +12,7 @@ namespace EGriceLab {
 namespace MSGseqTK {
 
 QualStr PrimarySeq::getQual() const {
-	if(qual.length() == seq.length())
+	if(hasQual())
 		return qual;
 	else {
 		return QualStr(seq.length(), QualStr::DEFAULT_Q_SCORE);

@@ -33,7 +33,9 @@
 #include <boost/iostreams/filter/zlib.hpp> /* for zlib support */
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filter/bzip2.hpp> /* for bzip2 support */
+#include <boost/random/mersenne_twister.hpp>
 #include "MSGseqTK.h"
+#include "MSGseqTK_main.h"
 #include "EGUtil.h"
 
 using namespace std;
@@ -70,9 +72,10 @@ void printUsage(const string& progName) {
 		 << "            -b|--bg  STR         : name of background/host database from which WGS reads need to be removed" << endl
 		 << "            -o  FILE             : output of cleaned single-end/forward reads" << ZLIB_SUPPORT << endl
 		 << "            -p  FILE             : output of cleaned mate/reverse reads" << ZLIB_SUPPORT << endl
-		 << "            --info  FILE         : write an additional TSV file with the calculated posterior probability and assignment information for each read" << endl
+		 << "            -a  FILE             : write an additional TSV file with the detailed assignment information for each read" << endl
 		 << "            -q  DBL              : minimum q-value (as -log10(postP)) required to determine a read/pair as reference [" << DEFAULT_MIN_QVAL << "]" << endl
 //		 << "            -e  DBL              : maximum e-value allowed to consider an MEM between datbase and a read as significance [" << MAX_EVAL << "]" << endl
+		 << "            --ignore  FLAG       : ignore read quality scores for calculating MEM evalues even if they are present" << endl
 		 << "            -s|--strand  INT     : read/pair strand to search, 1 for sense, 2 for anti-sense, 3 for both [" << DEFAULT_STRAND << "]" << endl
 		 << "            -S|--seed  INT       : random seed used for determing MEMS, for debug only" << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
@@ -84,14 +87,19 @@ int main(int argc, char* argv[]) {
 	/* variable declarations */
 	string fwdInFn, revInFn;
 	string refDB, bgDB;
-	string fwdOutFn, revOutFn, infoFn;
+	string fwdOutFn, revOutFn, assignFn;
 
 	boost::iostreams::filtering_istream fwdIn, revIn;
 	boost::iostreams::filtering_ostream fwdOut, revOut;
 
+	ofstream assignOut;
+
 	double minQual = DEFAULT_MIN_QVAL;
 	int checkStrand = DEFAULT_STRAND;
 	unsigned seed = time(NULL); // using time as default seed
+	bool ignoreQual = false;
+
+	typedef boost::random::mt11213b RNG; /* random number generator type */
 
 	/* parse options */
 	CommandOptions cmdOpts(argc, argv);
@@ -131,11 +139,14 @@ int main(int argc, char* argv[]) {
 	if(cmdOpts.hasOpt("-p"))
 		revOutFn = cmdOpts.getOpt("-p");
 
-	if(cmdOpts.hasOpt("--info"))
-		infoFn = cmdOpts.getOpt("--info");
+	if(cmdOpts.hasOpt("-a"))
+		assignFn = cmdOpts.getOpt("-a");
 
 	if(cmdOpts.hasOpt("-q"))
 		minQual = ::atof(cmdOpts.getOptStr("-q"));
+
+	if(cmdOpts.hasOpt("--ignore"))
+		ignoreQual = true;
 
 	if(cmdOpts.hasOpt("-s"))
 		checkStrand = ::atoi(cmdOpts.getOptStr("-s"));
@@ -280,4 +291,59 @@ int main(int argc, char* argv[]) {
 	SeqIO fwdO(dynamic_cast<ostream*>(&fwdOut), fmt);
 	SeqIO revO(dynamic_cast<ostream*>(&revOut), fmt);
 
+	/* load data */
+	infoLog << "Loading reference MetaGenome info ..." << endl;
+	loadProgInfo(refMtgIn);
+	if(!refMtgIn.bad())
+		refMtg.load(refMtgIn);
+	if(refMtgIn.bad()) {
+		cerr << "Unable to load reference MetaGenome: " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	infoLog << "Loading refrence FM-index ..." << endl;
+	loadProgInfo(refFmidxIn);
+	if(!refFmidxIn.bad())
+		refFmidx.load(refFmidxIn);
+	if(refFmidxIn.bad()) {
+		cerr << "Unable to load reference FM-index: " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+
+	infoLog << "Loading background MetaGenome info ..." << endl;
+	loadProgInfo(bgMtgIn);
+	if(!bgMtgIn.bad())
+		bgMtg.load(bgMtgIn);
+	if(bgMtgIn.bad()) {
+		cerr << "Unable to load background MetaGenome: " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	infoLog << "Loading bgrence FM-index ..." << endl;
+	loadProgInfo(bgFmidxIn);
+	if(!bgFmidxIn.bad())
+		bgFmidx.load(bgFmidxIn);
+	if(bgFmidxIn.bad()) {
+		cerr << "Unable to load background FM-index: " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+
+	/* initiate RNG */
+	RNG rng(seed);
+
+	/* search MEMS for each read */
+	while(fwdI.hasNext()) {
+		string id;
+		string desc;
+		PrimarySeq fwdRead = fwdI.nextSeq();
+		id = fwdRead.getName();
+//		desc = fwdRead.getDesc();
+		const vector<MEM>& mems = getMEMS(refFmidx, fwdRead, rng, ignoreQual);
+		cout << "read id:" << id << " desc:" << desc << endl;
+		cout << "found " << mems.size() << " raw MEMS" << endl;
+		for(vector<MEM>::size_type i = 0; i < mems.size(); ++i) {
+			cout << "MEM " << i << " from: " << mems[i].from << " to:" << mems[i].to << " locs:" << endl;
+			for(const Loc& loc : mems[i].locs) {
+				cout << "  " << loc << " genomeIdx:" << refMtg.getChromIndex(loc.start) << " chromIdx:" << refMtg.getChromIndex(loc.start) << endl;
+			}
+		}
+	}
 }

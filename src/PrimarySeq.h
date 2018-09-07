@@ -71,6 +71,10 @@ public:
 		this->desc = desc;
 	}
 
+	bool hasQual() const {
+		return qual.length() == seq.length();
+	}
+
 	QualStr getQual() const;
 
 	void setQual(const QualStr& qual) {
