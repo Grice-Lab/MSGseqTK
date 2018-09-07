@@ -43,6 +43,8 @@ using namespace EGriceLab;
 using namespace EGriceLab::MSGseqTK;
 using namespace Eigen;
 
+static const int DEFAULT_NUM_THREADS = 1;
+
 /**
  * Print introduction of this program
  */

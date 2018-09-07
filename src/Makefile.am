@@ -14,7 +14,8 @@ AM_CXXFLAGS = -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libcds/include \
 $(BOOST_CPPFLAGS) \
-$(OPENMP_CFLAGS)
+$(OPENMP_CFLAGS) \
+$(OPENMP_CXXFLAGS)
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENMP_CXXFLAGS)
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(OPENMP_CXXFLAGS) $(BOOST_REGEX_LIB)

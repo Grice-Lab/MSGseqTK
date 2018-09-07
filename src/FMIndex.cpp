@@ -5,8 +5,6 @@
  *      Author: zhengqi
  */
 
-#include "FMIndex.h"
-
 #include <algorithm>
 #include <cstddef>
 #include <cassert>
@@ -14,6 +12,7 @@
 #include "BitSequenceBuilderRRR.h"
 #include "Mapper.h"
 #include "MapperNone.h"
+#include "FMIndex.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
@@ -197,7 +196,7 @@ void FMIndex::buildBWT(const DNAseq& seq) {
 
 	/* build bwt */
 	sauchar_t* bwtSeq = new sauchar_t[N];
-#pragma omp parallel for
+
     for(saidx_t i = 0; i < N; ++i) {
         if(SA[i] == 0) // matches to the null
             bwtSeq[i] = 0; // null terminal
