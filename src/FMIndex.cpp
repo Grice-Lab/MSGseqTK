@@ -155,8 +155,8 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
     delete[] bwtM;
 
     /* swap data */
-    std::swap(B, BMerged);
-    std::swap(C, CMerged);
+    std::swap_ranges(B, B + UINT8_MAX + 1, BMerged);
+    std::swap_ranges(C, C + UINT8_MAX + 1, CMerged);
     std::swap(bwt, bwtMerged);
 
     if(keepSA)
@@ -281,48 +281,6 @@ Loc FMIndex::reverseLoc(const Loc& loc) const {
 	return Loc(reverseLoc(loc.end - 1) - 1, reverseLoc(loc.start));
 }
 
-MEM FMIndex::findMEM(const DNAseq&read, saidx_t from) const {
-	uint64_t start = 0;
-	uint64_t end = 0;
-	uint64_t nextStart = start;
-	uint64_t nextEnd = end;
-	uint64_t to;
-	/* search read left-to-right */
-	for(to = from; to < read.length(); ++to, start = nextStart, end = nextEnd) {
-		sauchar_t b = read[to];
-		if(b == 0) /* null gap */
-			break;
-		if(start == 0) {
-			nextStart = C[b];
-			nextEnd = C[b + 1] - 1;
-		}
-		else {
-			nextStart = LF(b, start - 1);
-			nextEnd = LF(b, end) - 1;
-		}
-
-		if(nextStart > nextEnd)
-			break;
-	}
-
-	/* construct MEM with basic matching info */
-	MEM mem(from, to, &read, nullptr, totalBases(), B);
-	if(start == 0 && end == 0)
-		return mem;
-	/* adding all matching locs */
-	for(saidx_t i = start; i <= end; ++i) {
-		saidx_t SAstart = accessSA(i);
-		mem.locs.push_back(Loc(SAstart, SAstart + to - from));
-	}
-
-	return mem;
-}
-
-MEM FMIndex::findMEM(const DNAseq&read, const QualStr& qual, saidx_t from) const {
-	MEM mem = findMEM(read, from);
-	mem.qual = &qual;
-	return mem;
-}
 
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */

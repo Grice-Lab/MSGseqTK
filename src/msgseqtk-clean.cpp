@@ -193,6 +193,8 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
+	bool isPaired = !revInFn.empty();
+
 	/* open inputs */
 #ifdef HAVE_LIBZ
 	if(StringUtils::endsWith(fwdInFn, GZIP_FILE_SUFFIX))
@@ -207,7 +209,7 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	if(!revInFn.empty()) {
+	if(isPaired) {
 #ifdef HAVE_LIBZ
 		if(StringUtils::endsWith(revInFn, GZIP_FILE_SUFFIX))
 			revIn.push(boost::iostreams::gzip_decompressor());
@@ -272,7 +274,7 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	if(!revOutFn.empty()) {
+	if(isPaired) {
 #ifdef HAVE_LIBZ
 		if(StringUtils::endsWith(revOutFn, GZIP_FILE_SUFFIX)) /* empty outFn won't match */
 			revOut.push(boost::iostreams::gzip_compressor());
@@ -336,11 +338,11 @@ int main(int argc, char* argv[]) {
 		PrimarySeq fwdRead = fwdI.nextSeq();
 		id = fwdRead.getName();
 //		desc = fwdRead.getDesc();
-		const vector<MEM>& mems = getMEMS(refFmidx, fwdRead, rng, ignoreQual);
+		const vector<MEM>& mems = getMEMS(&fwdRead, &refFmidx, rng);
 		cout << "read id:" << id << " desc:" << desc << endl;
 		cout << "found " << mems.size() << " raw MEMS" << endl;
 		for(vector<MEM>::size_type i = 0; i < mems.size(); ++i) {
-			cout << "MEM " << i << " from: " << mems[i].from << " to:" << mems[i].to << " locs:" << endl;
+			cout << "MEM " << i << " from: " << mems[i].from << " to:" << mems[i].to << " logP:" << mems[i].logP() << " evalue:" << mems[i].evalue() << " locs:" << endl;
 			for(const Loc& loc : mems[i].locs) {
 				cout << "  " << loc << " genomeIdx:" << refMtg.getChromIndex(loc.start) << " chromIdx:" << refMtg.getChromIndex(loc.start) << endl;
 			}

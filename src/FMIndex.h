@@ -20,7 +20,6 @@
 #include "DNAseq.h"
 #include "QualStr.h"
 #include "Loc.h"
-#include "MEM.h"
 #include "divsufsort_private.h"
 #include "WaveletTreeNoptrs.h"
 #include "BitSequence.h"
@@ -166,21 +165,6 @@ public:
 
 	/** reverse the coordinates of a Loc on this FM-index */
 	Loc reverseLoc(const Loc& loc) const;
-
-	/**
-	 * get an MEM of a given seq starting at given position relative to the seq
-	 * @param read  read to search, must be in reversed orientation of this FM-index
-	 * @param i  relative position of the seq
-	 */
-	MEM findMEM(const DNAseq& read, saidx_t from = 0) const;
-
-	/**
-	 * get an MEM of a given seq starting at given position relative to the seq and given quality info
-	 * @param read  read to search, must be in reversed orientation of this FM-index
-	 * @param qual  quality string, can be null
-	 * @param i  relative position of the seq
-	 */
-	MEM findMEM(const DNAseq& read, const QualStr& qual, saidx_t from = 0) const;
 
 	/* non-member functions */
 	friend FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs);

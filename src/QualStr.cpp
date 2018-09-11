@@ -13,8 +13,12 @@ namespace MSGseqTK {
 
 QualStr& QualStr::assign(const string& str) {
 	clear();
-	for(char q : str)
-		push_back(q - qShift);
+	for(char q : str) {
+		uint8_t qScore = q - qShift;
+		if(qScore < MIN_Q_SCORE)
+			qScore = MIN_Q_SCORE;
+		push_back(qScore);
+	}
 	return *this;
 }
 

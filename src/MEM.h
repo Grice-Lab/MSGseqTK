@@ -12,15 +12,15 @@
 #include <cmath>
 #include <algorithm>
 #include "Loc.h"
-#include "DNAseq.h"
+#include "PrimarySeq.h"
+#include "FMIndex.h"
 #include "MSGseqTKConst.h"
-#include "QualStr.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
 
 /*
- * Maximal Exact Match betwen a DNAseq and a FM-index database
+ * Maximal Exact Match betwen a PrimarySeq and an FM-index database
  */
 using std::vector;
 
@@ -29,33 +29,16 @@ struct MEM {
 	MEM() = default;
 
 	/** construct an MEM with all info */
-	MEM(uint64_t from, uint64_t to, const DNAseq* seq, const QualStr* qual,
-			int64_t N, const int64_t* B,
+	MEM(const PrimarySeq* seq, const FMIndex* fmidx,
+			uint64_t from, uint64_t to, uint64_t SAstart, uint64_t SAend,
 			const vector<Loc>& locs)
-	: from(from), to(to), seq(seq), qual(qual), N(N), locs(locs)
-	{
-		std::copy(B, B + UINT8_MAX + 1, this->B);
-	}
-
-	/** construct an MEM with all info but not locs */
-	MEM(uint64_t from, uint64_t to, const DNAseq* seq, const QualStr* qual,
-			int64_t N, const int64_t* B)
-	: from(from), to(to), seq(seq), qual(qual), N(N)
-	{
-		std::copy(B, B + UINT8_MAX + 1, this->B);
-	}
-
-	/** delegating construct an MEM with all info but not qual */
-	MEM(uint64_t from, uint64_t to, const DNAseq* seq,
-			int64_t N, const int64_t* B,
-			const vector<Loc>& locs)
-	: MEM(from, to, seq, nullptr, N, B, locs)
+	: seq(seq), fmidx(fmidx), from(from), to(to), SAstart(SAstart), SAend(SAend), locs(locs)
 	{  }
 
-	/** delegating construct an MEM with all info but not qual and locs */
-	MEM(uint64_t from, uint64_t to, const DNAseq* seq,
-			int64_t N, const int64_t* B)
-	: MEM(from, to, seq, nullptr, N, B)
+	/** construct an MEM with all info but not locs */
+	MEM(const PrimarySeq* seq, const FMIndex* fmidx,
+			uint64_t from, uint64_t to, uint64_t SAstart, uint64_t SAend)
+	: seq(seq), fmidx(fmidx), from(from), to(to), SAstart(SAstart), SAend(SAend)
 	{  }
 
 	/* member methods */
@@ -73,14 +56,18 @@ struct MEM {
 	void reset() {
 		from = 0;
 		to = 0;
-		seq = nullptr;
-		qual = nullptr;
 		locs.clear();
 	}
 
 	/**
+	 * fill the locs information of this MEM
+	 * locs are lazy-filled to save computation time
+	 */
+	MEM& findLocs();
+
+	/**
 	 * get loglikelihood of this MEM
-	 * @param  baseFreq  base frequency used to determine the loglik, default equal base frequency
+	 * @param  ignoreQual  whether to ignore quality even exists
 	 * @return  log-pvalue of observing this MEM by random, using base-frequency and optionally base quality
 	 */
 	double logP() const;
@@ -92,7 +79,7 @@ struct MEM {
 
 	/** get the E-value of observing this MEM on a known size database */
 	double evalue() const {
-		return N * pvalue();
+		return fmidx->length() * pvalue();
 	}
 
 	/* static member methods */
@@ -127,15 +114,23 @@ struct MEM {
 	}
 
 	/* member fields */
+	const PrimarySeq* seq = nullptr;
+	const FMIndex* fmidx = nullptr;
 	int64_t from = 0; /* 0-based relative start on seq */
 	int64_t to = 0;   /* 1-based relative end on seq */
-	const DNAseq* seq = nullptr;    // using pointers for fewer overhead,
-	const QualStr* qual = nullptr;  // assumes their existence
-
-	int64_t N = 0; /* database size */
-	int64_t B[UINT8_MAX + 1] = { 0 }; /* database base count */
-
+	int64_t SAstart = 0; /* 0-based start position on SA */
+	int64_t SAend = 0;   /* 1-based end position on SA */
 	vector<Loc> locs; /* all Loc this MEM matches to w/ reversed coordinates */
+
+	/* static methods */
+	/**
+	 * get an MEM of a given seq starting at given position relative to the seq
+	 * the locs will not be filled by this method
+	 * @param seq  seq to search, must be in reversed orientation of this FM-index
+	 * @param i  relative position of the seq
+	 * @param ignoreQual  whether to ignore quality
+	 */
+	static MEM findMEM(const PrimarySeq* seq, const FMIndex* fmidx, uint64_t from = 0);
 
 };
 

@@ -92,6 +92,7 @@ public:
 	/* static members */
 	static const uint8_t DEFAULT_Q_SCORE = 30;
 	static const uint8_t DEFAULT_Q_SHIFT = 33;
+	static const uint8_t MIN_Q_SCORE = 2; /* prevent Inf */
 };
 
 inline ostream& operator<<(ostream& out, const QualStr& qual) {

@@ -13,6 +13,7 @@
 #include "FMIndex.h"
 #include "PrimarySeq.h"
 #include "SeqIO.h"
+#include "MEM.h"
 #include "MetaGenome.h"
 #include "MSGseqTKConst.h"
 
