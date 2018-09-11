@@ -34,7 +34,7 @@ int main() {
 		for(const Loc& loc : mem.locs)
 			cout << " " << loc;
 		cout << endl;
-		cout << "loglik: " << mem.logP() << " likelihood: " << mem.pvalue()
+		cout << "loglik: " << mem.loglik() << " likelihood: " << mem.pvalue()
 				<< " evalue: " << mem.evalue() << endl;
 		if(!isValidMEM(genomeDB.reverse(), mem))
 			return EXIT_FAILURE;
@@ -53,7 +53,7 @@ int main() {
 		for(const Loc& loc : mem.locs)
 			cout << " " << loc;
 		cout << endl;
-		cout << "loglik: " << mem.logP() << " likelihood: " << mem.pvalue()
+		cout << "loglik: " << mem.loglik() << " likelihood: " << mem.pvalue()
 				<< " evalue: " << mem.evalue() << endl;
 		if(!isValidMEM(genomeDB.reverse(), mem))
 			return EXIT_FAILURE;

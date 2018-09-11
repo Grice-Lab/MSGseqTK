@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
 	ofstream assignOut;
 
 	double minQual = DEFAULT_MIN_QVAL;
-	int checkStrand = DEFAULT_STRAND;
+	int strand = DEFAULT_STRAND;
 	unsigned seed = time(NULL); // using time as default seed
 	bool ignoreQual = false;
 
@@ -149,7 +149,9 @@ int main(int argc, char* argv[]) {
 		ignoreQual = true;
 
 	if(cmdOpts.hasOpt("-s"))
-		checkStrand = ::atoi(cmdOpts.getOptStr("-s"));
+		strand = ::atoi(cmdOpts.getOptStr("-s"));
+	if(cmdOpts.hasOpt("--strand"))
+		strand = ::atoi(cmdOpts.getOptStr("--strand"));
 
 	if(cmdOpts.hasOpt("-S"))
 		seed = ::atoi(cmdOpts.getOptStr("-S"));
@@ -338,11 +340,11 @@ int main(int argc, char* argv[]) {
 		PrimarySeq fwdRead = fwdI.nextSeq();
 		id = fwdRead.getName();
 //		desc = fwdRead.getDesc();
-		const vector<MEM>& mems = getMEMS(&fwdRead, &refFmidx, rng);
+		const vector<MEM>& mems = getMEMS(&fwdRead, &refFmidx, rng, strand);
 		cout << "read id:" << id << " desc:" << desc << endl;
 		cout << "found " << mems.size() << " raw MEMS" << endl;
 		for(vector<MEM>::size_type i = 0; i < mems.size(); ++i) {
-			cout << "MEM " << i << " from: " << mems[i].from << " to:" << mems[i].to << " logP:" << mems[i].logP() << " evalue:" << mems[i].evalue() << " locs:" << endl;
+			cout << "MEM " << i << " strand: " << mems[i].strand << " from: " << mems[i].from << " to:" << mems[i].to << " logP:" << mems[i].loglik() << " evalue:" << mems[i].evalue() << " locs:" << endl;
 			for(const Loc& loc : mems[i].locs) {
 				cout << "  " << loc << " genomeIdx:" << refMtg.getChromIndex(loc.start) << " chromIdx:" << refMtg.getChromIndex(loc.start) << endl;
 			}

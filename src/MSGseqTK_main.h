@@ -25,15 +25,15 @@ using std::vector;
 typedef boost::random::mt11213b RNG;
 
 /**
- * get MEMS by MCMC sampling matches between db and seq
+ * get single-end MEMS by MCMC sampling matches between db and seq
  * @param fmidx  FM-index
  * @param seq  primary sequence to search
- * @param ignoreQual  whether to force ignoring quality info even if it is presented in the sequence
+ * @oaran rng  random-number generator
  */
-vector<MEM> getMEMS(const PrimarySeq* seq, const FMIndex* fmidx, RNG& rng);
+vector<MEM> getMEMS(const PrimarySeq* seq, const FMIndex* fmidx, RNG& rng, int strand);
 
 /**
- * filter MEMs by removing incompatitable MEMs that is not on the same genome, same chromosome and with not too much indels
+ * filter single-end MEMs by removing incompatitable MEMs that is not on the same genome, same chromosome and with not too much indels
  * @param mems  vector of MEMs ordered by their relative location on seq
  * @param mtg  MetaGenome data
  * @param maxIndel  max indel-rate allowed

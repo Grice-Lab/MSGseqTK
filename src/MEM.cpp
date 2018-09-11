@@ -15,15 +15,18 @@ namespace MSGseqTK {
 
 using namespace EGriceLab::Math;
 
-double MEM::logP() const {
+double MEM::loglik() const {
 	double loglik = 0;
 	uint64_t N = fmidx->totalBases();
+	DNAseq ds = seq->getSeq();
+	if(strand == REV)
+		ds.revcom();
 	for(uint64_t i = from; i < to; ++i)
-		loglik += ::log(fmidx->getBaseCount(seq->getSeq()[i])) - ::log(N); /* use observed base frequency */
+		loglik += ::log(fmidx->getBaseCount(ds[i])) - ::log(N); /* use observed base frequency */
 	return loglik;
 }
 
-int64_t MEM::readDist(const MEM& mem1, const MEM& mem2) {
+int64_t MEM::seqDist(const MEM& mem1, const MEM& mem2) {
 	assert(mem1.seq == mem2.seq);
 	if(isOverlap(mem1, mem2))
 		return 0;
@@ -43,20 +46,24 @@ int64_t MEM::dbDist(const MEM& mem1, const MEM& mem2) {
 	return minD;
 }
 
-MEM MEM::findMEM(const PrimarySeq* seq, const FMIndex* fmidx, uint64_t from) {
+MEM MEM::findMEM(const PrimarySeq* seq, const FMIndex* fmidx, uint64_t from, STRAND strand) {
 	uint64_t start = 0; /* 0-based SAstart */
 	uint64_t end = 0;   /* 1-based SAend */
 	uint64_t nextStart = start;
 	uint64_t nextEnd = end;
 	uint64_t to;
-	/* search read left-to-right */
-	for(to = from; to < seq->length(); ++to, start = nextStart, end = nextEnd) {
-		sauchar_t b = seq->getSeq()[to];
-		if(b == 0) /* null gap */
+	/* search left-to-right */
+	DNAseq ds = seq->getSeq();
+	if(strand == REV)
+		ds.revcom();
+
+	for(to = from; to < ds.length(); ++to, start = nextStart, end = nextEnd) {
+		sauchar_t b = ds[to];
+		if(b == DNAalphabet::N) /* null gap */
 			break;
 		if(start == 0) {
-			nextStart = fmidx->getBaseCount(b);
-			nextEnd = fmidx->getBaseCount(b + 1);
+			nextStart = fmidx->getCumCount(b);
+			nextEnd = fmidx->getCumCount(b + 1);
 		}
 		else {
 			nextStart = fmidx->LF(b, start - 1);
@@ -68,7 +75,7 @@ MEM MEM::findMEM(const PrimarySeq* seq, const FMIndex* fmidx, uint64_t from) {
 	}
 
 	/* return MEM with basic info */
-	return MEM(seq, fmidx, from, to, start, end);
+	return MEM(seq, fmidx, strand, from, to, start, end);
 }
 
 MEM& MEM::findLocs() {

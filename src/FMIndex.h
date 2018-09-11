@@ -90,6 +90,11 @@ public:
 		return B[b];
 	}
 
+	/** get cumulative base count of given base */
+	saidx_t getCumCount(sauchar_t b) const {
+		return C[b];
+	}
+
 	/** get total bases in this FM-index excluding gaps */
 	const saidx_t totalBases() const;
 
