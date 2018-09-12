@@ -35,7 +35,6 @@
 #include <boost/iostreams/filter/bzip2.hpp> /* for bzip2 support */
 #include <boost/random/mersenne_twister.hpp>
 #include "MSGseqTK.h"
-#include "MSGseqTK_main.h"
 #include "EGUtil.h"
 
 using namespace std;
@@ -340,9 +339,9 @@ int main(int argc, char* argv[]) {
 		PrimarySeq fwdRead = fwdI.nextSeq();
 		id = fwdRead.getName();
 //		desc = fwdRead.getDesc();
-		const vector<MEM>& mems = getMEMS(&fwdRead, &refFmidx, rng, strand);
+		MEMS mems = MEMS::sampleMEMS(&fwdRead, &refFmidx, rng, strand);
 		cout << "read id:" << id << " desc:" << desc << endl;
-		cout << "found " << mems.size() << " raw MEMS" << endl;
+		cout << "found " << mems.size() << " raw MEMS" << " loglik:" << mems.loglik() << " Pr:" << mems.Pr() << endl;
 		for(vector<MEM>::size_type i = 0; i < mems.size(); ++i) {
 			cout << "MEM " << i << " strand: " << mems[i].strand << " from: " << mems[i].from << " to:" << mems[i].to << " logP:" << mems[i].loglik() << " evalue:" << mems[i].evalue() << " locs:" << endl;
 			for(const Loc& loc : mems[i].locs) {

@@ -14,6 +14,7 @@
 #include "PrimarySeq.h"
 #include "SeqIO.h"
 #include "MEM.h"
+#include "MEMS.h"
 #include "MetaGenome.h"
 #include "MSGseqTKConst.h"
 

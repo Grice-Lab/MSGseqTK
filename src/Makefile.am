@@ -31,6 +31,7 @@ PrimarySeq.cpp \
 SeqIO.cpp \
 Loc.cpp \
 MEM.cpp \
+MEMS.cpp \
 FMIndex.cpp \
 Genome.cpp \
 MetaGenome.cpp
@@ -42,7 +43,7 @@ msgseqtk-build \
 msgseqtk-inspect \
 msgseqtk-mergedb
 
-msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTK_main.cpp MSGseqTKEnv.cpp
+msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTKEnv.cpp
 msgseqtk_clean_LDADD = \
 libMSGseqTK.a \
 util/libEGUtil.a \
