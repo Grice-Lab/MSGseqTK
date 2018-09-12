@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <utility>
 #include <boost/random/mersenne_twister.hpp>
 #include "MSGseqTK.h"
 
@@ -21,16 +22,29 @@ namespace MSGseqTK {
 
 using std::string;
 using std::vector;
+using std::pair;
 
 typedef boost::random::mt11213b RNG;
+typedef pair<vector<MEM>, vector<MEM>> MEMS_PE;
 
 /**
  * get single-end MEMS by MCMC sampling matches between db and seq
- * @param fmidx  FM-index
  * @param seq  primary sequence to search
- * @oaran rng  random-number generator
+ * @param fmidx  FM-index
+ * @param rng  random-number generator
+ * @return  a vector of MEMs ordered by from
  */
 vector<MEM> getMEMS(const PrimarySeq* seq, const FMIndex* fmidx, RNG& rng, int strand);
+
+/**
+ * get paired-end MEMS by MCMC sampling matches between db and seq
+ * @param fwdSeq  fwd-seq to search
+ * @param revSeq  rev-seq to search
+ * @param fmidx  FM-index
+ * @param rng  random-number generator
+ * @return  an MEM_PE of MEMs ordered by from
+ */
+MEMS_PE getMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx, RNG& rng, int strand);
 
 /**
  * filter single-end MEMs by removing incompatitable MEMs that is not on the same genome, same chromosome and with not too much indels
