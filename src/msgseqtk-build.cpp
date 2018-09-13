@@ -256,15 +256,14 @@ int main(int argc, char* argv[]) {
 			genome.addChrom(chrName, chrSeq.length());
 
 			blockSeq += chrSeq;
-			blockSeq.push_back(DNAalphabet::N); /* add a null terminal after each chrom */
-
 			if(blockSeq.length() >= blockSize * MBP_UNIT) {
 				infoLog << "Adding DNAseq of block " << ++k << " into database" << endl;
-				blockSeq.erase(blockSeq.length() - 1); /* remove terminal null */
 				fmidx = FMIndex(blockSeq) + fmidx;
 				blockSeq.clear();
 				infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
 			}
+			else
+				blockSeq.push_back(DNAalphabet::N); /* add a null terminal after each chrom */
 		}
 		/* incremental update backward */
 		mtg.push_front(genome);
