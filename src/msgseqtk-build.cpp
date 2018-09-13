@@ -68,6 +68,7 @@ void printUsage(const string& progName) {
 		 << "            -r|--update  STR     : update database based on this old DB, it can be the same name as -n, which will overwrite the old database" << endl
 		 << "            -f  FLAG             : during building/updating genomes already exist with the same names will be ignored, set this flag to force adding them" << endl
 		 << "            -g|--gff3  FLAG      : write an additional metagenome annotation file in GFF3 format" << endl
+		 << "            --per-chrom  FLAG    : build FMIndex per-chromosome instand of per-genome, this reduce memory usage for large genomes such as human" << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
 		 << "            -h|--help            : print this message and exit" << endl;
@@ -86,6 +87,7 @@ int main(int argc, char* argv[]) {
 	const string fmt = "fasta";
 
 	bool isForce = false;
+	bool perChr = false;
 
 	/* parse options */
 	CommandOptions cmdOpts(argc, argv);
@@ -128,6 +130,9 @@ int main(int argc, char* argv[]) {
 
 	if(cmdOpts.hasOpt("-f"))
 		isForce = true;
+
+	if(cmdOpts.hasOpt("--per-chrom"))
+		perChr = true;
 
 	if(cmdOpts.hasOpt("-v"))
 		INCREASE_LEVEL(cmdOpts.getOpt("-v").length());
@@ -241,17 +246,25 @@ int main(int argc, char* argv[]) {
 		while(seqI.hasNext()) {
 			PrimarySeq chr = seqI.nextSeq().reverse(); /* alwasy use reversed sequence */
 			string chrName = chr.getName();
-			DNAseq chrSeq = chr.getSeq();
+			const DNAseq& chrSeq = chr.getSeq();
 			genome.addChrom(chrName, chrSeq.length());
 
-			genomeSeq += chrSeq;
-			genomeSeq.push_back(DNAalphabet::N); /* add a null terminal after each chrom */
+			if(!perChr) {
+				genomeSeq += chrSeq;
+				genomeSeq.push_back(DNAalphabet::N); /* add a null terminal after each chrom */
+			}
+			else {
+				infoLog << "  Adding chrom '" << chrName << "' into database" << endl;
+				fmidx = FMIndex(chrSeq) + fmidx;
+			}
 		}
 
 		/* incremental update backward */
 		mtg.push_front(genome);
-		infoLog << "Adding into database ... ";
-		fmidx = FMIndex(genomeSeq) + fmidx; /* always use ther fresh object as lhs */
+		if(!perChr) {
+			infoLog << "Adding into database ... ";
+			fmidx = FMIndex(genomeSeq) + fmidx; /* always use ther fresh object as lhs */
+		}
 
 		assert(mtg.getSize() == fmidx.length());
 		infoLog << " done. Currrent # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
