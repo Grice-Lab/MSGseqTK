@@ -49,7 +49,7 @@ size_t Genome::getChromIndex(uint64_t loc) const {
 	for(vector<Chrom>::const_iterator chr = chroms.begin(); chr != chroms.end(); ++chr) {
 		if(start <= loc && loc <= start + chr->size) /* include null terminal */
 			return chr - chroms.begin();
-		start += chr->size + 1;
+		start += chr->size + 1; /* with null terminal */
 	}
 	return -1;
 }

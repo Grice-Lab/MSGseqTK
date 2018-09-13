@@ -18,7 +18,7 @@ uint64_t MetaGenome::getSize() const {
 	uint64_t size = 0;
 	for(const deque<Genome>::value_type & genome : genomes)
 		size += genome.getSize();
-	return size + numGenomes(); /* include null terminal for each Genome */
+	return size; /* include null terminal for each Genome */
 }
 
 vector<Genome> MetaGenome::getGenomes() const {
@@ -49,7 +49,7 @@ size_t MetaGenome::getChromIndex(uint64_t loc) const {
 	for(deque<Genome>::const_iterator genome = genomes.begin(); genome != genomes.end(); ++genome) {
 		if(start <= loc && loc <= start + genome->getSize()) /* include the null terminal */
 			return genome->getChromIndex(loc - start);
-		start += genome->getSize() + 1;
+		start += genome->getSize(); /* no null-terminal for genome */
 	}
 	return -1;
 }
