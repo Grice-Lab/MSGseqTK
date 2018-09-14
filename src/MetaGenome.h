@@ -38,7 +38,7 @@ public:
 //	MetaGenome() = default;
 
 	/** get total size of this MetaGenome */
-	uint64_t getSize() const;
+	uint64_t size() const;
 
 	/** get total number of genomes */
 	size_t numGenomes() const {
@@ -59,9 +59,9 @@ public:
 	size_t getGenomeIndex(uint64_t loc) const;
 
 	/**
-	 * get the chromosome index at given location, or -1 if not found
-	 * @param loc  0-based chromosome location
-	 * @return  the index of the genome that covers this loc
+	 * get the chromosome index of given location, or -1 if not found
+	 * @param loc  0-based location
+	 * @return  the index of chromosome that covers this loc
 	 */
 	size_t getChromIndex(uint64_t loc) const;
 

@@ -14,10 +14,10 @@ namespace EGriceLab {
 namespace MSGseqTK {
 using Eigen::Map;
 
-uint64_t MetaGenome::getSize() const {
+uint64_t MetaGenome::size() const {
 	uint64_t size = 0;
 	for(const deque<Genome>::value_type & genome : genomes)
-		size += genome.getSize();
+		size += genome.size();
 	return size; /* include null terminal for each Genome */
 }
 
@@ -37,19 +37,19 @@ vector<string> MetaGenome::getGenomeNames() const {
 size_t MetaGenome::getGenomeIndex(uint64_t loc) const {
 	uint64_t start = 0;
 	for(deque<Genome>::const_iterator genome = genomes.begin(); genome != genomes.end(); ++genome) {
-		if(start <= loc && loc <= start + genome->getSize()) /* include the null terminal */
+		if(start <= loc && loc < start + genome->size())
 			return genome - genomes.begin();
-		start += genome->getSize() + 1;
+		start += genome->size(); /* no null-terminal for genome */
 	}
 	return -1;
 }
 
 size_t MetaGenome::getChromIndex(uint64_t loc) const {
 	size_t start = 0;
-	for(deque<Genome>::const_iterator genome = genomes.begin(); genome != genomes.end(); ++genome) {
-		if(start <= loc && loc <= start + genome->getSize()) /* include the null terminal */
-			return genome->getChromIndex(loc - start);
-		start += genome->getSize(); /* no null-terminal for genome */
+	for(const Genome& genome : genomes) {
+		if(start <= loc && loc < start + genome.size())
+			return genome.getChromIndex(loc - start);
+		start += genome.size(); /* no null-terminal for genome */
 	}
 	return -1;
 }
@@ -92,7 +92,7 @@ ostream& MetaGenome::writeGFF(ostream& out, UCSC::GFF::Version ver, const string
 	size_t shift = 0;
 	for(const Genome& genome : genomes) {
 		genome.writeGFF(out, ver, src, shift);
-		shift += genome.getSize() + 1;
+		shift += genome.size() + 1;
 	}
 
 	return out;
