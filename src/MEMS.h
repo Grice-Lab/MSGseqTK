@@ -45,22 +45,35 @@ public:
 	}
 
 	/**
+	 * locate the best MEM index with lowest pvalue or likelihood
+	 * @return  the MEM with smallest loglik, or -1 if empty
+	 */
+	size_t bestMEMIndex() const;
+
+	/** locate the best MEM in this MEMS */
+	const MEM& bestMEM() const {
+		return (*this)[bestMEMIndex()];
+	}
+
+	/**
 	 * filter MEMS by removing incompatitable MEM's locs that is not on the same genome, or same chromosome and with not too much indels
-	 * @param mems  vector of MEMs ordered by their relative location on seq
+	 * this algorithm starts from the best MEM (lowest loglik), then sweep to both ends
 	 * @param mtg  MetaGenome data
 	 * @param maxIndel  max indel-rate allowed
 	 */
-	MEMS& filterLocs(vector<MEM>& mems, const MetaGenome& mtg, double maxIndel);
+	MEMS& filterLocs(const MetaGenome& mtg, double maxIndel);
 
 	/* static methods */
 	/**
 	 * get MEMS by MCMC sampling matches between db and seq
 	 * @param seq  primary sequence to search
 	 * @param fmidx  FM-index
+	 * @param mtg  MetaGenome
 	 * @param rng  random-number generator
 	 * @return  a vector of MEMs ordered by from
 	 */
-	static MEMS sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx, RNG& rng, int strand);
+	static MEMS sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx, const MetaGenome* mtg,
+			RNG& rng, int strand, double maxIndelRate);
 
 	/**
 	 * get paired-end MEMS by MCMC sampling matches between db and seq
@@ -70,11 +83,11 @@ public:
 	 * @param rng  random-number generator
 	 * @return  an MEM_PE of MEMs ordered by from
 	 */
-	MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx, RNG& rng, int strand);
+	MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx, const MetaGenome* mtg,
+			RNG& rng, int strand, double maxIndelRate);
 
 	/* static fields */
 	static boost::random::uniform_01<> mem_dist; /* random01 distribution for accepting MEMs */
-
 };
 
 } /* namespace UCSC */

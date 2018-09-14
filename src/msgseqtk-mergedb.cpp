@@ -157,14 +157,14 @@ int main(int argc, char* argv[]) {
 		infoLog << "Merging into new database ... ";
 		mtg = mtgPart + mtg;
 		fmidx = fmidxPart + fmidx;
-		assert(mtg.getSize() == fmidx.length());
-		infoLog << " done. currrent size: " << mtg.getSize() << endl;
+		assert(mtg.size() == fmidx.length());
+		infoLog << " done. currrent size: " << mtg.size() << endl;
 	}
 
 	infoLog << "Building the final SA ..." << endl;
 	fmidx.buildSA();
 
-	infoLog << "MetaGenomics database merged. # of Genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
+	infoLog << "MetaGenomics database merged. # of Genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
 	infoLog << "Saving database files ..." << endl;
 	/* write database files, all with prepend program info */
 	saveProgInfo(mtgOut);

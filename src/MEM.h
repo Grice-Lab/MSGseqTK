@@ -14,6 +14,7 @@
 #include "Loc.h"
 #include "PrimarySeq.h"
 #include "FMIndex.h"
+#include "MetaGenome.h"
 #include "MSGseqTKConst.h"
 
 namespace EGriceLab {
@@ -59,6 +60,10 @@ struct MEM {
 	void reset() {
 		from = 0;
 		to = 0;
+		SAstart = 0;
+		SAend = 0;
+		seq = nullptr;
+		fmidx = nullptr;
 		locs.clear();
 	}
 
@@ -91,30 +96,45 @@ struct MEM {
 		return mem1.from < mem2.to && mem1.to > mem2.from;
 	}
 
+	/** test whether two Loc is compatitable
+	 * @return  true if they are on the same genome and chromosome
+	 */
+	static bool isCompatitable(const MetaGenome* mtg, const Loc& loc1, const Loc& loc2) {
+		return mtg->getGenomeIndex(loc1.start) == mtg->getGenomeIndex(loc2.start) &&
+				mtg->getChromIndex(loc1.start) == mtg->getChromIndex(loc2.start);
+	}
+
 	/** get the seq-distance of two mem,
 	 * return 0 if they are overlapping
 	 */
-	static int64_t seqDist(const MEM& mem1, const MEM& mem2);
+	static uint64_t seqDist(const MEM& mem1, const MEM& mem2);
 
 	/** get the DB-distance of two mem,
-	 * return 0 if they are overlapping,
-	 * or -1 both locs are empty
+	 * return 0 if they are overlapping, or SIZE_MAX no compatitable locs found
 	 */
-	static int64_t dbDist(const MEM& mem1, const MEM& mem2);
+	static uint64_t dbDist(const MetaGenome* mtg, const MEM& mem1, const MEM& mem2);
 
 	/** get the number of indeals of two MEM
 	 * return positive number if insertion, negative if deletion, or 0 if none
 	 */
-	static int64_t nindel(const MEM& mem1, const MEM& mem2) {
-		return seqDist(mem1, mem2) - dbDist(mem2, mem2);
+	static int64_t nIndel(const MetaGenome* mtg, const MEM& mem1, const MEM& mem2) {
+		return seqDist(mem1, mem2) - dbDist(mtg, mem2, mem2);
 	}
 
 	/** get the indel rate relative to the size of their mapped seq
 	 * return positive number if insertion, negative if deletion, or 0 if none
 	 */
-	static double rindel(const MEM& mem1, const MEM& mem2) {
-		return nindel(mem1, mem2) / static_cast<double> (mem1.seq->length());
+	static double rIndel(const MetaGenome* mtg, const MEM& mem1, const MEM& mem2) {
+		return static_cast<double> (nIndel(mtg, mem1, mem2)) / mem1.seq->length();
 	}
+
+	/**
+	 * filter a pair of MEM by removing locs not within required indel rate
+	 * @param mtg  MetaGenome
+	 * @param mem1  primary MEM
+	 * @param mem2  target MEM
+	 */
+	static void filterLocsByIndel(const MetaGenome* mtg, MEM& mem1, MEM& mem2, double maxIndelRate);
 
 	/* member fields */
 	const PrimarySeq* seq = nullptr;
@@ -134,7 +154,8 @@ struct MEM {
 	 * @param i  relative position of the seq
 	 * @param strand  which strand to search
 	 */
-	static MEM findMEM(const PrimarySeq* seq, const FMIndex* fmidx, uint64_t from = 0, STRAND strand = FWD);
+	static MEM findMEM(const PrimarySeq* seq, const FMIndex* fmidx,
+			uint64_t from = 0, STRAND strand = FWD);
 };
 
 } /* namespace MSGseqTK */

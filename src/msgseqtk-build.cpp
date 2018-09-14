@@ -272,13 +272,12 @@ int main(int argc, char* argv[]) {
 	/* process last block */
 	if(!blockSeq.empty()) {
 		infoLog << "Adding DNAseq of block " << ++k << " into database" << endl;
-		blockSeq.erase(blockSeq.length() - 1); /* remove terminal null */
 		fmidx = FMIndex(blockSeq) + fmidx;
 		blockSeq.clear();
 		infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
 	}
 
-	assert(mtg.getSize() == fmidx.length());
+	assert(mtg.size() == fmidx.length());
 
 	if(oldDBName.empty() || nProcessed > 0) { /* original db not modified */
 		infoLog << "Building the final SA ..." << endl;
@@ -286,9 +285,9 @@ int main(int argc, char* argv[]) {
 	}
 
 	if(oldDBName.empty())
-		infoLog << "MetaGenomics database build. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
+		infoLog << "MetaGenomics database build. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
 	else
-		infoLog << "MetaGenomics database updated. Newly added # of genomes: " << nProcessed << " total # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
+		infoLog << "MetaGenomics database updated. Newly added # of genomes: " << nProcessed << " total # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
 
 	if(dbName != oldDBName || nProcessed > 0) { /* building new or updated database */
 		/* set db file names */

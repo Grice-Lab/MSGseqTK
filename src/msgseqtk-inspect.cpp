@@ -149,7 +149,7 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	cout << "MetaGenome info: # of genomes: " << mtg.numGenomes() << " size: " << mtg.getSize() << endl;
+	cout << "MetaGenome info: # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
 	cout << "FM-index info: length: " << fmidx.length() << " baseCount: ";
 	for(int8_t b = DNAalphabet::A; b < DNAalphabet::SIZE; ++b)
 		cout << " " << DNAalphabet::decode(b) << ":" << fmidx.getBaseCount(b);

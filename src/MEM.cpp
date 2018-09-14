@@ -7,6 +7,8 @@
 
 #include <cmath>
 #include <cassert>
+#include <limits>
+#include <unordered_set>
 #include "MEM.h"
 #include "Stats.h"
 
@@ -14,6 +16,7 @@ namespace EGriceLab {
 namespace MSGseqTK {
 
 using namespace EGriceLab::Math;
+using std::unordered_set;
 
 double MEM::loglik() const {
 	double loglik = 0;
@@ -26,7 +29,7 @@ double MEM::loglik() const {
 	return loglik;
 }
 
-int64_t MEM::seqDist(const MEM& mem1, const MEM& mem2) {
+uint64_t MEM::seqDist(const MEM& mem1, const MEM& mem2) {
 	assert(mem1.seq == mem2.seq);
 	if(isOverlap(mem1, mem2))
 		return 0;
@@ -34,13 +37,15 @@ int64_t MEM::seqDist(const MEM& mem1, const MEM& mem2) {
 		return mem1.from < mem2.from ? mem2.from - mem1.to + 1 : mem1.from - mem2.to + 1;
 }
 
-int64_t MEM::dbDist(const MEM& mem1, const MEM& mem2) {
-	int64_t minD = -1;
+uint64_t MEM::dbDist(const MetaGenome* mtg, const MEM& mem1, const MEM& mem2) {
+	uint64_t minD = std::numeric_limits<uint64_t>::max();
 	for(const Loc& loc1 : mem1.locs) {
 		for(const Loc& loc2 : mem2.locs) {
-			int64_t d = Loc::dist(loc1, loc2);
-			if(minD == -1 || d < minD)
-				minD = d;
+			if(isCompatitable(mtg, loc1, loc2)) {
+				int64_t d = Loc::dist(loc1, loc2);
+				if(d < minD)
+					minD = d;
+			}
 		}
 	}
 	return minD;
@@ -83,8 +88,32 @@ MEM& MEM::findLocs() {
 		uint64_t start = fmidx->accessSA(i);
 		locs.push_back(Loc(start, start + length()));
 	}
-
 	return *this;
+}
+
+void MEM::filterLocsByIndel(const MetaGenome* mtg, MEM& mem1, MEM& mem2, double maxIndelRate) {
+	assert(mem1.seq == mem2.seq);
+	unordered_set<size_t> acceptedLocs1;
+	unordered_set<size_t> acceptedLocs2;
+	for(size_t i = 0; i < mem1.locs.size(); ++i)
+		for(size_t j = 0; j < mem2.locs.size(); ++j)
+			if(isCompatitable(mtg, mem1.locs[i], mem2.locs[j])) {
+				int64_t d = Loc::dist(mem1.locs[i], mem2.locs[j]);
+				if(::abs(static_cast<double>(d) / mem1.seq->length() <= maxIndelRate)) {
+					acceptedLocs1.insert(i);
+					acceptedLocs2.insert(j);
+				}
+			}
+
+	/* filter mem1 locs */
+	for(size_t i = mem1.locs.size(); i > 0; --i)
+		if(acceptedLocs1.count(i - 1) == 0) /* not acceptible */
+			mem1.locs.erase(mem1.locs.begin() + i - 1);
+
+	/* filter mem2 locs */
+	for(size_t j = mem2.locs.size(); j > 0; --j)
+		if(acceptedLocs2.count(j - 1) == 0) /* not acceptible */
+			mem2.locs.erase(mem2.locs.begin() + j - 1);
 }
 
 } /* namespace MSGseqTK */

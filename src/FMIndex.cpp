@@ -202,15 +202,14 @@ void FMIndex::buildBWT(const DNAseq& seq) {
             bwtSeq[i] = 0; // null terminal
         else bwtSeq[i] = seq[SA[i] - 1];
     }
+    delete[] SA;
 
 	/* construct RRR_compressed BWT */
     bwt = std::make_shared<BWTRRR>(reinterpret_cast<uint*> (bwtSeq), N, sizeof(sauchar_t) * 8,
     		new BitSequenceBuilderRRR(RRR_SAMPLE_RATE), /* smart ptr */
 			new MapperNone() /* smart ptr */,
 			false); // do not free the rbwt after use
-
     delete[] bwtSeq;
-    delete[] SA;
 
 	if(keepSA) /* if intermediate SA need to be kept */
 		buildSA();

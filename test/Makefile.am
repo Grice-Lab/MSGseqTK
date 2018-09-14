@@ -48,7 +48,8 @@ FMIndex_test_SOURCES = FMIndex_test.cpp
 FMIndex_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-$(top_srcdir)/src/libcds/src/libcds.la
+$(top_srcdir)/src/libcds/src/libcds.la \
+$(top_srcdir)/src/util/libEGUtil.a
 
 Genome_test_SOURCES = Genome_test.cpp
 Genome_test_LDADD = \
@@ -59,7 +60,8 @@ MEM_test_SOURCES = MEM_test.cpp
 MEM_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-$(top_srcdir)/src/libcds/src/libcds.la
+$(top_srcdir)/src/libcds/src/libcds.la \
+$(top_srcdir)/src/util/libEGUtil.a
 
 TESTS = \
 DNAseq_test \

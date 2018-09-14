@@ -9,10 +9,16 @@
 #define SRC_MSGSEQTKCONST_H_
 
 #include <string>
+#include <limits>
+#include <cassert>
+
 using std::string;
 
 namespace EGriceLab {
 namespace MSGseqTK {
+
+const double inf = std::numeric_limits<double>::infinity();
+const double infV = -inf;
 
 const string GZIP_FILE_SUFFIX = ".gz";
 const string BZIP2_FILE_SUFFIX = ".bz2";

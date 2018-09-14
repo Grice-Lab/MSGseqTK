@@ -96,7 +96,7 @@ public:
 	uint64_t getChromSize(const string& chrName) const;
 
 	/** get the overall size of this genome */
-	uint64_t getSize() const;
+	uint64_t size() const;
 
 	/** add a new chrom object at the end */
 	void addChrom(const Chrom& chr) {

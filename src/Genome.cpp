@@ -74,7 +74,7 @@ istream& Genome::load(istream& in) {
 	return in;
 }
 
-uint64_t Genome::getSize() const {
+uint64_t Genome::size() const {
 	uint64_t size = 0;
 	for(const Chrom& chr : chroms)
 		size += chr.size;
@@ -95,7 +95,7 @@ bool operator==(const Genome& lhs, const Genome& rhs) {
 
 ostream& Genome::writeGFF(ostream& out, UCSC::GFF::Version ver, const string& src, size_t shift) const {
 	/* write genome as first-level feature */
-	UCSC::GFF genomeGff(ver, name, src, "genome", shift + 1, shift + getSize(), UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
+	UCSC::GFF genomeGff(ver, name, src, "genome", shift + 1, shift + size(), UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
 	genomeGff.setAttr("ID", name);
 	genomeGff.setAttr("Name", name);
 	out << genomeGff << endl;

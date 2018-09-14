@@ -44,8 +44,9 @@ using namespace Eigen;
 
 /* program default values */
 static const double DEFAULT_MIN_QVAL = 0;
-static const double MAX_EVAL = 1;
+//static const double MAX_EVAL = 1;
 static const int DEFAULT_STRAND = 3;
+static const double DEFAULT_INDEL_RATE = 0.01;
 
 /**
  * Print introduction of this program
@@ -97,6 +98,7 @@ int main(int argc, char* argv[]) {
 	int strand = DEFAULT_STRAND;
 	unsigned seed = time(NULL); // using time as default seed
 	bool ignoreQual = false;
+	double maxIndelRate = DEFAULT_INDEL_RATE;
 
 	typedef boost::random::mt11213b RNG; /* random number generator type */
 
@@ -338,11 +340,11 @@ int main(int argc, char* argv[]) {
 		string desc;
 		PrimarySeq fwdRead = fwdI.nextSeq();
 		id = fwdRead.getName();
-//		desc = fwdRead.getDesc();
-		MEMS mems = MEMS::sampleMEMS(&fwdRead, &refFmidx, rng, strand);
+		desc = fwdRead.getDesc();
 		cout << "read id:" << id << " desc:" << desc << endl;
+		MEMS mems = MEMS::sampleMEMS(&fwdRead, &refFmidx, &refMtg, rng, strand, maxIndelRate);
 		cout << "found " << mems.size() << " raw MEMS" << " loglik:" << mems.loglik() << " Pr:" << mems.Pr() << endl;
-		for(vector<MEM>::size_type i = 0; i < mems.size(); ++i) {
+		for(MEMS::size_type i = 0; i < mems.size(); ++i) {
 			cout << "MEM " << i << " strand: " << mems[i].strand << " from: " << mems[i].from << " to:" << mems[i].to << " logP:" << mems[i].loglik() << " evalue:" << mems[i].evalue() << " locs:" << endl;
 			for(const Loc& loc : mems[i].locs) {
 				cout << "  " << loc << " genomeIdx:" << refMtg.getChromIndex(loc.start) << " chromIdx:" << refMtg.getChromIndex(loc.start) << endl;
