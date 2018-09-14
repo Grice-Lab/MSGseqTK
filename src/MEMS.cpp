@@ -24,8 +24,8 @@ double MEMS::loglik() const {
 	return ll;
 }
 
-MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx, const MetaGenome* mtg,
-		RNG& rng, int strand, double maxIndelRate) {
+MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
+		RNG& rng, int strand) {
 	assert(strand != 0);
 	MEMS fwdMems, revMems;
 	double fwdLoglik = 0;
@@ -38,13 +38,9 @@ MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx, const MetaGen
 			/* calculate MEM evalue */
 			double eval = mem.evalue();
 			/* accept by chance */
-			bool acceptible = false;
-			if(eval <= mem_dist(rng)) {
-				mem.findLocs();
-				acceptible = fwdMems.empty() || ::abs(MEM::rIndel(mtg, fwdMems.back(), mem)) <= maxIndelRate;
-			}
+			bool acceptible = eval <= mem_dist(rng);
 			if(acceptible) {
-				fwdMems.push_back(mem);
+				fwdMems.push_back(mem.findLocs());
 				i = mem.to + 1;
 				fwdLoglik += mem.loglik();
 			}
@@ -59,13 +55,9 @@ MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx, const MetaGen
 			/* calculate MEM evalue */
 			double eval = mem.evalue();
 			/* accept by chance */
-			bool acceptible = false;
-			if(eval <= mem_dist(rng)) {
-				mem.findLocs();
-				acceptible = revMems.empty() || ::abs(MEM::rIndel(mtg, revMems.back(), mem)) <= maxIndelRate;
-			}
+			bool acceptible = eval <= mem_dist(rng);
 			if(acceptible) {
-				revMems.push_back(mem);
+				revMems.push_back(mem.findLocs());
 				i = mem.to + 1;
 				revLoglik += mem.loglik();
 			}
@@ -91,8 +83,8 @@ size_t MEMS::bestMEMIndex() const {
 	return bestIdx;
 }
 
-MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx, const MetaGenome* mtg,
-		RNG& rng, int strand, double maxIndelRate) {
+MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
+		RNG& rng, int strand) {
 	assert(strand != 0);
 	MEMS_PE sense_mems_pe, revcom_mems_pe;
 	double senseLoglik = 0;
@@ -105,13 +97,9 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 			/* calculate MEM evalue */
 			double eval = mem.evalue();
 			/* accept by chance */
-			bool acceptible = false;
-			if(eval <= mem_dist(rng)) {
-				mem.findLocs();
-				acceptible = sense_mems_pe.first.empty() || ::abs(MEM::rIndel(mtg, sense_mems_pe.first.back(), mem)) <= maxIndelRate;
-			}
+			bool acceptible = eval <= mem_dist(rng);
 			if(acceptible) {
-				sense_mems_pe.first.push_back(mem);
+				sense_mems_pe.first.push_back(mem.findLocs());
 				i = mem.to + 1;
 				senseLoglik += mem.loglik();
 			}
@@ -124,11 +112,9 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 			/* calculate MEM evalue */
 			double eval = mem.evalue();
 			/* accept by chance */
-			bool acceptible = false;
-			if(eval <= mem_dist(rng)) {
-				mem.findLocs();
-				acceptible = sense_mems_pe.second.empty() || ::abs(MEM::rIndel(mtg, sense_mems_pe.second.back(), mem)) <= maxIndelRate;
-				sense_mems_pe.second.push_back(mem);
+			bool acceptible = eval <= mem_dist(rng);
+			if(acceptible) {
+				sense_mems_pe.second.push_back(mem.findLocs());
 				i = mem.to + 1;
 				senseLoglik += mem.loglik();
 			}
@@ -146,15 +132,9 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 			/* accept by chance */
 			bool acceptible = eval <= mem_dist(rng);
 			if(acceptible) {
-				mem.findLocs();
-				/* accept only if it is not too far */
-				if(revcom_mems_pe.first.empty() || ::abs(MEM::rIndel(mtg, revcom_mems_pe.first.back(), mem)) <= maxIndelRate) {
-					revcom_mems_pe.first.push_back(mem);
-					i = mem.to + 1;
-					revcomLoglik += mem.loglik();
-				}
-				else
-					i++;
+				revcom_mems_pe.first.push_back(mem.findLocs());
+				i = mem.to + 1;
+				revcomLoglik += mem.loglik();
 			}
 			else
 				i++;
@@ -164,15 +144,11 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 			/* calculate MEM evalue */
 			double eval = mem.evalue();
 			/* accept by chance */
-			bool acceptible = false;
-			if(eval <= mem_dist(rng)) {
-				mem.findLocs();
-				acceptible = revcom_mems_pe.second.empty() || ::abs(MEM::rIndel(mtg, revcom_mems_pe.second.back(), mem)) <= maxIndelRate;
-			}
+			bool acceptible = eval <= mem_dist(rng);
 			if(acceptible) {
-					revcom_mems_pe.second.push_back(mem);
-					i = mem.to + 1;
-					revcomLoglik += mem.loglik();
+				revcom_mems_pe.second.push_back(mem.findLocs());
+				i = mem.to + 1;
+				revcomLoglik += mem.loglik();
 			}
 			else
 				i++;

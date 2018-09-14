@@ -40,7 +40,6 @@
 using namespace std;
 using namespace EGriceLab;
 using namespace EGriceLab::MSGseqTK;
-using namespace Eigen;
 
 /* program default values */
 static const double DEFAULT_MIN_QVAL = 0;
@@ -342,13 +341,14 @@ int main(int argc, char* argv[]) {
 		id = fwdRead.getName();
 		desc = fwdRead.getDesc();
 		cout << "read id:" << id << " desc:" << desc << endl;
-		MEMS mems = MEMS::sampleMEMS(&fwdRead, &refFmidx, &refMtg, rng, strand, maxIndelRate);
-		cout << "found " << mems.size() << " raw MEMS" << " loglik:" << mems.loglik() << " Pr:" << mems.Pr() << endl;
-		for(MEMS::size_type i = 0; i < mems.size(); ++i) {
-			cout << "MEM " << i << " strand: " << mems[i].strand << " from: " << mems[i].from << " to:" << mems[i].to << " logP:" << mems[i].loglik() << " evalue:" << mems[i].evalue() << " locs:" << endl;
-			for(const Loc& loc : mems[i].locs) {
-				cout << "  " << loc << " genomeIdx:" << refMtg.getChromIndex(loc.start) << " chromIdx:" << refMtg.getChromIndex(loc.start) << endl;
-			}
-		}
+		MEMS refMems = MEMS::sampleMEMS(&fwdRead, &refFmidx, rng, strand);
+		cout << "found " << refMems.size() << " raw MEMS on ref" << " loglik:" << refMems.loglik() << " Pr:" << refMems.Pr() << endl;
+
+		MEMS bgMems = MEMS::sampleMEMS(&fwdRead, &bgFmidx, rng, strand);
+		cout << "found " << bgMems.size() << " raw MEMS on bg" << " loglik:" << bgMems.loglik() << " Pr:" << bgMems.Pr() << endl;
+
+		double lod = - refMems.loglik() + bgMems.loglik();
+		cerr << "lod:" << lod << endl;
+
 	}
 }

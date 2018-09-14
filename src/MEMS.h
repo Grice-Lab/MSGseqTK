@@ -68,12 +68,11 @@ public:
 	 * get MEMS by MCMC sampling matches between db and seq
 	 * @param seq  primary sequence to search
 	 * @param fmidx  FM-index
-	 * @param mtg  MetaGenome
 	 * @param rng  random-number generator
 	 * @return  a vector of MEMs ordered by from
 	 */
-	static MEMS sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx, const MetaGenome* mtg,
-			RNG& rng, int strand, double maxIndelRate);
+	static MEMS sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
+			RNG& rng, int strand);
 
 	/**
 	 * get paired-end MEMS by MCMC sampling matches between db and seq
@@ -83,8 +82,8 @@ public:
 	 * @param rng  random-number generator
 	 * @return  an MEM_PE of MEMs ordered by from
 	 */
-	MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx, const MetaGenome* mtg,
-			RNG& rng, int strand, double maxIndelRate);
+	MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
+			RNG& rng, int strand);
 
 	/* static fields */
 	static boost::random::uniform_01<> mem_dist; /* random01 distribution for accepting MEMs */
