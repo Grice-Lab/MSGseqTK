@@ -24,6 +24,13 @@ double MEMS::loglik() const {
 	return ll;
 }
 
+uint64_t MEMS::length() const {
+	uint64_t L = 0;
+	for(const MEM& mem : *this)
+		L += mem.length();
+	return L;
+}
+
 MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
 		RNG& rng, int strand) {
 	assert(strand != 0);

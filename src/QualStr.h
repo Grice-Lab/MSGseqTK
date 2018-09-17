@@ -35,7 +35,7 @@ public:
 	}
 
 	/** construct a QualStr with fixed number of values */
-	explicit QualStr(size_type n = 0, uint8_t val = DEFAULT_Q_SHIFT)
+	explicit QualStr(size_type n, uint8_t val = DEFAULT_Q_SCORE)
 	: std::basic_string<uint8_t>(n, val)
 	 {   }
 

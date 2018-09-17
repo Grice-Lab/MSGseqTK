@@ -334,21 +334,45 @@ int main(int argc, char* argv[]) {
 	RNG rng(seed);
 
 	/* search MEMS for each read */
-	while(fwdI.hasNext()) {
+	while(fwdI.hasNext() && (!isPaired || revI.hasNext())) {
 		string id;
 		string desc;
-		PrimarySeq fwdRead = fwdI.nextSeq();
+		PrimarySeq fwdRead;
+		PrimarySeq revRead;
+		fwdRead = fwdI.nextSeq();
 		id = fwdRead.getName();
 		desc = fwdRead.getDesc();
 		cout << "read id:" << id << " desc:" << desc << endl;
-		MEMS refMems = MEMS::sampleMEMS(&fwdRead, &refFmidx, rng, strand);
-		cout << "found " << refMems.size() << " raw MEMS on ref" << " loglik:" << refMems.loglik() << " Pr:" << refMems.Pr() << endl;
+		if(isPaired) {
+			revRead = revI.nextSeq();
+			if(revRead.getName() != id) {
+				cerr << "Unmatched forward/reverse seq id found: " << id << " <-> " << revRead.getName() << endl;
+				return EXIT_FAILURE;
+			}
+		}
 
-		MEMS bgMems = MEMS::sampleMEMS(&fwdRead, &bgFmidx, rng, strand);
-		cout << "found " << bgMems.size() << " raw MEMS on bg" << " loglik:" << bgMems.loglik() << " Pr:" << bgMems.Pr() << endl;
+		if(!isPaired) {
+			MEMS refMems = MEMS::sampleMEMS(&fwdRead, &refFmidx, rng, strand);
+			cout << "found " << refMems.size() << " raw MEMS on ref" << " loglik:" << refMems.loglik() << " Pr:" << refMems.Pr() << endl;
 
-		double lod = - refMems.loglik() + bgMems.loglik();
-		cerr << "lod:" << lod << endl;
+			MEMS bgMems = MEMS::sampleMEMS(&fwdRead, &bgFmidx, rng, strand);
+			cout << "found " << bgMems.size() << " raw MEMS on bg" << " loglik:" << bgMems.loglik() << " Pr:" << bgMems.Pr() << endl;
 
+			double lod = - refMems.loglik() + bgMems.loglik();
+			cerr << "lod:" << lod << endl;
+		}
+		else {
+			MEMS_PE refMems_pe = MEMS::sampleMEMS(&fwdRead, &revRead, &refFmidx, rng, strand);
+			cout << "found " << refMems_pe.first.size() << " fwd MEMS on ref and " << refMems_pe.second.size() << " rev MEMS on ref"
+					<< " fwd loglik:" << refMems_pe.first.loglik() << " rev loglik:" << refMems_pe.second.loglik() << endl;
+
+			MEMS_PE bgMems_pe = MEMS::sampleMEMS(&fwdRead, &revRead, &bgFmidx, rng, strand);
+				cout << "found " << bgMems_pe.first.size() << " fwd MEMS on bg and " << bgMems_pe.second.size() << " rev MEMS on bg"
+						<< " fwd loglik:" << bgMems_pe.first.loglik() << " rev loglik:" << bgMems_pe.second.loglik() << endl;
+
+			double lod = -refMems_pe.first.loglik() + bgMems_pe.first.loglik()
+						 -refMems_pe.second.loglik() + bgMems_pe.second.loglik();
+			cerr << "lod:" << lod << endl;
+		}
 	}
 }

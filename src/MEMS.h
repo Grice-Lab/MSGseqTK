@@ -44,6 +44,9 @@ public:
 		return 1 - ::exp(loglik());
 	}
 
+	/** get the total length of this MEMS */
+	uint64_t length() const;
+
 	/**
 	 * locate the best MEM index with lowest pvalue or likelihood
 	 * @return  the MEM with smallest loglik, or -1 if empty
@@ -82,7 +85,7 @@ public:
 	 * @param rng  random-number generator
 	 * @return  an MEM_PE of MEMs ordered by from
 	 */
-	MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
+	static MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
 			RNG& rng, int strand);
 
 	/* static fields */

@@ -253,6 +253,7 @@ int main(int argc, char* argv[]) {
 			PrimarySeq chr = seqI.nextSeq().reverse(); /* alwasy use reversed sequence */
 			string chrName = chr.getName();
 			DNAseq chrSeq = chr.getSeq();
+			debugLog << "  adding " << chrName << " with length " << chrSeq.length() << endl;
 			genome.addChrom(chrName, chrSeq.length());
 
 			blockSeq += chrSeq;
