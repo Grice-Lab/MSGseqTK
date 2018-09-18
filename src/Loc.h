@@ -54,8 +54,8 @@ struct Loc {
 	friend istream& operator>>(istream& in, Loc& loc);
 
 	/* member fields */
-	int64_t start; /* 0-based */
-	int64_t end;   /* 1-based */
+	int64_t start = 0; /* 0-based */
+	int64_t end = 0;   /* 1-based */
 };
 
 inline ostream& operator<<(ostream& out, const Loc& loc) {

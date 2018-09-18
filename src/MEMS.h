@@ -58,6 +58,9 @@ public:
 		return (*this)[bestMEMIndex()];
 	}
 
+	/** write this MEMS to text output */
+	ostream& write(ostream& out) const;
+
 	/**
 	 * filter MEMS by removing incompatitable MEM's locs that is not on the same genome, or same chromosome and with not too much indels
 	 * this algorithm starts from the best MEM (lowest loglik), then sweep to both ends
@@ -88,9 +91,23 @@ public:
 	static MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
 			RNG& rng, int strand);
 
+	/**
+	 * get the loglik of a paired-end MEMS
+	 */
+	static double loglik(const MEMS_PE& mems_pe) {
+		return mems_pe.first.loglik() + mems_pe.second.loglik();
+	}
+
 	/* static fields */
 	static boost::random::uniform_01<> mem_dist; /* random01 distribution for accepting MEMs */
+
+	/* non-member methods */
+	friend ostream& operator<<(ostream& out, const MEMS& mems);
 };
+
+inline ostream& operator<<(ostream& out, const MEMS& mems) {
+	return mems.write(out); /* call virtual member method */
+}
 
 } /* namespace UCSC */
 } /* namespace EGriceLab */

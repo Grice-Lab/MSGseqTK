@@ -44,7 +44,7 @@ using namespace EGriceLab::MSGseqTK;
 using namespace Eigen;
 
 static const int DEFAULT_NUM_THREADS = 1;
-static const int DEFAULT_BLOCK_SIZE = 256;
+static const int DEFAULT_BLOCK_SIZE = 1000;
 static const size_t MBP_UNIT = 1000000;
 
 /**
@@ -256,6 +256,8 @@ int main(int argc, char* argv[]) {
 			debugLog << "  adding " << chrName << " with length " << chrSeq.length() << endl;
 			genome.addChrom(chrName, chrSeq.length());
 
+			if(!blockSeq.empty())
+				blockSeq.push_back(DNAalphabet::N); /* add a null terminal before appending a new chrom */
 			blockSeq += chrSeq;
 			if(blockSeq.length() >= blockSize * MBP_UNIT) {
 				infoLog << "Adding DNAseq of block " << ++k << " into database" << endl;
@@ -263,8 +265,6 @@ int main(int argc, char* argv[]) {
 				blockSeq.clear();
 				infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
 			}
-			else
-				blockSeq.push_back(DNAalphabet::N); /* add a null terminal after each chrom */
 		}
 		/* incremental update backward */
 		mtg.push_front(genome);

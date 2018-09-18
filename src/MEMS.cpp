@@ -90,6 +90,16 @@ size_t MEMS::bestMEMIndex() const {
 	return bestIdx;
 }
 
+ostream& MEMS::write(ostream& out) const {
+	for(MEMS::const_iterator mem = begin(); mem != end(); ++mem) {
+		if(mem != begin())
+			out << ';';
+		out << *mem;
+	}
+
+	return out;
+}
+
 MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
 		RNG& rng, int strand) {
 	assert(strand != 0);

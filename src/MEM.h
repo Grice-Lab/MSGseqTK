@@ -90,6 +90,9 @@ struct MEM {
 		return fmidx->length() * pvalue();
 	}
 
+	/** write this MEM to text output */
+	ostream& write(ostream& out) const;
+
 	/* static member methods */
 	/** test whether two MEM overlap on the seq */
 	static bool isOverlap(const MEM& mem1, const MEM& mem2) {
@@ -156,7 +159,14 @@ struct MEM {
 	 */
 	static MEM findMEM(const PrimarySeq* seq, const FMIndex* fmidx,
 			uint64_t from = 0, STRAND strand = FWD);
+
+	/* non-member methods */
+	friend ostream& operator<<(ostream& out, const MEM& mem);
 };
+
+inline ostream& operator<<(ostream& out, const MEM& mem) {
+	return mem.write(out); /* call virtual member method */
+}
 
 } /* namespace MSGseqTK */
 } /* namespace EGriceLab */

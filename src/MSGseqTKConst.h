@@ -19,6 +19,7 @@ namespace MSGseqTK {
 
 const double inf = std::numeric_limits<double>::infinity();
 const double infV = -inf;
+const std::streamsize MAX_STREAM_SIZE = std::numeric_limits<std::streamsize>::max();
 
 const string GZIP_FILE_SUFFIX = ".gz";
 const string BZIP2_FILE_SUFFIX = ".bz2";

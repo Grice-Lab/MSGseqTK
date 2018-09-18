@@ -5,6 +5,7 @@
  *      Author: zhengqi
  */
 
+#include <cctype>
 #include <cmath>
 #include <cassert>
 #include <limits>
@@ -49,6 +50,19 @@ uint64_t MEM::dbDist(const MetaGenome* mtg, const MEM& mem1, const MEM& mem2) {
 		}
 	}
 	return minD;
+}
+
+ostream& MEM::write(ostream& out) const {
+	/* write basic info */
+	out << strand << ':' << from << '-' << to << ':'; /* SAstart and SAend are ignored */
+	/* write Loc info */
+	for(vector<Loc>::const_iterator loc = locs.begin(); loc != locs.end(); ++loc) {
+		if(loc != locs.begin())
+			out << ',';
+		out << *loc;
+	}
+
+	return out;
 }
 
 MEM MEM::findMEM(const PrimarySeq* seq, const FMIndex* fmidx, uint64_t from, STRAND strand) {

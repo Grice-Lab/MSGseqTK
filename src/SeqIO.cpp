@@ -113,7 +113,8 @@ void SeqIO::writeFastaSeq(const PrimarySeq& seq) {
 void SeqIO::writeFastqSeq(const PrimarySeq& seq) {
 	*out << fastqHead << seq.getName();
 	if(!seq.getDesc().empty())
-		*out << " " + seq.getDesc() << endl;
+		*out << " " + seq.getDesc();
+	*out << endl;
 	*out << seq.getSeq() << endl;
 	*out << fastqSep << endl << seq.getQual() << endl;
 }

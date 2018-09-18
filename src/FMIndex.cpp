@@ -147,17 +147,20 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
 	sauchar_t* bwtM = new sauchar_t[N];
 	for(saidx_t i = 0, j = 0, k = 0; k < N; ++k)
 		bwtM[k] = bitStr.getBit(k) ? bwt->access(i++) : other.bwt->access(j++);
-
     BWTRRR_ptr bwtMerged = std::make_shared<BWTRRR>(reinterpret_cast<uint*> (bwtM), N, sizeof(sauchar_t) * 8,
     		new BitSequenceBuilderRRR(RRR_SAMPLE_RATE), /* smart ptr */
 			new MapperNone() /* smart ptr */,
-			false); // do not free the bwtNew after use
+			false); // do not free the bwtM after use
     delete[] bwtM;
 
     /* swap data */
     std::swap_ranges(B, B + UINT8_MAX + 1, BMerged);
     std::swap_ranges(C, C + UINT8_MAX + 1, CMerged);
     std::swap(bwt, bwtMerged);
+
+    /* reset SA */
+	SAbit.reset();
+	SAsampled.clear();
 
     if(keepSA)
     	buildSA();
@@ -217,16 +220,16 @@ void FMIndex::buildBWT(const DNAseq& seq) {
 
 void FMIndex::buildSA() {
 	assert(isInitiated());
+	assert(SAbit == nullptr);
+	assert(SAsampled.empty());
 	const saidx_t N = length();
 	/* build BitVector in the 1st pass */
-	{
-		BitString bitStr(N);
-		for(saidx_t i = 0; i < N; ++i) {
-			if(bwt->access(i) == 0 || i % SA_SAMPLE_RATE == 0)
-				bitStr.setBit(i);
-		}
-		SAbit.reset(new BitSequenceRRR(bitStr, RRR_SAMPLE_RATE)); /* use RRR implementation */
+	BitString bitStr(N);
+	for(saidx_t i = 0; i < N; ++i) {
+		if(bwt->access(i) == 0 || i % SA_SAMPLE_RATE == 0)
+			bitStr.setBit(i);
 	}
+	SAbit.reset(new BitSequenceRRR(bitStr, RRR_SAMPLE_RATE)); /* use RRR implementation */
 
 	/* build SAsampled in the 2nd pass */
 	SAsampled.resize(N / SA_SAMPLE_RATE + C[0 + 1] + 1); /* need additional storage for all Ns */

@@ -23,16 +23,14 @@ istream& Loc::load(istream& in) {
 }
 
 ostream& Loc::write(ostream& out) const {
-	out << "[" << start << ", " << end << ")"; /* [start, end) */
+	out << start << '-' << end; /* start-end */
 	return out;
 }
 
 istream& Loc::read(istream& in) {
-	in.ignore(1, '[');
 	in >> start;
-	in.ignore(1, ',');
+	in.ignore(1, '-');
 	in >> end; /* automatical ignore additional space */
-	in.ignore(1, ')');
 	return in;
 }
 
