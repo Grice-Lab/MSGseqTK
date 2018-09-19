@@ -184,7 +184,6 @@ private:
 	/** build BWT on the reversed string of seq */
 	void buildBWT(const DNAseq& seq);
 
-
 	static const int RRR_SAMPLE_RATE = 8; /* RRR sample rate for BWT */
 	static const int SA_SAMPLE_RATE = 16;  /* sample rate for SA */
 
@@ -202,8 +201,8 @@ public:
 };
 
 inline FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {
-	FMIndex rrfm(lhs);
-	return rrfm += rhs;
+	FMIndex fmidx(lhs);
+	return fmidx += rhs;
 }
 
 } /* namespace MSGSeqClean */
