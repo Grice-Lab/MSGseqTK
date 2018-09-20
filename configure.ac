@@ -8,6 +8,8 @@ AC_CANONICAL_SYSTEM
 
 AC_CONFIG_MACRO_DIR([m4])
 
+AC_PROG_CXX
+
 dnl Initialize automake
 AM_INIT_AUTOMAKE
 
@@ -20,5 +22,6 @@ LT_INIT
 AC_CONFIG_FILES(Makefile
                 test/Makefile
                 src/Makefile
-                include/Makefile)
+                include/Makefile
+                examples/Makefile)
 AC_OUTPUT

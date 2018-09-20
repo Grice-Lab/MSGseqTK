@@ -1,2 +1,2 @@
-SUBDIRS=libsds include exampleProgram
+SUBDIRS=src include test examples
 ACLOCAL_AMFLAGS=-I m4

@@ -25,3 +25,5 @@ config.status
 **/config.h
 # ignore test binaries
 **/*test
+# ignore non-install executables
+examples/hello

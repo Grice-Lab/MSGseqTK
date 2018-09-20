@@ -7,7 +7,7 @@
 # Because a.out is only a sample program we don't want it to be installed.
 # The 'noinst_' prefix indicates that the following targets are not to be
 # installed.
-noinst_PROGRAMS=exampleProgram
+noinst_PROGRAMS=hello
 
 #######################################
 # Build information for each executable. The variable name is derived
@@ -18,13 +18,13 @@ noinst_PROGRAMS=exampleProgram
 ACLOCAL_AMFLAGS=-I ../m4
 
 # Sources for the a.out 
-exampleProgram_SOURCES= exampleProgram.c
+hello_SOURCES= hello.c
 
 # Libraries for a.out
-exampleProgram_LDADD = $(top_srcdir)/libsds/libsds.la
+hello_LDADD = $(top_srcdir)/src/libsds.la
 
 # Linker options for a.out
-exampleProgram_LDFLAGS = -rpath `cd $(top_srcdir);pwd`/libsds/.libs
+hello_LDFLAGS = -rpath `cd $(top_srcdir);pwd`/src/.libs
 
 # Compiler options for a.out
-exampleProgram_CPPFLAGS = -I$(top_srcdir)/include
+hello_CPPFLAGS = -I$(top_srcdir)/include
