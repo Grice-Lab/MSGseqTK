@@ -8,7 +8,8 @@ lib_LTLIBRARIES = libsds.la
 # Build information for each library
 
 # Sources for libsds
-libsds_la_SOURCES = libsds.c
+libsds_la_SOURCES = \
+BitSeq.cpp
 
 # Linker options libTestProgram
 libsds_la_LDFLAGS = 

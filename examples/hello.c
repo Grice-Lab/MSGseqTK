@@ -1,6 +1,6 @@
 /*
  ============================================================================
- Name        : exampleProgram.c
+ Name        : hello.c
  Author      : Qi Zheng
  Version     :
  Copyright   : GPL v3.0 Copyright (C) 2018  Qi Zheng
@@ -14,8 +14,8 @@
  */
 
 #include "libsds.h"
+#include "stdio.h"
 
 int main(void) {
-  print_hello();
-  return 0;
+	printf("Hello World\n");
 }

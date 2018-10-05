@@ -7,7 +7,9 @@
 # Because a.out is only a sample program we don't want it to be installed.
 # The 'noinst_' prefix indicates that the following targets are not to be
 # installed.
-noinst_PROGRAMS=hello
+noinst_PROGRAMS = \
+hello \
+hello2
 
 #######################################
 # Build information for each executable. The variable name is derived
@@ -28,3 +30,10 @@ hello_LDFLAGS = -rpath `cd $(top_srcdir);pwd`/src/.libs
 
 # Compiler options for a.out
 hello_CPPFLAGS = -I$(top_srcdir)/include
+
+
+hello2_SOURCES = hello.cpp
+
+hello2_LDADD = $(top_srcdir)/src/libsds.la
+
+hello2_CPPFLAGS = -I$(top_srcdir)/include 

@@ -113,14 +113,16 @@ public:
 	virtual size_t selectPrev0(const size_t i) const;
 
 	/**
+	 * abstract method
 	 * save this BitSeq to binary output
 	 */
-	virtual ostream& save(ostream& out) const;
+	virtual ostream& save(ostream& out) const = 0;
 
 	/**
+	 * abstract method
 	 * load data from a binary input
 	 */
-	virtual istream& load(istream& in);
+	virtual istream& load(istream& in) = 0;
 };
 
 } /* namespace libSDS */
