@@ -24,26 +24,26 @@ using namespace EGriceLab::libSDS;
 
 int main() {
 	/* try hex values */
-	for(int8_t v = 0; v < 16; ++v) {
-		BitStr<int8_t> bst(1, v);
+	for(uint8_t v = 0; v < 16; ++v) {
+		BitStr<uint8_t> bst(Wb, v);
 		cout << "bstr(" << (int) v << "): " << bst << endl;
 	}
 
 	/* test C-array construction */
-	const int8_t hex_val[] = {
+	const uint8_t hex_val[] = {
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF
 	};
 	const size_t n_hex = sizeof(hex_val) / sizeof(hex_val[0]);
 
-	BitStr<int8_t> bst_hex(hex_val, n_hex);
-	cerr << "n_hex: " << n_hex << " bst_hex: " << bst_hex.to_string(",") << endl;
+	BitStr<uint8_t> bst_hex(hex_val, n_hex);
+	cerr << "n_hex: " << n_hex << " bst_hex: " << bst_hex << endl;
 	for(size_t i = 0; i < n_hex; ++i) {
 		fprintf(stdout, "bst_hex.getValue(%d): %ld <-> hex_val[%d]: %ld\n", i, bst_hex.getValue(i), i, hex_val[i]);
 		if(bst_hex.getValue(i) != hex_val[i])
 			return EXIT_FAILURE;
 	}
 	/* bitwise test */
-	BitStr<uint> bst(1);
+	BitStr<uint32_t> bst(W);
 	if(bst.getValue(0) != 0)
 		return EXIT_FAILURE;
 	for(size_t i = 0, v = 1; i < n_hex; ++i, v = v << 1) {
@@ -65,9 +65,11 @@ int main() {
 	}
 
 	/* logit tests */
+	bst.resize(16);
 	bst.clear();
 	if(bst.any())
 		return EXIT_FAILURE;
+	cout << "bst.length(): " << bst.length() << endl;
 	for(size_t i = 0; i < bst.length(); ++i) {
 		bst.set(i);
 		fprintf(stdout, "bst.count(): %d i+1: %d\n", bst.count(), i + 1);
@@ -81,18 +83,18 @@ int main() {
 	/* resize and assignment */
 	bst.resize(1024);
 	cout << "bst.numBits(): " << bst.numBits() << endl;
-	if(bst.getValue(0) != UINT_MAX)
+	if(bst.getValue(0) != UINT16_MAX)
 		return EXIT_FAILURE;
 	bst.resize(128);
 	cout << "bst.numBits(): " << bst.numBits() << endl;
-	if(bst.getValue(0) != UINT_MAX)
+	if(bst.getValue(0) != UINT16_MAX)
 		return EXIT_FAILURE;
 	bst.resize(4);
 	cout << "bst.numBits(): " << bst.numBits() << endl;
-	if(bst.getValue(0) != UINT_MAX)
+	if(bst.getValue(0) != 0xF)
 		return EXIT_FAILURE;
 
-	BitStr<uint> bst1 = bst;
+	BitStr<uint32_t> bst1 = bst;
 	cout << "bst1.numBits(): " << bst1.numBits() << endl;
 	if(bst1 != bst)
 		return EXIT_FAILURE;
@@ -103,7 +105,7 @@ int main() {
 
 	/* copy between different types */
 	bst.resize(256);
-	BitStr<ushort> bstS(bst);
+	BitStr<uint16_t> bstS(bst);
 	cout << "bst.getWid(): " << bst.getWid() << " bstS.getWid(): " << bstS.getWid() << endl;
 	cout << "bst.numBits(): " << bst.numBits() << " bstS.numBits(): " << bstS.numBits() << endl;
 	cout << "bst : " << bst << endl << "bstS: " << bstS << endl;
@@ -113,7 +115,7 @@ int main() {
 		if(bst.test(i) != bstS.test(i))
 			return EXIT_FAILURE;
 
-	BitStr<ulong> bstL(bst);
+	BitStr<uint64_t> bstL(bst);
 	cout << "bst.getWid(): " << bst.getWid() << " bstL.getWid(): " << bstL.getWid() << endl;
 	cout << "bst.numBits(): " << bst.numBits() << " bstL.numBits(): " << bstL.numBits() << endl;
 	cout << "bst : " << bst << endl << "bstL: " << bstL << endl;
@@ -124,8 +126,8 @@ int main() {
 			return EXIT_FAILURE;
 
 	/* assign between different types */
-	bst1.resize(256);
-	BitStr<ushort> bst1S = bst1;
+	bst1 = BitStr<uint32_t>(256, 0xFF);
+	BitStr<uint16_t> bst1S = bst1;
 	cout << "bst1.getWid(): " << bst1.getWid() << " bst1S.getWid(): " << bst1S.getWid() << endl;
 	cout << "bst1.numBits(): " << bst1.numBits() << " bst1S.numBits(): " << bst1S.numBits() << endl;
 	cout << "bst1 : " << bst1 << endl << "bst1S: " << bst1S << endl;
@@ -135,7 +137,7 @@ int main() {
 		if(bst1.test(i) != bst1S.test(i))
 			return EXIT_FAILURE;
 
-	BitStr<ulong> bst1L = bst1;
+	BitStr<uint64_t> bst1L = bst1;
 	cout << "bst1.getWid(): " << bst1.getWid() << " bst1L.getWid(): " << bst1L.getWid() << endl;
 	cout << "bst1.numBits(): " << bst1.numBits() << " bst1L.numBits(): " << bst1L.numBits() << endl;
 	cout << "bst1 : " << bst1 << endl << "bst1L: " << bst1L << endl;

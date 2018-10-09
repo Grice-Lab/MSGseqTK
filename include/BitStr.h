@@ -12,7 +12,9 @@
 #include <algorithm>
 #include <utility>
 #include <iostream>
+#include <cassert>
 #include "libsdsConst.h"
+#include "libsdsBitBasic.h"
 
 namespace EGriceLab {
 namespace libSDS {
@@ -38,7 +40,7 @@ public:
 	BitStr() = default;
 
 	/** copy constructor */
-	BitStr(const BitStr<uIntType>& other) : wid(other.wid), n(other.n) {
+	BitStr(const BitStr<uIntType>& other) : wid(other.wid), n(other.n), nB(other.nB) {
 		data = new uIntType[n];
 		std::copy(other.data, other.data + other.n, data);
 	}
@@ -57,18 +59,19 @@ public:
 	/**
 	 * construct a BitStr with n-bits all set to zero
 	 */
-	BitStr(size_type nB) : wid(sizeof(value_type) * Wb) {
+	BitStr(size_type nB) : wid(sizeof(value_type) * Wb), nB(nB) {
 		n = (nB + wid - 1) / wid; /* ceil(nB / wid) */
-		data = new uIntType[n]; /* value initialization */
+		data = new uIntType[n](); /* value initialization */
 	}
 
 	/**
 	 * construct a BitStr with given length and a value,
-	 * val will be used to fill the least-significant element of BitStr, with all others as zero
-	 * @param n  length of bits
-	 * @param val  value to use this BitStr
+	 * val will be used to fill the lowest/least-significant element of BitStr, with all others as zero
+	 * @param nB  length in bits
+	 * @param val  value to fill the lowest bits
 	 */
-	BitStr(size_type n, uIntType val) : wid(sizeof(value_type) * Wb), n(n) {
+	BitStr(size_type nB, uIntType val) : wid(sizeof(value_type) * Wb), nB(nB) {
+		n = (nB + wid - 1) / wid; /* ceil(nB / wid) */
 		data = new uIntType[n](); /* value initialization */
 		data[0] = val;
 	}
@@ -79,15 +82,16 @@ public:
 	 * @param n  length of str
 	 */
 	BitStr(const uIntType* src, size_type n) : wid(sizeof(value_type) * Wb), n(n) {
+		nB = n * wid;
 		data = new uIntType[n];
 		std::copy(src, src + n, data);
 	}
 
 	/** construct a BitStr by coping from another BitStr of different type */
 	template<typename oIntType>
-	BitStr(const BitStr<oIntType>& other) : wid(sizeof(value_type) * Wb) {
-		n = other.length() / wid;
-		data = new uIntType[n];
+	BitStr(const BitStr<oIntType>& other) : wid(sizeof(value_type) * Wb), nB(other.length()) {
+		n = (nB + wid - 1) / wid;
+		data = new uIntType[n](); /* value initiation */
 		/* bitwise copy */
 		for(size_type i = 0; i < length(); ++i)
 			set(i, other.get(i));
@@ -107,14 +111,14 @@ public:
 		return wid;
 	}
 
-	/** get number of bits */
-	size_t numBits() const {
-		return n * wid;
+	/** get length in bits */
+	size_t length() const {
+		return nB;
 	}
 
-	/** get length in bits, alias of numBits */
-	size_type length() const {
-		return numBits();
+	/** get number of bits, alias of length() */
+	size_type numBits() const {
+		return length();
 	}
 
 	/** get number of values */
@@ -131,21 +135,23 @@ public:
 	 * otherwise they are discarded
 	 */
 	void resize(size_type nB, bool val = false) {
-		size_type n = (nB + wid - 1) / wid;
-		if(n == this->n)
+		if(nB == this->nB)
 			return;
-		uIntType* data_new = new uIntType[n];
+		size_type n = (nB + wid - 1) / wid;
+		uIntType* data_new = new uIntType[n](); /* value-initialtion */
 		if(data_new == nullptr) /* failed, do not change the data */
 			return;
-		if(n > this->n) {
+		if(nB > this->nB)
 			std::copy(data, data + this->n, data_new);
-			if(val)
-				std::fill(data + this->n, data + n, ~0);
-		}
 		else
 			std::copy(data, data + n, data_new);
 
 		std::swap(data, data_new); /* swap the array */
+		/* fix last/lowest block of remaining bits, if any */
+		for(size_t i = nB; i < n * wid; ++i)
+			set(i, val);
+
+		this->nB = nB;
 		this->n = n;
 	}
 
@@ -167,42 +173,42 @@ public:
 	}
 
 	/**
-	 * set the p-th element to v measured by value_type
+	 * set the n-th element to v measured by value_type
 	 */
-	void setValue(size_type p, value_type v) {
-		data[p] = v;
+	void setValue(size_type n, value_type v) {
+		data[n] = v;
 	}
 
 	/* bit-wise methods */
 	/** get the n-th bit of this BitStr */
-	bool get(size_type n) const {
-		return data[n / wid] & (static_cast<uIntType>(1) << (n % wid));
+	bool get(size_type i) const {
+		return data[i / wid] & (1UL << (i % wid));
 	}
 
-	/** set the n-th bit of this BitStr */
-	BitStr<uIntType>& set(size_type n, bool bit = true) {
+	/** set the i-th bit of this BitStr */
+	BitStr<uIntType>& set(size_type i, bool bit = true) {
 		/* clear bits first */
-		data[n / wid] &= ~(static_cast<uIntType>(1) << (n % wid));
+		data[i / wid] &= ~(1UL << (i % wid));
 		/* set bit */
-		data[n / wid] |= static_cast<uIntType>(bit) << (n % wid);
+		data[i / wid] |= bit << (i % wid);
 		return *this;
 	}
 
-	/** reset the n-th bit to zero, alias of set(n, true) */
-	BitStr<uIntType>& reset(size_type n) {
-		data[n / wid] &= ~(static_cast<uIntType>(1) << (n % wid));
+	/** reset the i-th bit to zero, alias of set(n, true) */
+	BitStr<uIntType>& reset(size_type i) {
+		data[i / wid] &= ~(1UL << (i % wid));
 		return *this;
 	}
 
-	/** flip/toggle the n-th bit */
-	BitStr<uIntType>& flip(size_type n) {
-		data[n / wid] ^= static_cast<uIntType>(1) << n;
+	/** flip/toggle the i-th bit */
+	BitStr<uIntType>& flip(size_type i) {
+		data[i / wid] ^= 1UL << (i % wid);
 		return *this;
 	}
 
-	/** test whether the n-th bit is on, alias to get(n) */
-	bool test(size_type n) const {
-		return get(n);
+	/** test whether the i-th bit is on, alias to get(n) */
+	bool test(size_type i) const {
+		return get(i);
 	}
 
 	/** test whether any bit is on */
@@ -220,31 +226,44 @@ public:
 
 	/** test whether all bits are on */
 	bool all() const {
-		for(size_type i = 0; i < n; ++i)
-			if(~ data[i] != 0)
+		if(empty())
+			return false;
+		for(size_type i = 0; i < n - 1; ++i) /* test till last block */
+			if(~ data[i])
+				return false;
+		for(size_type i = (n - 1) * wid; i < nB; ++i) /* test last block bits */
+			if(!test(i))
 				return false;
 		return true;
 	}
 
-	/** count on bits */
+	/** count on bits using fast popcount */
 	size_type count() const {
+		if(empty())
+			return 0;
 		size_type on = 0;
-		for(size_type i = 0; i < length(); ++i)
+		for(size_t b = 0; b < n - 1; ++b) /* popcount till last block */
+			on += popcount(getValue(b));
+		/* count the lowest bits bit by bit */
+		for(size_t i = (n - 1) * wid; i < nB; ++i)
 			if(test(i))
 				on++;
 		return on;
 	}
 
-	/** get a binary string representation */
-	string to_string(const string& sep = "") const {
+	/**
+	 * get a binary string representation
+	 * @return  a binarhy string copy of this BitStr. A character in string is '1' if set, and '0' if not.
+	 * Character position i in string corresponds to bit position b.size() - 1 - 1, in other word, reversed order
+	 */
+	string to_string() const {
 		string bin;
-		bin.reserve(numBits());
+		bin.reserve(length());
 		for(size_type i = 0; i < n; ++i) {
-			if(!sep.empty() && i != 0)
-				bin.append(sep);
-			for(size_type j = wid; j != 0; --j) /* start from most-significant bit */
-				bin.push_back(test(i * wid + j - 1) ? '1' : '0');
+			for(size_type j = i * wid; j < (i + 1) * wid && j < nB; ++j)
+				bin.push_back(test(j) ? '1' : '0');
 		}
+		std::reverse(bin.begin(), bin.end());
 		return bin;
 	}
 
@@ -262,13 +281,20 @@ public:
 	void swap(BitStr<uIntType>& other) {
 		std::swap(wid, other.wid);
 		std::swap(n, other.n);
+		std::swap(nB, other.nB);
 		std::swap(data, other.data);
+	}
+
+	/** get required storage size of BitStr in bytes */
+	size_t getBytes() const {
+		return sizeof(wid) + sizeof(n) + sizeof(uIntType) * n + sizeof(this);
 	}
 
 	/* member fields */
 private:
-	uint wid = W;    /* bit-width of a value_type */
-	size_type n = 0; /* number of elements of value_type */
+	size_t wid = W;    /* bit-width of a value_type */
+	size_type n = 0; /* number of values in value_type */
+	size_type nB = 0; /* number of bits */
 	uIntType* data = nullptr; /* underlying data of given type */
 };
 

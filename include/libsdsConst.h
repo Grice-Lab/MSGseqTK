@@ -9,33 +9,25 @@
 #define LIBSDSCONST_H_
 
 #include <cctype>
-
-#ifndef uint
-typedef unsigned int uint;
-#endif
-
-#ifndef ushort
-typedef unsigned short ushort;
-#endif
-
-#ifndef ulong
-typedef unsigned long ulong;
-#endif
-
-#ifndef uchar
-typedef unsigned char uchar;
-#endif
+#include <cstdint>
 
 namespace EGriceLab {
 namespace libSDS {
 
 /** number of bits in a word/bype */
-const uint Wb = 8;
+const size_t Wb = 8;
 
-const uint W = sizeof(uint) * Wb;
+/** number of bits in a uint32_t */
+const size_t W = 32;
+
+/** number of bits in a uint64_t */
+const size_t W64 = 64;
+
+/** mask for obtaining the first/lowest 5 bits */
+const size_t lowest5_mask = 0x1F;
 
 /** popcount array for uchars */
-const uchar __popcount_tab[] = {
+const uint8_t __popcount_tab[] = {
 	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
 	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
 	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
@@ -47,7 +39,7 @@ const uchar __popcount_tab[] = {
 };
 
 /** select array for uchars */
-const uchar select_tab[] = {
+const uint8_t select_tab[] = {
 	0, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
 	6, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
 	7, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1,
@@ -59,7 +51,7 @@ const uchar select_tab[] = {
 };
 
 /** prev array for uchars */
-const uchar prev_tab[] = {
+const uint8_t prev_tab[] = {
 	0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
 	6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
 	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
