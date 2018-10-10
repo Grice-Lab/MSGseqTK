@@ -273,6 +273,27 @@ public:
 		return out;
 	}
 
+	/** save BitStr to binary output */
+	ostream& save(ostream& out) const {
+		out.write((const char*) &wid, sizeof(size_t));
+		out.write((const char*) &n, sizeof(size_type));
+		out.write((const char*) &nB, sizeof(size_type));
+		out.write((const char*) data, sizeof(uIntType) * n);
+		return out;
+	}
+
+	/** load BitStr from binary input */
+	istream& load(istream& in) {
+		in.read((char*) &wid, sizeof(size_t));
+		in.read((char*) &n, sizeof(size_type));
+		in.read((char*) &nB, sizeof(size_type));
+		if(data != nullptr)
+			delete[] data;
+		data = new uIntType[n];
+		in.read((char*) data, sizeof(uIntType) * n);
+		return in;
+	}
+
 	/** test whether two BitStr are equal */
 	template<typename oIntType>
 	friend bool operator==(const BitStr<oIntType>& lhs, const BitStr<oIntType>& rhs);

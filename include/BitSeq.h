@@ -22,37 +22,54 @@ using std::ostream;
  */
 class BitSeq {
 public:
+	/** basic default constructor */
+	BitSeq() = default;
+
+	/** basic constructor from given values */
+	BitSeq(size_t n, size_t ones) : n(n), ones(ones)
+	{  }
+
 	/** destructor */
 	virtual ~BitSeq() {  }
 
 	/* member methods */
 	/**
-	 * Abstract method
 	 * get the length of this BitSeq in bits
 	 */
-	virtual size_t length() const = 0;
+	virtual size_t length() const {
+		return n;
+	}
 
 	/**
-	 * Abstract method
-	 * get number of one bits (ones)
+	 * get number of on bits (ones)
 	 */
-	virtual size_t ones() const = 0;
+	virtual size_t numOnes() const {
+		return ones;
+	}
 
 	/**
-	 * Abstract method
+	 * get number of off bits (zeros)
+	 */
+	virtual size_t numZeros() const {
+		return n - ones;
+	}
+
+	/**
 	 * get the size of the structure in bytes
 	 */
-	virtual size_t getBytes() const = 0;
+	virtual size_t getBytes() const {
+		return sizeof(n) + sizeof(ones) + sizeof(this);
+	}
 
 	/**
 	 * Abstract method
-	 * get # of ones until position i
+	 * get # of ones until position i (0-based, inclusive)
 	 * @param i  position
 	 */
 	virtual size_t rank1(size_t i) const = 0;
 
 	/**
-	 * get # of zeros until position i
+	 * get # of zeros until position i (0-based, inclusive)
 	 */
 	virtual size_t rank0(size_t i) const;
 
@@ -116,14 +133,31 @@ public:
 	 * abstract method
 	 * save this BitSeq to binary output
 	 */
-	virtual ostream& save(ostream& out) const = 0;
+	virtual ostream& save(ostream& out) const;
 
 	/**
 	 * abstract method
 	 * load data from a binary input
 	 */
-	virtual istream& load(istream& in) = 0;
+	virtual istream& load(istream& in);
+
+	/* non-member methods */
+	/* relationship operators */
+	friend bool operator==(const BitSeq& lhs, const BitSeq& rhs);
+
+	/** basic member fields */
+protected:
+	size_t n = 0; /* length in bits */
+	size_t ones = 0; /* ones (on bits) */
 };
+
+inline bool operator==(const BitSeq& lhs, const BitSeq& rhs) {
+	return lhs.n == rhs.n && lhs.ones == rhs.ones;
+}
+
+inline bool operator!=(const BitSeq& lhs, const BitSeq& rhs) {
+	return !(lhs == rhs);
+}
 
 } /* namespace libSDS */
 } /* namespace EGriceLab */

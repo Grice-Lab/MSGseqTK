@@ -50,5 +50,17 @@ bool BitSeq::access(size_t i) const
 		return rank1(i) > rank1(i - 1);
 }
 
+ostream& BitSeq::save(ostream& out) const {
+	out.write((const char*) &n, sizeof(size_t));
+	out.write((const char*) &ones, sizeof(size_t));
+	return out;
+}
+
+istream& BitSeq::load(istream& in) {
+	in.read((char*) &n, sizeof(size_t));
+	in.read((char*) &ones, sizeof(size_t));
+	return in;
+}
+
 } /* namespace libSDS */
 } /* namespace EGriceLab */

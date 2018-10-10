@@ -88,8 +88,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-check_PROGRAMS = BitStr_test$(EXEEXT)
-TESTS = BitStr_test$(EXEEXT)
+check_PROGRAMS = BitStr_test$(EXEEXT) BitSeqGGMN_test$(EXEEXT)
+TESTS = BitStr_test$(EXEEXT) BitSeqGGMN_test$(EXEEXT)
 subdir = test
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -103,13 +103,16 @@ DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am_BitStr_test_OBJECTS = BitStr_test.$(OBJEXT)
-BitStr_test_OBJECTS = $(am_BitStr_test_OBJECTS)
-BitStr_test_DEPENDENCIES = $(top_srcdir)/src/libsds.la
+am_BitSeqGGMN_test_OBJECTS = BitSeqGGMN_test.$(OBJEXT)
+BitSeqGGMN_test_OBJECTS = $(am_BitSeqGGMN_test_OBJECTS)
+BitSeqGGMN_test_DEPENDENCIES = $(top_srcdir)/src/libsds.la
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_BitStr_test_OBJECTS = BitStr_test.$(OBJEXT)
+BitStr_test_OBJECTS = $(am_BitStr_test_OBJECTS)
+BitStr_test_DEPENDENCIES = $(top_srcdir)/src/libsds.la
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -144,8 +147,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(BitStr_test_SOURCES)
-DIST_SOURCES = $(BitStr_test_SOURCES)
+SOURCES = $(BitSeqGGMN_test_SOURCES) $(BitStr_test_SOURCES)
+DIST_SOURCES = $(BitSeqGGMN_test_SOURCES) $(BitStr_test_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -511,6 +514,10 @@ BitStr_test_SOURCES = BitStr_test.cpp
 BitStr_test_LDADD = \
 $(top_srcdir)/src/libsds.la 
 
+BitSeqGGMN_test_SOURCES = BitSeqGGMN_test.cpp
+BitSeqGGMN_test_LDADD = \
+$(top_srcdir)/src/libsds.la 
+
 all: all-am
 
 .SUFFIXES:
@@ -554,6 +561,10 @@ clean-checkPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
+BitSeqGGMN_test$(EXEEXT): $(BitSeqGGMN_test_OBJECTS) $(BitSeqGGMN_test_DEPENDENCIES) $(EXTRA_BitSeqGGMN_test_DEPENDENCIES) 
+	@rm -f BitSeqGGMN_test$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(BitSeqGGMN_test_OBJECTS) $(BitSeqGGMN_test_LDADD) $(LIBS)
+
 BitStr_test$(EXEEXT): $(BitStr_test_OBJECTS) $(BitStr_test_DEPENDENCIES) $(EXTRA_BitStr_test_DEPENDENCIES) 
 	@rm -f BitStr_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(BitStr_test_OBJECTS) $(BitStr_test_LDADD) $(LIBS)
@@ -564,6 +575,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BitSeqGGMN_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BitStr_test.Po@am__quote@
 
 .cpp.o:
@@ -792,6 +804,13 @@ recheck: all $(check_PROGRAMS)
 BitStr_test.log: BitStr_test$(EXEEXT)
 	@p='BitStr_test$(EXEEXT)'; \
 	b='BitStr_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+BitSeqGGMN_test.log: BitSeqGGMN_test$(EXEEXT)
+	@p='BitSeqGGMN_test$(EXEEXT)'; \
+	b='BitSeqGGMN_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

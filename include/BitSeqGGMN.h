@@ -25,7 +25,7 @@ namespace libSDS {
  */
 class BitSeqGGMN: public BitSeq {
 public:
-	typedef uint data_type;
+	typedef uint32_t data_type; /* use uint32_t for this implementation */
 	/* constructors */
 	/** default constructor */
 	BitSeqGGMN() = default;
@@ -38,7 +38,7 @@ public:
 	 * @param bstr  BitStr of uint
 	 * @param super-block factor, if 0, automatic determined
 	 */
-	BitSeqGGMN(const BitStr<uint>& bstr, size_t factor = 0);
+	BitSeqGGMN(const BitStr<data_type>& bstr, size_t factor = 0);
 
 	/**
 	 * constructing from a BitStr of suitable type and factor rate
@@ -47,8 +47,10 @@ public:
 	 */
 	template<typename oIntType>
 	BitSeqGGMN(const BitStr<oIntType>& bstr, size_t factor = 0) : bstr(bstr) {
+		n = bstr.length();
+		ones = bstr.count();
 		if(factor == 0)
-			factor = bits(length() - 1);
+			factor = bits(n - 1);
 		this->factor = factor;
 		b = sizeof(data_type) * Wb;
 		s = b * factor;
@@ -59,23 +61,6 @@ public:
 	virtual ~BitSeqGGMN()
 	{  }
 
-	/* member methods */
-	/**
-	 * get the length of this BitSeq in bits
-	 * @override  base class virtual method
-	 */
-	virtual size_t length() const {
-		return bstr.length();
-	}
-
-	/**
-	 * get number of one bits (ones)
-	 * @override  base class virtual method
-	 */
-	virtual size_t ones() const {
-		return bstr.count();
-	}
-
 	/**
 	 * get the size of the structure in bytes
 	 * @override  base class virtual method
@@ -83,8 +68,7 @@ public:
 	virtual size_t getBytes() const;
 
 	/**
-	 * Abstract method
-	 * get # of ones until position i
+	 * get # of ones until position i (0-based, inclusive)
 	 * @param i  position
 	 * @override  base class virtual method
 	 * @return  number of ones until position i,
@@ -129,16 +113,16 @@ public:
 	/**
 	 * get the next position starting from i that is one
 	 * @param start  starting pos
-	 * @return  next one position
+	 * @return  next one position, or n if not found
 	 * @override  base class virtual method
-	 * this method is optimized for uint 32bits machines
+	 * this method is optimized for 32 bits machines
 	 */
 	virtual size_t selectNext1(size_t start) const;
 
 	/**
 	 * get the previous position starting from i that is one
 	 * @param start  starting pos
-	 * @return  prev one position
+	 * @return  prev one position, or 0 if not found
 	 * @override  base class virtual method
 	 * this method is optimized for uint 32bits machines
 	 */
@@ -160,12 +144,12 @@ public:
 
 	/** get number of superblocks, deduced from numBits() */
 	size_t numSuperBlocks() const {
-		return (bstr.length() + s - 1) / s;
+		return (n + s - 1) / s;
 	}
 
 	/** swap this BitSeqGGMN with another object */
 	void swap(BitSeqGGMN& other) {
-		std::swap(bstr, other.bstr);
+		bstr.swap(other.bstr);
 		std::swap(Rs, other.Rs);
 		std::swap(factor, other.factor);
 		std::swap(b, other.b);
@@ -174,7 +158,6 @@ public:
 
 	/* internal help methods */
 private:
-
 	/**
 	 * build rank index on super-block level
 	 */
@@ -188,6 +171,11 @@ private:
 	 */
 	size_t buildRank(size_t start, size_t len);
 
+	/* non-member methods */
+	/* relationship operators */
+public:
+	friend bool operator==(const BitSeqGGMN& lhs, const BitSeqGGMN& rhs);
+
 	/* member fields */
 private:
 	BitStr<data_type> bstr; /* default data type is uint for efficiency */
@@ -196,6 +184,10 @@ private:
 	size_t b = 0; /* block size in bits */
 	size_t s = 0; /* super-block size in bits per block */
 };
+
+inline bool operator!=(const BitSeqGGMN& lhs, const BitSeqGGMN& rhs) {
+	return !(lhs == rhs);
+}
 
 } /* namespace libSDS */
 } /* namespace EGriceLab */
