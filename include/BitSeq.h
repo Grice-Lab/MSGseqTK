@@ -130,13 +130,11 @@ public:
 	virtual size_t selectPrev0(size_t start) const;
 
 	/**
-	 * abstract method
 	 * save this BitSeq to binary output
 	 */
 	virtual ostream& save(ostream& out) const;
 
 	/**
-	 * abstract method
 	 * load data from a binary input
 	 */
 	virtual istream& load(istream& in);

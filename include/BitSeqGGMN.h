@@ -156,6 +156,12 @@ public:
 		std::swap(s, other.s);
 	}
 
+	/** copy assignment operator using copy-swap */
+	BitSeqGGMN& operator=(BitSeqGGMN other) {
+		swap(other);
+		return *this;
+	}
+
 	/* internal help methods */
 private:
 	/**

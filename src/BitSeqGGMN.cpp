@@ -16,9 +16,9 @@ namespace libSDS {
 BitSeqGGMN::BitSeqGGMN(const BitSeqGGMN& other) : BitSeq(other.n, other.ones),
 		bstr(other.bstr), factor(other.factor), b(other.b), s(other.s)
 {
-	size_t nSB = other.numSuperBlocks();
-	Rs = new size_t[nSB + 1];
-	std::copy(Rs, Rs + nSB, other.Rs);
+	size_t nRS = other.numSuperBlocks();
+	Rs = new size_t[nRS + 1];
+	std::copy(Rs, Rs + nRS + 1, other.Rs);
 }
 
 BitSeqGGMN::BitSeqGGMN(const BitStr<data_type>& bstr, size_t factor) : bstr(bstr) {

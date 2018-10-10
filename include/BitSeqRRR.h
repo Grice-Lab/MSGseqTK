@@ -41,6 +41,7 @@ public:
 	/* member fields */
 private:
 
+
 };
 
 } /* namespace libSDS */

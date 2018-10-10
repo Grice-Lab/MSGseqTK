@@ -75,6 +75,13 @@ int main() {
 			return EXIT_FAILURE;
 	}
 
+	/* copy test */
+	BitSeqGGMN bseqN = bseq;
+	if(bseqN != bseq) {
+		cerr << "failed to copy bseq" << endl;
+		return EXIT_FAILURE;
+	}
+
 	/* IO tests */
 	ostringstream out;
 	bseq.save(out);

@@ -99,9 +99,8 @@ public:
 
 	/** copy assign operator by copying from another BitStr of potential different type */
 	template<typename oIntType>
-	BitStr<uIntType>& operator=(const BitStr<oIntType>& other) {
-		BitStr<uIntType> newBstr(other);
-		swap(newBstr);
+	BitStr<uIntType>& operator=(BitStr<oIntType> other) {
+		swap(other);
 		return *this;
 	}
 
