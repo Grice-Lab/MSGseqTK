@@ -54,12 +54,15 @@ public:
 		this->factor = factor;
 		b = sizeof(data_type) * Wb;
 		s = b * factor;
+		nRs = numSuperBlocks() + 1;
 		buildRank();
 	}
 
 	/** virtual destructor */
 	virtual ~BitSeqGGMN()
-	{  }
+	{
+		delete[] Rs;
+	}
 
 	/**
 	 * get the size of the structure in bytes
@@ -150,6 +153,7 @@ public:
 	/** swap this BitSeqGGMN with another object */
 	void swap(BitSeqGGMN& other) {
 		bstr.swap(other.bstr);
+		std::swap(nRs, other.nRs);
 		std::swap(Rs, other.Rs);
 		std::swap(factor, other.factor);
 		std::swap(b, other.b);
@@ -185,7 +189,8 @@ public:
 	/* member fields */
 private:
 	BitStr<data_type> bstr; /* default data type is uint for efficiency */
-	size_t* Rs = nullptr; /* 1-based super-block rank array, storing the on bits in each block */
+	size_t nRs = 0; /* size of Rs */
+	size_t* Rs = nullptr; /* 1-based super-block rank array, storing the on bits in each block, with Rs[0] = 0 */
 	size_t factor = 0;
 	size_t b = 0; /* block size in bits */
 	size_t s = 0; /* super-block size in bits per block */

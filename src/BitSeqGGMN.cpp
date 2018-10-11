@@ -14,11 +14,10 @@ namespace EGriceLab {
 namespace libSDS {
 
 BitSeqGGMN::BitSeqGGMN(const BitSeqGGMN& other) : BitSeq(other.n, other.ones),
-		bstr(other.bstr), factor(other.factor), b(other.b), s(other.s)
+		bstr(other.bstr), nRs(other.nRs), factor(other.factor), b(other.b), s(other.s)
 {
-	size_t nRS = other.numSuperBlocks();
-	Rs = new size_t[nRS + 1];
-	std::copy(Rs, Rs + nRS + 1, other.Rs);
+	Rs = new size_t[nRs];
+	std::copy(Rs, Rs + nRs, other.Rs);
 }
 
 BitSeqGGMN::BitSeqGGMN(const BitStr<data_type>& bstr, size_t factor) : bstr(bstr) {
@@ -29,14 +28,14 @@ BitSeqGGMN::BitSeqGGMN(const BitStr<data_type>& bstr, size_t factor) : bstr(bstr
 	this->factor = factor;
 	b = sizeof(data_type) * Wb;
 	s = b * factor;
+	nRs = numSuperBlocks() + 1;
 	buildRank();
 }
 
 void BitSeqGGMN::buildRank() {
-	size_t nSB = numSuperBlocks();
-	Rs = new size_t[nSB + 1](); /* value initiation */
-	for (size_t i = 1; i <= nSB; ++i)
-		Rs[i] = Rs[i-1] + buildRank((i-1) * factor, factor);
+	Rs = new size_t[nRs](); /* value initiation */
+	for (size_t i = 1; i <= nRs; ++i)
+		Rs[i] = Rs[i - 1] + buildRank((i-1) * factor, factor);
 }
 
 size_t BitSeqGGMN::getBytes() const {
@@ -226,9 +225,8 @@ size_t BitSeqGGMN::selectPrev1(size_t start) const {
 ostream& BitSeqGGMN::save(ostream& out) const {
 	BitSeq::save(out);
 	bstr.save(out);
-	const size_t nRs = numSuperBlocks();
 	out.write((const char*) &nRs, sizeof(size_t));
-	out.write((const char*) Rs, sizeof(size_t) * (nRs + 1));
+	out.write((const char*) Rs, sizeof(size_t) * nRs);
 	out.write((const char*) &factor, sizeof(size_t));
 	out.write((const char*) &b, sizeof(size_t));
 	out.write((const char*) &s, sizeof(size_t));
@@ -238,17 +236,15 @@ ostream& BitSeqGGMN::save(ostream& out) const {
 istream& BitSeqGGMN::load(istream& in) {
 	BitSeq::load(in);
 	bstr.load(in);
-	size_t nRs;
 	in.read((char *) &nRs, sizeof(size_t));
 	if(Rs != nullptr)
 		delete[] Rs;
-	Rs = new size_t[nRs + 1];
-	in.read((char*) Rs, sizeof(size_t) * (nRs + 1));
+	Rs = new size_t[nRs];
+	in.read((char*) Rs, sizeof(size_t) * nRs);
 	in.read((char*) &factor, sizeof(size_t));
 	in.read((char*) &b, sizeof(size_t));
 	in.read((char*) &s, sizeof(size_t));
-	cerr << "nRs: " << nRs << " numSuperBlocks(): " << numSuperBlocks() << endl;
-	assert(nRs == numSuperBlocks());
+	assert(nRs == numSuperBlocks() + 1);
 	return in;
 }
 
@@ -266,10 +262,10 @@ bool operator==(const BitSeqGGMN& lhs, const BitSeqGGMN& rhs) {
 	/* compare member fields */
 	if(lhs.bstr != rhs.bstr)
 		return false;
-	if(!(lhs.factor == rhs.factor && lhs.b == rhs.b && lhs.s == rhs.s))
+	if(!(lhs.nRs == rhs.nRs && lhs.factor == rhs.factor && lhs.b == rhs.b && lhs.s == rhs.s))
 		return false;
 	/* compare arrays */
-	for(size_t i = 0; i <= lhs.numSuperBlocks(); ++i)
+	for(size_t i = 0; i < lhs.nRs; ++i)
 		if(lhs.Rs[i] != rhs.Rs[i])
 			return false;
 	return true;
