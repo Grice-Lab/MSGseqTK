@@ -80,6 +80,18 @@ int main() {
 	if(!bst.all())
 		return EXIT_FAILURE;
 
+	/* value setting tests */
+	BitStr<uint32_t> bst1(512);
+	for(size_t i = 0, len = 1; i < bst1.length() && len <= 16; ++len) {
+		uint32_t val = len;
+		printf("bst1.setValue(%d, %d, %d)\n", i, len, val);
+		bst1.setValue(i, len, val);
+		printf("bst1.getValue(%d, %d): %d\n", i, len, bst1.getValue(i, len));
+		if(bst1.getValue(i, len) != val)
+			return EXIT_FAILURE;
+		i += len;
+	}
+
 	/* resize and assignment */
 	bst.resize(1024);
 	cout << "bst.numBits(): " << bst.numBits() << endl;
@@ -94,7 +106,7 @@ int main() {
 	if(bst.getValue(0) != 0xF)
 		return EXIT_FAILURE;
 
-	BitStr<uint32_t> bst1 = bst;
+	bst1 = bst;
 	cout << "bst1.numBits(): " << bst1.numBits() << endl;
 	if(bst1 != bst)
 		return EXIT_FAILURE;

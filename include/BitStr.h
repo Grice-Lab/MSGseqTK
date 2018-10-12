@@ -47,8 +47,7 @@ public:
 
 	/** copy assignment operator using copy-swap */
 	BitStr& operator=(BitStr<uIntType> other) {
-		swap(other);
-		return *this;
+		return swap(other);
 	}
 
 	/** destructor */
@@ -172,10 +171,53 @@ public:
 	}
 
 	/**
+	 * get the value represented by a given fixed length of bits
+	 * @param start  start bit position
+	 * @param len  number of bits
+	 * @return value represented by these bits
+	 */
+	size_t getValue(size_type start, size_type len) const {
+		assert(len <= wid);
+		if(len == 0)
+			return 0;
+		size_type i = start * len / wid;
+		size_type j = start * len - wid * i;
+		size_t result;
+		if (j + len <= wid)
+			result = (data[i] << wid - j - len) >> (wid - len);
+		else {
+			result = data[i] >> j;
+			result |= (data[i + 1] << wid * 2 - j - len) >> (wid - len);
+		}
+		return result;
+	}
+
+	/**
 	 * set the n-th element to v measured by value_type
 	 */
 	void setValue(size_type n, value_type v) {
 		data[n] = v;
+	}
+
+	/**
+	 * set a given fixed region of fixed length bits to given value
+	 * @param start  start position of bits
+	 * @param len  number of bits
+	 * @param v  value to set
+	 */
+	void setValue(size_type start, size_type len, value_type v) {
+		assert(len <= wid);
+		if(len == 0)
+			return;
+		size_type i = start * len / wid;
+		size_type j = start * len - i * wid;
+		size_t mask = ((j + len) < wid ? ~0UL << j + len : 0UL)
+			| ((wid - j) < wid ? ~0UL >> wid - j : 0UL);
+		data[i] = (data[i] & mask) | v << j;
+		if (j + len > wid) {
+			mask = (~0UL) << len + j - wid;
+			data[i+1] = (data[i + 1] & mask) | v >> wid - j;
+		}
 	}
 
 	/* bit-wise methods */
@@ -298,11 +340,12 @@ public:
 	friend bool operator==(const BitStr<oIntType>& lhs, const BitStr<oIntType>& rhs);
 
 	/** swap this BitStr with another with same type, the underlying data is shallow-swapped */
-	void swap(BitStr<uIntType>& other) {
+	BitStr<uIntType>& swap(BitStr<uIntType>& other) {
 		std::swap(wid, other.wid);
 		std::swap(n, other.n);
 		std::swap(nB, other.nB);
 		std::swap(data, other.data);
+		return *this;
 	}
 
 	/** get required storage size of BitStr in bytes */
