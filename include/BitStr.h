@@ -63,10 +63,6 @@ public:
 		data = new uIntType[n](); /* value initialization */
 	}
 
-	/** delegating construct a BitStr with given number of blocks of given width */
-	BitStr(size_type nBlocks, size_type wBlock) : BitStr(nBlocks * wBlock)
-	{  }
-
 	/**
 	 * construct a BitStr with given length and a value,
 	 * val will be used to fill the lowest/least-significant element of BitStr, with all others as zero
