@@ -15,7 +15,7 @@ namespace EGriceLab {
 namespace libSDS {
 
 /** bits needed to represent a number between 0 and n */
-inline unsigned int bits(size_t n) {
+inline uint32_t bits(size_t n) {
 	size_t b = 0;
 	for(; n != 0; n >>= 1)
 		b++;
@@ -24,8 +24,8 @@ inline unsigned int bits(size_t n) {
 
 /** counts the number of 1s in x */
 template<typename uIntType>
-inline unsigned int popcount(uIntType x) {
-	unsigned int ones = 0;
+inline uint32_t popcount(uIntType x) {
+	uint32_t ones = 0;
 	for(size_t i = 0; i < sizeof(uIntType); ++i)
 		ones += __popcount_tab[(x >> Wb * i) & 0xff];
 	return ones;
@@ -40,19 +40,25 @@ inline unsigned int popcount64(uint64_t x) {
 }
 
 /** Counts the number of 1s in the first 32 bits of x */
-inline unsigned int popcount32(uint32_t x) {
+inline uint32_t popcount32(uint32_t x) {
 	return __popcount_tab[(x >> 0) & 0xff] + __popcount_tab[(x >> 8) & 0xff]
          + __popcount_tab[(x >> 16) & 0xff] + __popcount_tab[(x >> 24) & 0xff];
 }
 
 /** Counts the number of 1s in the first 16 bits of x */
-inline unsigned int popcount16(uint16_t x) {
+inline uint32_t popcount16(uint16_t x) {
 	return __popcount_tab[x & 0xff]  + __popcount_tab[(x >> 8) & 0xff];
 }
 
 /** Counts the number of 1s in the first 8 bits of x */
-inline unsigned int popcount8(uint8_t x) {
+inline uint32_t popcount8(uint8_t x) {
 	return __popcount_tab[x & 0xff];
+}
+
+/** number of elements required to represent n integers of e bits each in given integer type */
+template<typename uIntType>
+inline size_t int_len(size_t e, size_t n) {
+	return (e * n + W - 1) / (sizeof(uIntType) * Wb);
 }
 
 } /* namespace libSDS */

@@ -28,18 +28,18 @@ size_t BitSeq::selectPrev1(size_t start) const
 {
 	size_t v = rank1(start);
 	if(v <= 1)
-		return -1;
+		return 0;
 	else
-		return select1(v - 1);
+		return select1(v);
 }
 
 size_t BitSeq::selectPrev0(size_t start) const
 {
 	size_t v = rank0(start);
 	if(v <= 1)
-		return -1;
+		return 0;
 	else
-		return select0(v - 1);
+		return select0(v);
 }
 
 bool BitSeq::access(size_t i) const

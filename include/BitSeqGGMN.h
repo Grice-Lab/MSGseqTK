@@ -151,19 +151,19 @@ public:
 	}
 
 	/** swap this BitSeqGGMN with another object */
-	void swap(BitSeqGGMN& other) {
+	BitSeqGGMN& swap(BitSeqGGMN& other) {
 		bstr.swap(other.bstr);
 		std::swap(nRs, other.nRs);
 		std::swap(Rs, other.Rs);
 		std::swap(factor, other.factor);
 		std::swap(b, other.b);
 		std::swap(s, other.s);
+		return *this;
 	}
 
 	/** copy assignment operator using copy-swap */
 	BitSeqGGMN& operator=(BitSeqGGMN other) {
-		swap(other);
-		return *this;
+		return swap(other);
 	}
 
 	/* internal help methods */

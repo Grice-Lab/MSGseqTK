@@ -223,7 +223,7 @@ size_t BitSeqGGMN::selectPrev1(size_t start) const {
 }
 
 ostream& BitSeqGGMN::save(ostream& out) const {
-	BitSeq::save(out);
+	BitSeq::save(out); /* save base object */
 	bstr.save(out);
 	out.write((const char*) &nRs, sizeof(size_t));
 	out.write((const char*) Rs, sizeof(size_t) * nRs);
@@ -234,7 +234,7 @@ ostream& BitSeqGGMN::save(ostream& out) const {
 }
 
 istream& BitSeqGGMN::load(istream& in) {
-	BitSeq::load(in);
+	BitSeq::load(in); /* load base object */
 	bstr.load(in);
 	in.read((char *) &nRs, sizeof(size_t));
 	if(Rs != nullptr)

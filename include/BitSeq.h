@@ -118,7 +118,7 @@ public:
 	/**
 	 * get the previous position starting from i that is one
 	 * @param start  starting pos
-	 * @return  prev one position
+	 * @return  prev one position,
 	 */
 	virtual size_t selectPrev1(size_t start) const;
 

@@ -97,7 +97,9 @@ int main() {
 		cerr << "failed to load bseq: '" << ::strerror(errno) << " '" << endl;
 		return EXIT_FAILURE;
 	}
-	if(bseq1 != bseq)
+	if(bseq1 != bseq) {
+		cerr << "loaded BitSeqGGMN doesn't match saved object" << endl;
 		return EXIT_FAILURE;
+	}
 }
 

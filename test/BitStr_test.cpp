@@ -82,12 +82,26 @@ int main() {
 
 	/* value setting tests */
 	BitStr<uint32_t> bst1(512);
-	for(size_t i = 0, len = 1; i < bst1.length() && len <= 16; ++len) {
+	for(size_t i = 0, len = 1; i * bst1.getWid() < bst1.length() && len < 16; ++len) {
 		uint32_t val = len;
-		printf("bst1.setValue(%d, %d, %d)\n", i, len, val);
+		fprintf(stderr, "bst1.setValue(%d, %d, %d)\n", i, len, val);
 		bst1.setValue(i, len, val);
-		printf("bst1.getValue(%d, %d): %d\n", i, len, bst1.getValue(i, len));
-		if(bst1.getValue(i, len) != val)
+		uint32_t valN = bst1.getValue(i, len);
+		fprintf(stderr, "bst1.getValue(%d, %d): %d\n", i, len, valN);
+		if(valN != val)
+			return EXIT_FAILURE;
+		i += len;
+	}
+
+	/* bit setting tests */
+	bst1.clear();
+	for(size_t i = 0, len = 1; i < bst1.length() && len < 32; ++len) {
+		uint32_t val = len;
+		fprintf(stderr, "bst1.set(%d, %d, %d)\n", i, len, val);
+		bst1.set(i, len, val);
+		uint32_t valN = bst1.get(i, len);
+		fprintf(stderr, "bst1.get(%d, %d): %d\n", i, len, valN);
+		if(valN != val)
 			return EXIT_FAILURE;
 		i += len;
 	}

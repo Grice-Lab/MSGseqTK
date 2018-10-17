@@ -172,7 +172,7 @@ public:
 
 	/**
 	 * get the value represented by a given fixed length of bits
-	 * @param start  start bit position
+	 * @param start  start position measured by len
 	 * @param len  number of bits
 	 * @return value represented by these bits
 	 */
@@ -180,6 +180,8 @@ public:
 		assert(len <= wid);
 		if(len == 0)
 			return 0;
+		if((start + 1) * len > nB)
+			len = nB - start * len;
 		size_type i = start * len / wid;
 		size_type j = start * len - wid * i;
 		size_t result;
@@ -201,7 +203,7 @@ public:
 
 	/**
 	 * set a given fixed region of fixed length bits to given value
-	 * @param start  start position of bits
+	 * @param start  start position measured by len
 	 * @param len  number of bits
 	 * @param v  value to set
 	 */
@@ -209,6 +211,8 @@ public:
 		assert(len <= wid);
 		if(len == 0)
 			return;
+		if((start + 1) * len > nB)
+			len = nB - start * len;
 		size_type i = start * len / wid;
 		size_type j = start * len - i * wid;
 		size_t mask = ((j + len) < wid ? ~0UL << j + len : 0UL)
@@ -226,12 +230,57 @@ public:
 		return data[i / wid] & (1UL << (i % wid));
 	}
 
+	/**
+	 * get the value represented by a region [start, start + len) of bits
+	 * @param start  start position in bits
+	 * @param len  region length in bits
+	 */
+	size_t get(size_type start, size_type len) const {
+		if(len == 0)
+			return 0;
+		if(start + len > nB)
+			len = nB - start;
+		size_t i = start / wid;
+		size_t j = start - wid * i;
+		size_t result;
+		if (j + len <= W)
+			result = (data[i] << (wid - j - len)) >> (wid - len);
+		else {
+			result = data[i] >> j;
+			result |= (data[i+1] << (2 * wid - j - len)) >> (wid - len);
+		}
+		return result;
+	}
+
 	/** set the i-th bit of this BitStr */
 	BitStr<uIntType>& set(size_type i, bool bit = true) {
 		/* clear bits first */
 		data[i / wid] &= ~(1UL << (i % wid));
 		/* set bit */
 		data[i / wid] |= bit << (i % wid);
+		return *this;
+	}
+
+	/**
+	 * set a given region of bits to a value
+	 * @param start  start position in bits
+	 * @param len  length in bits
+	 * @param val  value to be set
+	 */
+	BitStr<uIntType>& set(size_type start, size_type len, size_t value) {
+		if(len == 0)
+			return *this;
+		if(start + len > nB)
+			len = nB - start;
+		size_t i = start / wid;
+		size_t j = start - i * wid;
+		size_t mask = ((j + len) < wid ? ~0UL << j + len : 0UL)
+			| ((wid - j) < wid ? ~0UL >> wid - j : 0UL);
+		data[i] = (data[i] & mask) | value << j;
+		if (j + len > wid) {
+			mask = (~0UL) << len + j - wid;
+			data[i+1] = (data[i + 1] & mask) | value >> wid - j;
+		}
 		return *this;
 	}
 
@@ -300,10 +349,8 @@ public:
 	string to_string() const {
 		string bin;
 		bin.reserve(length());
-		for(size_type i = 0; i < n; ++i) {
-			for(size_type j = i * wid; j < (i + 1) * wid && j < nB; ++j)
-				bin.push_back(test(j) ? '1' : '0');
-		}
+		for(size_type i = 0; i < nB; ++i)
+			bin.push_back(test(i) ? '1' : '0');
 		std::reverse(bin.begin(), bin.end());
 		return bin;
 	}
