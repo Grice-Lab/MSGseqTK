@@ -135,6 +135,7 @@ public:
 	template<typename oIntType>
 	BitSeqRRR(const BitStr<oIntType>& bstr, uint32_t sample_rate = DEFAULT_SAMPLE_RATE) : sample_rate(sample_rate) {
 		build_basic(bstr);
+		build_sampled();
 	}
 
 	/** destructor */
@@ -223,7 +224,7 @@ public:
 
 	/* utility method */
 private:
-	/** build the basic C and O data */
+	/** build the basic C and O data from any type */
 	template<typename oIntType>
 	void build_basic(const BitStr<oIntType>& bstr) {
 		n = bstr.length();
@@ -232,7 +233,7 @@ private:
 		wC = bits(BLOCK_SIZE);
 		nC = numClasses();
 		cerr << "nC: " << nC << " wC: " << wC << endl;
-		C = BitStr<uint32_t>(nC * wC);
+		C = BitStr32(nC * wC);
 
 		nO = 0; /* number of total bits required for O */
 		wO = 1; /* Offset in 1 bit */
@@ -245,13 +246,12 @@ private:
 		}
 
 		/* build Table O */
-		O = BitStr<uint32_t>(nO * wO);
+		O = BitStr32(nO * wO);
 		for(size_t i = 0, Opos = 0; i < nC; ++i) {
 			uint32_t value = bstr.get(i * BLOCK_SIZE, BLOCK_SIZE);
 			O.set(Opos, OFFSET.get_log2binomial(BLOCK_SIZE, popcount32(value)), OFFSET.compute_offset(value));
 			Opos += OFFSET.get_log2binomial(BLOCK_SIZE, popcount32(value));
 		}
-		build_sampled();
 	}
 
 	/** build the sampled C and O */
@@ -259,12 +259,12 @@ private:
 
 	/* member fields */
 private:
-	BitStr<uint32_t> C; /* bitstring for classes */
-	BitStr<uint32_t> O; /* bitstring for offsets */
+	BitStr32 C; /* bitstring for classes */
+	BitStr32 O; /* bitstring for offsets */
 	size_t nC = 0, wC = 0; /* len and bit wid for C */
 	size_t nO = 0, wO = 0; /* len and bit wid for O */
-	BitStr<uint32_t> Csampled; /* C samplings */
-	BitStr<uint32_t> Osampled; /* O samplings */
+	BitStr32 Csampled; /* C samplings */
+	BitStr32 Osampled; /* O samplings */
 	size_t nCsampled = 0, wCsampled = 0;
 	size_t nOsampled = 0, wOsampled = 0;
 	/** Sample rate */

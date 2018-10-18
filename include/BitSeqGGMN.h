@@ -25,7 +25,7 @@ namespace libSDS {
  */
 class BitSeqGGMN: public BitSeq {
 public:
-	typedef uint32_t data_type; /* use uint32_t for this implementation */
+	typedef BitStr32::value_type data_type;
 	/* constructors */
 	/** default constructor */
 	BitSeqGGMN() = default;
@@ -38,7 +38,7 @@ public:
 	 * @param bstr  BitStr of uint
 	 * @param super-block factor, if 0, automatic determined
 	 */
-	BitSeqGGMN(const BitStr<data_type>& bstr, size_t factor = 0);
+	BitSeqGGMN(const BitStr32& bstr, size_t factor = 0);
 
 	/**
 	 * constructing from a BitStr of suitable type and factor rate
@@ -188,7 +188,7 @@ public:
 
 	/* member fields */
 private:
-	BitStr<data_type> bstr; /* default data type is uint for efficiency */
+	BitStr32 bstr; /* use BitStr32 for efficiency */
 	size_t nRs = 0; /* size of Rs */
 	size_t* Rs = nullptr; /* 1-based super-block rank array, storing the on bits in each block, with Rs[0] = 0 */
 	size_t factor = 0;

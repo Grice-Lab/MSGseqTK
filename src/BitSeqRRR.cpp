@@ -107,7 +107,7 @@ void BitSeqRRR::build_sampled() {
 	/* sampling C */
 	nCsampled = numClassSampled();
 	wCsampled = bits(ones);
-	Csampled = BitStr<uint32_t>(nCsampled * wCsampled);
+	Csampled = BitStr32(nCsampled * wCsampled);
 	size_t sum = 0;
 	for(size_t i = 0; i < nC; ++i) {
 		if(i % sample_rate == 0)
@@ -122,7 +122,7 @@ void BitSeqRRR::build_sampled() {
 	/* sampling O */
 	nOsampled = numOffsetSampled();
 	wOsampled = bits(nO);
-	Osampled = BitStr<uint32_t>(nOsampled * wOsampled);
+	Osampled = BitStr32(nOsampled * wOsampled);
 	for(size_t i = 0, pos = 0; i < nC; ++i) {
 		if(i % sample_rate == 0)
 			Osampled.setValue(i / sample_rate, wOsampled, pos);
