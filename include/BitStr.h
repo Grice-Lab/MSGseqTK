@@ -30,7 +30,7 @@ using std::cerr;
 /**
  * A BitStr is a dynamic array representation of bits for arbitrary unsigned integer types
  */
-template<typename uIntType = uint>
+template<typename uIntType = uint32_t>
 class BitStr {
 public:
 	typedef uIntType value_type;
@@ -80,20 +80,48 @@ public:
 	 * @param str  C-type string
 	 * @param n  length of str
 	 */
-	BitStr(const uIntType* src, size_type n) : wid(sizeof(value_type) * Wb), n(n) {
+	BitStr(const uIntType* src, size_type n) : wid(sizeof(uIntType) * Wb), n(n) {
 		nB = n * wid;
 		data = new uIntType[n];
 		std::copy(src, src + n, data);
 	}
 
+	/**
+	 * construct a BitStr by copying from a given C-type string of a diffent type,
+	 * @param str  C-type string
+	 * @param nSrc  length of str
+	 */
+	template<typename oIntType>
+	BitStr(const oIntType* src, size_type nSrc) : wid(sizeof(uIntType) * Wb) {
+		size_t wSrc = sizeof(oIntType) * Wb; // input width
+		nB = wSrc * nSrc;
+		n = (nB + wid - 1) / wid; /* ceil(nB / wid) */
+		data = new uIntType[n](); // value initiation
+		if(wSrc < wid) {
+			for(size_type i = 0; i < nB; i += wSrc)
+				set(i, wSrc, src[i]);
+		}
+		else {
+			for(size_type i = 0; i < nB; i += wid)
+				setValue(i, src[i / wSrc] & (~0UL) << i % wSrc);
+		}
+	}
+
 	/** construct a BitStr by coping from another BitStr of different type */
 	template<typename oIntType>
 	BitStr(const BitStr<oIntType>& other) : wid(sizeof(value_type) * Wb), nB(other.length()) {
-		n = (nB + wid - 1) / wid;
+		const size_t wO = other.getWid();
+		n = (nB + wid - 1) / wid; /* ceil(nB / wid) */
 		data = new uIntType[n](); /* value initiation */
-		/* bitwise copy */
-		for(size_type i = 0; i < length(); ++i)
-			set(i, other.get(i));
+		/* block copy */
+		if(wO < wid) {
+			for(size_type i = 0; i < nB; i += wO)
+				set(i, wO, other.get(i, wO));
+		}
+		else {
+			for(size_type i = 0; i < nB; i += wid)
+				setValue(i, other.get(i, wid));
+		}
 	}
 
 	/** copy assign operator by copying from another BitStr of potential different type */
@@ -203,7 +231,7 @@ public:
 
 	/**
 	 * set a given fixed region of fixed length bits to given value
-	 * @param start  start position measured by len
+	 * @param start  start position measured by size_type
 	 * @param len  number of bits
 	 * @param v  value to set
 	 */
@@ -236,6 +264,7 @@ public:
 	 * @param len  region length in bits
 	 */
 	size_t get(size_type start, size_type len) const {
+		assert(len <= wid);
 		if(len == 0)
 			return 0;
 		if(start + len > nB)
@@ -268,6 +297,7 @@ public:
 	 * @param val  value to be set
 	 */
 	BitStr<uIntType>& set(size_type start, size_type len, size_t value) {
+		assert(len <= wid);
 		if(len == 0)
 			return *this;
 		if(start + len > nB)
@@ -407,6 +437,11 @@ private:
 	size_type nB = 0; /* number of bits */
 	uIntType* data = nullptr; /* underlying data of given type */
 };
+
+typedef BitStr<uint8_t> BitStr8;
+typedef BitStr<uint16_t> BitStr16;
+typedef BitStr<> BitStr32;
+typedef BitStr<uint64_t> BitStr64;
 
 template<typename T>
 inline bool operator==(const BitStr<T>& lhs, const BitStr<T>& rhs) {
