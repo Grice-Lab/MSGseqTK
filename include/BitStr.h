@@ -87,6 +87,16 @@ public:
 	}
 
 	/**
+	 * construct a BitStr by copying from a std__basic_string
+	 * @param str  std__basic_string
+	 */
+	BitStr(const basic_string<uIntType>& src) : wid(sizeof(uIntType) * Wb), n(src.length()) {
+		nB = n * wid;
+		data = new uIntType[n];
+		std::copy(src.begin(), src.end(), data);
+	}
+
+	/**
 	 * construct a BitStr by copying from a given C-type string of a diffent type,
 	 * @param str  C-type string
 	 * @param nSrc  length of str
@@ -101,10 +111,34 @@ public:
 			for(size_type i = 0; i < nB; i += wSrc)
 				set(i, wSrc, src[i]);
 		}
-		else {
+		else if(wSrc > wid) {
 			for(size_type i = 0; i < nB; i += wid)
 				setValue(i, src[i / wSrc] & (~0UL) << i % wSrc);
 		}
+		else
+			std::copy(src, src + nSrc, data);
+	}
+
+	/**
+	 * construct a BitStr by copying from a std::basic_string a diffent type,
+	 * @param str  std::basic_string
+	 */
+	template<typename oIntType>
+	BitStr(const basic_string<oIntType>& src) : wid(sizeof(uIntType) * Wb) {
+		size_t wSrc = sizeof(oIntType) * Wb; // input width
+		nB = wSrc * src.length();
+		n = (nB + wid - 1) / wid; /* ceil(nB / wid) */
+		data = new uIntType[n](); // value initiation
+		if(wSrc < wid) {
+			for(size_type i = 0; i < nB; i += wSrc)
+				set(i, wSrc, src[i]);
+		}
+		else if(wSrc > wid) {
+			for(size_type i = 0; i < nB; i += wid)
+				setValue(i, src[i / wSrc] & (~0UL) << i % wSrc);
+		}
+		else
+			std::copy(src.begin(), src.end(), data);
 	}
 
 	/** construct a BitStr by coping from another BitStr of different type */
@@ -118,10 +152,12 @@ public:
 			for(size_type i = 0; i < nB; i += wO)
 				set(i, wO, other.get(i, wO));
 		}
-		else {
+		else if(wO > wid) {
 			for(size_type i = 0; i < nB; i += wid)
 				setValue(i, other.get(i, wid));
 		}
+		else
+			std::copy(other.getData(), other.getData() + other.length(), data);
 	}
 
 	/** copy assign operator by copying from another BitStr of potential different type */
@@ -164,15 +200,16 @@ public:
 		if(nB == this->nB)
 			return;
 		size_type n = (nB + wid - 1) / wid;
-		uIntType* data_new = new uIntType[n](); /* value-initialtion */
-		if(data_new == nullptr) /* failed, do not change the data */
-			return;
-		if(nB > this->nB)
-			std::copy(data, data + this->n, data_new);
-		else
-			std::copy(data, data + n, data_new);
+		if(n != this->n) { /* new array needed */
+			uIntType* data_new = new uIntType[n](); /* value-initialtion */
+			if(n > this->n)
+				std::copy(data, data + this->n, data_new);
+			else
+				std::copy(data, data + n, data_new);
+			std::swap(data, data_new); /* swap the array */
+			delete[] data_new; /* data new is the old data */
+		}
 
-		std::swap(data, data_new); /* swap the array */
 		/* fix last/lowest block of remaining bits, if any */
 		for(size_t i = nB; i < n * wid; ++i)
 			set(i, val);
@@ -314,7 +351,7 @@ public:
 		return *this;
 	}
 
-	/** reset the i-th bit to zero, alias of set(n, true) */
+	/** reset the i-th bit to zero, alias of set(n, false) */
 	BitStr<uIntType>& reset(size_type i) {
 		data[i / wid] &= ~(1UL << (i % wid));
 		return *this;
