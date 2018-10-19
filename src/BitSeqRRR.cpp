@@ -307,26 +307,6 @@ bool BitSeqRRR::access(size_t i) const {
 			OFFSET.get_bitmap(c, O.get(posO, OFFSET.get_log2binomial(BLOCK_SIZE, c)))) != 0;
 }
 
-BitSeqRRR& BitSeqRRR::swap(BitSeqRRR& other) {
-	C.swap(other.C);
-	O.swap(other.O);
-	Csampled.swap(other.Csampled);
-	Osampled.swap(other.Osampled);
-
-	std::swap(nC, other.nC);
-	std::swap(wC, other.wC);
-	std::swap(nO, other.nO);
-	std::swap(wO, other.wO);
-
-	std::swap(nCsampled, other.nCsampled);
-	std::swap(wCsampled, other.wCsampled);
-	std::swap(nOsampled, other.nOsampled);
-	std::swap(wOsampled, other.wOsampled);
-
-	std::swap(sample_rate, other.sample_rate);
-	return *this;
-}
-
 ostream& BitSeqRRR::save(ostream& out) const {
 	BitSeq::save(out); /* save base object */
 	assert(C.length() == nC * wC);
@@ -382,31 +362,12 @@ istream& BitSeqRRR::load(istream& in) {
 }
 
 bool operator==(const BitSeqRRR& lhs, const BitSeqRRR& rhs) {
-	/* compare basic fields */
-	if(dynamic_cast<const BitSeq&>(lhs) != dynamic_cast<const BitSeq&>(rhs))
-		return false;
-	cerr << "basic equals" << endl;
-	/* compare member fields */
-	if(lhs.sample_rate != rhs.sample_rate)
-		return false;
-	cerr << "rate equals" << endl;
-	if(!(lhs.nC == rhs.nC && lhs.wC == rhs.wC && lhs.C == rhs.C))
-		return false;
-	cerr << "C equals" << endl;
-	if(!(lhs.nO == rhs.nO && lhs.wO == rhs.wO && lhs.O == rhs.O))
-		return false;
-	cerr << "O equals" << endl;
-
-	if(!(lhs.nCsampled == rhs.nCsampled && lhs.wCsampled == rhs.wCsampled && lhs.Csampled == rhs.Csampled))
-		return false;
-	cerr << "Csampled equals" << endl;
-
-	if(!(lhs.nOsampled == rhs.nOsampled && lhs.wOsampled == rhs.wOsampled && lhs.Osampled == rhs.Osampled))
-		return false;
-	cerr << "Osampled equals" << endl;
-
-	cerr << "returning true" << endl;
-	return true;
+	return dynamic_cast<const BitSeq&>(lhs) == dynamic_cast<const BitSeq&>(rhs) &&
+			lhs.nC == rhs.nC && lhs.wC == rhs.wC && lhs.C == rhs.C &&
+			lhs.nO == rhs.nO && lhs.wO == rhs.wO && lhs.O == rhs.O &&
+			lhs.nCsampled == rhs.nCsampled && lhs.wCsampled == rhs.wCsampled && lhs.Csampled == rhs.Csampled &&
+			lhs.nOsampled == rhs.nOsampled && lhs.wOsampled == rhs.wOsampled && lhs.Osampled == rhs.Osampled &&
+			lhs.sample_rate == rhs.sample_rate;
 }
 
 } /* namespace libSDS */

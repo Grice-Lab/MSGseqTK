@@ -22,6 +22,7 @@ using std::ostream;
  */
 class Seq {
 public:
+	typedef size_t size_type;
 	/* constructors */
 	/** default constructor */
 	Seq() = default;
@@ -31,7 +32,7 @@ public:
 	{ 	}
 
 	/** basic constructor from given values */
-	Seq(size_t n, size_t K) : n(n), sigma(K)
+	Seq(size_t n, size_t sigma) : n(n), sigma(sigma)
 	{  }
 
 	/* member methods */

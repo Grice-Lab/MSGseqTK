@@ -13,7 +13,7 @@
 namespace EGriceLab {
 namespace libSDS {
 
-BitSeqGGMN::BitSeqGGMN(const BitSeqGGMN& other) : BitSeq(other.n, other.ones),
+BitSeqGGMN::BitSeqGGMN(const BitSeqGGMN& other) : BitSeq(other), /* copy base class object */
 		bstr(other.bstr), nRs(other.nRs), factor(other.factor), b(other.b), s(other.s)
 {
 	Rs = new size_t[nRs];

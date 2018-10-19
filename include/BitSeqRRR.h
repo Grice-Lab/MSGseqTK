@@ -214,14 +214,6 @@ public:
 	 */
 	virtual istream& load(istream& in);
 
-	/** swap this BitSeqRRR with another object */
-	BitSeqRRR& swap(BitSeqRRR& other);
-
-	/** copy assignment operator using copy-swap */
-	BitSeqRRR& operator=(BitSeqRRR other) {
-		return swap(other);
-	}
-
 	/* utility method */
 private:
 	/** build the basic C and O data from any type */

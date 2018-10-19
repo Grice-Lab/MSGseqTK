@@ -39,28 +39,15 @@ public:
 	/** default constructor */
 	BitStr() = default;
 
-	/** copy constructor */
-	BitStr(const BitStr<uIntType>& other) : wid(other.wid), n(other.n), nB(other.nB) {
-		data = new uIntType[n];
-		std::copy(other.data, other.data + other.n, data);
-	}
-
-	/** copy assignment operator using copy-swap */
-	BitStr& operator=(BitStr<uIntType> other) {
-		return swap(other);
-	}
-
-	/** destructor */
-	~BitStr() {
-		delete[] data;
-	}
+	/** virtual destructor */
+	~BitStr()
+	{  }
 
 	/**
 	 * construct a BitStr with n-bits all set to zero
 	 */
-	BitStr(size_type nB) : wid(sizeof(value_type) * Wb), nB(nB) {
-		n = (nB + wid - 1) / wid; /* ceil(nB / wid) */
-		data = new uIntType[n](); /* value initialization */
+	BitStr(size_type nB) : wid(sizeof(value_type) * Wb), nB(nB), n(int_len(nB, wid)) {
+		data.resize(n);
 	}
 
 	/**
@@ -69,9 +56,7 @@ public:
 	 * @param nB  length in bits
 	 * @param val  value to fill the lowest bits
 	 */
-	BitStr(size_type nB, uIntType val) : wid(sizeof(value_type) * Wb), nB(nB) {
-		n = (nB + wid - 1) / wid; /* ceil(nB / wid) */
-		data = new uIntType[n](); /* value initialization */
+	BitStr(size_type nB, uIntType val) : BitStr(nB) /* deligating construction */ {
 		data[0] = val;
 	}
 
@@ -80,20 +65,16 @@ public:
 	 * @param str  C-type string
 	 * @param n  length of str
 	 */
-	BitStr(const uIntType* src, size_type n) : wid(sizeof(uIntType) * Wb), n(n) {
+	BitStr(const uIntType* src, size_type n) : wid(sizeof(uIntType) * Wb), n(n), data(src, n) {
 		nB = n * wid;
-		data = new uIntType[n];
-		std::copy(src, src + n, data);
 	}
 
 	/**
 	 * construct a BitStr by copying from a std__basic_string
 	 * @param str  std__basic_string
 	 */
-	BitStr(const basic_string<uIntType>& src) : wid(sizeof(uIntType) * Wb), n(src.length()) {
+	BitStr(const basic_string<uIntType>& src) : wid(sizeof(uIntType) * Wb), n(src.length()), data(src) {
 		nB = n * wid;
-		data = new uIntType[n];
-		std::copy(src.begin(), src.end(), data);
 	}
 
 	/**
@@ -106,7 +87,7 @@ public:
 		size_t wSrc = sizeof(oIntType) * Wb; // input width
 		nB = wSrc * nSrc;
 		n = (nB + wid - 1) / wid; /* ceil(nB / wid) */
-		data = new uIntType[n](); // value initiation
+		data.resize(n);
 		if(wSrc < wid) {
 			for(size_type i = 0; i < nB; i += wSrc)
 				set(i, wSrc, src[i]);
@@ -116,7 +97,7 @@ public:
 				setValue(i, src[i / wSrc] & (~0UL) << i % wSrc);
 		}
 		else
-			std::copy(src, src + nSrc, data);
+			std::copy(src, src + nSrc, data.begin());
 	}
 
 	/**
@@ -128,7 +109,7 @@ public:
 		size_t wSrc = sizeof(oIntType) * Wb; // input width
 		nB = wSrc * src.length();
 		n = (nB + wid - 1) / wid; /* ceil(nB / wid) */
-		data = new uIntType[n](); // value initiation
+		data.resize(n);
 		if(wSrc < wid) {
 			for(size_type i = 0; i < nB; i += wSrc)
 				set(i, wSrc, src[i]);
@@ -138,15 +119,14 @@ public:
 				setValue(i, src[i / wSrc] & (~0UL) << i % wSrc);
 		}
 		else
-			std::copy(src.begin(), src.end(), data);
+			std::copy(src.begin(), src.end(), data.begin());
 	}
 
 	/** construct a BitStr by coping from another BitStr of different type */
 	template<typename oIntType>
-	BitStr(const BitStr<oIntType>& other) : wid(sizeof(value_type) * Wb), nB(other.length()) {
+	BitStr(const BitStr<oIntType>& other) : wid(sizeof(value_type) * Wb), nB(other.length()), n(int_len(nB, wid)) {
 		const size_t wO = other.getWid();
-		n = (nB + wid - 1) / wid; /* ceil(nB / wid) */
-		data = new uIntType[n](); /* value initiation */
+		data.resize(n);
 		/* block copy */
 		if(wO < wid) {
 			for(size_type i = 0; i < nB; i += wO)
@@ -156,15 +136,10 @@ public:
 			for(size_type i = 0; i < nB; i += wid)
 				setValue(i, other.get(i, wid));
 		}
-		else
-			std::copy(other.getData(), other.getData() + other.length(), data);
-	}
-
-	/** copy assign operator by copying from another BitStr of potential different type */
-	template<typename oIntType>
-	BitStr<uIntType>& operator=(BitStr<oIntType> other) {
-		swap(other);
-		return *this;
+		else {
+			const basic_string<oIntType>& oData = other.getData();
+			std::copy(oData.begin(), oData.end(), data.begin());
+		}
 	}
 
 	/* member methods */
@@ -200,15 +175,7 @@ public:
 		if(nB == this->nB)
 			return;
 		size_type n = (nB + wid - 1) / wid;
-		if(n != this->n) { /* new array needed */
-			uIntType* data_new = new uIntType[n](); /* value-initialtion */
-			if(n > this->n)
-				std::copy(data, data + this->n, data_new);
-			else
-				std::copy(data, data + n, data_new);
-			std::swap(data, data_new); /* swap the array */
-			delete[] data_new; /* data new is the old data */
-		}
+		data.resize(n);
 
 		/* fix last/lowest block of remaining bits, if any */
 		for(size_t i = nB; i < n * wid; ++i)
@@ -220,11 +187,11 @@ public:
 
 	/** clear all bits to zero */
 	void clear() {
-		std::fill(data, data + n, 0);
+		std::fill(data.begin(), data.end(), 0);
 	}
 
 	/** get the underlying data in raw array */
-	const uIntType* getData() const {
+	const basic_string<uIntType>& getData() const {
 		return data;
 	}
 
@@ -370,10 +337,7 @@ public:
 
 	/** test whether any bit is on */
 	bool any() const {
-		for(size_type i = 0; i < n; ++i)
-			if(data[i])
-				return true;
-		return false;
+		return std::any_of(data.begin(), data.end(), [](uIntType v) { return v; });
 	}
 
 	/** test whether none of the bit is on */
@@ -383,11 +347,8 @@ public:
 
 	/** test whether all bits are on */
 	bool all() const {
-		if(empty())
+		if(std::any_of(data.begin(), data.end() - 1, [](uIntType v) { return ~v; }))
 			return false;
-		for(size_type i = 0; i < n - 1; ++i) /* test till last block */
-			if(~ data[i])
-				return false;
 		for(size_type i = (n - 1) * wid; i < nB; ++i) /* test last block bits */
 			if(!test(i))
 				return false;
@@ -431,21 +392,21 @@ public:
 	/** save BitStr to binary output */
 	ostream& save(ostream& out) const {
 		out.write((const char*) &wid, sizeof(size_t));
-		out.write((const char*) &n, sizeof(size_type));
 		out.write((const char*) &nB, sizeof(size_type));
-		out.write((const char*) data, sizeof(uIntType) * n);
+		out.write((const char*) &n, sizeof(size_type));
+		out.write((const char*) data.c_str(), sizeof(uIntType) * n);
 		return out;
 	}
 
 	/** load BitStr from binary input */
 	istream& load(istream& in) {
 		in.read((char*) &wid, sizeof(size_t));
-		in.read((char*) &n, sizeof(size_type));
 		in.read((char*) &nB, sizeof(size_type));
-		if(data != nullptr)
-			delete[] data;
-		data = new uIntType[n];
-		in.read((char*) data, sizeof(uIntType) * n);
+		in.read((char*) &n, sizeof(size_type));
+		uIntType *tmp = new uIntType[n];
+		in.read((char*) tmp, sizeof(uIntType) * n);
+		data.assign(tmp, n);
+		delete[] tmp;
 		return in;
 	}
 
@@ -453,26 +414,17 @@ public:
 	template<typename oIntType>
 	friend bool operator==(const BitStr<oIntType>& lhs, const BitStr<oIntType>& rhs);
 
-	/** swap this BitStr with another with same type, the underlying data is shallow-swapped */
-	BitStr<uIntType>& swap(BitStr<uIntType>& other) {
-		std::swap(wid, other.wid);
-		std::swap(n, other.n);
-		std::swap(nB, other.nB);
-		std::swap(data, other.data);
-		return *this;
-	}
-
 	/** get required storage size of BitStr in bytes */
 	size_t getBytes() const {
-		return sizeof(wid) + sizeof(n) + sizeof(uIntType) * n + sizeof(this);
+		return sizeof(wid) + sizeof(nB) + sizeof(n), sizeof(data) + sizeof(this);
 	}
 
 	/* member fields */
 private:
-	size_t wid = W;    /* bit-width of a value_type */
-	size_type n = 0; /* number of values in value_type */
+	size_t wid = 0;    /* bit-width of a value_type */
 	size_type nB = 0; /* number of bits */
-	uIntType* data = nullptr; /* underlying data of given type */
+	size_type n = 0; /* number of values in value_type */
+	basic_string<uIntType> data; /* underlying data stored in std::basic_string, with length n */
 };
 
 typedef BitStr<uint8_t> BitStr8;
@@ -482,12 +434,8 @@ typedef BitStr<uint64_t> BitStr64;
 
 template<typename T>
 inline bool operator==(const BitStr<T>& lhs, const BitStr<T>& rhs) {
-	if(!(lhs.wid == rhs.wid && lhs.n == rhs.n))
-		return false;
-	for(size_t i = 0; i < rhs.n; ++i)
-		if(lhs.data[i] != rhs.data[i])
-			return false;
-	return true;
+	return lhs.wid == rhs.wid && lhs.nB == rhs.nB &&
+			lhs.n == rhs.n && lhs.data == rhs.data;
 }
 
 /** test whether two BitStr are different */

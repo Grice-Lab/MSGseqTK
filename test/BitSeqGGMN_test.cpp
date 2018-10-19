@@ -28,12 +28,12 @@ int main() {
 	/* set every 4 bits on */
 	for(size_t i = 0; i < N; i += 4)
 		bstr.set(i);
-	cout << "bstr: " << bstr << endl;
+	cerr << "bstr: " << bstr << endl;
 	/* construct a BitSeqGGMN */
 	BitSeqGGMN bseq(bstr);
 
 	/* basic tests */
-	cout << "bseq.length(): " << bseq.length() << " bseq.numOnes(): " << bseq.numOnes() << endl;
+	cerr << "bseq.length(): " << bseq.length() << " bseq.numOnes(): " << bseq.numOnes() << endl;
 	if(!(bseq.length() == N && bseq.numOnes() == N / 4))
 		return EXIT_FAILURE;
 	/* access tests */

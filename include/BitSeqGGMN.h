@@ -152,7 +152,7 @@ public:
 
 	/** swap this BitSeqGGMN with another object */
 	BitSeqGGMN& swap(BitSeqGGMN& other) {
-		bstr.swap(other.bstr);
+		std::swap(bstr, other.bstr);
 		std::swap(nRs, other.nRs);
 		std::swap(Rs, other.Rs);
 		std::swap(factor, other.factor);

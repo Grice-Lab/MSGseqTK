@@ -55,10 +55,15 @@ inline uint32_t popcount8(uint8_t x) {
 	return __popcount_tab[x & 0xff];
 }
 
-/** number of elements required to represent n integers of e bits each in given integer type */
+/** number of elements required to represent nB bits in values of given wid */
+inline size_t int_len(size_t nB, size_t w) {
+	return (nB + w - 1) / w; /* ceil(nB / w) */
+}
+
+/** number of elements required to represent nB bits in given int type */
 template<typename uIntType>
-inline size_t int_len(size_t e, size_t n) {
-	return (e * n + W - 1) / (sizeof(uIntType) * Wb);
+inline size_t int_len(size_t nB) {
+	return int_len(nB, sizeof(uIntType) * Wb);
 }
 
 } /* namespace libSDS */
