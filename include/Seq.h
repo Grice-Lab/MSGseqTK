@@ -61,7 +61,7 @@ public:
 	 * Abstract method
 	 * get the i-th symbol in this Seq
 	 */
-	virtual unsigned int access(size_t i) const = 0;
+	virtual size_t access(size_t i) const = 0;
 
 	/**
 	 * get #occurrence of symbol s until position i (0-based, inclusive)
@@ -70,7 +70,7 @@ public:
 	 * @param i  position
 	 * @return rank of s till position i
 	 */
-	virtual size_t rank(unsigned int s, size_t i) const;
+	virtual size_t rank(size_t s, size_t i) const;
 
 	/**
 	 * get the position of the r-th occurrence of symbol s
@@ -79,7 +79,7 @@ public:
 	 * @param r  required occurrence/rank of s
 	 * @return  position in this Seq, or -1 if i = 0, or len if i > total # of s
 	 */
-	virtual size_t select(unsigned int s, size_t r) const;
+	virtual size_t select(size_t s, size_t r) const;
 
 	/**
 	 * get the next position of the r-th occurrence of symbol s
@@ -88,12 +88,12 @@ public:
 	 * @param start  start positin to search
 	 * @return  next position in this Seq, or 0 if not found
 	 */
-	virtual size_t selectNext(unsigned int s, size_t start) const;
+	virtual size_t selectNext(size_t s, size_t start) const;
 
 	/**
 	 * get the max value of symbols in this Seq
 	 */
-	virtual unsigned int maxValue() const;
+	virtual size_t maxValue() const;
 
 	/**
 	 * save this BitSeq to binary output

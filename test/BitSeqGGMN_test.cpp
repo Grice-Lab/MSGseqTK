@@ -38,40 +38,51 @@ int main() {
 		return EXIT_FAILURE;
 	/* access tests */
 	for(size_t i = 0; i < N; ++i) {
-		printf("bseq.access(%d): %d\n", i, bseq.access(i));
+		fprintf(stderr, "bseq.access(%d): %d\n", i, bseq.access(i));
 		if(bseq.access(i) != i % 4 == 0)
 			return EXIT_FAILURE;
 	}
 	/* rank tests */
 	for(size_t i = 0; i < N; ++i) {
-		printf("bseq.rank1(%d): %d\n", i, bseq.rank1(i));
+		fprintf(stderr, "bseq.rank1(%d): %d\n", i, bseq.rank1(i));
 		if(bseq.rank1(i) != i / 4 + 1)
 			return EXIT_FAILURE;
-		printf("bseq.rank0(%d): %d\n", i, bseq.rank0(i));
+		fprintf(stderr, "bseq.rank0(%d): %d\n", i, bseq.rank0(i));
 		if(bseq.rank0(i) != i - i / 4)
 			return EXIT_FAILURE;
 	}
 	/* select tests */
 	for(size_t r = 1; r <= bseq.numOnes(); ++r) {
-		printf("bseq.select1(%d): %d\n", r, bseq.select1(r));
+		fprintf(stderr, "bseq.select1(%d): %d\n", r, bseq.select1(r));
 		if(bseq.select1(r) != (r - 1) * 4)
 			return EXIT_FAILURE;
 	}
 	for(size_t r = 1; r <= bseq.numZeros(); ++r) {
-		printf("bseq.select0(%d): %d\n", r, bseq.select0(r));
+		fprintf(stderr, "bseq.select0(%d): %d\n", r, bseq.select0(r));
 		if(bseq.select0(r) != r + (r - 1) / 3)
 			return EXIT_FAILURE;
 	}
 	/* forward search tests */
 	for(size_t i = 0; i < N; ++i) {
-		printf("bseq.selectNext1(%d): %d\n", i, bseq.selectNext1(i));
+		fprintf(stderr, "bseq.selectNext1(%d): %d\n", i, bseq.selectNext1(i));
 		if(bseq.selectNext1(i) != (i + 4 - 1) / 4 * 4)
 			return EXIT_FAILURE;
 	}
 	/* reverse search tests */
 	for(size_t i = 0; i < N; ++i) {
-		printf("bseq.selectPrev1(%d): %d\n", i, bseq.selectPrev1(i));
+		fprintf(stderr, "bseq.selectPrev1(%d): %d\n", i, bseq.selectPrev1(i));
 		if(bseq.selectPrev1(i) != i / 4 * 4)
+			return EXIT_FAILURE;
+	}
+	/* access & rank test */
+	for(size_t i = 0, r = 0; i < N; ++i) {
+		fprintf(stderr, "bseq.access(%d, %d): ", i, r);
+		bool bit = bseq.access(i, r);
+		fprintf(stderr, "%d\n", bit);
+		fprintf(stderr, "r: %d\n", r);
+		if(bit != i % 4 == 0)
+			return EXIT_FAILURE;
+		if(r != (bit ? bseq.rank1(i) : i - bseq.rank1(i) + 1))
 			return EXIT_FAILURE;
 	}
 

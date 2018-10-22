@@ -101,6 +101,9 @@ public:
 	 */
 	virtual size_t select0(size_t r) const;
 
+	/* import base class access methods */
+	using BitSeq::access;
+
 	/**
 	 * get the i-th bit of this BitSeq by testing the rank1 difference
 	 * @param i  pos

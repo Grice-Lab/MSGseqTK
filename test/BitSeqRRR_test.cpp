@@ -74,6 +74,17 @@ int main() {
 		if(bseq.selectPrev1(i) != i / 4 * 4)
 			return EXIT_FAILURE;
 	}
+	/* access & rank test */
+	for(size_t i = 0, r = 0; i < N; ++i) {
+		fprintf(stderr, "bseq.access(%d, %d): ", i, r);
+		bool bit = bseq.access(i, r);
+		fprintf(stderr, "%d\n", bit);
+		fprintf(stderr, "r: %d\n", r);
+		if(bit != i % 4 == 0)
+			return EXIT_FAILURE;
+		if(r != (bit ? bseq.rank1(i) : i - bseq.rank1(i) + 1))
+			return EXIT_FAILURE;
+	}
 
 	/* copy test */
 	BitSeqRRR bseqN = bseq;

@@ -96,6 +96,14 @@ public:
 	 */
 	virtual bool access(size_t i) const;
 
+	/**
+	 * get the i-th bit of this BitSeq by testing the rank1 difference, and return the corresponding rank the same time
+	 * @param i  pos
+	 * @param r  rank of i if bit is on, or i - r + 1 if bit is off
+	 * @return  true if it is i-th bit is significant (one)
+	 */
+	virtual bool access(size_t i, size_t& r) const;
+
 	/* test bit i, alias to access */
 	bool test(size_t i) const {
 		return access(i);

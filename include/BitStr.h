@@ -177,7 +177,7 @@ public:
 	void resize(size_type nB, bool val = false) {
 		if(nB == this->nB)
 			return;
-		size_type n = (nB + wid - 1) / wid;
+		size_type n = int_len(nB, wid);
 		data.resize(n);
 
 		/* fix last/lowest block of remaining bits, if any */

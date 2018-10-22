@@ -265,6 +265,47 @@ bool BitSeqRRR::access(size_t i) const {
 			OFFSET.get_bitmap(c, O.get(posO, OFFSET.get_log2binomial(BLOCK_SIZE, c)))) != 0;
 }
 
+bool BitSeqRRR::access(size_t i, size_t& r) const {
+	if(i == -1)
+		return 0;
+	size_t nearest_sampled_value = i / BLOCK_SIZE / sample_rate;
+	size_t sum = Csampled.getValue(nearest_sampled_value, wCsampled);
+	size_t posO = Osampled.getValue(nearest_sampled_value, wOsampled);
+	size_t pos = i / BLOCK_SIZE;
+	size_t k = nearest_sampled_value * sample_rate;
+	if(k % 2 == 1 && k < pos) {
+		size_t aux = C.getValue(k, wC);
+		sum += aux;
+		posO += OFFSET.get_log2binomial(BLOCK_SIZE, aux);
+		k++;
+	}
+	size_t mask = 0x0F;
+	while(k < pos - 1 && pos > 0) {
+		size_t lower = C.getValue(k, wC) & mask;
+		size_t upper = C.getValue(k + 1, wC);
+		sum += lower + upper;
+		posO += OFFSET.get_log2binomial(BLOCK_SIZE, lower) + OFFSET.get_log2binomial(BLOCK_SIZE, upper);
+		k+=2;
+	}
+	if(k < pos) {
+		size_t aux = C.getValue(k, wC);
+		sum += aux;
+		posO += OFFSET.get_log2binomial(BLOCK_SIZE, aux);
+		k++;
+	}
+	size_t c = C.getValue(pos, wC);
+	size_t v = OFFSET.get_bitmap(c, O.get(posO, OFFSET.get_log2binomial(BLOCK_SIZE, c)));
+	sum += popcount32(((2 << (i % BLOCK_SIZE)) - 1) & v);
+	r = sum;
+
+	if( ((1UL << (i % BLOCK_SIZE)) & v))
+		return true;
+	else {
+		r = i - r + 1;
+		return false;
+	}
+}
+
 ostream& BitSeqRRR::save(ostream& out) const {
 	BitSeq::save(out); /* save base object */
 	assert(C.length() == nC * wC);

@@ -50,6 +50,16 @@ bool BitSeq::access(size_t i) const
 		return rank1(i) > rank1(i - 1);
 }
 
+bool BitSeq::access(size_t i, size_t& r) const {
+	r = rank1(i);
+	if(!access(i)) {
+		r = i - r + 1;
+		return false;
+	}
+	else
+		return true;
+}
+
 ostream& BitSeq::save(ostream& out) const {
 	out.write((const char*) &n, sizeof(size_t));
 	out.write((const char*) &ones, sizeof(size_t));

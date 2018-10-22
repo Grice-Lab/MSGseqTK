@@ -172,6 +172,15 @@ public:
 	virtual bool access(size_t i) const;
 
 	/**
+	 * get the i-th bit of this BitSeq by testing the rank1 difference, and return the corresponding rank the same time
+	 * @param i  pos
+	 * @param r  rank of i
+	 * @return  true if it is i-th bit is significant (one)
+	 * @override  base class virtual method
+	 */
+	virtual bool access(size_t i, size_t& r) const;
+
+	/**
 	 * save this BitSeq to binary output
 	 * @param out  binary output
 	 * @override  base class virtual method
