@@ -8,6 +8,7 @@
 #ifndef BITSEQGGMN_H_
 #define BITSEQGGMN_H_
 
+#include <vector>
 #include <algorithm>
 #include "BitSeq.h"
 #include "BitStr.h"
@@ -15,6 +16,8 @@
 
 namespace EGriceLab {
 namespace libSDS {
+
+using std::vector;
 
 /**
  * An uncompressed implementation of BitSeq using the algorithm described in
@@ -29,9 +32,6 @@ public:
 	/* constructors */
 	/** default constructor */
 	BitSeqGGMN() = default;
-
-	/** copy constructor */
-	BitSeqGGMN(const BitSeqGGMN& other);
 
 	/**
 	 * constructing from a BitStr of suitable type and factor rate
@@ -60,9 +60,7 @@ public:
 
 	/** virtual destructor */
 	virtual ~BitSeqGGMN()
-	{
-		delete[] Rs;
-	}
+	{  }
 
 	/**
 	 * get the size of the structure in bytes
@@ -150,22 +148,6 @@ public:
 		return (n + s - 1) / s;
 	}
 
-	/** swap this BitSeqGGMN with another object */
-	BitSeqGGMN& swap(BitSeqGGMN& other) {
-		std::swap(bstr, other.bstr);
-		std::swap(nRs, other.nRs);
-		std::swap(Rs, other.Rs);
-		std::swap(factor, other.factor);
-		std::swap(b, other.b);
-		std::swap(s, other.s);
-		return *this;
-	}
-
-	/** copy assignment operator using copy-swap */
-	BitSeqGGMN& operator=(BitSeqGGMN other) {
-		return swap(other);
-	}
-
 	/* internal help methods */
 private:
 	/**
@@ -190,7 +172,7 @@ public:
 private:
 	BitStr32 bstr; /* use BitStr32 for efficiency */
 	size_t nRs = 0; /* size of Rs */
-	size_t* Rs = nullptr; /* 1-based super-block rank array, storing the on bits in each block, with Rs[0] = 0 */
+	vector<size_t> Rs; /* 1-based super-block rank vector, storing the on bits in each block, with Rs[0] = 0 */
 	size_t factor = 0;
 	size_t b = 0; /* block size in bits */
 	size_t s = 0; /* super-block size in bits per block */

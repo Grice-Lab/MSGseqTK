@@ -86,7 +86,7 @@ public:
 	BitStr(const oIntType* src, size_type nSrc) : wid(sizeof(uIntType) * Wb) {
 		size_t wSrc = sizeof(oIntType) * Wb; // input width
 		nB = wSrc * nSrc;
-		n = (nB + wid - 1) / wid; /* ceil(nB / wid) */
+		n = int_len(nB, wid);
 		data.resize(n);
 		if(wSrc < wid) {
 			for(size_type i = 0; i < nB; i += wSrc)
@@ -108,7 +108,7 @@ public:
 	BitStr(const basic_string<oIntType>& src) : wid(sizeof(uIntType) * Wb) {
 		size_t wSrc = sizeof(oIntType) * Wb; // input width
 		nB = wSrc * src.length();
-		n = (nB + wid - 1) / wid; /* ceil(nB / wid) */
+		n = int_len(nB, wid);
 		data.resize(n);
 		if(wSrc < wid) {
 			for(size_type i = 0; i < nB; i += wSrc)

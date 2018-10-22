@@ -13,13 +13,6 @@
 namespace EGriceLab {
 namespace libSDS {
 
-BitSeqGGMN::BitSeqGGMN(const BitSeqGGMN& other) : BitSeq(other), /* copy base class object */
-		bstr(other.bstr), nRs(other.nRs), factor(other.factor), b(other.b), s(other.s)
-{
-	Rs = new size_t[nRs];
-	std::copy(Rs, Rs + nRs, other.Rs);
-}
-
 BitSeqGGMN::BitSeqGGMN(const BitStr<data_type>& bstr, size_t factor) : bstr(bstr) {
 	n = bstr.length();
 	ones = bstr.count();
@@ -33,13 +26,14 @@ BitSeqGGMN::BitSeqGGMN(const BitStr<data_type>& bstr, size_t factor) : bstr(bstr
 }
 
 void BitSeqGGMN::buildRank() {
-	Rs = new size_t[nRs](); /* value initiation */
+	Rs.resize(nRs);
+	Rs[0] = 0;
 	for (size_t i = 1; i <= nRs; ++i)
 		Rs[i] = Rs[i - 1] + buildRank((i-1) * factor, factor);
 }
 
 size_t BitSeqGGMN::getBytes() const {
-	return BitSeq::getBytes() + bstr.getBytes() + sizeof(size_t) * (numSuperBlocks() + 1) +
+	return BitSeq::getBytes() + bstr.getBytes() + sizeof(nRs) + sizeof(Rs) +
 			sizeof(factor) + sizeof(b) + sizeof(s) + sizeof(this);
 }
 
@@ -226,7 +220,7 @@ ostream& BitSeqGGMN::save(ostream& out) const {
 	BitSeq::save(out); /* save base object */
 	bstr.save(out);
 	out.write((const char*) &nRs, sizeof(size_t));
-	out.write((const char*) Rs, sizeof(size_t) * nRs);
+	out.write((const char*) Rs.data(), sizeof(size_t) * nRs);
 	out.write((const char*) &factor, sizeof(size_t));
 	out.write((const char*) &b, sizeof(size_t));
 	out.write((const char*) &s, sizeof(size_t));
@@ -237,10 +231,8 @@ istream& BitSeqGGMN::load(istream& in) {
 	BitSeq::load(in); /* load base object */
 	bstr.load(in);
 	in.read((char *) &nRs, sizeof(size_t));
-	if(Rs != nullptr)
-		delete[] Rs;
-	Rs = new size_t[nRs];
-	in.read((char*) Rs, sizeof(size_t) * nRs);
+	Rs.resize(nRs);
+	in.read((char*) Rs.data(), sizeof(size_t) * nRs);
 	in.read((char*) &factor, sizeof(size_t));
 	in.read((char*) &b, sizeof(size_t));
 	in.read((char*) &s, sizeof(size_t));
@@ -256,19 +248,9 @@ size_t BitSeqGGMN::buildRank(size_t start, size_t len) {
 }
 
 bool operator==(const BitSeqGGMN& lhs, const BitSeqGGMN& rhs) {
-	/* compare basic fields */
-	if(dynamic_cast<const BitSeq&>(lhs) != dynamic_cast<const BitSeq&>(rhs))
-		return false;
-	/* compare member fields */
-	if(lhs.bstr != rhs.bstr)
-		return false;
-	if(!(lhs.nRs == rhs.nRs && lhs.factor == rhs.factor && lhs.b == rhs.b && lhs.s == rhs.s))
-		return false;
-	/* compare arrays */
-	for(size_t i = 0; i < lhs.nRs; ++i)
-		if(lhs.Rs[i] != rhs.Rs[i])
-			return false;
-	return true;
+	return lhs.bstr == rhs.bstr &&
+			lhs.nRs == rhs.nRs && lhs.Rs == rhs.Rs &&
+			lhs.factor == rhs.factor && lhs.b == rhs.b && lhs.s == rhs.s;
 }
 
 } /* namespace libSDS */
