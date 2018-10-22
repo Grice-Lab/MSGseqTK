@@ -11,57 +11,15 @@
 namespace EGriceLab {
 namespace libSDS {
 
-const BitSeqRRR::TableOffset BitSeqRRR::OFFSET(BitSeqRRR::BLOCK_SIZE); /* pre-computed TalbeOffset given block size */
+const BitSeqRRR::TableOffset BitSeqRRR::OFFSET; /* pre-computed TalbeOffset with pre-defined BLOCK_SIZE */
 
-BitSeqRRR::TableOffset::~TableOffset() {
-	delete[] bitmaps;
-	delete[] offset_class;
-	delete[] rev_offset;
-	for(uint32_t i = 0; i <= u; ++i) {
-		delete[] binomial[i];
-		delete[] log2binomial[i];
-	}
-	delete[] binomial;
-	delete[] log2binomial;
-}
-
-BitSeqRRR::TableOffset::TableOffset(size_t u) : u(u) {
-	bitmaps = new uint32_t[numBitmaps() + 1];
-	rev_offset = new uint32_t[numRevOffset()];
-	offset_class = new uint32_t[numClasses() + 1];
-	binomial = new uint32_t*[u + 1];
-	log2binomial = new uint32_t*[u + 1];
-	for(uint32_t i = 0; i <= u; ++i) {
-		binomial[i] = new uint32_t[u + 1](); /* value initiation */
-		log2binomial[i] = new uint32_t[u + 1](); /* value initiation */
-	}
-
+BitSeqRRR::TableOffset::TableOffset() {
 	init_binomials();
 	init_offsets();
 }
 
-BitSeqRRR::TableOffset::TableOffset(const TableOffset& other) : u(other.u) {
-	bitmaps = new uint32_t[numBitmaps() + 1];
-	rev_offset = new uint32_t[numRevOffset()];
-	offset_class = new uint32_t[numClasses() + 1];
-	binomial = new uint32_t*[u + 1];
-	log2binomial = new uint32_t*[u + 1];
-	for(uint32_t i = 0; i <= u; ++i) {
-		binomial[i] = new uint32_t[u + 1](); /* value initiation */
-		log2binomial[i] = new uint32_t[u + 1](); /* value initiation */
-	}
-	/* copy values */
-	std::copy(other.bitmaps, other.bitmaps + other.numBitmaps() + 1, bitmaps);
-	std::copy(other.rev_offset, other.rev_offset + other.numRevOffset(), rev_offset);
-	std::copy(other.offset_class, other.offset_class + other.numClasses() + 1, offset_class);
-	for(uint32_t i = 0; i <= u; ++i) {
-		std::copy(other.binomial[i], other.binomial[i] + u + 1, binomial[i]);
-		std::copy(other.log2binomial[i], other.log2binomial[i] + u + 1, log2binomial[i]);
-	}
-}
-
 void BitSeqRRR::TableOffset::init_binomials() {
-	for(uint32_t i = 0; i <= u; ++i) { /* upper-right half all ones */
+	for(uint32_t i = 0; i <= BLOCK_SIZE; ++i) { /* upper-right half all ones */
 		binomial[i][0] = 1;
 		binomial[i][1] = 1;
 		binomial[i][i] = 1;
@@ -69,8 +27,8 @@ void BitSeqRRR::TableOffset::init_binomials() {
 		log2binomial[i][1] = 0;
 		log2binomial[i][i] = 0;
 	}
-	for(uint32_t j = 1; j <= u; ++j) {
-		for(uint32_t i = j + 1; i <= u; ++i) {
+	for(uint32_t j = 1; j <= BLOCK_SIZE; ++j) {
+		for(uint32_t i = j + 1; i <= BLOCK_SIZE; ++i) {
 			binomial[i][j] = binomial[i - 1][j - 1] + binomial[i - 1][j];
 			log2binomial[i][j] = bits(binomial[i][j] - 1);
 		}
@@ -88,7 +46,7 @@ uint32_t BitSeqRRR::TableOffset::init_classes(uint32_t& shift, uint32_t& classId
 	}
 	if (k < len)
 		return 0;
-	for (uint32_t i = start; i < u; ++i)
+	for (uint32_t i = start; i < BLOCK_SIZE; ++i)
 		idx += init_classes(shift, classIdx, k, len + 1, i + 1, val | (1UL << i)); /* recursive initiation */
 	return idx;
 }
@@ -97,7 +55,7 @@ void BitSeqRRR::TableOffset::init_offsets() {
 	uint32_t shift = 0;
 	uint32_t classIdx = 0;
 	offset_class[0] = 0;
-	for (uint32_t k = 0; k <= u; ++k) {
+	for (uint32_t k = 0; k <= BLOCK_SIZE; ++k) {
 		shift += init_classes(shift, classIdx, k);
 		offset_class[k + 1] = classIdx;
 	}

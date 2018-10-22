@@ -13,6 +13,12 @@
 #include "BitSeq.h"
 #include "BitStr.h"
 
+/*
+ * block size can't be changed in this implementation
+ * it would require more than just changing the constant
+ */
+#define BLOCK_SIZE (15)
+
 namespace EGriceLab {
 namespace libSDS {
 
@@ -31,38 +37,9 @@ public:
 	public:
 		/* constructors */
 		/** default constructor */
-		TableOffset() = default;
-
-		/** construct a TableOffset with given number of blocks */
-		TableOffset(size_t u);
-
-		/** copy constructor */
-		TableOffset(const TableOffset& other);
-
-		/** destructor */
-		~TableOffset();
-
-		/** copy assignment operator using copy-swap */
-		TableOffset& operator=(TableOffset other) {
-			return swap(other);
-		}
+		TableOffset();
 
 		/* member methods */
-		/** get number of rev_offsets */
-		uint32_t numRevOffset() const {
-			return 2 << (u + 1);
-		}
-
-		/** get number of bitmaps */
-		uint32_t numBitmaps() const {
-			return 1 << u;
-		}
-
-		/** get number of offset classes */
-		uint32_t numClasses() const {
-			return u + 1;
-		}
-
 		/** computes binomial(n,k) for n,k <= u */
 		uint32_t get_binomial(uint32_t n, uint32_t k) const {
 			return binomial[n][k];
@@ -77,25 +54,14 @@ public:
 		uint32_t get_bitmap(uint32_t class_offset, uint inclass_offset) const {
 			if(class_offset == 0)
 				return 0;
-			if(class_offset == u)
-				return (1 << u) - 1;
+			if(class_offset == BLOCK_SIZE)
+				return (1 << BLOCK_SIZE) - 1;
 			return bitmaps[offset_class[class_offset] + inclass_offset];
 		}
 
 		/** computes the offset of the first u bits of a given bitstring */
 		uint32_t compute_offset(uint32_t v) const {
 			return rev_offset[v];
-		}
-
-		/** swap data with another TableOffset */
-		TableOffset& swap(TableOffset& other) {
-			std::swap(u, other.u);
-			std::swap(binomial, other.binomial);
-			std::swap(log2binomial, other.log2binomial);
-			std::swap(rev_offset, other.rev_offset);
-			std::swap(offset_class, other.offset_class);
-			std::swap(bitmaps, other.bitmaps);
-			return *this;
 		}
 
 		/* utility methods */
@@ -118,14 +84,19 @@ public:
 		uint32_t init_classes(uint32_t& shift, uint32_t& classIdx, uint32_t k,
 				uint32_t len = 0, uint32_t start = 0, uint32_t val = 0);
 
+		/* static fields */
+	public:
+		static const uint32_t NUM_BITMAPS = 1 << BLOCK_SIZE;
+		static const uint32_t NUM_REVOFFSETS = 2 << (BLOCK_SIZE + 1);
+		static const uint32_t NUM_CLASSES = BLOCK_SIZE + 1;
+
 		/* member fields */
 	private:
-		uint32_t u = 0; /* block size of WaveletTree */
-		uint32_t **binomial = nullptr; /* pre-computed binomial matrix of small u */
-		uint32_t **log2binomial = nullptr; /* pre-computed log2-binomial matrix */
-		uint32_t *rev_offset = nullptr; /* pre-computed reverse offset array */
-		uint32_t *offset_class = nullptr; /* pre-computed integer class-offset array */
-		uint32_t *bitmaps = nullptr; /* pre-computed bitmaps */
+		uint32_t binomial[BLOCK_SIZE + 1][BLOCK_SIZE + 1]; /* pre-computed binomial static matrix */
+		uint32_t log2binomial[BLOCK_SIZE + 1][BLOCK_SIZE + 1]; /* pre-computed log2-binomial static matrix */
+		uint32_t rev_offset[NUM_REVOFFSETS]; /* pre-computed reverse offset static array */
+		uint32_t offset_class[NUM_CLASSES + 1]; /* pre-computed integer class-offset static array */
+		uint32_t bitmaps[NUM_BITMAPS + 1]; /* pre-computed bitmap static array */
 	};
 
 	/** default constructor */
@@ -269,9 +240,6 @@ public:
 
 	/* static members */
 public:
-	// block size can't be changed in this implementation
-	// it would require more than just changing the constant
-	static const size_t BLOCK_SIZE = 15;
 	static const size_t DEFAULT_SAMPLE_RATE = 32;
 	static const TableOffset OFFSET; /* pre-computed TalbeOffset given block size */
 };
