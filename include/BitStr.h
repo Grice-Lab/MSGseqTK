@@ -46,7 +46,7 @@ public:
 	/**
 	 * construct a BitStr with n-bits all set to zero
 	 */
-	BitStr(size_type nB) : wid(sizeof(value_type) * Wb), nB(nB), n(int_len(nB, wid)) {
+	explicit BitStr(size_type nB) : wid(sizeof(value_type) * Wb), nB(nB), n(int_len(nB, wid)) {
 		data.resize(n);
 	}
 
@@ -73,7 +73,7 @@ public:
 	 * construct a BitStr by copying from a std__basic_string
 	 * @param str  std__basic_string
 	 */
-	BitStr(const basic_string<uIntType>& src) : wid(sizeof(uIntType) * Wb), n(src.length()), data(src) {
+	explicit BitStr(const basic_string<uIntType>& src) : wid(sizeof(uIntType) * Wb), n(src.length()), data(src) {
 		nB = n * wid;
 	}
 
@@ -105,7 +105,7 @@ public:
 	 * @param str  std::basic_string
 	 */
 	template<typename oIntType>
-	BitStr(const basic_string<oIntType>& src) : wid(sizeof(uIntType) * Wb) {
+	explicit BitStr(const basic_string<oIntType>& src) : wid(sizeof(uIntType) * Wb) {
 		size_t wSrc = sizeof(oIntType) * Wb; // input width
 		nB = wSrc * src.length();
 		n = int_len(nB, wid);
@@ -122,7 +122,10 @@ public:
 			std::copy(src.begin(), src.end(), data.begin());
 	}
 
-	/** construct a BitStr by coping from another BitStr of different type */
+	/**
+	 * construct a BitStr by coping from another BitStr of different type
+	 * this non-explicit constructor can be used during copy-initiation as a converting constructor
+	 */
 	template<typename oIntType>
 	BitStr(const BitStr<oIntType>& other) : wid(sizeof(value_type) * Wb), nB(other.length()), n(int_len(nB, wid)) {
 		const size_t wO = other.getWid();
