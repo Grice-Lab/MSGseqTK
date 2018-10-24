@@ -103,15 +103,9 @@ public:
 	/** default constructor */
 	BitSeqRRR() = default;
 
-	/** construct a BitSeqRRR from a given BitStr32 of matched type */
-	BitSeqRRR(const BitStr32& bstr, uint32_t sample_rate = DEFAULT_SAMPLE_RATE) : sample_rate(sample_rate) {
-		build_basic(bstr);
-		build_sampled();
-	}
-
 	/** construct a BitSeqRRR from a given BitStr with any type */
 	template<typename oIntType>
-	BitSeqRRR(const BitStr<oIntType>& bstr, uint32_t sample_rate = DEFAULT_SAMPLE_RATE) : sample_rate(sample_rate) {
+	explicit BitSeqRRR(const BitStr<oIntType>& bstr, uint32_t sample_rate = DEFAULT_SAMPLE_RATE) : sample_rate(sample_rate) {
 		build_basic(bstr);
 		build_sampled();
 	}

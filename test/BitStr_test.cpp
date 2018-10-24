@@ -11,6 +11,7 @@
 #include <iostream>
 #include <cstdio>
 #include <climits>
+#include <vector>
 #include "BitStr.h"
 
 namespace EGriceLab {

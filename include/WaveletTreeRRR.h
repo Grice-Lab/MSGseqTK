@@ -12,6 +12,7 @@
 #include <vector>
 #include <algorithm>
 #include <utility>
+#include <limits>
 #include "Seq.h"
 #include "BitStr.h"
 #include "BitSeqRRR.h"
@@ -29,7 +30,7 @@ using std::pair;
  *  [1] R. Raman, V. Raman and S. Rao. Succinct indexable dictionaries with applications
  *     to encoding $k$-ary trees and multisets. SODA02.
  *  [2] F. Claude and G. Navarro. Practical Rank/Select over Arbitrary Sequences. SPIRE08.
- *  A WaveletTreeRRR uses BitSeqRRR to store the bits internally for balanced speed and storage
+ *  A WaveletTreeRRR uses BitSeqRRR to store the bits internally for balancing speed and storage
  */
 class WaveletTreeRRR: public Seq {
 public:
@@ -48,7 +49,6 @@ public:
 			this->min = *std::min_element(src.begin(), src.end());
 		if(this->max == -1)
 			this->max = *std::max_element(src.begin(), src.end());
-
 		build(src);
 	}
 
@@ -87,7 +87,7 @@ public:
 	 * get the position of the r-th occurrence of symbol s
 	 * @param s  symbol to search
 	 * @param r  required occurrence/rank of s
-	 * @return  position in this Seq, or -1 if i = 0, or len if i > total # of s
+	 * @return  position in this Seq, or -1 if r = 0, or len if r > total # of s
 	 * @override  base class implementation
 	 */
 	virtual size_t select(size_t s, size_t r) const;
@@ -122,10 +122,13 @@ public:
 	/* find the q-th smallest element in T[l..r] and return the freq */
 	virtual pair<size_t, size_t> quantile_freq(size_t left, size_t right, size_t q);
 
+	/* non-member operators */
+	friend bool operator==(const WaveletTreeRRR& lhs, const WaveletTreeRRR& rhs);
+
 	/* utility methods */
 private:
 	/**
-	 * build the basic fields
+	 * build the basic fields from a copy of the input string
 	 */
 	template<typename uIntType>
 	void build(const basic_string<uIntType>& src);
@@ -137,7 +140,7 @@ private:
 	 * @param offset  offset relative to the original symbol
 	 */
 	template<typename uIntType>
-	void build_level(vector<BitStr32>& bstrs, const basic_string<uIntType>& sym, size_t level, size_t offset = 0);
+	void build_level(vector<BitStr32>&, const basic_string<uIntType>& sym, size_t level, size_t offset = 0);
 
 	/* member fields */
 private:
@@ -171,41 +174,35 @@ void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
 	for (uIntType ch : src)
         OCC[ch + 1]++; /* avoid zeros in OCC */
 
-	/* enlarge symbols if required */
+	/* calculate potential enlarge requirement */
 	size_t to_add = 0;
-	for (size_t i = 1; i <= max + 1; ++i)
+	for(size_t i = 1; i <= max + 1; ++i)
 		if(OCC[i] == 0)
 			to_add++;
+	n += to_add; // update n
 
-	n += to_add;
-
-	/* construct temporary bitstrgings */
-	vector<BitStr32> bstrs;  /* an array of BitStr32 of length height, to store the intermediate status during construction */
-//	bstrs.reserve(height);
+	/* construct intermediate BitStrs */
+	vector<BitStr32> bstrs; /* intermediate BitStrs */
 	for(size_t i = 0; i < height; ++i)
 		bstrs.push_back(BitStr32(n));
 
+	/* enlarge symbols if required */
 	if(to_add == 0)
 		build_level(bstrs, src, 0);
 	else {
-		basic_string<uIntType> srcN = src; /* make a local copy */
+		basic_string<uIntType> srcN(src); // local copy
 		for (size_t i = 1; i <= max + 1; ++i) {
-			if (OCC[i] == 0) {
-				/* append a new character (i - 1) as OCC = 1 */
+			if(OCC[i] == 0) {
 				OCC[i]++;
 				srcN.push_back(i - 1);
 			}
 		}
 		build_level(bstrs, srcN, 0);
 	}
-	cerr << "bitstrs built" << endl;
 
 	/* build the BitSeqs from BitStrs */
-//	bseqs.reserve(height);
-	for(const BitStr32& bstr : bstrs) /* use a copy instead of const reference to prevent move construction */
-		bseqs.push_back(BitSeqRRR(bstr));
-	/* clear intermediate storates */
-	cerr << "bitseqs built" << endl;
+	for(const BitStr32& bs : bstrs)
+		bseqs.push_back(BitSeqRRR(bs));
 
 	/* build cumulative OCC */
 	for(size_t i = 1; i <= max + 1; ++i)
@@ -213,37 +210,35 @@ void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
 }
 
 template<typename uIntType>
-void WaveletTreeRRR::build_level(vector<BitStr32>& bstrs, const basic_string<uIntType>& sym, size_t level, size_t offset) {
+inline void WaveletTreeRRR::build_level(vector<BitStr32>& bstrs, const basic_string<uIntType>& sym, size_t level, size_t offset) {
 	if(level == height)
 		return;
-
-	size_t cleft = 0;
-	for (size_t i = 0; i < n; ++i)
-		if (!test(sym[i], level))
-			cleft++;
-
-	size_t cright = n - cleft;
 
 	basic_string<uIntType> left;
 	basic_string<uIntType> right;
 
 	assert(bstrs[level].length() == n);
 
-	left.reserve(cleft);
-	right.reserve(cright);
-
 	for (size_t i = 0; i < sym.length(); ++i) {
 		bool flag = test(sym[i], level);
 		bstrs[level].set(i + offset, flag);
-		if(!flag)
-			left.push_back(sym[i]);
-		else
-			right.push_back(sym[i]);
+		!flag ? left.push_back(sym[i]) : right.push_back(sym[i]);
 	}
 
 	/* build level recursevely */
 	build_level(bstrs, left, level + 1, offset);
-	build_level(bstrs, right, level + 1, offset + cleft);
+	build_level(bstrs, right, level + 1, offset + left.length());
+}
+
+inline bool operator==(const WaveletTreeRRR& lhs, const WaveletTreeRRR& rhs) {
+	return dynamic_cast<const Seq&>(lhs) == dynamic_cast<const Seq&>(rhs) &&
+			lhs.height == rhs.height && lhs.wid == rhs.wid &&
+			lhs.min == rhs.min && lhs.max == rhs.max &&
+			lhs.OCC == rhs.OCC && lhs.bseqs == rhs.bseqs;
+}
+
+inline bool operator!=(const WaveletTreeRRR& lhs, const WaveletTreeRRR& rhs) {
+	return !(lhs == rhs);
 }
 
 } /* namespace libSDS */

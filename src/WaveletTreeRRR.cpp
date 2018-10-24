@@ -51,21 +51,16 @@ size_t WaveletTreeRRR::access(size_t i) const {
 	for (size_t level = 0; level < height; ++level) {
 		size_t optR = 0;
 		size_t before = 0;
-		fprintf(stderr, "init, s:%d start:%d level:%d height:%d optR:%d before:%d i:%d\n", s, start, level, height, optR, before, i);
 		if (start > 0)
 			before = bseqs[level].rank1(start - 1);
-		fprintf(stderr, "start, s:%d start:%d level:%d height:%d optR:%d before:%d i:%d\n", s, start, level, height, optR, before, i);
 		if (bseqs[level].access(i, optR)) {
 			s |= 1UL << (height - level - 1);
 			i = optR - 1 - before;
 			start = OCC[s];
 			i += start;
-			fprintf(stderr, "true, s:%d start:%d level:%d height:%d optR:%d before:%d i:%d\n", s, start, level, height, optR, before, i);
 		}
-		else {
+		else
 			i = optR - 1 + before;
-			fprintf(stderr, "false, s:%d start:%d level:%d height:%d optR:%d before:%d i:%d\n", s, start, level, height, optR, before, i);
-		}
 	}
 	return s;
 }
