@@ -64,6 +64,11 @@ public:
 	virtual size_t access(size_t i) const = 0;
 
 	/**
+	 * Retrieve the symbol at position i and its rank.
+	 */
+	virtual size_t access(size_t i, size_t & r) const;
+
+	/**
 	 * get #occurrence of symbol s until position i (0-based, inclusive)
 	 * this naive implementation is based on counting using the abstract access
 	 * @param s  symbol

@@ -58,10 +58,6 @@ public:
 		buildRank();
 	}
 
-	/** virtual destructor */
-	virtual ~BitSeqGGMN()
-	{  }
-
 	/**
 	 * get the size of the structure in bytes
 	 * @override  base class virtual method

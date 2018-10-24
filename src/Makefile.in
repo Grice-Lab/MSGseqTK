@@ -133,7 +133,8 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libsds_la_LIBADD =
 am_libsds_la_OBJECTS = libsds_la-BitSeq.lo libsds_la-BitSeqGGMN.lo \
-	libsds_la-BitSeqRRR.lo
+	libsds_la-BitSeqRRR.lo libsds_la-Seq.lo \
+	libsds_la-WaveletTreeRRR.lo
 libsds_la_OBJECTS = $(am_libsds_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -343,7 +344,9 @@ lib_LTLIBRARIES = libsds.la
 libsds_la_SOURCES = \
 BitSeq.cpp \
 BitSeqGGMN.cpp \
-BitSeqRRR.cpp
+BitSeqRRR.cpp \
+Seq.cpp \
+WaveletTreeRRR.cpp
 
 
 # Linker options libTestProgram
@@ -433,6 +436,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsds_la-BitSeq.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsds_la-BitSeqGGMN.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsds_la-BitSeqRRR.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsds_la-Seq.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsds_la-WaveletTreeRRR.Plo@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -475,6 +480,20 @@ libsds_la-BitSeqRRR.lo: BitSeqRRR.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='BitSeqRRR.cpp' object='libsds_la-BitSeqRRR.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsds_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsds_la-BitSeqRRR.lo `test -f 'BitSeqRRR.cpp' || echo '$(srcdir)/'`BitSeqRRR.cpp
+
+libsds_la-Seq.lo: Seq.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsds_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsds_la-Seq.lo -MD -MP -MF $(DEPDIR)/libsds_la-Seq.Tpo -c -o libsds_la-Seq.lo `test -f 'Seq.cpp' || echo '$(srcdir)/'`Seq.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libsds_la-Seq.Tpo $(DEPDIR)/libsds_la-Seq.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='Seq.cpp' object='libsds_la-Seq.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsds_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsds_la-Seq.lo `test -f 'Seq.cpp' || echo '$(srcdir)/'`Seq.cpp
+
+libsds_la-WaveletTreeRRR.lo: WaveletTreeRRR.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsds_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libsds_la-WaveletTreeRRR.lo -MD -MP -MF $(DEPDIR)/libsds_la-WaveletTreeRRR.Tpo -c -o libsds_la-WaveletTreeRRR.lo `test -f 'WaveletTreeRRR.cpp' || echo '$(srcdir)/'`WaveletTreeRRR.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libsds_la-WaveletTreeRRR.Tpo $(DEPDIR)/libsds_la-WaveletTreeRRR.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='WaveletTreeRRR.cpp' object='libsds_la-WaveletTreeRRR.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libsds_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libsds_la-WaveletTreeRRR.lo `test -f 'WaveletTreeRRR.cpp' || echo '$(srcdir)/'`WaveletTreeRRR.cpp
 
 mostlyclean-libtool:
 	-rm -f *.lo

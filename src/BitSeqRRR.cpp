@@ -65,7 +65,7 @@ void BitSeqRRR::build_sampled() {
 	/* sampling C */
 	nCsampled = numClassSampled();
 	wCsampled = bits(ones);
-	Csampled = BitStr32(nCsampled * wCsampled);
+	Csampled.resize(nCsampled * wCsampled);
 	size_t sum = 0;
 	for(size_t i = 0; i < nC; ++i) {
 		if(i % sample_rate == 0)
@@ -73,14 +73,13 @@ void BitSeqRRR::build_sampled() {
 		sum += C.getValue(i, wC);
 	}
 	/* set the last field */
-	for(size_t i = (nC + sample_rate - 1) / sample_rate; i < nCsampled; ++i) {
+	for(size_t i = (nC + sample_rate - 1) / sample_rate; i < nCsampled; ++i)
 		Csampled.setValue(i, wCsampled, sum);
-	}
 
 	/* sampling O */
 	nOsampled = numOffsetSampled();
 	wOsampled = bits(nO);
-	Osampled = BitStr32(nOsampled * wOsampled);
+	Osampled.resize(nOsampled * wOsampled);
 	for(size_t i = 0, pos = 0; i < nC; ++i) {
 		if(i % sample_rate == 0)
 			Osampled.setValue(i / sample_rate, wOsampled, pos);
@@ -285,7 +284,7 @@ bool BitSeqRRR::access(size_t i, size_t& r) const {
 		size_t upper = C.getValue(k + 1, wC);
 		sum += lower + upper;
 		posO += OFFSET.get_log2binomial(BLOCK_SIZE, lower) + OFFSET.get_log2binomial(BLOCK_SIZE, upper);
-		k+=2;
+		k += 2;
 	}
 	if(k < pos) {
 		size_t aux = C.getValue(k, wC);
@@ -295,9 +294,8 @@ bool BitSeqRRR::access(size_t i, size_t& r) const {
 	}
 	size_t c = C.getValue(pos, wC);
 	size_t v = OFFSET.get_bitmap(c, O.get(posO, OFFSET.get_log2binomial(BLOCK_SIZE, c)));
-	sum += popcount32(((2 << (i % BLOCK_SIZE)) - 1) & v);
+	sum += popcount32(((2UL << (i % BLOCK_SIZE)) - 1) & v);
 	r = sum;
-
 	if( ((1UL << (i % BLOCK_SIZE)) & v))
 		return true;
 	else {

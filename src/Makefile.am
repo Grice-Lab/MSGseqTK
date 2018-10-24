@@ -11,7 +11,9 @@ lib_LTLIBRARIES = libsds.la
 libsds_la_SOURCES = \
 BitSeq.cpp \
 BitSeqGGMN.cpp \
-BitSeqRRR.cpp
+BitSeqRRR.cpp \
+Seq.cpp \
+WaveletTreeRRR.cpp
 
 # Linker options libTestProgram
 libsds_la_LDFLAGS = 

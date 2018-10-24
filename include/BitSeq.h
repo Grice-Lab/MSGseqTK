@@ -22,14 +22,13 @@ using std::ostream;
  */
 class BitSeq {
 public:
-	/** basic default constructor */
+	/** default constructor */
 	BitSeq() = default;
 
 	/** basic constructor from given values */
 	BitSeq(size_t n, size_t ones) : n(n), ones(ones)
 	{  }
 
-	/** destructor */
 	virtual ~BitSeq() {  }
 
 	/* member methods */

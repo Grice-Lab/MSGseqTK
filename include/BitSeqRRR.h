@@ -99,8 +99,15 @@ public:
 		uint32_t bitmaps[NUM_BITMAPS + 1]; /* pre-computed bitmap static array */
 	};
 
+	/* constructors */
 	/** default constructor */
 	BitSeqRRR() = default;
+
+	/** construct a BitSeqRRR from a given BitStr32 of matched type */
+	BitSeqRRR(const BitStr32& bstr, uint32_t sample_rate = DEFAULT_SAMPLE_RATE) : sample_rate(sample_rate) {
+		build_basic(bstr);
+		build_sampled();
+	}
 
 	/** construct a BitSeqRRR from a given BitStr with any type */
 	template<typename oIntType>
@@ -108,10 +115,6 @@ public:
 		build_basic(bstr);
 		build_sampled();
 	}
-
-	/** destructor */
-	virtual ~BitSeqRRR()
-	{ 	}
 
 	/* member methods */
 	/** get number of classes */
@@ -204,8 +207,7 @@ private:
 		/* build Table C */
 		wC = bits(BLOCK_SIZE);
 		nC = numClasses();
-		cerr << "nC: " << nC << " wC: " << wC << endl;
-		C = BitStr32(nC * wC);
+		C.resize(nC * wC);
 
 		nO = 0; /* number of total bits required for O */
 		wO = 1; /* Offset in 1 bit */
@@ -218,7 +220,7 @@ private:
 		}
 
 		/* build Table O */
-		O = BitStr32(nO * wO);
+		O.resize(nO * wO);
 		for(size_t i = 0, Opos = 0; i < nC; ++i) {
 			uint32_t value = bstr.get(i * BLOCK_SIZE, BLOCK_SIZE);
 			O.set(Opos, OFFSET.get_log2binomial(BLOCK_SIZE, popcount32(value)), OFFSET.compute_offset(value));

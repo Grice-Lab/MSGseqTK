@@ -89,9 +89,9 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 check_PROGRAMS = BitStr_test$(EXEEXT) BitSeqGGMN_test$(EXEEXT) \
-	BitSeqRRR_test$(EXEEXT)
+	BitSeqRRR_test$(EXEEXT) WaveletTreeRRR_test$(EXEEXT)
 TESTS = BitStr_test$(EXEEXT) BitSeqGGMN_test$(EXEEXT) \
-	BitSeqRRR_test$(EXEEXT)
+	BitSeqRRR_test$(EXEEXT) WaveletTreeRRR_test$(EXEEXT)
 subdir = test
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -118,6 +118,9 @@ BitSeqRRR_test_DEPENDENCIES = $(top_srcdir)/src/libsds.la
 am_BitStr_test_OBJECTS = BitStr_test.$(OBJEXT)
 BitStr_test_OBJECTS = $(am_BitStr_test_OBJECTS)
 BitStr_test_DEPENDENCIES = $(top_srcdir)/src/libsds.la
+am_WaveletTreeRRR_test_OBJECTS = WaveletTreeRRR_test.$(OBJEXT)
+WaveletTreeRRR_test_OBJECTS = $(am_WaveletTreeRRR_test_OBJECTS)
+WaveletTreeRRR_test_DEPENDENCIES = $(top_srcdir)/src/libsds.la
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -153,9 +156,9 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(BitSeqGGMN_test_SOURCES) $(BitSeqRRR_test_SOURCES) \
-	$(BitStr_test_SOURCES)
+	$(BitStr_test_SOURCES) $(WaveletTreeRRR_test_SOURCES)
 DIST_SOURCES = $(BitSeqGGMN_test_SOURCES) $(BitSeqRRR_test_SOURCES) \
-	$(BitStr_test_SOURCES)
+	$(BitStr_test_SOURCES) $(WaveletTreeRRR_test_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -529,6 +532,10 @@ BitSeqRRR_test_SOURCES = BitSeqRRR_test.cpp
 BitSeqRRR_test_LDADD = \
 $(top_srcdir)/src/libsds.la 
 
+WaveletTreeRRR_test_SOURCES = WaveletTreeRRR_test.cpp
+WaveletTreeRRR_test_LDADD = \
+$(top_srcdir)/src/libsds.la 
+
 all: all-am
 
 .SUFFIXES:
@@ -584,6 +591,10 @@ BitStr_test$(EXEEXT): $(BitStr_test_OBJECTS) $(BitStr_test_DEPENDENCIES) $(EXTRA
 	@rm -f BitStr_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(BitStr_test_OBJECTS) $(BitStr_test_LDADD) $(LIBS)
 
+WaveletTreeRRR_test$(EXEEXT): $(WaveletTreeRRR_test_OBJECTS) $(WaveletTreeRRR_test_DEPENDENCIES) $(EXTRA_WaveletTreeRRR_test_DEPENDENCIES) 
+	@rm -f WaveletTreeRRR_test$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(WaveletTreeRRR_test_OBJECTS) $(WaveletTreeRRR_test_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -593,6 +604,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BitSeqGGMN_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BitSeqRRR_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BitStr_test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/WaveletTreeRRR_test.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -834,6 +846,13 @@ BitSeqGGMN_test.log: BitSeqGGMN_test$(EXEEXT)
 BitSeqRRR_test.log: BitSeqRRR_test$(EXEEXT)
 	@p='BitSeqRRR_test$(EXEEXT)'; \
 	b='BitSeqRRR_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+WaveletTreeRRR_test.log: WaveletTreeRRR_test$(EXEEXT)
+	@p='WaveletTreeRRR_test$(EXEEXT)'; \
+	b='WaveletTreeRRR_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

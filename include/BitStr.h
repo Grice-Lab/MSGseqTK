@@ -39,10 +39,6 @@ public:
 	/** default constructor */
 	BitStr() = default;
 
-	/** virtual destructor */
-	~BitStr()
-	{  }
-
 	/**
 	 * construct a BitStr with n-bits all set to zero
 	 */
@@ -175,6 +171,7 @@ public:
 	 * otherwise they are discarded
 	 */
 	void resize(size_type nB, bool val = false) {
+		assert(wid > 0);
 		if(nB == this->nB)
 			return;
 		size_type n = int_len(nB, wid);
@@ -424,7 +421,7 @@ public:
 
 	/* member fields */
 private:
-	size_t wid = 0;    /* bit-width of a value_type */
+	size_t wid = sizeof(uIntType) * Wb;    /* bit-width of a value_type */
 	size_type nB = 0; /* number of bits */
 	size_type n = 0; /* number of values in value_type */
 	basic_string<uIntType> data; /* underlying data stored in std::basic_string, with length n */
