@@ -114,14 +114,6 @@ public:
 		return OCC[s];
 	}
 
-	/**
-	 * find the q-th smallest element in Seq[l..r]
-	 */
-	virtual size_t quantile(size_t left, size_t right, size_t q);
-
-	/* find the q-th smallest element in T[l..r] and return the freq */
-	virtual pair<size_t, size_t> quantile_freq(size_t left, size_t right, size_t q);
-
 	/* non-member operators */
 	friend bool operator==(const WaveletTreeRRR& lhs, const WaveletTreeRRR& rhs);
 

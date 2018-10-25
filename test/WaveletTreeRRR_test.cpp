@@ -82,6 +82,7 @@ int main() {
 				return EXIT_FAILURE;
 		}
 	}
+
 	/* copy test */
 	WaveletTreeRRR seqRRR2 = seqRRR;
 	if(seqRRR2 != seqRRR) {
