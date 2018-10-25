@@ -191,6 +191,23 @@ public:
 	 */
 	virtual istream& load(istream& in);
 
+	/**
+	 * reset this BitSeqRRR to default state
+	 * @override  base class method
+	 */
+	virtual void reset() {
+		sample_rate = 0;
+		nOsampled = wOsampled = 0;
+		nCsampled = wCsampled = 0;
+		Osampled.reset();
+		Csampled.reset();
+		nO = wO = 0;
+		nC = wC = 0;
+		O.reset();
+		C.reset();
+		BitSeq::reset();
+	}
+
 	/* utility method */
 private:
 	/** build the basic C and O data from any type */

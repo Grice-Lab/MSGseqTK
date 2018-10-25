@@ -104,6 +104,19 @@ public:
 	 */
 	virtual istream& load(istream& in);
 
+	/** reset this Seq to default state
+	 * @override  base class method
+	 */
+	virtual void reset() {
+		bseqs.clear();
+		OCC.clear();
+		max = 0;
+		min = 0;
+		wid = 0;
+		height = 0;
+		Seq::reset();
+	}
+
 	/** get count of given symbol */
 	virtual size_t getCount(size_t s) const {
 		return OCC[s + 1] - OCC[s] + 1;
