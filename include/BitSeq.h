@@ -151,6 +151,12 @@ public:
 	 */
 	virtual istream& load(istream& in);
 
+	/** reset this BitSeq to default state */
+	virtual void reset() {
+		n = 0;
+		ones = 0;
+	}
+
 	/* non-member methods */
 	/* relationship operators */
 	friend bool operator==(const BitSeq& lhs, const BitSeq& rhs);

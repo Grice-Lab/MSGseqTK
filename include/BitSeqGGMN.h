@@ -142,6 +142,20 @@ public:
 	 */
 	virtual istream& load(istream& in);
 
+	/**
+	 * reset this BitSeqGGMN to default state
+	 * @override  base class method
+	 */
+	virtual void reset() {
+		s = 0;
+		b = 0;
+		factor = 0;
+		Rs.clear();
+		nRs = 0;
+		bstr.reset();
+		BitSeq::reset();
+	}
+
 	/** get number of superblocks, deduced from numBits() */
 	size_t numSuperBlocks() const {
 		return (n + s - 1) / s;

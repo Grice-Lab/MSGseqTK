@@ -190,6 +190,13 @@ public:
 		std::fill(data.begin(), data.end(), 0);
 	}
 
+	/** reset this BitStr to default state */
+	void reset() {
+		nB = 0;
+		n = 0;
+		data.clear();
+	}
+
 	/** get the underlying data in raw array */
 	const basic_string<uIntType>& getData() const {
 		return data;
