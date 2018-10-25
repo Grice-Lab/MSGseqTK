@@ -27,14 +27,14 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 using std::vector;
+using EGriceLab::libSDS::BitSeqGGMN;
+using EGriceLab::libSDS::WaveletTreeRRR;
 
 /**
  * FM-index with merge support
  */
 class FMIndex {
 	typedef vector<saidx_t> SArray_t; /* store sampled Suffix-Array in std::vector */
-	typedef EGriceLab::libSDS::WaveletTreeRRR BWTRRR; /* use WaveletTreeRRR to store BWT string */
-	typedef EGriceLab::libSDS::BitSeqGGMN SAUncompressed; /* use BitSeqGGMN uncompressed BitSeq to store SAbit */
 
 public:
 	/* constructors */
@@ -71,15 +71,15 @@ public:
 
 	/** test whether this RRFMIndex is initiated */
 	bool isInitiated() const {
-		return bwt.length() != 0;
+		return !bwt.empty();
 	}
 
 	/** get the length of this index */
 	saidx_t length() const {
-		return bwt != nullptr ? bwt->getLength() : 0;
+		return bwt.length();
 	}
 
-	/** get baseCount of this index */
+	/** get baseCount array of this index */
 	const saidx_t* getBaseCount() const {
 		return B;
 	}
@@ -190,10 +190,10 @@ private:
 private:
 	saidx_t B[UINT8_MAX + 1] = { 0 }; /* base count of each alphabetbase */
 	saidx_t C[UINT8_MAX + 1] = { 0 }; /* cumulative count of each alphabet base, C[i] = B(0) + B(1) + ... + B(i-1) */
+	WaveletTreeRRR bwt; /* Wavelet-Tree transformed BWT string for reversed DNAseq */
 	bool keepSA = false; /* whether to keep SAidx and SAsampled during building */
-	SAUncompressed SAbit; /* BitSeq index telling whether a SA was sampled */
+	BitSeqGGMN SAbit; /* BitSeq index telling whether a SA was sampled */
 	SArray_t SAsampled; /* sampled SA vector */
-	BWTRRR bwt; /* Wavelet-Tree transformed BWT string for reversed DNAseq */
 
 public:
 	static const saidx_t MAX_LENGTH = std::numeric_limits<saidx_t>::max();

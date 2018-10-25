@@ -17,13 +17,7 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 using std::vector;
-using cds_static::Mapper;
-using cds_static::MapperNone;
-using cds_static::BitSequenceRRR;
-using cds_static::BitSequenceBuilder;
-using cds_static::BitSequenceBuilderRRR;
-using cds_static::WaveletTreeNoptrs;
-using cds_static::BitString;
+using EGriceLab::libSDS::BitStr32;
 
 const saidx_t FMIndex::totalBases() const {
 	saidx_t N = 0;
@@ -58,28 +52,29 @@ void FMIndex::buildCounts(const DNAseq& seq) {
 ostream& FMIndex::save(ostream& out) const {
 	out.write((const char*) B, (UINT8_MAX + 1) * sizeof(saidx_t));
 	out.write((const char*) C, (UINT8_MAX + 1) * sizeof(saidx_t));
-	bool SAflag = !SAsampled.empty() && SAbit != nullptr;
-	out.write((const char*) &SAflag, sizeof(bool));
-	if(SAflag) {
-		assert(SAsampled.size() == length() / SA_SAMPLE_RATE + C[0 + 1] + 1);
-		StringUtils::saveString(SAsampled, out);
-		SAbit->save(out);
+	bwt.save(out);
+	size_t nSAsampled = SAsampled.size();
+	out.write((const char*) &nSAsampled, sizeof(size_t));
+	if(nSAsampled) {
+		assert(nSAsampled == (length() + SA_SAMPLE_RATE - 1) / SA_SAMPLE_RATE + C[0 + 1]);
+		out.write((const char*) SAsampled.data(), sizeof(saidx_t) * nSAsampled);
+		SAbit.save(out);
 	}
-	bwt->save(out);
 	return out;
 }
 
 istream& FMIndex::load(istream& in) {
 	in.read((char*) B, (UINT8_MAX + 1) * sizeof(saidx_t));
 	in.read((char*) C, (UINT8_MAX + 1) * sizeof(saidx_t));
-	bool SAflag;
-	in.read((char*) &SAflag, sizeof(bool));
-	if(SAflag) {
-		StringUtils::loadString(SAsampled, in);
-		SAbit.reset(BitSequenceRRR::load(in));
+	bwt.load(in);
+	size_t nSAsampled = 0;
+	in.read((char*) &nSAsampled, sizeof(size_t));
+	if(nSAsampled) {
+		assert(nSAsampled == (length() + SA_SAMPLE_RATE - 1) / SA_SAMPLE_RATE + C[0 + 1]);
+		SAsampled.resize(nSAsampled);
+		in.read((char*) SAsampled.data(), sizeof(saidx_t) * nSAsampled);
+		SAbit.load(in);
 	}
-
-	bwt.reset(WaveletTreeNoptrs::load(in));
 	return in;
 }
 
@@ -127,11 +122,11 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
 	}
 
 	/* build RA and interleaving bitvector */
-	BitString bitStr(N);
+	BitStr32 bitStr(N);
 	for(saidx_t i = 0, j = 0, shift = 0, RA = other.C[0 + 1]; j < N1; ++j) {
-		bitStr.setBit(i + RA);
+		bitStr.set(i + RA);
 		/* LF mapping */
-		sauchar_t b = bwt->access(i);
+		sauchar_t b = bwt.access(i);
 		if(b == 0) {
 			RA = other.C[0 + 1];
 			i = ++shift;
@@ -144,23 +139,17 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
 	}
 
 	/* build merbed BWT */
-	sauchar_t* bwtM = new sauchar_t[N];
+	basic_string<sauchar_t> bwtM;
+	bwtM.reserve(N);
 	for(saidx_t i = 0, j = 0, k = 0; k < N; ++k)
-		bwtM[k] = bitStr.getBit(k) ? bwt->access(i++) : other.bwt->access(j++);
-    BWTRRR_ptr bwtMerged = std::make_shared<BWTRRR>(reinterpret_cast<uint*> (bwtM), N, sizeof(sauchar_t) * 8,
-    		new BitSequenceBuilderRRR(RRR_SAMPLE_RATE), /* smart ptr */
-			new MapperNone() /* smart ptr */,
-			false); // do not free the bwtM after use
-    delete[] bwtM;
-
-    /* swap data */
-    std::swap_ranges(B, B + UINT8_MAX + 1, BMerged);
-    std::swap_ranges(C, C + UINT8_MAX + 1, CMerged);
-    std::swap(bwt, bwtMerged);
+		bwtM.push_back(bitStr.test(k) ? bwt.access(i++) : other.bwt.access(j++));
+	/* update bwtRRR */
+    bwt = WaveletTreeRRR(bwtM, DNAalphabet::N, DNAalphabet::T);
+    bwtM.clear();
 
     /* reset SA */
-	SAbit.reset();
 	SAsampled.clear();
+	SAbit = BitSeqGGMN();
 
     if(keepSA)
     	buildSA();
@@ -169,11 +158,11 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
 }
 
 DNAseq FMIndex::getBWT() const {
-	DNAseq bwt;
-	bwt.reserve(length());
+	DNAseq bwtSeq;
+	bwtSeq.reserve(length());
 	for(saidx_t i = 0; i < length(); ++i)
-		bwt.push_back(this->bwt->access(i));
-	return bwt;
+		bwtSeq.push_back(bwt.access(i));
+	return bwtSeq;
 }
 
 DNAseq FMIndex::getSeq() const {
@@ -181,7 +170,7 @@ DNAseq FMIndex::getSeq() const {
 	DNAseq seq;
 	seq.reserve(length() - 1);
 	for(saidx_t i = 0, shift = 0; seq.length() < length() - 1;) {
-		sauchar_t b = bwt->access(i);
+		sauchar_t b = bwt.access(i);
 		seq.push_back(b);
 		i = b != 0 ? LF(i) - 1 : ++shift;
 	}
@@ -198,21 +187,16 @@ void FMIndex::buildBWT(const DNAseq& seq) {
 		throw runtime_error("Error: Cannot build suffix-array on DNAseq");
 
 	/* build bwt */
-	sauchar_t* bwtSeq = new sauchar_t[N];
+	basic_string<sauchar_t> bwtSeq;
+	bwtSeq.reserve(N);
 
-    for(saidx_t i = 0; i < N; ++i) {
-        if(SA[i] == 0) // matches to the null
-            bwtSeq[i] = 0; // null terminal
-        else bwtSeq[i] = seq[SA[i] - 1];
-    }
+    for(saidx_t i = 0; i < N; ++i)
+    	bwtSeq.push_back(SA[i] == 0 ? 0 : seq[SA[i] - 1]);
     delete[] SA;
 
-	/* construct RRR_compressed BWT */
-    bwt = std::make_shared<BWTRRR>(reinterpret_cast<uint*> (bwtSeq), N, sizeof(sauchar_t) * 8,
-    		new BitSequenceBuilderRRR(RRR_SAMPLE_RATE), /* smart ptr */
-			new MapperNone() /* smart ptr */,
-			false); // do not free the rbwt after use
-    delete[] bwtSeq;
+	/* construct BWTRRR */
+    bwt = WaveletTreeRRR(bwtSeq, DNAalphabet::N, DNAalphabet::T);
+    bwtSeq.clear();
 
 	if(keepSA) /* if intermediate SA need to be kept */
 		buildSA();
@@ -220,23 +204,23 @@ void FMIndex::buildBWT(const DNAseq& seq) {
 
 void FMIndex::buildSA() {
 	assert(isInitiated());
-	assert(SAbit == nullptr);
+	assert(SAbit.empty);
 	assert(SAsampled.empty());
 	const saidx_t N = length();
-	/* build BitVector in the 1st pass */
-	BitString bitStr(N);
+	/* build a BitStr in the 1st pass */
+	BitStr32 bstr(N);
 	for(saidx_t i = 0; i < N; ++i) {
-		if(bwt->access(i) == 0 || i % SA_SAMPLE_RATE == 0)
-			bitStr.setBit(i);
+		if(bwt.access(i) == 0 || i % SA_SAMPLE_RATE == 0)
+			bstr.set(i);
 	}
-	SAbit.reset(new BitSequenceRRR(bitStr, RRR_SAMPLE_RATE)); /* use RRR implementation */
+	SAbit = BitSeqGGMN(bstr); /* reset the SAbit */
 
 	/* build SAsampled in the 2nd pass */
-	SAsampled.resize(N / SA_SAMPLE_RATE + C[0 + 1] + 1); /* need additional storage for all Ns */
+	SAsampled.resize((N + SA_SAMPLE_RATE - 1) / SA_SAMPLE_RATE /* ceil(N / RATE) */ + C[0 + 1]); // plus all Ns */
 	for(saidx_t i = 0, j = N, shift = 0; j > 0; --j) { /* i: 0-based on BWT; j: 1-based on seq */
-		sauchar_t b = bwt->access(i);
+		sauchar_t b = bwt.access(i);
 		if(b == 0 || i % SA_SAMPLE_RATE == 0)
-			SAsampled[SAbit->rank1(i) - 1] = j - 1;
+			SAsampled[SAbit.rank1(i) - 1] = j - 1;
 		/* LF-mapping */
 		i = b != 0 ? LF(i) - 1 : ++shift;
 	}
@@ -244,11 +228,11 @@ void FMIndex::buildSA() {
 
 saidx_t FMIndex::accessSA(saidx_t i) const {
 	saidx_t dist = 0;
-	while(!SAbit->access(i)) {
+	while(!SAbit.access(i)) {
 		i =  LF(i) - 1; // backward LF-mapping
 		dist++;
 	}
-	return SAsampled[SAbit->rank1(i) - 1] + dist;
+	return SAsampled[SAbit.rank1(i) - 1] + dist;
 }
 
 vector<Loc> FMIndex::locateAll(const DNAseq& pattern) const {
