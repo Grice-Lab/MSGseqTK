@@ -21,8 +21,8 @@
 #include "QualStr.h"
 #include "Loc.h"
 #include "divsufsort_private.h"
-#include "WaveletTreeNoptrs.h"
-#include "BitSequence.h"
+#include "BitSeqGGMN.h"
+#include "WaveletTreeRRR.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
@@ -32,10 +32,9 @@ using std::vector;
  * FM-index with merge support
  */
 class FMIndex {
-	typedef cds_static::WaveletTreeNoptrs BWTRRR;
-	typedef std::shared_ptr<BWTRRR> BWTRRR_ptr;
-	typedef std::basic_string<saidx_t> sastring_t;
-	typedef std::shared_ptr<cds_static::BitSequenceRRR> sabit_ptr;
+	typedef vector<saidx_t> SArray_t; /* store sampled Suffix-Array in std::vector */
+	typedef EGriceLab::libSDS::WaveletTreeRRR BWTRRR; /* use WaveletTreeRRR to store BWT string */
+	typedef EGriceLab::libSDS::BitSeqGGMN SAUncompressed; /* use BitSeqGGMN uncompressed BitSeq to store SAbit */
 
 public:
 	/* constructors */
@@ -58,7 +57,7 @@ public:
 	 * @return  1-based index on F column (original seq)
 	 */
 	saidx_t LF(sauchar_t b, saidx_t i) const {
-		return C[b] + bwt->rank(b, i);
+		return C[b] + bwt.rank(b, i);
 	}
 
 	/**
@@ -67,12 +66,12 @@ public:
 	 * @return 1-based index on F column (original seq)
 	 */
 	saidx_t LF(saidx_t i) const {
-		return LF(bwt->access(i), i);
+		return LF(bwt.access(i), i);
 	}
 
 	/** test whether this RRFMIndex is initiated */
 	bool isInitiated() const {
-		return bwt != nullptr;
+		return bwt.length() != 0;
 	}
 
 	/** get the length of this index */
@@ -192,9 +191,9 @@ private:
 	saidx_t B[UINT8_MAX + 1] = { 0 }; /* base count of each alphabetbase */
 	saidx_t C[UINT8_MAX + 1] = { 0 }; /* cumulative count of each alphabet base, C[i] = B(0) + B(1) + ... + B(i-1) */
 	bool keepSA = false; /* whether to keep SAidx and SAsampled during building */
-	sabit_ptr SAbit; /* BitSequence index telling whether a SA was sampled */
-	sastring_t SAsampled; /* sampled SA vector */
-	BWTRRR_ptr bwt; /* Wavelet-Tree transformed BWT string for reversed DNAseq */
+	SAUncompressed SAbit; /* BitSeq index telling whether a SA was sampled */
+	SArray_t SAsampled; /* sampled SA vector */
+	BWTRRR bwt; /* Wavelet-Tree transformed BWT string for reversed DNAseq */
 
 public:
 	static const saidx_t MAX_LENGTH = std::numeric_limits<saidx_t>::max();
