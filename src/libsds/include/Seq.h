@@ -115,6 +115,12 @@ public:
 	 */
 	virtual istream& load(istream& in);
 
+	/** reset this Seq to default state */
+	virtual void reset() {
+		sigma = 0;
+		n = 0;
+	}
+
 	/* non-member methods */
 	/* relationship operators */
 	friend bool operator==(const Seq& lhs, const Seq& rhs);
