@@ -39,6 +39,11 @@ public:
 		return n;
 	}
 
+	/** test whether this BitSeq is empty */
+	bool empty() const {
+		return length() == 0;
+	}
+
 	/**
 	 * get number of on bits (ones)
 	 */
