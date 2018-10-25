@@ -18,6 +18,8 @@ size_t Seq::access(size_t i, size_t & r) const {
 }
 
 size_t Seq::rank(size_t s, size_t i) const {
+	if(i >= n)
+		return -1;
 	size_t r = 0;
 	for(size_t k = 0; k <= i && k < n; ++k)
 		if(access(k) == s)

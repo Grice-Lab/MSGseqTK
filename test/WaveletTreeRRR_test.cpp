@@ -51,15 +51,17 @@ int main() {
 	/* rank tests */
 	for(char c : string("ACGTN")) {
 		for(size_t i = 0; i < N; ++i) {
-			fprintf(stderr, "seqRRR.rank(%c, %d): %d\n", c, i, seqRRR.rank(c, i));
-			if(seqRRR.rank(c, i) != std::count(seq.begin(), seq.begin() + i + 1, c))
+			size_t r = seqRRR.rank(c, i);
+			fprintf(stderr, "seqRRR.rank(%c, %d): %d\n", c, i, r);
+			if(r != std::count(seq.begin(), seq.begin() + i + 1, c))
 				return EXIT_FAILURE;
 		}
 	}
 	for(uint8_t c : basic_string<uint8_t>{0, 1, 2, 3, 4}) {
 		for(size_t i = 0; i < N; ++i) {
-			fprintf(stderr, "dnaRRR.rank(%d, %d): %d\n", c, i, seqRRR.rank(c, i));
-			if(dnaRRR.rank(c, i) != std::count(dna.begin(), dna.begin() + i + 1, c))
+			size_t r = dnaRRR.rank(c, i);
+			fprintf(stderr, "dnaRRR.rank(%d, %d): %d\n", c, i, r);
+			if(r != std::count(dna.begin(), dna.begin() + i + 1, c))
 				return EXIT_FAILURE;
 		}
 	}
@@ -68,7 +70,7 @@ int main() {
 		for(size_t r = 1; r <= N; ++r) {
 			size_t i = seqRRR.select(c, r);
 			fprintf(stderr, "seqRRR.select(%c, %d): %d\n", c, r, i);
-			if(!(r >= seqRRR.rank(c, i)))
+			if(!(i == N || r == seqRRR.rank(c, i)))
 				return EXIT_FAILURE;
 		}
 	}
@@ -76,7 +78,7 @@ int main() {
 		for(size_t r = 1; r <= N; ++r) {
 			size_t i = dnaRRR.select(c, r);
 			fprintf(stderr, "dnaRRR.select(%d, %d): %d\n", c, r, i);
-			if(!(r >= seqRRR.rank(c, i)))
+			if(!(i == N || r == dnaRRR.rank(c, i)))
 				return EXIT_FAILURE;
 		}
 	}

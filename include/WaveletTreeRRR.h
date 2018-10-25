@@ -78,7 +78,7 @@ public:
 	 * get #occurrence of symbol s until position i (0-based, inclusive)
 	 * @param s  symbol
 	 * @param i  position
-	 * @return rank of s till position i
+	 * @return rank of s till position i, or -1 if i >= n
 	 * @override  base class implementation
 	 */
 	virtual size_t rank(size_t s, size_t i) const;
@@ -174,31 +174,13 @@ void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
 	for (uIntType ch : src)
         OCC[ch + 1]++; /* avoid zeros in OCC */
 
-	/* calculate potential enlarge requirement */
-	size_t to_add = 0;
-	for(size_t i = 1; i <= max + 1; ++i)
-		if(OCC[i] == 0)
-			to_add++;
-	n += to_add; // update n
-
 	/* construct intermediate BitStrs */
 	vector<BitStr32> bstrs; /* intermediate BitStrs */
 	for(size_t i = 0; i < height; ++i)
 		bstrs.push_back(BitStr32(n));
 
-	/* enlarge symbols if required */
-	if(to_add == 0)
-		build_level(bstrs, src, 0);
-	else {
-		basic_string<uIntType> srcN(src); // local copy
-		for (size_t i = 1; i <= max + 1; ++i) {
-			if(OCC[i] == 0) {
-				OCC[i]++;
-				srcN.push_back(i - 1);
-			}
-		}
-		build_level(bstrs, srcN, 0);
-	}
+	/* build levels */
+	build_level(bstrs, src, 0);
 
 	/* build the BitSeqs from BitStrs */
 	for(const BitStr32& bs : bstrs)
@@ -213,6 +195,7 @@ template<typename uIntType>
 inline void WaveletTreeRRR::build_level(vector<BitStr32>& bstrs, const basic_string<uIntType>& sym, size_t level, size_t offset) {
 	if(level == height)
 		return;
+//	fprintf(stderr, "buidling level %d offset: %d\n", level, offset);
 
 	basic_string<uIntType> left;
 	basic_string<uIntType> right;

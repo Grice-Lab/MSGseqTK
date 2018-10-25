@@ -73,7 +73,7 @@ public:
 	 * this naive implementation is based on counting using the abstract access
 	 * @param s  symbol
 	 * @param i  position
-	 * @return rank of s till position i
+	 * @return rank of s till position i, or -1 if i >= n
 	 */
 	virtual size_t rank(size_t s, size_t i) const;
 

@@ -89,6 +89,8 @@ size_t WaveletTreeRRR::access(size_t i, size_t& r) const {
 }
 
 size_t WaveletTreeRRR::rank(size_t s, size_t i) const {
+	if(i >= n)
+		return -1;
 	size_t start = 0;
 	size_t r = 0;
 
@@ -128,12 +130,12 @@ size_t WaveletTreeRRR::select(size_t s, size_t r) const {
 			ones_start = bseqs[level - 1].rank1(start - 1);
 
 		if (test(s, level - 1))
-			i = bseqs[level - 1].select1(ones_start + r) - start + 1;
+			i = bseqs[level - 1].select1(ones_start + i) - start + 1;
 		else
 			i = bseqs[level - 1].select0(start - ones_start + i) - start + 1;
 
-		mask <<= 1UL;
-		sum <<= 1UL;
+		mask <<= 1;
+		sum <<= 1;
 	}
 	return i - 1;
 }
