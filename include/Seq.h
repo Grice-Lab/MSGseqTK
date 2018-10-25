@@ -37,10 +37,15 @@ public:
 
 	/* member methods */
 	/**
-	 * get the length of this BitSeq in bits
+	 * get the length of this Seq
 	 */
 	virtual size_t length() const {
 		return n;
+	}
+
+	/** test whether this Seq is empty */
+	bool empty() const {
+		return length() == 0;
 	}
 
 	/**
