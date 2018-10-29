@@ -40,11 +40,14 @@ public:
 	/** Default constructor */
 	FMIndex() = default;
 
-	/** Construct a RRFMIndex from a given (large) DNAseq */
+	/** Construct an FMIndex from a given (large) DNAseq */
 	explicit FMIndex(const DNAseq& seq, bool keepSA = false)
 	: keepSA(keepSA) {
 		build(seq);
 	}
+
+	/** construct an FMIndex from pre-built values */
+	FMIndex(const saidx_t* B, const saidx_t* C, const basic_string<sauchar_t>& bwtSeq, bool keepSA = false);
 
 	/** destructor */
 	virtual ~FMIndex() { 	}
@@ -198,11 +201,6 @@ private:
 public:
 	static const saidx_t MAX_LENGTH = std::numeric_limits<saidx_t>::max();
 };
-
-inline FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {
-	FMIndex fmidx(lhs);
-	return fmidx += rhs;
-}
 
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */

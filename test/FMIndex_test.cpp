@@ -24,9 +24,10 @@ int main() {
 	DNAseq pat("CTAG");
 	vector<Loc> locs;
 
+	/* series operator+= tests */
 	DNAseq seq1("CTAGCATAGAC");
 	cout << "seq1:" << endl << seq1 << endl;
-	seqM1 = seq1 + seqM1;
+	seqM1 += seq1;
 	fmidx1 += FMIndex(seq1, true);
 	cout << "fmidx1.length(): " << fmidx1.length() << endl;
 	cout << "fmidx1.getBWT():" << endl << fmidx1.getBWT() << endl;
@@ -46,7 +47,7 @@ int main() {
 
 	DNAseq seq2("CTAGCATCGAC");
 	cout << "seq2:" << endl << seq2 << endl;
-	seqM1 = seq2 + DNAseq(0) + seqM1;
+	seqM1 += DNAseq(0) + seq2;
 	fmidx1 += FMIndex(seq2);
 	cout << "fmidx1.length(): " << fmidx1.length() << endl;
 	cout << "fmidx1.getBWT():" << endl << fmidx1.getBWT() << endl;
@@ -66,7 +67,7 @@ int main() {
 
 	DNAseq seq3("CTAGCATGGAC");
 	cout << "seq3:" << endl << seq3 << endl;
-	seqM1 = seq3 + DNAseq(0) + seqM1;
+	seqM1 += DNAseq(0) + seq3;
 	fmidx1 += FMIndex(seq3);
 	cout << "fmidx1.length(): " << fmidx1.length() << endl;
 	cout << "fmidx1.getBWT():" << endl << fmidx1.getBWT() << endl;
@@ -86,7 +87,7 @@ int main() {
 
 	DNAseq seq4("CTAGCATTGAC");
 	cout << "seq4:" << endl << seq4 << endl;
-	seqM1 = seq4 + DNAseq(0) + seqM1;
+	seqM1 += DNAseq(0) + seq4;
 	fmidx1 += FMIndex(seq4);
 	cout << "fmidx1.length(): " << fmidx1.length() << endl;
 	cout << "fmidx1.getBWT():" << endl << fmidx1.getBWT() << endl;
@@ -104,10 +105,11 @@ int main() {
 	if(!isValidLocs(seqM1, pat, fmidx1.locateAll(pat)))
 		return EXIT_FAILURE;
 
+	/* series operator+ tests */
 	DNAseq seq5("CTAGCAACTAG");
 	cout << "seq5:" << endl << seq5 << endl;
 	seqM2 = seq5 + seqM2;
-	fmidx2 += FMIndex(seq5, true);
+	fmidx2 = FMIndex(seq5, true) + fmidx2;
 	cout << "fmidx2.length(): " << fmidx2.length() << endl;
 	cout << "fmidx2.getBWT():" << endl << fmidx2.getBWT() << endl;
 	cout << "fmidx2.getSeq():" << endl << fmidx2.getSeq() << endl;
@@ -127,7 +129,7 @@ int main() {
 	DNAseq seq6("CTAGCACCTAG");
 	cout << "seq6:" << endl << seq6 << endl;
 	seqM2 = seq6 + DNAseq(0) + seqM2;
-	fmidx2 += FMIndex(seq6);
+	fmidx2 = FMIndex(seq6) + fmidx2;
 	cout << "fmidx2.length(): " << fmidx2.length() << endl;
 	cout << "fmidx2.getBWT():" << endl << fmidx2.getBWT() << endl;
 	cout << "fmidx2.getSeq():" << endl << fmidx2.getSeq() << endl;
@@ -147,7 +149,7 @@ int main() {
 	DNAseq seq7("CTAGCAGCTAG");
 	cout << "seq7:" << endl << seq7 << endl;
 	seqM2 = seq7 + DNAseq(0) + seqM2;
-	fmidx2 += FMIndex(seq7);
+	fmidx2 = FMIndex(seq7) + fmidx2;
 	cout << "fmidx2.length(): " << fmidx2.length() << endl;
 	cout << "fmidx2.getBWT():" << endl << fmidx2.getBWT() << endl;
 	cout << "fmidx2.getSeq():" << endl << fmidx2.getSeq() << endl;
@@ -167,7 +169,7 @@ int main() {
 	DNAseq seq8("CTAGCATCTAG");
 	cout << "seq8:" << endl << seq8 << endl;
 	seqM2 = seq8 + DNAseq(0) + seqM2;
-	fmidx2 += FMIndex(seq8);
+	fmidx2 = FMIndex(seq8) + fmidx2;
 	cout << "fmidx2.length(): " << fmidx2.length() << endl;
 	cout << "fmidx2.getBWT():" << endl << fmidx2.getBWT() << endl;
 	cout << "fmidx2.getSeq():" << endl << fmidx2.getSeq() << endl;
@@ -184,8 +186,8 @@ int main() {
 	if(!isValidLocs(seqM2, pat, fmidx2.locateAll(pat)))
 		return EXIT_FAILURE;
 
-	DNAseq seqM = seqM1;
-	seqM = seqM2 + DNAseq(0) + seqM;
+	/* hierarchical merge test */
+	DNAseq seqM = seqM1 + DNAseq(0) + seqM2;
 	cout << "seqM:" << endl << seqM << endl;
 	FMIndex fmidx = fmidx1 + fmidx2;
 	cout << "fmidx.length(): " << fmidx.length() << endl;

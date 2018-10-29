@@ -51,10 +51,11 @@ ostream& FMIndex::save(ostream& out) const {
 	out.write((const char*) B, (UINT8_MAX + 1) * sizeof(saidx_t));
 	out.write((const char*) C, (UINT8_MAX + 1) * sizeof(saidx_t));
 	bwt.save(out);
-	size_t nSAsampled = SAsampled.size();
-	out.write((const char*) &nSAsampled, sizeof(size_t));
-	if(nSAsampled) {
+	out.write((const char*) &keepSA, sizeof(bool));
+	if(keepSA) {
+		size_t nSAsampled = SAsampled.size();
 		assert(nSAsampled == length() / SA_SAMPLE_RATE + C[0 + 1] + 1);
+		out.write((const char*) &nSAsampled, sizeof(size_t));
 		out.write((const char*) SAsampled.data(), sizeof(saidx_t) * nSAsampled);
 		SAbit.save(out);
 	}
@@ -65,9 +66,10 @@ istream& FMIndex::load(istream& in) {
 	in.read((char*) B, (UINT8_MAX + 1) * sizeof(saidx_t));
 	in.read((char*) C, (UINT8_MAX + 1) * sizeof(saidx_t));
 	bwt.load(in);
-	size_t nSAsampled = 0;
-	in.read((char*) &nSAsampled, sizeof(size_t));
-	if(nSAsampled) {
+	in.read((char*) &keepSA, sizeof(bool));
+	if(keepSA) {
+		size_t nSAsampled;
+		in.read((char*) &nSAsampled, sizeof(size_t));
 		assert(nSAsampled == length() / SA_SAMPLE_RATE + C[0 + 1] + 1);
 		SAsampled.resize(nSAsampled);
 		in.read((char*) SAsampled.data(), sizeof(saidx_t) * nSAsampled);
@@ -106,34 +108,33 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
 		return *this;
 	}
 
-	/* build interleaving bitvector between other and *this */
-	const saidx_t N1 = other.length();
-	const saidx_t N2 = length();
+	/* build interleaving bitvector between *this and other */
+	const saidx_t N1 = length();
+	const saidx_t N2 = other.length();
 	const saidx_t N = N1 + N2;
 
 	/* build RA and interleaving bitvector */
 	BitStr32 bstr(N);
-	for(saidx_t i = 0, j = 0, shift = 0, RA = C[0 + 1]; j < N1; ++j) {
+	for(saidx_t i = 0, j = 0, shift = 0, RA = other.C[0 + 1]; j < N1; ++j) {
 		bstr.set(i + RA);
 		/* LF mapping */
-		sauchar_t b = other.bwt.access(i);
+		sauchar_t b = bwt.access(i);
 		if(b == 0) {
-			RA = C[0 + 1];
+			RA = other.C[0 + 1];
 			i = ++shift;
 		}
 		else {
-			RA = LF(b, RA - 1);
-			i = other.LF(i) - 1;
+			RA = other.LF(b, RA - 1);
+			i = LF(i) - 1;
 		}
 //		cerr << "i: " << i << " c: " << DNAalphabet::decode(b) << " RA: " << RA << endl;
 	}
-	std::cerr << "bstr constructed" << std::endl;
 
 	/* build merbed BWT */
 	basic_string<sauchar_t> bwtM;
 	bwtM.reserve(N);
 	for(saidx_t i = 0, j = 0, k = 0; k < N; ++k)
-		bwtM.push_back(bstr.test(k) ? other.bwt.access(i++) : bwt.access(j++));
+		bwtM.push_back(bstr.test(k) ? bwt.access(i++) : other.bwt.access(j++));
 	std::cerr << "bwtM constructed" << std::endl;
 	/* update bwtRRR */
     bwt = WaveletTreeRRR(bwtM, DNAalphabet::N, DNAalphabet::T);
@@ -145,10 +146,8 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
 		B[i] += other.B[i];
 		C[i] += other.C[i];
 	}
-	std::cerr << "B and C merged" << std::endl;
 
     /* reset SA */
-	SAsampled.clear();
 	SAbit.reset();
 
     if(keepSA)
@@ -204,7 +203,6 @@ void FMIndex::buildBWT(const DNAseq& seq) {
 
 void FMIndex::buildSA() {
 	assert(isInitiated());
-	assert(SAsampled.empty());
 	const saidx_t N = length();
 	/* build a BitStr in the 1st pass */
 	BitStr32 bstr(N);
@@ -212,9 +210,7 @@ void FMIndex::buildSA() {
 		if(bwt.access(i) == 0 || i % SA_SAMPLE_RATE == 0)
 			bstr.set(i);
 	}
-	std::cerr << "bstr built" << std::endl;
 	SAbit = BitSeqGGMN(bstr); /* reset the SAbit */
-	std::cerr << "SAbit built" << std::endl;
 
 	/* build SAsampled in the 2nd pass */
 	std::cerr << "SAsampled.size(): " << SAsampled.size() << std::endl;
@@ -229,7 +225,6 @@ void FMIndex::buildSA() {
 		/* LF-mapping */
 		i = b != 0 ? LF(i) - 1 : ++shift;
 	}
-	std::cerr << "SAsampled built" << std::endl;
 }
 
 saidx_t FMIndex::accessSA(saidx_t i) const {
@@ -273,6 +268,60 @@ Loc FMIndex::reverseLoc(const Loc& loc) const {
 	return Loc(reverseLoc(loc.end - 1) - 1, reverseLoc(loc.start));
 }
 
+FMIndex::FMIndex(const saidx_t* B, const saidx_t* C, const basic_string<sauchar_t>& bwtSeq, bool keepSA)
+: bwt(WaveletTreeRRR(bwtSeq, DNAalphabet::N, DNAalphabet::T)), keepSA(keepSA)
+{
+	/* copy B and C */
+	std::copy(B, B + UINT8_MAX + 1, this->B);
+	std::copy(C, C + UINT8_MAX + 1, this->C);
+	/* build SA */
+	if(keepSA)
+		buildSA();
+}
+
+FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {
+	std::cerr << "merging lhs " << lhs.isInitiated() << " and rhs " << rhs.isInitiated() << std::endl;
+	if(!rhs.isInitiated())
+		return lhs;
+	if(!lhs.isInitiated())
+		return rhs;
+
+	const saidx_t N1 = lhs.length();
+	const saidx_t N2 = rhs.length();
+	const saidx_t N = N1 + N2;
+	saidx_t BMerged[UINT8_MAX + 1];
+	saidx_t CMerged[UINT8_MAX + 1];
+	basic_string<sauchar_t> bwtMerged;
+	/* build merged B and C */
+	for(saidx_t i = 0; i <= DNAalphabet::SIZE; ++i) {
+		BMerged[i] = lhs.B[i] + rhs.B[i];
+		CMerged[i] = lhs.C[i] + rhs.C[i];
+	}
+	/* build interleaving bitstr */
+	BitStr32 bstrMerged(N);
+	for(saidx_t i = 0, j = 0, shift = 0, RA = rhs.C[0 + 1]; j < N1; ++j) {
+		bstrMerged.set(i + RA);
+		/* LF mapping */
+		sauchar_t b = lhs.bwt.access(i);
+		if(b == 0) {
+			RA = rhs.C[0 + 1];
+			i = ++shift;
+		}
+		else {
+			RA = rhs.LF(b, RA - 1);
+			i = lhs.LF(i) - 1;
+		}
+//		cerr << "i: " << i << " c: " << DNAalphabet::decode(b) << " RA: " << RA << endl;
+	}
+
+	/* build merbed BWT */
+	basic_string<sauchar_t> bwtM;
+	bwtM.reserve(N);
+	for(saidx_t i = 0, j = 0, k = 0; k < N; ++k)
+		bwtM.push_back(bstrMerged.test(k) ? lhs.bwt.access(i++) : rhs.bwt.access(j++));
+	std::cerr << "bwtM constructed" << std::endl;
+	return FMIndex(BMerged, CMerged, bwtM, lhs.keepSA || rhs.keepSA /* keep SA if any of the two operands keepSA */);
+}
 
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */
