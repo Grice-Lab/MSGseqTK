@@ -241,9 +241,9 @@ int main(int argc, char* argv[]) {
 		DNAseq genomeSeq;
 
 		while(seqI.hasNext()) {
-			PrimarySeq chr = seqI.nextSeq().reverse(); /* alwasy use reversed sequence */
+			const PrimarySeq& chr = seqI.nextSeq();
 			string chrName = chr.getName();
-			DNAseq chrSeq = chr.getSeq();
+			DNAseq chrSeq = chr.getSeq().reverse(); /* alwasy use reversed sequence */
 			debugLog << "  adding " << chrName << " with length " << chrSeq.length() << endl;
 			genome.addChrom(chrName, chrSeq.length());
 

@@ -277,7 +277,6 @@ FMIndex::FMIndex(const saidx_t* B, const saidx_t* C, const basic_string<sauchar_
 }
 
 FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {
-	std::cerr << "merging lhs " << lhs.isInitiated() << " and rhs " << rhs.isInitiated() << std::endl;
 	if(!rhs.isInitiated())
 		return lhs;
 	if(!lhs.isInitiated())
