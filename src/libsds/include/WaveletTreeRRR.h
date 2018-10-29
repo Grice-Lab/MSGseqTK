@@ -181,6 +181,7 @@ void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
 
 	/* construct intermediate BitStrs */
 	vector<BitStr32> bstrs; /* intermediate BitStrs */
+	bstrs.reserve(height);
 	for(size_t i = 0; i < height; ++i)
 		bstrs.push_back(BitStr32(n));
 
@@ -188,6 +189,7 @@ void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
 	build_level(bstrs, src, 0);
 
 	/* build the BitSeqs from BitStrs */
+	bseqs.reserve(height);
 	for(const BitStr32& bs : bstrs)
 		bseqs.push_back(BitSeqRRR(bs));
 
