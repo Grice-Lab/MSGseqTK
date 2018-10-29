@@ -182,9 +182,9 @@ size_t BitSeqRRR::select1(size_t r) const {
 		}
 	}
 	pos--;
-	assert(acc == r);
-	assert(rank1(pos) == r);
-	assert(access(pos));
+//	assert(acc == r);
+//	assert(rank1(pos) == r);
+//	assert(access(pos));
 	return pos;
 }
 
@@ -246,9 +246,9 @@ size_t BitSeqRRR::select0(size_t r) const {
 		}
 	}
 	pos--;
-	assert(acc == r);
-	assert(rank0(pos) == r);
-	assert(!access(pos));
+//	assert(acc == r);
+//	assert(rank0(pos) == r);
+//	assert(!access(pos));
 	return pos;
 }
 
