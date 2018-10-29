@@ -185,7 +185,7 @@ public:
 private:
 	BitStr32 bstr; /* use BitStr32 for efficiency */
 	size_t nRs = 0; /* size of Rs */
-	vector<size_t> Rs; /* 1-based super-block rank vector, storing the on bits in each block, with Rs[0] = 0 */
+	basic_string<size_t> Rs; /* 1-based super-block rank array, storing the on bits in each block, with Rs[0] = 0 */
 	size_t factor = 0;
 	size_t b = 0; /* block size in bits */
 	size_t s = 0; /* super-block size in bits per block */
