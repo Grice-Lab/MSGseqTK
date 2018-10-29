@@ -213,11 +213,8 @@ void FMIndex::buildSA() {
 	SAbit = BitSeqGGMN(bstr); /* reset the SAbit */
 
 	/* build SAsampled in the 2nd pass */
-	std::cerr << "SAsampled.size(): " << SAsampled.size() << std::endl;
-	std::cerr << "SAsampled resizing to " << (N / SA_SAMPLE_RATE + C[0 + 1] + 1) << std::endl;
 	SAsampled.reserve(N / SA_SAMPLE_RATE + C[0 + 1] + 1);
 	SAsampled.resize(N / SA_SAMPLE_RATE + C[0 + 1] + 1); // plus all Ns */
-	std::cerr << "SAsampled resized to " << SAsampled.size() << std::endl;
 	for(saidx_t i = 0, j = N, shift = 0; j > 0; --j) { /* i: 0-based on BWT; j: 1-based on seq */
 		sauchar_t b = bwt.access(i);
 		if(b == 0 || i % SA_SAMPLE_RATE == 0)
@@ -319,7 +316,6 @@ FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {
 	bwtM.reserve(N);
 	for(saidx_t i = 0, j = 0, k = 0; k < N; ++k)
 		bwtM.push_back(bstrMerged.test(k) ? lhs.bwt.access(i++) : rhs.bwt.access(j++));
-	std::cerr << "bwtM constructed" << std::endl;
 	return FMIndex(BMerged, CMerged, bwtM, lhs.keepSA || rhs.keepSA /* keep SA if any of the two operands keepSA */);
 }
 

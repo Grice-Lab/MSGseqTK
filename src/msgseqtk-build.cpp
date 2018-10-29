@@ -44,8 +44,6 @@ using namespace EGriceLab::MSGseqTK;
 using namespace Eigen;
 
 static const int DEFAULT_NUM_THREADS = 1;
-static const int DEFAULT_BLOCK_SIZE = 1000;
-static const size_t MBP_UNIT = 1000000;
 
 /**
  * Print introduction of this program
@@ -70,7 +68,6 @@ void printUsage(const string& progName) {
 		 << "            -r|--update  STR     : update database based on this old DB, it can be the same name as -n, which will overwrite the old database" << endl
 		 << "            -f  FLAG             : during building/updating genomes already exist with the same names will be ignored, set this flag to force adding them" << endl
 		 << "            -g|--gff3  FLAG      : write an additional metagenome annotation file in GFF3 format" << endl
-		 << "            -b|--block  INT      : block size (in Mbp) for building FM-index, larget block size will lead to faster but more memory usage algorithm [" << DEFAULT_BLOCK_SIZE << "]" << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
 		 << "            -h|--help            : print this message and exit" << endl;
@@ -89,7 +86,6 @@ int main(int argc, char* argv[]) {
 	const string fmt = "fasta";
 
 	bool isForce = false;
-	int blockSize = DEFAULT_BLOCK_SIZE;
 
 	/* parse options */
 	CommandOptions cmdOpts(argc, argv);
@@ -132,11 +128,6 @@ int main(int argc, char* argv[]) {
 
 	if(cmdOpts.hasOpt("-f"))
 		isForce = true;
-
-	if(cmdOpts.hasOpt("-b"))
-		blockSize = ::atoi(cmdOpts.getOptStr("-b"));
-	if(cmdOpts.hasOpt("--block"))
-		blockSize = ::atoi(cmdOpts.getOptStr("--block"));
 
 	if(cmdOpts.hasOpt("-v"))
 		INCREASE_LEVEL(cmdOpts.getOpt("-v").length());
@@ -218,7 +209,6 @@ int main(int argc, char* argv[]) {
 
 	/* process each file */
 	size_t nProcessed = 0;
-	DNAseq blockSeq;
 	int k = 0;
 	for(const string& inFn : inFns) {
 		string genomeName = genomeFn2Name.at(inFn);
@@ -248,6 +238,7 @@ int main(int argc, char* argv[]) {
 
 		Genome genome(genomeName);
 		SeqIO seqI(&genomeIn, fmt);
+		DNAseq genomeSeq;
 
 		while(seqI.hasNext()) {
 			PrimarySeq chr = seqI.nextSeq().reverse(); /* alwasy use reversed sequence */
@@ -256,29 +247,19 @@ int main(int argc, char* argv[]) {
 			debugLog << "  adding " << chrName << " with length " << chrSeq.length() << endl;
 			genome.addChrom(chrName, chrSeq.length());
 
-			if(!blockSeq.empty())
-				blockSeq.push_back(DNAalphabet::N); /* add a null terminal before appending a new chrom */
-			blockSeq += chrSeq;
-			if(blockSeq.length() >= blockSize * MBP_UNIT) {
-				infoLog << "Adding DNAseq of block " << ++k << " into database" << endl;
-				fmidx += FMIndex(blockSeq); /* operator+= always append new blocks to the front */
-				blockSeq.clear();
-				infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
-			}
+			if(!genomeSeq.empty())
+				genomeSeq.push_back(DNAalphabet::N); /* add a null terminal before appending a new chrom */
+			genomeSeq += chrSeq;
 		}
-		/* incremental update backward */
+		/* add genome */
 		mtg.push_front(genome);
+		/* update FMIndex */
+		fmidx = FMIndex(genomeSeq) + fmidx; /* always use the old genome as rhs to increase speed */
+		infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
+		assert(mtg.size() == fmidx.length());
+		/* incremental update backward */
 		nProcessed++;
 	}
-	/* process last block */
-	if(!blockSeq.empty()) {
-		infoLog << "Adding DNAseq of block " << ++k << " into database" << endl;
-		fmidx = FMIndex(blockSeq) + fmidx;
-		blockSeq.clear();
-		infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
-	}
-
-	assert(mtg.size() == fmidx.length());
 
 	if(oldDBName.empty() || nProcessed > 0) { /* original db not modified */
 		infoLog << "Building the final SA ..." << endl;
