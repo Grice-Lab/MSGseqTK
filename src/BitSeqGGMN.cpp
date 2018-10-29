@@ -220,7 +220,7 @@ ostream& BitSeqGGMN::save(ostream& out) const {
 	BitSeq::save(out); /* save base object */
 	bstr.save(out);
 	out.write((const char*) &nRs, sizeof(size_t));
-	out.write((const char*) Rs.data(), sizeof(size_t) * nRs);
+	out.write((const char*) Rs.c_str(), sizeof(size_t) * nRs);
 	out.write((const char*) &factor, sizeof(size_t));
 	out.write((const char*) &b, sizeof(size_t));
 	out.write((const char*) &s, sizeof(size_t));
@@ -231,8 +231,10 @@ istream& BitSeqGGMN::load(istream& in) {
 	BitSeq::load(in); /* load base object */
 	bstr.load(in);
 	in.read((char *) &nRs, sizeof(size_t));
-	Rs.resize(nRs);
-	in.read((char*) Rs.data(), sizeof(size_t) * nRs);
+	size_t* tmp = new size_t[nRs];
+	in.read((char*) tmp, sizeof(size_t) * nRs);
+	Rs.assign(tmp, nRs);
+	delete[] tmp;
 	in.read((char*) &factor, sizeof(size_t));
 	in.read((char*) &b, sizeof(size_t));
 	in.read((char*) &s, sizeof(size_t));

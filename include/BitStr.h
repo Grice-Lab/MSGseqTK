@@ -42,9 +42,8 @@ public:
 	/**
 	 * construct a BitStr with n-bits all set to zero
 	 */
-	explicit BitStr(size_type nB) : wid(sizeof(value_type) * Wb), nB(nB), n(int_len(nB, wid)) {
-		data.resize(n);
-	}
+	explicit BitStr(size_type nB) : wid(sizeof(value_type) * Wb), nB(nB), n(int_len(nB, wid)), data(n, 0)
+	{ 	}
 
 	/**
 	 * construct a BitStr with given length and a value,
@@ -69,9 +68,8 @@ public:
 	 * construct a BitStr by copying from a std__basic_string
 	 * @param str  std__basic_string
 	 */
-	explicit BitStr(const basic_string<uIntType>& src) : wid(sizeof(uIntType) * Wb), n(src.length()), data(src) {
-		nB = n * wid;
-	}
+	explicit BitStr(const basic_string<uIntType>& src) : wid(sizeof(uIntType) * Wb), nB(src.length() * wid), n(src.length()), data(src)
+	{ 	}
 
 	/**
 	 * construct a BitStr by copying from a given C-type string of a diffent type,
@@ -79,10 +77,9 @@ public:
 	 * @param nSrc  length of str
 	 */
 	template<typename oIntType>
-	BitStr(const oIntType* src, size_type nSrc) : wid(sizeof(uIntType) * Wb) {
+	BitStr(const oIntType* src, size_type nSrc) : wid(sizeof(uIntType) * Wb), nB(nSrc * wid),  n(int_len(nB, wid)), data(n, 0)
+	{
 		size_t wSrc = sizeof(oIntType) * Wb; // input width
-		nB = wSrc * nSrc;
-		n = int_len(nB, wid);
 		data.resize(n);
 		if(wSrc < wid) {
 			for(size_type i = 0; i < nB; i += wSrc)
@@ -101,11 +98,9 @@ public:
 	 * @param str  std::basic_string
 	 */
 	template<typename oIntType>
-	explicit BitStr(const basic_string<oIntType>& src) : wid(sizeof(uIntType) * Wb) {
+	explicit BitStr(const basic_string<oIntType>& src) : wid(sizeof(uIntType) * Wb), nB(src.length() * wid), n(int_len(nB, wid)), data(n, 0)
+	{
 		size_t wSrc = sizeof(oIntType) * Wb; // input width
-		nB = wSrc * src.length();
-		n = int_len(nB, wid);
-		data.resize(n);
 		if(wSrc < wid) {
 			for(size_type i = 0; i < nB; i += wSrc)
 				set(i, wSrc, src[i]);
