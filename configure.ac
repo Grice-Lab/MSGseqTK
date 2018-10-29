@@ -51,7 +51,7 @@ AC_CONFIG_FILES([Makefile
 
 AC_CONFIG_SUBDIRS([src/util
                    src/math
-                   src/libcds])
+                   src/libsds])
                    
 AX_SUBDIRS_CONFIGURE([src/libdivsufsort],
 [--enable-build64],

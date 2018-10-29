@@ -25,6 +25,7 @@
  */
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <cstdlib>
 #include "EGUtil.h"

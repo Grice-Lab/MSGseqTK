@@ -5,7 +5,7 @@ AM_CFLAGS = \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
--I$(top_srcdir)/src/libcds/include \
+-I$(top_srcdir)/src/libsds/include \
 $(BOOST_CPPFLAGS) \
 $(OPENMP_CFLAGS)
 
@@ -14,7 +14,7 @@ AM_CXXFLAGS = \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
--I$(top_srcdir)/src/libcds/include \
+-I$(top_srcdir)/src/libsds/include \
 $(BOOST_CPPFLAGS) \
 $(OPENMP_CFLAGS)
 
@@ -48,7 +48,7 @@ FMIndex_test_SOURCES = FMIndex_test.cpp
 FMIndex_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-$(top_srcdir)/src/libcds/src/libcds.la \
+$(top_srcdir)/src/libsds/src/libsds.la \
 $(top_srcdir)/src/util/libEGUtil.a
 
 Genome_test_SOURCES = Genome_test.cpp
@@ -60,7 +60,7 @@ MEM_test_SOURCES = MEM_test.cpp
 MEM_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-$(top_srcdir)/src/libcds/src/libcds.la \
+$(top_srcdir)/src/libsds/src/libsds.la \
 $(top_srcdir)/src/util/libEGUtil.a
 
 TESTS = \

@@ -802,7 +802,7 @@ CCC
 CXXCPP'
 ac_subdirs_all='src/util
                    src/math
-                   src/libcds'
+                   src/libsds'
 
 # Initialize some variables set by options.
 ac_init_help=
@@ -19162,7 +19162,7 @@ ac_config_files="$ac_config_files Makefile src/Makefile test/Makefile"
 
 
 
-subdirs="$subdirs src/util src/math src/libcds"
+subdirs="$subdirs src/util src/math src/libsds"
 
 
 

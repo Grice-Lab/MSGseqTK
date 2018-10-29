@@ -261,7 +261,7 @@ int main(int argc, char* argv[]) {
 			blockSeq += chrSeq;
 			if(blockSeq.length() >= blockSize * MBP_UNIT) {
 				infoLog << "Adding DNAseq of block " << ++k << " into database" << endl;
-				fmidx = FMIndex(blockSeq) + fmidx;
+				fmidx += FMIndex(blockSeq); /* operator+= always append new blocks to the front */
 				blockSeq.clear();
 				infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
 			}

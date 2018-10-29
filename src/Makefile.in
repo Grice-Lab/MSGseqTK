@@ -131,7 +131,7 @@ msgseqtk_build_OBJECTS = $(am_msgseqtk_build_OBJECTS)
 am__DEPENDENCIES_1 =
 msgseqtk_build_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
 	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-	libcds/src/libcds.la $(am__DEPENDENCIES_1)
+	libsds/src/libsds.la $(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -141,19 +141,19 @@ am_msgseqtk_clean_OBJECTS = msgseqtk-clean.$(OBJEXT) \
 msgseqtk_clean_OBJECTS = $(am_msgseqtk_clean_OBJECTS)
 msgseqtk_clean_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
 	math/libEGMath.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-	libcds/src/libcds.la $(am__DEPENDENCIES_1)
+	libsds/src/libsds.la $(am__DEPENDENCIES_1)
 am_msgseqtk_inspect_OBJECTS = msgseqtk-inspect.$(OBJEXT) \
 	MSGseqTKEnv.$(OBJEXT)
 msgseqtk_inspect_OBJECTS = $(am_msgseqtk_inspect_OBJECTS)
 msgseqtk_inspect_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
 	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-	libcds/src/libcds.la
+	libsds/src/libsds.la
 am_msgseqtk_mergedb_OBJECTS = msgseqtk-mergedb.$(OBJEXT) \
 	MSGseqTKEnv.$(OBJEXT)
 msgseqtk_mergedb_OBJECTS = $(am_msgseqtk_mergedb_OBJECTS)
 msgseqtk_mergedb_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
 	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-	libcds/src/libcds.la
+	libsds/src/libsds.la
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -395,12 +395,12 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = libdivsufsort libcds util math
+SUBDIRS = libdivsufsort libsds util math
 AM_CFLAGS = -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
--I$(top_srcdir)/src/libcds/include \
+-I$(top_srcdir)/src/libsds/include \
 $(BOOST_CPPFLAGS) \
 $(OPENMP_CFLAGS)
 
@@ -408,7 +408,7 @@ AM_CXXFLAGS = -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
--I$(top_srcdir)/src/libcds/include \
+-I$(top_srcdir)/src/libsds/include \
 $(BOOST_CPPFLAGS) \
 $(OPENMP_CFLAGS) \
 $(OPENMP_CXXFLAGS)
@@ -437,7 +437,7 @@ libMSGseqTK.a \
 util/libEGUtil.a \
 math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libcds/src/libcds.la \
+libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB)
 
 msgseqtk_build_SOURCES = msgseqtk-build.cpp MSGseqTKEnv.cpp
@@ -445,7 +445,7 @@ msgseqtk_build_LDADD = \
 libMSGseqTK.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libcds/src/libcds.la \
+libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB)
 
 msgseqtk_inspect_SOURCES = msgseqtk-inspect.cpp MSGseqTKEnv.cpp
@@ -453,14 +453,14 @@ msgseqtk_inspect_LDADD = \
 libMSGseqTK.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libcds/src/libcds.la
+libsds/src/libsds.la
 
 msgseqtk_mergedb_SOURCES = msgseqtk-mergedb.cpp MSGseqTKEnv.cpp
 msgseqtk_mergedb_LDADD = \
 libMSGseqTK.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libcds/src/libcds.la
+libsds/src/libsds.la
 
 all: all-recursive
 

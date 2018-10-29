@@ -38,6 +38,11 @@ public:
 	/** virtual destructor */
 	virtual ~DNAseq() {  }
 
+	/** construct a DNAseq from a given value */
+	explicit DNAseq(int8_t b) : std::basic_string<int8_t>({ b })
+	{  }
+
+
 	/** constructing a DNAseq from a symbol string */
 	explicit DNAseq(const string& str) {
 		assign(str);
