@@ -285,8 +285,8 @@ FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {
 	const saidx_t N1 = lhs.length();
 	const saidx_t N2 = rhs.length();
 	const saidx_t N = N1 + N2;
-	saidx_t BMerged[UINT8_MAX + 1];
-	saidx_t CMerged[UINT8_MAX + 1];
+	saidx_t BMerged[UINT8_MAX + 1] = { 0 };
+	saidx_t CMerged[UINT8_MAX + 1] = { 0 };
 	basic_string<sauchar_t> bwtMerged;
 	/* build merged B and C */
 	for(saidx_t i = 0; i <= DNAalphabet::SIZE; ++i) {
