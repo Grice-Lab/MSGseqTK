@@ -220,12 +220,9 @@ public:
 		size_type j = start * len - wid * i;
 		size_t result;
 		if (j + len <= wid)
-			result = (data[i] << wid - j - len) >> (wid - len);
-		else {
-			result = data[i] >> j;
-			result |= (data[i + 1] << wid * 2 - j - len) >> (wid - len);
-		}
-		return result;
+			return (data[i] << wid - j - len) >> (wid - len);
+		else
+			return data[i] >> j | ((data[i + 1] << wid * 2 - j - len) >> (wid - len));
 	}
 
 	/**
@@ -277,14 +274,10 @@ public:
 			len = nB - start;
 		size_t i = start / wid;
 		size_t j = start - wid * i;
-		size_t result;
 		if (j + len <= W)
-			result = (data[i] << (wid - j - len)) >> (wid - len);
-		else {
-			result = data[i] >> j;
-			result |= (data[i+1] << (2 * wid - j - len)) >> (wid - len);
-		}
-		return result;
+			return (data[i] << (wid - j - len)) >> (wid - len);
+		else
+			return data[i] >> j | ((data[i+1] << (2 * wid - j - len)) >> (wid - len));
 	}
 
 	/** set the i-th bit of this BitStr */
