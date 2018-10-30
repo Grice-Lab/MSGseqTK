@@ -97,6 +97,16 @@ public:
 		genomes.push_front(genome);
 	}
 
+	/** append multiple genomes at the end of this MetaGenome */
+	void append(const vector<Genome>& blockGenomes) {
+		genomes.insert(genomes.end(), blockGenomes.begin(), blockGenomes.end());
+	}
+
+	/** prepend multiple genomes at the beginning of this MetaGenome */
+	void prepend(const vector<Genome>& blockGenomes) {
+		genomes.insert(genomes.begin(), blockGenomes.begin(), blockGenomes.end());
+	}
+
 	/** save this object to binary output */
 	ostream& save(ostream& out) const;
 

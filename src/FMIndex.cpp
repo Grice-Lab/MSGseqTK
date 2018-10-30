@@ -207,7 +207,7 @@ void FMIndex::buildSA() {
 	/* build a BitStr in the 1st pass */
 	BitStr32 bstr(N);
 	for(saidx_t i = 0; i < N; ++i) {
-		if(bwt.access(i) == 0 || i % SA_SAMPLE_RATE == 0)
+		if(i % SA_SAMPLE_RATE == 0 || bwt.access(i) == 0)
 			bstr.set(i);
 	}
 	SAbit = BitSeqGGMN(bstr); /* reset the SAbit */

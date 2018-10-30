@@ -31,7 +31,7 @@ using std::ostream;
  */
 class Genome {
 public:
-	/* nested types and enums */\
+	/* nested types and enums */
 	struct Chrom {
 		/** default constructor */
 		Chrom() = default;

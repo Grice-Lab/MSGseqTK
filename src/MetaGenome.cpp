@@ -16,7 +16,7 @@ using Eigen::Map;
 
 uint64_t MetaGenome::size() const {
 	uint64_t size = 0;
-	for(const deque<Genome>::value_type & genome : genomes)
+	for(const Genome& genome : genomes)
 		size += genome.size();
 	return size; /* include null terminal for each Genome */
 }
