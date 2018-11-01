@@ -119,9 +119,10 @@ int main(int argc, char* argv[]) {
 	FMIndex fmidx; /* keepSA == false */
 
 	/* process each database */
-	for(const string& inDB : inDBNames) {
-		string mtgInfn = inDB + METAGENOME_FILE_SUFFIX;
-		string fmidxInfn = inDB + FMINDEX_FILE_SUFFIX;
+	for(vector<string>::const_iterator inDB = inDBNames.begin(); inDB != inDBNames.end(); ++inDB) {
+		bool isLast = inDB == inDBNames.end() - 1;
+		string mtgInfn = *inDB + METAGENOME_FILE_SUFFIX;
+		string fmidxInfn = *inDB + FMINDEX_FILE_SUFFIX;
 		/* open DB files */
 		ifstream mtgIn(mtgInfn.c_str(), ios_base::binary);
 		if(!mtgIn.is_open()) {
@@ -135,7 +136,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		/* read in genome sequence, concatenated with Ns */
-		infoLog << "Loading database '" << inDB << "'" << endl;
+		infoLog << "Loading database '" << *inDB << "'" << endl;
 		MetaGenome mtgPart;
 		FMIndex fmidxPart;
 		loadProgInfo(mtgIn);
@@ -155,17 +156,21 @@ int main(int argc, char* argv[]) {
 		}
 
 		/* incremental update */
-		infoLog << "Merging into new database ... ";
+		if(!isLast) {
+			debugLog << "Removing SA info from intermediate FM-index" << endl;
+			fmidxPart.clearSA(); /* do not store SA info for intermediate parts */
+		}
+		if(!isLast)
+			infoLog << "Merging into new database" << endl;
+		else
+			infoLog << "Merging into new database and building final Suffix-Array" << endl;
 		mtg = mtgPart + mtg;
 		fmidx = fmidxPart + fmidx;
 		assert(mtg.size() == fmidx.length());
-		infoLog << " done. currrent size: " << mtg.size() << endl;
+		infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
 	}
 
-	infoLog << "Building the final SA ..." << endl;
-	fmidx.buildSA();
-
-	infoLog << "MetaGenomics database merged. # of Genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
+	infoLog << "Database merged. # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
 	infoLog << "Saving database files ..." << endl;
 	/* write database files, all with prepend program info */
 	saveProgInfo(mtgOut);
