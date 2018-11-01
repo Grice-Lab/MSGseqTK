@@ -49,7 +49,6 @@ void printUsage(const string& progName) {
 	cerr << "Usage:    " << progName << "  <DB-NAME> [options]" << endl
 		 << "DB-NAME    STR                   : database name (prefix)" << endl
 		 << "Options:    -l  FILE             : write the genome names included in this database to FILE" << endl
-		 << "            -g|--gff3  FILE      : write the metagenome annotation into FILE in GFF3 format" << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
 		 << "            -h|--help            : print this message and exit" << endl;
@@ -59,9 +58,8 @@ int main(int argc, char* argv[]) {
 	/* variable declarations */
 	string dbName;
 	string listFn;
-	string gffFn;
 	ifstream mtgIn, fmidxIn;
-	ofstream listOut, gffOut;
+	ofstream listOut;
 
 	/* parse options */
 	CommandOptions cmdOpts(argc, argv);
@@ -85,11 +83,6 @@ int main(int argc, char* argv[]) {
 
 	if(cmdOpts.hasOpt("-l"))
 		listFn = cmdOpts.getOpt("-l");
-
-	if(cmdOpts.hasOpt("-g"))
-		gffFn = cmdOpts.getOpt("-g");
-	if(cmdOpts.hasOpt("--gff3"))
-		gffFn = cmdOpts.getOpt("--gff3");
 
 	if(cmdOpts.hasOpt("-v"))
 		INCREASE_LEVEL(cmdOpts.getOpt("-v").length());
@@ -116,14 +109,6 @@ int main(int argc, char* argv[]) {
 		listOut.open(listFn.c_str());
 		if(!listOut.is_open()) {
 			cerr << "Unable to write to '" << listFn << "': " << ::strerror(errno) << endl;
-			return EXIT_FAILURE;
-		}
-	}
-
-	if(!gffFn.empty()) {
-		gffOut.open(gffFn.c_str());
-		if(!gffOut.is_open()) {
-			cerr << "Unable to write to '" << gffFn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
 	}
@@ -160,7 +145,4 @@ int main(int argc, char* argv[]) {
 		for(const string& genomeName : mtg.getGenomeNames())
 			listOut << genomeName << endl;
 	}
-
-	if(gffOut.is_open())
-		mtg.writeGFF(gffOut, UCSC::GFF::GFF3, progName);
 }

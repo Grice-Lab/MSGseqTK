@@ -183,7 +183,6 @@ public:
 	/* non-member functions */
 	friend FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs);
 
-
 private:
 	/**
 	 * build alphabet counts from a DNAseq

@@ -69,7 +69,6 @@ void printUsage(const string& progName) {
 		 << "            -l  FILE             : tab-delimited list with 1st field genome-names and 2nd field genomic file paths/names" << endl
 		 << "            -r|--update  STR     : update database based on this old DB, it can be the same name as -n, which will overwrite the old database" << endl
 		 << "            -f  FLAG             : during building/updating genomes already exist with the same names will be ignored, set this flag to force adding them" << endl
-		 << "            -g|--gff3  FLAG      : write an additional metagenome annotation file in GFF3 format" << endl
 		 << "            -b|--block  INT      : block size (in Mbp) for building FM-index, larget block size will lead to faster but more memory usage algorithm [" << DEFAULT_BLOCK_SIZE << "]" << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
@@ -122,9 +121,6 @@ int main(int argc, char* argv[]) {
 	if(cmdOpts.hasOpt("-l"))
 		listFn = cmdOpts.getOpt("-l");
 
-	if(cmdOpts.hasOpt("-g") || cmdOpts.hasOpt("--gff3"))
-		gffFn = dbName + UCSC::GFF::GFF3_SUFFIX;
-
 	if(cmdOpts.hasOpt("-r"))
 		oldDBName = cmdOpts.getOpt("-r");
 	if(cmdOpts.hasOpt("--update"))
@@ -148,6 +144,8 @@ int main(int argc, char* argv[]) {
 	}
 	if(dbName == oldDBName)
 		warningLog << "Warning: old database '" << oldDBName << "' will be overwritten!" << endl;
+
+	gffFn = dbName + UCSC::GFF::GFF3_SUFFIX;
 
 	/* open inputs */
 	if(!listFn.empty()) {
@@ -288,6 +286,7 @@ int main(int argc, char* argv[]) {
 		/* set db file names */
 		mtgFn = dbName + METAGENOME_FILE_SUFFIX;
 		fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
+		gffFn = dbName + UCSC::GFF::GFF3_SUFFIX;
 		/* open output files */
 		mtgOut.open(mtgFn.c_str(), ios_base::out | ios_base::binary);
 		if(!mtgOut.is_open()) {
@@ -300,12 +299,10 @@ int main(int argc, char* argv[]) {
 			return EXIT_FAILURE;
 		}
 
-		if(!gffFn.empty()) {
-			gffOut.open(gffFn.c_str());
-			if(!gffOut.is_open()) {
-				cerr << "Unable to write to '" << gffFn << "': " << ::strerror(errno) << endl;
-				return EXIT_FAILURE;
-			}
+		gffOut.open(gffFn.c_str());
+		if(!gffOut.is_open()) {
+			cerr << "Unable to write to '" << gffFn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
 		}
 
 		infoLog << "Saving database files ..." << endl;

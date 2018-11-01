@@ -308,9 +308,9 @@ FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {
 		CMerged[i] = lhs.C[i] + rhs.C[i];
 	}
 	/* build interleaving bitstr */
-	BitStr32 bstrMerged(N);
+	BitStr32 bstrM(N);
 	for(saidx_t i = 0, j = 0, shift = 0, RA = rhs.C[0 + 1]; j < N1; ++j) {
-		bstrMerged.set(i + RA);
+		bstrM.set(i + RA);
 		/* LF mapping */
 		sauchar_t b = lhs.bwt.access(i);
 		if(b == 0) {
@@ -328,7 +328,7 @@ FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {
 	DNAseq bwtM;
 	bwtM.reserve(N);
 	for(saidx_t i = 0, j = 0, k = 0; k < N; ++k)
-		bwtM.push_back(bstrMerged.test(k) ? lhs.bwt.access(i++) : rhs.bwt.access(j++));
+		bwtM.push_back(bstrM.test(k) ? lhs.bwt.access(i++) : rhs.bwt.access(j++));
 	return FMIndex(BMerged, CMerged, bwtM, lhs.keepSA || rhs.keepSA /* keep SA if any of the two operands keepSA */);
 }
 
