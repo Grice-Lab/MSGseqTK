@@ -33,9 +33,13 @@
 #include <boost/iostreams/filter/zlib.hpp> /* for zlib support */
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filter/bzip2.hpp> /* for bzip2 support */
-#include <boost/random/mersenne_twister.hpp>
+//#include <boost/random/mersenne_twister.hpp>
 #include "MSGseqTK.h"
 #include "EGUtil.h"
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 using namespace std;
 using namespace EGriceLab;
@@ -49,6 +53,7 @@ static const double DEFAULT_INDEL_RATE = 0.01;
 static const string ASSIGNMENT_BASIC_HEADER = "id\tdescription\tref_loglik\tbg_loglik\tLOD";
 static const string ASSIGNMENT_SE_DETAIL = "ref_MEMS\tbg_MEMS";
 static const string ASSIGNMENT_PE_DETAIL = "ref_MEMS_fwd\tref_MEMS_rev\tbg_MEMS_fwd\tbg_MEMS_rev";
+static const int DEFAULT_NUM_THREADS = 1;
 
 /**
  * Print introduction of this program
@@ -80,6 +85,9 @@ void printUsage(const string& progName) {
 //		 << "            -e  DBL              : maximum e-value allowed to consider an MEM between datbase and a read as significance [" << MAX_EVAL << "]" << endl
 		 << "            -s|--strand  INT     : read/pair strand to search, 1 for sense, 2 for anti-sense, 3 for both [" << DEFAULT_STRAND << "]" << endl
 		 << "            -S|--seed  INT       : random seed used for determing MEMS, for debug only" << endl
+#ifdef _OPENMP
+		 << "            -p|--process INT     : number of threads/cpus used for parallel processing" << endl
+#endif
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
 		 << "            -h|--help            : print this message and exit" << endl;
@@ -101,6 +109,7 @@ int main(int argc, char* argv[]) {
 	int strand = DEFAULT_STRAND;
 	unsigned seed = time(NULL); // using time as default seed
 	double maxIndelRate = DEFAULT_INDEL_RATE;
+	int nThreads = DEFAULT_NUM_THREADS;
 
 	typedef boost::random::mt11213b RNG; /* random number generator type */
 
@@ -162,6 +171,13 @@ int main(int argc, char* argv[]) {
 		seed = ::atoi(cmdOpts.getOptStr("--seed"));
 	srand(seed); /* set seed */
 
+#ifdef _OPENMP
+	if(cmdOpts.hasOpt("-p"))
+		nThreads = ::atoi(cmdOpts.getOptStr("-p"));
+	if(cmdOpts.hasOpt("--process"))
+		nThreads = ::atoi(cmdOpts.getOptStr("--process"));
+#endif
+
 	if(cmdOpts.hasOpt("-v"))
 		INCREASE_LEVEL(cmdOpts.getOpt("-v").length());
 
@@ -190,6 +206,14 @@ int main(int argc, char* argv[]) {
 		cerr << "-q must be non-negative" << endl;
 		return EXIT_FAILURE;
 	}
+
+#ifdef _OPENMP
+	if(!(nThreads > 0)) {
+		cerr << "-p|--process must be positive" << endl;
+		return EXIT_FAILURE;
+	}
+	omp_set_num_threads(nThreads);
+#endif
 
 	/* guess input seq format */
 	string fmt = SeqIO::guessFormat(fwdInFn);
@@ -332,7 +356,7 @@ int main(int argc, char* argv[]) {
 		cerr << "Unable to load background MetaGenome: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	infoLog << "Loading bgrence FM-index ..." << endl;
+	infoLog << "Loading background FM-index ..." << endl;
 	loadProgInfo(bgFmidxIn);
 	if(!bgFmidxIn.bad())
 		bgFmidx.load(bgFmidxIn);
@@ -355,54 +379,70 @@ int main(int argc, char* argv[]) {
 
 	infoLog << "Filtering input reads/pairs" << endl;
 	/* search MEMS for each read */
-	while(fwdI.hasNext() && (!isPaired || revI.hasNext())) {
-		string id;
-		string desc;
-		PrimarySeq fwdRead;
-		PrimarySeq revRead;
-		fwdRead = fwdI.nextSeq();
-		id = fwdRead.getName();
-		desc = fwdRead.getDesc();
-		if(isPaired) {
-			revRead = revI.nextSeq();
-			if(revRead.getName() != id) {
-				cerr << "Unmatched forward/reverse seq id found: " << id << " <-> " << revRead.getName() << endl;
-				return EXIT_FAILURE;
-			}
-		}
-
-		if(!isPaired) {
-			MEMS refMems = MEMS::sampleMEMS(&fwdRead, &refFmidx, rng, strand);
-			MEMS bgMems = MEMS::sampleMEMS(&fwdRead, &bgFmidx, rng, strand);
-			double refLoglik = refMems.loglik();
-			double bgLoglik = bgMems.loglik();
-			double lod = - refLoglik + bgLoglik;
-			if(lod >= minLod)
-				fwdO.writeSeq(fwdRead);
-			if(assignOut.is_open()) {
-				assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod;
-				if(withDetail)
-					assignOut << "\t" << refMems << "\t" << bgMems;
-				assignOut << endl;
-			}
-		}
-		else {
-			MEMS_PE refMems_pe = MEMS::sampleMEMS(&fwdRead, &revRead, &refFmidx, rng, strand);
-			MEMS_PE bgMems_pe = MEMS::sampleMEMS(&fwdRead, &revRead, &bgFmidx, rng, strand);
-			double refLoglik = MEMS::loglik(refMems_pe);
-			double bgLoglik = MEMS::loglik(bgMems_pe);
-			double lod = - refLoglik + bgLoglik;
-			if(lod >= minLod) {
-				fwdO.writeSeq(fwdRead);
-				revO.writeSeq(revRead);
-			}
-			if(assignOut.is_open()) {
-				assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod;
-				if(withDetail)
-					assignOut << refMems_pe.first << "\t" << refMems_pe.second << "\t"
-					<< bgMems_pe.first << "\t" << bgMems_pe.second;
-				assignOut << endl;
-			}
-		}
-	}
+#pragma omp parallel
+	{
+#pragma omp single
+		{
+			while(fwdI.hasNext() && (!isPaired || revI.hasNext())) {
+				string id;
+				string desc;
+				PrimarySeq fwdRead;
+				PrimarySeq revRead;
+				fwdRead = fwdI.nextSeq();
+				id = fwdRead.getName();
+				desc = fwdRead.getDesc();
+				if(isPaired) {
+					revRead = revI.nextSeq();
+					assert(revRead.getName() == id);
+				}
+#pragma omp task
+				{
+					if(!isPaired) {
+						MEMS refMems = MEMS::sampleMEMS(&fwdRead, &refFmidx, rng, strand);
+						MEMS bgMems = MEMS::sampleMEMS(&fwdRead, &bgFmidx, rng, strand);
+						double refLoglik = refMems.loglik();
+						double bgLoglik = bgMems.loglik();
+						double lod = - refLoglik + bgLoglik;
+						if(lod >= minLod)
+#pragma omp critical(writeSeq)
+							fwdO.writeSeq(fwdRead);
+						if(assignOut.is_open()) {
+#pragma omp critical(writeAssign)
+							{
+								assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod;
+								if(withDetail)
+									assignOut << "\t" << refMems << "\t" << bgMems;
+								assignOut << endl;
+							}
+						}
+					}
+					else {
+						MEMS_PE refMems_pe = MEMS::sampleMEMS(&fwdRead, &revRead, &refFmidx, rng, strand);
+						MEMS_PE bgMems_pe = MEMS::sampleMEMS(&fwdRead, &revRead, &bgFmidx, rng, strand);
+						double refLoglik = MEMS::loglik(refMems_pe);
+						double bgLoglik = MEMS::loglik(bgMems_pe);
+						double lod = - refLoglik + bgLoglik;
+						if(lod >= minLod) {
+#pragma omp critical(writeSeq)
+							{
+								fwdO.writeSeq(fwdRead);
+								revO.writeSeq(revRead);
+							}
+						}
+						if(assignOut.is_open()) {
+#pragma omp critical(writeAssign)
+							{
+								assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod;
+								if(withDetail)
+									assignOut << refMems_pe.first << "\t" << refMems_pe.second << "\t"
+									<< bgMems_pe.first << "\t" << bgMems_pe.second;
+								assignOut << endl;
+							}
+						}
+					}
+				} /* end task */
+			} /* end each read/pair */
+		} /* end single */
+#pragma omp taskwait
+	} /* end parallel */
 }
