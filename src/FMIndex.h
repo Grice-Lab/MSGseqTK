@@ -157,12 +157,15 @@ public:
 	/** get the original seq */
 	DNAseq getSeq() const;
 
-	bool isKeepSa() const {
+	bool hasSA() const {
 		return keepSA;
 	}
 
-	void setKeepSa(bool keepSa = false) {
-		keepSA = keepSa;
+	/** clear stored SA information, if any */
+	void clearSA() {
+		SAsampled.clear();
+		SAbit.reset();
+		keepSA = false;
 	}
 
 	/** locate all matches to given pattern */
