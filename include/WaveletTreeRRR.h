@@ -43,8 +43,8 @@ public:
 	 * @param src  copy of input string
 	 */
 	template<typename uIntType>
-	WaveletTreeRRR(const basic_string<uIntType>& src, size_t min = -1, size_t max = -1)
-	: wid(sizeof(uIntType) * Wb), min(min), max(max) {
+	WaveletTreeRRR(const basic_string<uIntType>& src, size_t min = -1, size_t max = -1, size_t sample_rate = BitSeqRRR::DEFAULT_SAMPLE_RATE)
+	: wid(sizeof(uIntType) * Wb), min(min), max(max), sample_rate(sample_rate) {
 		if(this->min == -1)
 			this->min = *std::min_element(src.begin(), src.end());
 		if(this->max == -1)
@@ -153,6 +153,7 @@ private:
 	size_t wid = 0; /* nBits of the original input string */
 	size_t min = 0; /* min value of input symbols */
 	size_t max = 0; /* max value of input symbols */
+	size_t sample_rate = 0; /* sample_rate for underlying BitSeqRRR structures */
 	vector<size_t> OCC; /* 0-based cumulative occurence of each symbol in alphabet, with length max + 2 */
 	vector<BitSeqRRR> bseqs; /* an array of BitSeqRRR, with length height */
 
@@ -191,7 +192,7 @@ void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
 	/* build the BitSeqs from BitStrs */
 	bseqs.reserve(height);
 	for(const BitStr32& bs : bstrs)
-		bseqs.push_back(BitSeqRRR(bs));
+		bseqs.push_back(BitSeqRRR(bs, sample_rate));
 
 	/* build cumulative OCC */
 	for(size_t i = 1; i <= max + 1; ++i)
