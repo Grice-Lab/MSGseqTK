@@ -18,6 +18,7 @@ ostream& WaveletTreeRRR::save(ostream& out) const {
 	out.write((const char*) &wid, sizeof(size_t));
 	out.write((const char*) &min, sizeof(size_t));
 	out.write((const char*) &max, sizeof(size_t));
+	out.write((const char*) &sample_rate, sizeof(size_t));
 	size_t nOCC = OCC.size();
 	out.write((const char*) &nOCC, sizeof(size_t));
 	out.write((const char*) OCC.data(), sizeof(size_t) * nOCC);
@@ -34,6 +35,7 @@ istream& WaveletTreeRRR::load(istream& in) {
 	in.read((char*) &wid, sizeof(size_t));
 	in.read((char*) &min, sizeof(size_t));
 	in.read((char*) &max, sizeof(size_t));
+	in.read((char*) &sample_rate, sizeof(size_t));
 	size_t nOCC;
 	in.read((char*) &nOCC, sizeof(size_t));
 	OCC.resize(nOCC);
