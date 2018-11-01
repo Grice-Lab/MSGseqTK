@@ -221,8 +221,8 @@ int main(int argc, char* argv[]) {
 	DNAseq blockSeq;
 	vector<Genome> blockGenomes;
 	int k = 0;
-	for(const string& inFn : inFns) {
-		string genomeName = genomeFn2Name.at(inFn);
+	for(vector<string>::const_iterator inFn = inFns.begin(); inFn != inFns.end(); ++inFn) {
+		string genomeName = genomeFn2Name.at(*inFn);
 		if(!isForce && mtg.hasGenome(genomeName)) {
 			warningLog << "Genome '" << genomeName << "' already exists in the database, ignore" << endl;
 			continue;
@@ -231,16 +231,16 @@ int main(int argc, char* argv[]) {
 		/* open genome file */
 		boost::iostreams::filtering_istream genomeIn;
 #ifdef HAVE_LIBZ
-		if(StringUtils::endsWith(inFn, GZIP_FILE_SUFFIX))
+		if(StringUtils::endsWith(*inFn, GZIP_FILE_SUFFIX))
 			genomeIn.push(boost::iostreams::gzip_decompressor());
-		else if(StringUtils::endsWith(inFn, BZIP2_FILE_SUFFIX))
+		else if(StringUtils::endsWith(*inFn, BZIP2_FILE_SUFFIX))
 			genomeIn.push(boost::iostreams::bzip2_decompressor());
 		else { }
 #endif
 
-		genomeIn.push(boost::iostreams::file_source(inFn));
+		genomeIn.push(boost::iostreams::file_source(*inFn));
 		if(genomeIn.bad()) {
-			cerr << "Unable to open genome seq file '" << inFn << "' " << ::strerror(errno) << endl;
+			cerr << "Unable to open genome seq file '" << *inFn << "' " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
 
@@ -262,10 +262,14 @@ int main(int argc, char* argv[]) {
 		}
 		blockGenomes.push_back(genome); /* add this genome to the block */
 		/* process block, if large enough */
-		if(blockSeq.length() >= blockSize * MBP_UNIT) {
-			infoLog << "Adding " << blockGenomes.size() << " genomes in block " << ++k << " into database" << endl;
+		bool isLast = inFn == inFns.end() - 1;
+		if(blockSeq.length() >= blockSize * MBP_UNIT || isLast) { /* last genome or full block */
+			if(!isLast)
+				infoLog << "Adding " << blockGenomes.size() << " genomes in block " << ++k << " into database" << endl;
+			else
+				infoLog << "Adding " << blockGenomes.size() << " genomes in block " << ++k << " into database and building final sampled Suffix-Array" << endl;
 			mtg.prepend(blockGenomes);
-			fmidx = FMIndex(blockSeq) + fmidx; /* always use freshly built FMIndex as lhs */
+			fmidx = FMIndex(blockSeq, isLast) + fmidx; /* always use freshly built FMIndex as lhs */
 			assert(mtg.size() == fmidx.length());
 			blockGenomes.clear();
 			blockSeq.clear();
@@ -273,20 +277,6 @@ int main(int argc, char* argv[]) {
 		}
 		/* incremental update backward */
 		nProcessed++;
-	}
-	/* process last block */
-	if(!blockSeq.empty()) {
-		infoLog << "Adding " << blockGenomes.size() << " genomes in block " << ++k << " into database" << endl;
-		mtg.prepend(blockGenomes);
-		fmidx = FMIndex(blockSeq) + fmidx;
-		assert(mtg.size() == fmidx.length());
-		blockSeq.clear();
-		infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
-	}
-
-	if(oldDBName.empty() || nProcessed > 0) { /* original db not modified */
-		infoLog << "Building the final SA ..." << endl;
-		fmidx.buildSA();
 	}
 
 	if(oldDBName.empty())

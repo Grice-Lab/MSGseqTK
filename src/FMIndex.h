@@ -20,12 +20,14 @@
 #include "QualStr.h"
 #include "Loc.h"
 #include "divsufsort_private.h"
+#include "BitStr.h"
 #include "BitSeqGGMN.h"
 #include "WaveletTreeRRR.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
 using std::vector;
+using EGriceLab::libSDS::BitStr32;
 using EGriceLab::libSDS::BitSeqGGMN;
 using EGriceLab::libSDS::WaveletTreeRRR;
 
@@ -47,7 +49,7 @@ public:
 	}
 
 	/** construct an FMIndex from pre-built values */
-	FMIndex(const saidx_t* B, const saidx_t* C, const basic_string<sauchar_t>& bwtSeq, bool keepSA = false);
+	FMIndex(const saidx_t* B, const saidx_t* C, const DNAseq& bwtSeq, bool keepSA = false);
 
 	/** destructor */
 	virtual ~FMIndex() { 	}
@@ -124,9 +126,14 @@ public:
 	 */
 	saidx_t accessSA(saidx_t i) const;
 
-	/** build SAbit and SAsampled from the internal BWT */
+	/** build SAbit and SAsampled from the internal BWT, where raw BWTseq not available */
 	void buildSA();
 
+protected:
+	/** build SAbit and SAsampled from a given raw BWTSeq, which is available during many operations */
+	void buildSA(const DNAseq& bwtSeq);
+
+public:
 	/**
 	 * count present times of a DNAseq pattern in forward version
 	 */
