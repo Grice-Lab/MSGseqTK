@@ -137,7 +137,7 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
 		bwtM.push_back(bstr.test(k) ? bwt.access(i++) : other.bwt.access(j++));
 	std::cerr << "bwtM constructed" << std::endl;
 	/* update bwtRRR */
-    bwt = WaveletTreeRRR(bwtM, DNAalphabet::N, DNAalphabet::T);
+    bwt = WaveletTreeRRR(bwtM, DNAalphabet::N, DNAalphabet::T, RRR_SAMPLE_RATE);
 	std::cerr << "bwt constructed" << std::endl;
 
 	/* merging B[] and C[] */
@@ -192,7 +192,7 @@ void FMIndex::buildBWT(const DNAseq& seq) {
     delete[] SA;
 
 	/* construct BWTRRR */
-    bwt = WaveletTreeRRR(bwtSeq, DNAalphabet::N, DNAalphabet::T);
+    bwt = WaveletTreeRRR(bwtSeq, DNAalphabet::N, DNAalphabet::T, RRR_SAMPLE_RATE);
 
 	if(keepSA)
 		buildSA(bwtSeq);
@@ -281,7 +281,7 @@ Loc FMIndex::reverseLoc(const Loc& loc) const {
 }
 
 FMIndex::FMIndex(const saidx_t* B, const saidx_t* C, const DNAseq& bwtSeq, bool keepSA)
-: bwt(WaveletTreeRRR(bwtSeq, DNAalphabet::N, DNAalphabet::T)), keepSA(keepSA)
+: bwt(WaveletTreeRRR(bwtSeq, DNAalphabet::N, DNAalphabet::T, RRR_SAMPLE_RATE)), keepSA(keepSA)
 {
 	/* copy B and C */
 	std::copy(B, B + UINT8_MAX + 1, this->B);
