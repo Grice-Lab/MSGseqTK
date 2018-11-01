@@ -27,6 +27,7 @@ using std::vector;
 
 struct MEM {
 	/* nested types and enums */
+	/* bit-mask for strands, 01 for FWD, 10 for REV */
 	enum STRAND { FWD = 1, REV };
 
 	/** default constructor */

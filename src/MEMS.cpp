@@ -75,7 +75,7 @@ MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
 
 	if(strand & MEM::FWD != 0 && strand & MEM::REV == 0) /* fwd only */
 		return fwdMems;
-	else if(strand & MEM::FWD == 0 && strand & MEM::REV != 0)
+	else if(strand & MEM::FWD == 0 && strand & MEM::REV != 0) /* rev only */
 		return revMems;
 	else
 		return fwdLoglik < revLoglik ? fwdMems : revMems; /* return the most significant result */
