@@ -21,14 +21,14 @@
 #include "Loc.h"
 #include "divsufsort_private.h"
 #include "BitStr.h"
-#include "BitSeqGGMN.h"
+#include "BitSeqRRR.h"
 #include "WaveletTreeRRR.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
 using std::vector;
 using EGriceLab::libSDS::BitStr32;
-using EGriceLab::libSDS::BitSeqGGMN;
+using EGriceLab::libSDS::BitSeqRRR;
 using EGriceLab::libSDS::WaveletTreeRRR;
 
 /**
@@ -202,7 +202,7 @@ private:
 	saidx_t C[UINT8_MAX + 1] = { 0 }; /* cumulative count of each alphabet base, C[i] = B(0) + B(1) + ... + B(i-1) */
 	WaveletTreeRRR bwt; /* Wavelet-Tree transformed BWT string for reversed DNAseq */
 	bool keepSA = false; /* whether to keep SAidx and SAsampled during building */
-	BitSeqGGMN SAbit; /* BitSeq index telling whether a SA was sampled */
+	BitSeqRRR SAbit; /* BitSeq index telling whether a SA was sampled */
 	SArray_t SAsampled; /* sampled SA vector */
 
 public:
