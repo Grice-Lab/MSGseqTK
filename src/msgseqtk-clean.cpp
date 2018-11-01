@@ -78,7 +78,6 @@ void printUsage(const string& progName) {
 		 << "            --detail  FLAG       : write detailed information of MEMS in the assignment output, ignored if -a is not specified" << endl
 		 << "            -L|--lod  DBL        : minimum log-odd required to determine a read/pair as reference vs. background [" << DEFAULT_MIN_LOD << "]" << endl
 //		 << "            -e  DBL              : maximum e-value allowed to consider an MEM between datbase and a read as significance [" << MAX_EVAL << "]" << endl
-		 << "            --ignore  FLAG       : ignore read quality scores for calculating MEM evalues even if they are present" << endl
 		 << "            -s|--strand  INT     : read/pair strand to search, 1 for sense, 2 for anti-sense, 3 for both [" << DEFAULT_STRAND << "]" << endl
 		 << "            -S|--seed  INT       : random seed used for determing MEMS, for debug only" << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
@@ -101,7 +100,6 @@ int main(int argc, char* argv[]) {
 	double minLod = DEFAULT_MIN_LOD;
 	int strand = DEFAULT_STRAND;
 	unsigned seed = time(NULL); // using time as default seed
-	bool ignoreQual = false;
 	double maxIndelRate = DEFAULT_INDEL_RATE;
 
 	typedef boost::random::mt11213b RNG; /* random number generator type */
@@ -152,9 +150,6 @@ int main(int argc, char* argv[]) {
 
 	if(cmdOpts.hasOpt("-q"))
 		minLod = ::atof(cmdOpts.getOptStr("-q"));
-
-	if(cmdOpts.hasOpt("--ignore"))
-		ignoreQual = true;
 
 	if(cmdOpts.hasOpt("-s"))
 		strand = ::atoi(cmdOpts.getOptStr("-s"));
