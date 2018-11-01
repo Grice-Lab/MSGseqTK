@@ -125,7 +125,7 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
 		}
 		else {
 			RA = other.LF(b, RA - 1);
-			i = LF(i) - 1;
+			i = LF(b, i) - 1;
 		}
 //		cerr << "i: " << i << " c: " << DNAalphabet::decode(b) << " RA: " << RA << endl;
 	}
@@ -214,7 +214,7 @@ void FMIndex::buildSA() {
 		if(bstr.test(i))
 			SAsampled[SAbit.rank1(i) - 1] = j - 1;
 		/* LF-mapping */
-		i = b != 0 ? LF(i) - 1 : ++shift;
+		i = b != 0 ? LF(b, i) - 1 : ++shift;
 	}
 }
 
@@ -319,7 +319,7 @@ FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {
 		}
 		else {
 			RA = rhs.LF(b, RA - 1);
-			i = lhs.LF(i) - 1;
+			i = lhs.LF(b, i) - 1;
 		}
 //		cerr << "i: " << i << " c: " << DNAalphabet::decode(b) << " RA: " << RA << endl;
 	}
