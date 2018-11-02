@@ -160,6 +160,13 @@ public:
 		return attrValues.count(name) > 0;
 	}
 
+	/** shift this GFF record of given offset */
+	GFF& shift(long offset) {
+		start += offset;
+		end += offset;
+		return *this;
+	}
+
 	/** load object from binary input */
 	istream& load(istream& in);
 
