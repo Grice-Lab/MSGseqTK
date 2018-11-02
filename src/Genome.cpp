@@ -103,7 +103,7 @@ ostream& Genome::writeGFF(ostream& out, UCSC::GFF::Version ver, const string& sr
 	size_t chrShift = shift;
 	for(const Chrom& chr : chroms) {
 		UCSC::GFF chrGff(ver, name, src, "chromosome", chrShift + 1, chrShift + chr.size, UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
-		chrGff.setAttr("ID", "chr:" + name + ":" + chr.name);
+		chrGff.setAttr("ID", chr.name);
 		chrGff.setAttr("Name", chr.name);
 		chrGff.setAttr("Parent", name);
 		out << chrGff << endl;
