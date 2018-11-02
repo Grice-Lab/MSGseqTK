@@ -36,7 +36,7 @@ istream& GFF::load(istream& in) {
 	in.read((char *) &start, sizeof(long));
 	in.read((char *) &end, sizeof(long));
 	in.read((char *) &score, sizeof(double));
-	in.read(&strand, 1);
+	in.read(&strand, sizeof(char));
 	in.read((char *) &frame, sizeof(int));
 	size_t nAttr = 0;
 	string name, val;
@@ -56,7 +56,7 @@ ostream& GFF::save(ostream& out) const {
 	out.write((const char *) &start, sizeof(long));
 	out.write((const char *) &end, sizeof(long));
 	out.write((const char *) &score, sizeof(double));
-	out.write(&strand, 1);
+	out.write(&strand, sizeof(char));
 	out.write((const char *) &frame, sizeof(int));
 	size_t nAttr = numAttrs();
 	out.write((const char *) &nAttr, sizeof(size_t));
