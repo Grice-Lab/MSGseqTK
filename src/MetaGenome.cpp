@@ -92,7 +92,7 @@ ostream& MetaGenome::writeGFF(ostream& out, UCSC::GFF::Version ver, const string
 	size_t shift = 0;
 	for(const Genome& genome : genomes) {
 		genome.writeGFF(out, ver, src, shift);
-		shift += genome.size() + 1;
+		shift += genome.size();
 	}
 
 	return out;
