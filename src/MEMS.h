@@ -78,7 +78,7 @@ public:
 	 * @return  a vector of MEMs ordered by from
 	 */
 	static MEMS sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
-			RNG& rng, int strand);
+			RNG& rng, int strand, bool keepLoc = false);
 
 	/**
 	 * get paired-end MEMS by MCMC sampling matches between db and seq
@@ -89,7 +89,7 @@ public:
 	 * @return  an MEM_PE of MEMs ordered by from
 	 */
 	static MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
-			RNG& rng, int strand);
+			RNG& rng, int strand, bool keepLoc = false);
 
 	/**
 	 * get the loglik of a paired-end MEMS

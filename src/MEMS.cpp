@@ -32,7 +32,7 @@ uint64_t MEMS::length() const {
 }
 
 MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
-		RNG& rng, int strand) {
+		RNG& rng, int strand, bool keepLoc) {
 	assert(strand != 0);
 	MEMS fwdMems, revMems;
 	double fwdLoglik = 0;
@@ -47,7 +47,7 @@ MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
 			/* accept by chance */
 			bool acceptible = eval <= mem_dist(rng);
 			if(acceptible) {
-				fwdMems.push_back(mem.findLocs());
+				fwdMems.push_back(!keepLoc ? mem : mem.findLocs());
 				i = mem.to + 1;
 				fwdLoglik += mem.loglik();
 			}
@@ -64,7 +64,7 @@ MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
 			/* accept by chance */
 			bool acceptible = eval <= mem_dist(rng);
 			if(acceptible) {
-				revMems.push_back(mem.findLocs());
+				revMems.push_back(!keepLoc ? mem : mem.findLocs());
 				i = mem.to + 1;
 				revLoglik += mem.loglik();
 			}
@@ -101,7 +101,7 @@ ostream& MEMS::write(ostream& out) const {
 }
 
 MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
-		RNG& rng, int strand) {
+		RNG& rng, int strand, bool keepLoc) {
 	assert(strand != 0);
 	MEMS_PE sense_mems_pe, revcom_mems_pe;
 	double senseLoglik = 0;
@@ -116,7 +116,7 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 			/* accept by chance */
 			bool acceptible = eval <= mem_dist(rng);
 			if(acceptible) {
-				sense_mems_pe.first.push_back(mem.findLocs());
+				sense_mems_pe.first.push_back(!keepLoc ? mem : mem.findLocs());
 				i = mem.to + 1;
 				senseLoglik += mem.loglik();
 			}
@@ -131,7 +131,7 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 			/* accept by chance */
 			bool acceptible = eval <= mem_dist(rng);
 			if(acceptible) {
-				sense_mems_pe.second.push_back(mem.findLocs());
+				sense_mems_pe.second.push_back(!keepLoc ? mem : mem.findLocs());
 				i = mem.to + 1;
 				senseLoglik += mem.loglik();
 			}
@@ -149,7 +149,7 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 			/* accept by chance */
 			bool acceptible = eval <= mem_dist(rng);
 			if(acceptible) {
-				revcom_mems_pe.first.push_back(mem.findLocs());
+				revcom_mems_pe.first.push_back(!keepLoc ? mem : mem.findLocs());
 				i = mem.to + 1;
 				revcomLoglik += mem.loglik();
 			}
@@ -163,7 +163,7 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 			/* accept by chance */
 			bool acceptible = eval <= mem_dist(rng);
 			if(acceptible) {
-				revcom_mems_pe.second.push_back(mem.findLocs());
+				revcom_mems_pe.second.push_back(!keepLoc ? mem : mem.findLocs());
 				i = mem.to + 1;
 				revcomLoglik += mem.loglik();
 			}

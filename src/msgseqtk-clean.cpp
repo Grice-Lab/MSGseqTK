@@ -80,7 +80,7 @@ void printUsage(const string& progName) {
 		 << "            -o  FILE             : output of cleaned single-end/forward reads" << ZLIB_SUPPORT << endl
 		 << "            -p  FILE             : output of cleaned mate/reverse reads" << ZLIB_SUPPORT << endl
 		 << "            -a  FILE             : write an additional TSV file with the detailed assignment information for each read" << endl
-		 << "            --detail  FLAG       : write detailed information of MEMS in the assignment output, ignored if -a is not specified" << endl
+		 << "            --detail  FLAG       : write detailed information of MEMS in the assignment output, ignored if -a is not specified; this may lead to slower processing" << endl
 		 << "            -L|--lod  DBL        : minimum log-odd required to determine a read/pair as reference vs. background [" << DEFAULT_MIN_LOD << "]" << endl
 //		 << "            -e  DBL              : maximum e-value allowed to consider an MEM between datbase and a read as significance [" << MAX_EVAL << "]" << endl
 		 << "            -s|--strand  INT     : read/pair strand to search, 1 for sense, 2 for anti-sense, 3 for both [" << DEFAULT_STRAND << "]" << endl
@@ -398,8 +398,8 @@ int main(int argc, char* argv[]) {
 #pragma omp task
 				{
 					if(!isPaired) {
-						MEMS refMems = MEMS::sampleMEMS(&fwdRead, &refFmidx, rng, strand);
-						MEMS bgMems = MEMS::sampleMEMS(&fwdRead, &bgFmidx, rng, strand);
+						MEMS refMems = MEMS::sampleMEMS(&fwdRead, &refFmidx, rng, strand, withDetail);
+						MEMS bgMems = MEMS::sampleMEMS(&fwdRead, &bgFmidx, rng, strand, withDetail);
 						double refLoglik = refMems.loglik();
 						double bgLoglik = bgMems.loglik();
 						double lod = - refLoglik + bgLoglik;
@@ -417,8 +417,8 @@ int main(int argc, char* argv[]) {
 						}
 					}
 					else {
-						MEMS_PE refMems_pe = MEMS::sampleMEMS(&fwdRead, &revRead, &refFmidx, rng, strand);
-						MEMS_PE bgMems_pe = MEMS::sampleMEMS(&fwdRead, &revRead, &bgFmidx, rng, strand);
+						MEMS_PE refMems_pe = MEMS::sampleMEMS(&fwdRead, &revRead, &refFmidx, rng, strand, withDetail);
+						MEMS_PE bgMems_pe = MEMS::sampleMEMS(&fwdRead, &revRead, &bgFmidx, rng, strand, withDetail);
 						double refLoglik = MEMS::loglik(refMems_pe);
 						double bgLoglik = MEMS::loglik(bgMems_pe);
 						double lod = - refLoglik + bgLoglik;
