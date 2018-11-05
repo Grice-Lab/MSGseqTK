@@ -40,7 +40,7 @@ MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
 	/* scan fwd strand */
 	if(strand & MEM::FWD != 0) {
 		for(int64_t i = 0; i < seq->length();) {
-			MEM mem = MEM::findMEM(seq, fmidx, i, MEM::FWD);
+			MEM& mem = MEM::findMEM(seq, fmidx, i, MEM::FWD).evaluate();
 
 			/* calculate MEM evalue */
 			double eval = mem.evalue();
@@ -58,7 +58,7 @@ MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
 	/* scal rev strand */
 	if(strand & MEM::REV != 0) {
 		for(int64_t i = 0; i < seq->length();) {
-			MEM mem = MEM::findMEM(seq, fmidx, i, MEM::REV);
+			MEM& mem = MEM::findMEM(seq, fmidx, i, MEM::REV).evaluate();
 			/* calculate MEM evalue */
 			double eval = mem.evalue();
 			/* accept by chance */
@@ -109,7 +109,7 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 	/* scan fwd strand */
 	if(strand & MEM::FWD != 0) {
 		for(int64_t i = 0; i < fwdSeq->length();) {
-			MEM mem = MEM::findMEM(fwdSeq, fmidx, i, MEM::FWD);
+			MEM& mem = MEM::findMEM(fwdSeq, fmidx, i, MEM::FWD).evaluate();
 
 			/* calculate MEM evalue */
 			double eval = mem.evalue();
@@ -124,7 +124,7 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 				i++;
 		}
 		for(int64_t i = 0; i < revSeq->length();) {
-			MEM mem = MEM::findMEM(revSeq, fmidx, i, MEM::REV);
+			MEM& mem = MEM::findMEM(revSeq, fmidx, i, MEM::REV).evaluate();
 
 			/* calculate MEM evalue */
 			double eval = mem.evalue();
@@ -142,7 +142,7 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 	/* scal rev strand */
 	if(strand & MEM::REV != 0) {
 		for(int64_t i = 0; i < fwdSeq->length();) {
-			MEM mem = MEM::findMEM(fwdSeq, fmidx, i, MEM::REV);
+			MEM& mem = MEM::findMEM(fwdSeq, fmidx, i, MEM::REV).evaluate();
 
 			/* calculate MEM evalue */
 			double eval = mem.evalue();
@@ -157,7 +157,7 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 				i++;
 		}
 		for(int64_t i = 0; i < revSeq->length();) {
-			MEM mem = MEM::findMEM(revSeq, fmidx, i, MEM::FWD);
+			MEM& mem = MEM::findMEM(revSeq, fmidx, i, MEM::FWD).evaluate();
 			/* calculate MEM evalue */
 			double eval = mem.evalue();
 			/* accept by chance */

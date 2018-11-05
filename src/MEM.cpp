@@ -19,15 +19,19 @@ namespace MSGseqTK {
 using namespace EGriceLab::Math;
 using std::unordered_set;
 
-double MEM::loglik() const {
-	double loglik = 0;
-	uint64_t N = fmidx->totalBases();
-	DNAseq ds = seq->getSeq();
-	if(strand == REV)
-		ds.revcom();
-	for(uint64_t i = from; i < to; ++i)
-		loglik += ::log(fmidx->getBaseCount(ds[i])) - ::log(N); /* use observed base frequency */
-	return loglik;
+MEM& MEM::evaluate() {
+	if(empty())
+		return *this;
+	logP = 0;
+	const uint64_t N = fmidx->totalBases();
+	for(int64_t i = from; i < to; ++i) {
+		int8_t b = seq->getBase(i);
+		if(strand == REV)
+			b = DNAalphabet::complement(b);
+		logP += ::log(fmidx->getBaseCount(b));
+	}
+	logP -= length() * log(N); /* subtract denominator */
+	return *this;
 }
 
 uint64_t MEM::seqDist(const MEM& mem1, const MEM& mem2) {

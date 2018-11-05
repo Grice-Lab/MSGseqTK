@@ -19,7 +19,7 @@ using EGriceLab::libSDS::BitStr32;
 
 const saidx_t FMIndex::totalBases() const {
 	saidx_t N = 0;
-	for(int8_t i = DNAalphabet::A; i < DNAalphabet::SIZE; i++)
+	for(int8_t i = DNAalphabet::A; i <= DNAalphabet::T; i++)
 		N += B[i];
 	return N;
 }

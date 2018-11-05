@@ -38,13 +38,13 @@ struct MEM {
 			uint64_t from, uint64_t to, uint64_t SAstart, uint64_t SAend,
 			const vector<Loc>& locs)
 	: seq(seq), fmidx(fmidx), strand(strand), from(from), to(to), SAstart(SAstart), SAend(SAend), locs(locs)
-	{  }
+	{ 	}
 
 	/** construct an MEM with all info but not locs */
 	MEM(const PrimarySeq* seq, const FMIndex* fmidx, STRAND strand,
 			uint64_t from, uint64_t to, uint64_t SAstart, uint64_t SAend)
 	: seq(seq), fmidx(fmidx), strand(strand), from(from), to(to), SAstart(SAstart), SAend(SAend)
-	{  }
+	{   }
 
 	/* member methods */
 	/** get length of this MEM */
@@ -75,11 +75,18 @@ struct MEM {
 	MEM& findLocs();
 
 	/**
-	 * get loglikelihood of this MEM
-	 * @param  ignoreQual  whether to ignore quality even exists
-	 * @return  log-pvalue of observing this MEM by random, using base-frequency and optionally base quality
+	 * evaluate the log-probality of this MEM
+	 * @return  log-pvalue of observing this MEM by chance, using base-frequency only
 	 */
-	double loglik() const;
+	MEM& evaluate();
+
+	/**
+	 * get loglikelihood of this MEM, use pre-evaluate logP value
+	 * @return  log-pvalue of observing this MEM by chance, using base-frequency only
+	 */
+	double loglik() const {
+		return logP;
+	}
 
 	/** get the pvalue of observing this MEM by random */
 	double pvalue() const {
@@ -148,6 +155,7 @@ struct MEM {
 	int64_t to = 0;   /* 1-based relative end on seq */
 	int64_t SAstart = 0; /* 0-based start position on SA */
 	int64_t SAend = 0;   /* 1-based end position on SA */
+	double logP = NAN; /* log-probability (loglik) of observing this MEM by chance */
 	vector<Loc> locs; /* all Loc this MEM matches to w/ reversed coordinates */
 
 	/* static methods */

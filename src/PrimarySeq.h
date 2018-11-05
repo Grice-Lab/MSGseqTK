@@ -89,6 +89,14 @@ public:
 		return seq.empty();
 	}
 
+	DNAseq::value_type getBase(DNAseq::size_type i) const {
+		return seq[i];
+	}
+
+	QualStr::value_type getQvalue(QualStr::size_type i) const {
+		return qual[i];
+	}
+
 	/** load a DNAseq from binary input, override the old one */
 	istream& load(istream& in);
 
