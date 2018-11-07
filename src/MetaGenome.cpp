@@ -59,6 +59,24 @@ size_t MetaGenome::getChromIndex(uint64_t loc) const {
 	return -1;
 }
 
+uint64_t MetaGenome::getGenomeShift(size_t i) const {
+	uint64_t shift = 0;
+	for(size_t k = 0; k < i; ++k)
+		shift += getGenome(k).size();
+	return shift;
+}
+
+MetaGenome::GENOME_SHIFTMAP MetaGenome::getGenomeShift() const {
+	GENOME_SHIFTMAP shiftMap;
+	uint64_t shift = 0;
+	for(size_t i = 0; i < numGenomes(); ++i) {
+		shiftMap[i] = shift;
+		shift += getGenome(i).size();
+	}
+	return shiftMap;
+}
+
+
 ostream& MetaGenome::save(ostream& out) const {
 	size_t N = numGenomes();
 	out.write((const char*) &N, sizeof(size_t));

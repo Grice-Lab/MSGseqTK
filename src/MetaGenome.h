@@ -35,6 +35,7 @@ using UCSC::GFF;
  */
 class MetaGenome {
 public:
+	typedef map<size_t, uint64_t> GENOME_SHIFTMAP; /* genome shift in this MetaGenome */
 	typedef map<string, Genome::CHROM_ANNOMAP> GENOME_ANNOMAP; /* map from genome names to chrom-level maps */
 	/* constructors */
 	/** default constructor */
@@ -56,14 +57,14 @@ public:
 
 	/**
 	 * get the genome index at given location, or -1 if not found
-	 * @param loc  0-based location on the MetaGenome
+	 * @param loc  0-based location on the concatenated MetaGenome
 	 * @return  the index of the genome that covers this loc
 	 */
 	size_t getGenomeIndex(uint64_t loc) const;
 
 	/**
 	 * get the chromosome index of given location, or -1 if not found
-	 * @param loc  0-based location
+	 * @param loc  0-based on the concatenated location
 	 * @return  the index of chromosome that covers this loc
 	 */
 	size_t getChromIndex(uint64_t loc) const;
@@ -74,6 +75,20 @@ public:
 	const Genome& getGenomeAtLoc(uint64_t loc) const {
 		return genomes.at(getGenomeIndex(loc));
 	}
+
+	/**
+	 * get the shift of the i-th genome
+	 * @param i  index of the genome
+	 * @return  shift or total size of genomes before this
+	 */
+	uint64_t getGenomeShift(size_t i) const;
+
+	/**
+	 * get the shift of the i-th genome
+	 * @param i  index of the genome
+	 * @return  shift or total size of genomes before this
+	 */
+	GENOME_SHIFTMAP getGenomeShift() const;
 
 	/** get genome by index */
 	const Genome& getGenome(size_t i) const {
