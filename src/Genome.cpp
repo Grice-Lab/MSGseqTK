@@ -15,6 +15,7 @@ namespace EGriceLab {
 namespace MSGseqTK {
 using namespace std;
 
+const boost::regex Genome::INVALID_NAMEPREFIX_PATTERN = boost::regex("^[^\\w.:^*$@!+?-|]");
 const boost::regex Genome::INVALID_NAME_PATTERN = boost::regex("[^\\w.:^*$@!+?-|]");
 const string Genome::REPLACEMENT_STR = ".";
 
@@ -113,8 +114,44 @@ ostream& Genome::writeGFF(ostream& out, UCSC::GFF::Version ver, const string& sr
 	return out;
 }
 
+ostream& Genome::writeGFF(ostream& out, const CHROM_ANNOMAP& extAnno, GFF::Version ver, const string& src, size_t shift) const {
+	/* write per-genome comment */
+	out << "##genome " << name << endl;
+	/* write genome as first-level feature */
+	UCSC::GFF genomeGff(ver, name, src, "genome", shift + 1, shift + size(), UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
+	genomeGff.setAttr("ID", name);
+	genomeGff.setAttr("Name", name);
+	out << genomeGff << endl;
+	/* write each chromosome as second-level feature, with additional annotations inserted within */
+	size_t chrShift = shift;
+	for(const Chrom& chr : chroms) {
+		UCSC::GFF chrGff(ver, name, src, "chromosome", chrShift + 1, chrShift + chr.size, UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME); // use genome name as seqsrc
+		chrGff.setAttr("ID", chr.name);
+		chrGff.setAttr("Name", chr.name);
+		chrGff.setAttr("Parent", name);
+		assert(chrGff.getEnd() < genomeGff.getEnd()); /* genome end with null */
+		out << chrGff << endl;
+		/* write external annotations */
+		if(extAnno.count(chr.name) > 0) { /* this chromosome has external annotations */
+			for(GFF extGff : extAnno.at(chr.name)) { /* use a local copy */
+				extGff.setSeqname(name); // always use genome name
+				extGff.shift(chrShift);
+				if(!extGff.hasAttr("Parent")) /* top level features, i.e. region, gene */
+					extGff.setAttr("Parent", chr.name);
+				out << extGff << endl;
+			}
+		}
+
+		chrShift += chr.size + 1; /* including null terminal */
+	}
+
+	return out;
+}
+
 string Genome::formatName(const string& name) {
-	return boost::replace_all_regex_copy(name, INVALID_NAME_PATTERN, REPLACEMENT_STR);
+	return boost::replace_all_regex_copy(
+			boost::replace_all_regex_copy(name, INVALID_NAMEPREFIX_PATTERN, string("")),
+			INVALID_NAME_PATTERN, REPLACEMENT_STR);
 }
 
 } /* namespace MSGseqTK */

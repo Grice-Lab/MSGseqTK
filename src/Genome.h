@@ -25,12 +25,14 @@ using std::map;
 using std::vector;
 using std::istream;
 using std::ostream;
+using UCSC::GFF;
 
 /**
  * Basic information of a genome (within a MetaGenome)
  */
 class Genome {
 public:
+	typedef map<string, vector<GFF>> CHROM_ANNOMAP; /* type for external chromosome annotations */
 	/* nested types and enums */
 	struct Chrom {
 		/** default constructor */
@@ -50,7 +52,7 @@ public:
 		friend bool operator==(const Chrom& lhs, const Chrom& rhs);
 
 		string name;
-		uint64_t size;
+		uint64_t size = 0;
 	};
 
 	/* constructors */
@@ -122,7 +124,10 @@ public:
 	istream& load(istream& in);
 
 	/** write this object to text output in GFF format */
-	ostream& writeGFF(ostream& out, UCSC::GFF::Version ver = UCSC::GFF::GFF3, const string& src = ".", size_t shift = 0) const;
+	ostream& writeGFF(ostream& out, GFF::Version ver = GFF::GFF3, const string& src = ".", size_t shift = 0) const;
+
+	/** write this object to text output in GFF format, with provided external annotations */
+	ostream& writeGFF(ostream& out, const CHROM_ANNOMAP& extAnno, GFF::Version ver = GFF::GFF3, const string& src = ".", size_t shift = 0) const;
 
 	/* non-member functions */
 	friend bool operator==(const Genome& lhs, const Genome& rhs);
@@ -134,6 +139,7 @@ private:
 
 	/* class members */
 public:
+	static const boost::regex INVALID_NAMEPREFIX_PATTERN;
 	static const boost::regex INVALID_NAME_PATTERN;
 	static const string REPLACEMENT_STR;
 

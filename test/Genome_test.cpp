@@ -8,9 +8,9 @@
 #include <iostream>
 #include <sstream>
 #include <cstring>
-#include "ProgEnv.h"
 #include "Genome.h"
 #include "MetaGenome.h"
+#include "MSGseqTKEnv.h"
 
 using namespace std;
 using namespace EGriceLab::MSGseqTK;

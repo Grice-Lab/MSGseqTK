@@ -125,8 +125,7 @@ am_libMSGseqTK_a_OBJECTS = DNAalphabet.$(OBJEXT) DNAseq.$(OBJEXT) \
 libMSGseqTK_a_OBJECTS = $(am_libMSGseqTK_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_msgseqtk_build_OBJECTS = msgseqtk-build.$(OBJEXT) \
-	MSGseqTKEnv.$(OBJEXT)
+am_msgseqtk_build_OBJECTS = msgseqtk-build.$(OBJEXT)
 msgseqtk_build_OBJECTS = $(am_msgseqtk_build_OBJECTS)
 am__DEPENDENCIES_1 =
 msgseqtk_build_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
@@ -136,20 +135,17 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-am_msgseqtk_clean_OBJECTS = msgseqtk-clean.$(OBJEXT) \
-	MSGseqTKEnv.$(OBJEXT)
+am_msgseqtk_clean_OBJECTS = msgseqtk-clean.$(OBJEXT)
 msgseqtk_clean_OBJECTS = $(am_msgseqtk_clean_OBJECTS)
 msgseqtk_clean_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
 	math/libEGMath.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	libsds/src/libsds.la $(am__DEPENDENCIES_1)
-am_msgseqtk_inspect_OBJECTS = msgseqtk-inspect.$(OBJEXT) \
-	MSGseqTKEnv.$(OBJEXT)
+am_msgseqtk_inspect_OBJECTS = msgseqtk-inspect.$(OBJEXT)
 msgseqtk_inspect_OBJECTS = $(am_msgseqtk_inspect_OBJECTS)
 msgseqtk_inspect_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
 	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	libsds/src/libsds.la
-am_msgseqtk_mergedb_OBJECTS = msgseqtk-mergedb.$(OBJEXT) \
-	MSGseqTKEnv.$(OBJEXT)
+am_msgseqtk_mergedb_OBJECTS = msgseqtk-mergedb.$(OBJEXT)
 msgseqtk_mergedb_OBJECTS = $(am_msgseqtk_mergedb_OBJECTS)
 msgseqtk_mergedb_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
 	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
@@ -431,7 +427,7 @@ FMIndex.cpp \
 Genome.cpp \
 MetaGenome.cpp
 
-msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTKEnv.cpp
+msgseqtk_clean_SOURCES = msgseqtk-clean.cpp
 msgseqtk_clean_LDADD = \
 libMSGseqTK.a \
 util/libEGUtil.a \
@@ -440,7 +436,7 @@ libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB)
 
-msgseqtk_build_SOURCES = msgseqtk-build.cpp MSGseqTKEnv.cpp
+msgseqtk_build_SOURCES = msgseqtk-build.cpp
 msgseqtk_build_LDADD = \
 libMSGseqTK.a \
 util/libEGUtil.a \
@@ -448,14 +444,14 @@ libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB)
 
-msgseqtk_inspect_SOURCES = msgseqtk-inspect.cpp MSGseqTKEnv.cpp
+msgseqtk_inspect_SOURCES = msgseqtk-inspect.cpp
 msgseqtk_inspect_LDADD = \
 libMSGseqTK.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la
 
-msgseqtk_mergedb_SOURCES = msgseqtk-mergedb.cpp MSGseqTKEnv.cpp
+msgseqtk_mergedb_SOURCES = msgseqtk-mergedb.cpp
 msgseqtk_mergedb_LDADD = \
 libMSGseqTK.a \
 util/libEGUtil.a \
@@ -582,7 +578,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Loc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MEM.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MEMS.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MSGseqTKEnv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MetaGenome.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PrimarySeq.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QualStr.Po@am__quote@

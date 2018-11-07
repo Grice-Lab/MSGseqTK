@@ -6,13 +6,18 @@
  */
 
 #include <algorithm>
+#include <boost/iostreams/filtering_stream.hpp> /* basic boost streams */
+#include <boost/iostreams/device/file.hpp> /* file sink and source */
+#include <boost/iostreams/filter/zlib.hpp> /* for zlib support */
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filter/bzip2.hpp> /* for bzip2 support */
 #include "MetaGenome.h"
 #include "StringUtils.h"
 #include "ProgEnv.h"
+#include "MSGseqTKConst.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
-using Eigen::Map;
 
 uint64_t MetaGenome::size() const {
 	uint64_t size = 0;
@@ -87,14 +92,25 @@ bool operator==(const MetaGenome& lhs, const MetaGenome& rhs) {
 	return true;
 }
 
-ostream& MetaGenome::writeGFF(ostream& out, UCSC::GFF::Version ver, const string& src) const {
+ostream& MetaGenome::writeGFF(ostream& out, GFF::Version ver, const string& src) const {
 	/* write each genome */
-	size_t shift = 0;
-	for(const Genome& genome : genomes) {
-		genome.writeGFF(out, ver, src, shift);
-		shift += genome.size();
-	}
+	for(const Genome& genome : genomes)
+		genome.writeGFF(out, ver, src);
+	return out;
+}
 
+ostream& MetaGenome::writeGFF(ostream& out, const GENOME_ANNOMAP& genomeAnnos, GFF::Version ver, const string& src) const {
+	if(genomeAnnos.empty())
+		return writeGFF(out, ver, src);
+	/* write each genome with external annotations */
+	for(const Genome& genome : genomes) {
+		if(genomeAnnos.count(genome.getName())) { /* annotation exists */
+			genome.writeGFF(out, genomeAnnos.at(genome.getName()), ver, src);
+		}
+		else {
+			genome.writeGFF(out, ver, src);
+		}
+	}
 	return out;
 }
 

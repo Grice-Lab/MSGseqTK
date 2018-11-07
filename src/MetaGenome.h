@@ -12,27 +12,30 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <map>
 #include <deque>
 #include <algorithm>
-#include <eigen3/Eigen/Dense>
 #include "DNAseq.h"
 #include "Genome.h"
+#include "StringUtils.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
 
 using std::string;
+using std::map;
 using std::istream;
 using std::ostream;
 using std::vector;
 using std::deque;
-using Eigen::Vector4d;
+using UCSC::GFF;
 
 /**
  * class representing a genome basic information
  */
 class MetaGenome {
 public:
+	typedef map<string, Genome::CHROM_ANNOMAP> GENOME_ANNOMAP; /* map from genome names to chrom-level maps */
 	/* constructors */
 	/** default constructor */
 //	MetaGenome() = default;
@@ -114,7 +117,10 @@ public:
 	istream& load(istream& in);
 
 	/** write this object to text output in GFF format */
-	ostream& writeGFF(ostream& out, UCSC::GFF::Version ver = UCSC::GFF::GFF3, const string& src = ".") const;
+	ostream& writeGFF(ostream& out, GFF::Version ver = GFF::GFF3, const string& src = ".") const;
+
+	/** write this object to text output in GFF format, with external annotation files optionally provided */
+	ostream& writeGFF(ostream& out, const GENOME_ANNOMAP& genomeAnnos, GFF::Version ver = GFF::GFF3, const string& src = ".") const;
 
 	/** merge this MetaGenome with another one,
 	 * with its name unchanged

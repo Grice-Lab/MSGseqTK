@@ -25,6 +25,7 @@
  */
 
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <cstdlib>
 #include <algorithm>
@@ -41,9 +42,8 @@
 using namespace std;
 using namespace EGriceLab;
 using namespace EGriceLab::MSGseqTK;
-using namespace Eigen;
 
-static const int DEFAULT_NUM_THREADS = 1;
+//static const int DEFAULT_NUM_THREADS = 1;
 static const int DEFAULT_BLOCK_SIZE = 1000;
 static const size_t MBP_UNIT = 1000000;
 
@@ -66,7 +66,7 @@ void printUsage(const string& progName) {
 	cerr << "Usage:    " << progName << "  <SEQ-FILE1> [SEQ-FILE2 SEQ-FILE3 ...] <-n DBNAME> [options]" << endl
 		 << "SEQ-FILE  FILE                   : genome sequence file with one file per-genome in FASTA format" << ZLIB_SUPPORT << endl
 		 << "Options:    -n  STR              : database name" << endl
-		 << "            -l  FILE             : tab-delimited list with 1st field genome-names and 2nd field genomic file paths/names" << endl
+		 << "            -l  FILE             : tab-delimited genome list with 1st field genome-names, 2nd field genomic seq file paths, and an optional 3rd field with genomic GFF annotation file paths" << endl
 		 << "            -r|--update  STR     : update database based on this old DB, it can be the same name as -n, which will overwrite the old database" << endl
 		 << "            -f  FLAG             : during building/updating genomes already exist with the same names will be ignored, set this flag to force adding them" << endl
 		 << "            -b|--block  INT      : block size (in Mbp) for building FM-index, larget block size will lead to faster but more memory usage algorithm [" << DEFAULT_BLOCK_SIZE << "]" << endl
@@ -75,10 +75,21 @@ void printUsage(const string& progName) {
 		 << "            -h|--help            : print this message and exit" << endl;
 }
 
+/**
+ * write GFF header comments
+ */
+ostream& writeGFFHeader(ostream& out, const string& dbName, GFF::Version ver = GFF::GFF3) {
+	out << "##gff-version " << ver << endl;
+	out << "#!processor " << progName << endl;
+	out << "##metagenome " << dbName << endl;
+	return out;
+}
+
 int main(int argc, char* argv[]) {
 	/* variable declarations */
 	vector<string> inFns;
 	map<string, string> genomeFn2Name;
+	MetaGenome::GENOME_ANNOMAP genomeAnnos; /* external GFF annotation maps */
 	string dbName, oldDBName;
 	string listFn, gffFn, mtgFn, fmidxFn;
 
@@ -169,12 +180,69 @@ int main(int argc, char* argv[]) {
 				if(genomeFn2Name.count(fn)) { /* this is an input file */
 					inFns.push_back(fn);
 					genomeFn2Name[fn] = name; /* update the sample name */
+					if(fields.size() >= 3) { /* optional 3rd filed of external GFF exits */
+						string gname = Genome::formatName(name);
+						const string& gffFn = fields[2];
+						GFF::Version extVer = GFF::UNK; /* GFF version for this gffFn */
+						infoLog << "Readding external GFF annotation from '" << gffFn << "'" << endl;
+						/* open external GFF file, and guess GFF version */
+						boost::iostreams::filtering_istream gffIn;
+#ifdef HAVE_LIBZ
+						if(StringUtils::endsWith(gffFn, GZIP_FILE_SUFFIX)) {
+							gffIn.push(boost::iostreams::gzip_decompressor());
+							extVer = GFF::guessVersion(StringUtils::removeEnd(gffFn, GZIP_FILE_SUFFIX));
+						}
+						else if(StringUtils::endsWith(gffFn, BZIP2_FILE_SUFFIX)) {
+							gffIn.push(boost::iostreams::bzip2_decompressor());
+							extVer = GFF::guessVersion(StringUtils::removeEnd(gffFn, BZIP2_FILE_SUFFIX));
+						}
+						else {
+							extVer = GFF::guessVersion(gffFn);
+						}
+#endif
+						gffIn.push(boost::iostreams::file_source(gffFn));
+
+						if(extVer == GFF::UNK)
+							extVer = GFF::guessVersion(gffFn);
+
+						if(!gffIn.bad()) {
+							/* process comment lines, if any */
+							string line;
+							GFF gffRecord(extVer);
+							while(std::getline(gffIn, line)) {
+								if(line.empty())
+									continue;
+								else if(line.front() == GFF::COMMENT_CHAR) {
+									if(StringUtils::startsWith(line, "##gff-version 3")) {
+										gffRecord.setVer(GFF::GFF3);
+										debugLog << "GFF version determined by embedded comment" << endl;
+									}
+									else if(StringUtils::startsWith(line, "##gff-version 2")) {
+										gffRecord.setVer(GFF::GTF);
+										debugLog << "GFF version determined by embedded comment" << endl;
+									}
+									else
+										continue;
+								}
+								else {
+									istringstream iss(line);
+									iss >> gffRecord;
+									const string& chr = gffRecord.getSeqname();
+									genomeAnnos[gname][chr].push_back(gffRecord);
+								}
+							}
+						}
+						else
+							warningLog << "Unable to open external GFF file '" << gffFn << "' " << ::strerror(errno) << ", ignore" << endl;
+					} /* end if fields.size() >= 3 */
 					nRead++;
-				}
-			}
-		}
+				} /* end if is input */
+			} /* end if fields.size() >= 2 */
+		} /* end each line */
 		listIn.close();
 		infoLog << nRead << " user-provided genome names read" << endl;
+		if(!genomeAnnos.empty())
+			infoLog << genomeAnnos.size() << " user-provided GFF annotations read" << endl;
 	}
 	if(inFns.empty()) {
 		cerr << "At least one valid genome file must be provided" << endl;
@@ -323,10 +391,10 @@ int main(int argc, char* argv[]) {
 		}
 		infoLog << "RFM-index saved" << endl;
 
-		if(gffOut.is_open()) {
-			mtg.writeGFF(gffOut, UCSC::GFF::GFF3, progName);
-			infoLog << "GFF3 annotation file written" << endl;
-		}
+		/* write GFF annotation file, and insert existing annotation if exist */
+		writeGFFHeader(gffOut, dbName, GFF::GFF3);
+		mtg.writeGFF(gffOut, genomeAnnos, GFF::GFF3, progName);
+		infoLog << "GFF3 annotation file written" << endl;
 	}
 	else
 		infoLog << "Database was not modified" << endl;
