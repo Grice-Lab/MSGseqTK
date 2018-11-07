@@ -221,6 +221,7 @@ private:
 
 public:
 	/* class constants */
+	static const char COMMENT_CHAR = '#';
 	static const char SEP = '\t';
 	static const string GFF_SUFFIX;
 	static const string GTF_SUFFIX;
