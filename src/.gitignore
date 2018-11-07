@@ -5,3 +5,4 @@ msgseqtk-inspect
 msgseqtk-mergedb
 msgseqtk-sim
 *.exe
+.*
