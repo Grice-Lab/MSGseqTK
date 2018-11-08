@@ -36,10 +36,8 @@ public:
 
 	/* constructors */
 	/** construct am empty GFF with given version */
-	explicit GFF(Version ver) : ver(ver) {
-		if(ver == UNK)
-			throw std::invalid_argument("Unknown GFF version");
-	}
+	explicit GFF(Version ver = GFF::UNK) : ver(ver)
+	{ 	}
 
 	/** construct a GFF record with given info */
 	GFF(Version ver, const string& seqname, const string& source, const string& type,
