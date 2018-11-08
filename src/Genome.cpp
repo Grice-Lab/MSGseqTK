@@ -15,8 +15,8 @@ namespace EGriceLab {
 namespace MSGseqTK {
 using namespace std;
 
-const boost::regex Genome::INVALID_NAMEPREFIX_PATTERN = boost::regex("^[^\\w.:^*$@!+?-|]");
-const boost::regex Genome::INVALID_NAME_PATTERN = boost::regex("[^\\w.:^*$@!+?-|]");
+const boost::regex Genome::INVALID_NAMEPREFIX_PATTERN = boost::regex("^[^\\w.:^*$@!+?-|]+");
+const boost::regex Genome::INVALID_NAME_PATTERN = boost::regex("[^\\w.:^*$@!+?-|]+");
 const string Genome::REPLACEMENT_STR = ".";
 
 ostream& Genome::Chrom::save(ostream& out) const {
@@ -56,6 +56,7 @@ size_t Genome::getChromIndex(uint64_t loc) const {
 }
 
 ostream& Genome::save(ostream& out) const {
+	StringUtils::saveString(id, out);
 	StringUtils::saveString(name, out);
 	size_t NChrom = numChroms();
 	out.write((const char*) &NChrom, sizeof(size_t));
@@ -65,6 +66,7 @@ ostream& Genome::save(ostream& out) const {
 }
 
 istream& Genome::load(istream& in) {
+	StringUtils::loadString(id, in);
 	StringUtils::loadString(name, in);
 	size_t NChrom = 0;
 	in.read((char*) &NChrom, sizeof(size_t));
@@ -97,7 +99,7 @@ bool operator==(const Genome& lhs, const Genome& rhs) {
 ostream& Genome::writeGFF(ostream& out, UCSC::GFF::Version ver, const string& src, size_t shift) const {
 	/* write genome as first-level feature */
 	UCSC::GFF genomeGff(ver, name, src, "genome", shift + 1, shift + size(), UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
-	genomeGff.setAttr("ID", name);
+	genomeGff.setAttr("ID", id);
 	genomeGff.setAttr("Name", name);
 	out << genomeGff << endl;
 	/* write each chromosome as second-level feature */
@@ -116,16 +118,16 @@ ostream& Genome::writeGFF(ostream& out, UCSC::GFF::Version ver, const string& sr
 
 ostream& Genome::writeGFF(ostream& out, const CHROM_ANNOMAP& extAnno, GFF::Version ver, const string& src, size_t shift) const {
 	/* write per-genome comment */
-	out << "##genome " << name << endl;
+	out << "##genome " << id << " (" << name << ")" << endl;
 	/* write genome as first-level feature */
-	UCSC::GFF genomeGff(ver, name, src, "genome", shift + 1, shift + size(), UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
-	genomeGff.setAttr("ID", name);
+	UCSC::GFF genomeGff(ver, id, src, "genome", shift + 1, shift + size(), UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
+	genomeGff.setAttr("ID", id);
 	genomeGff.setAttr("Name", name);
 	out << genomeGff << endl;
 	/* write each chromosome as second-level feature, with additional annotations inserted within */
 	size_t chrShift = shift;
 	for(const Chrom& chr : chroms) {
-		UCSC::GFF chrGff(ver, name, src, "chromosome", chrShift + 1, chrShift + chr.size, UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME); // use genome name as seqsrc
+		UCSC::GFF chrGff(ver, id, src, "chromosome", chrShift + 1, chrShift + chr.size, UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME); // use genome name as seqsrc
 		chrGff.setAttr("ID", chr.name);
 		chrGff.setAttr("Name", chr.name);
 		chrGff.setAttr("Parent", name);
@@ -134,7 +136,7 @@ ostream& Genome::writeGFF(ostream& out, const CHROM_ANNOMAP& extAnno, GFF::Versi
 		/* write external annotations */
 		if(extAnno.count(chr.name) > 0) { /* this chromosome has external annotations */
 			for(GFF extGff : extAnno.at(chr.name)) { /* use a local copy */
-				extGff.setSeqname(name); // always use genome name
+				extGff.setSeqname(id); // always use genome id
 				extGff.shift(chrShift);
 				if(!extGff.hasAttr("Parent")) /* top level features, i.e. region, gene */
 					extGff.setAttr("Parent", chr.name);

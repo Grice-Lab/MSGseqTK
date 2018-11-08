@@ -26,19 +26,6 @@ uint64_t MetaGenome::size() const {
 	return size; /* include null terminal for each Genome */
 }
 
-vector<Genome> MetaGenome::getGenomes() const {
-	vector<Genome> genomes;
-	std::copy(this->genomes.begin(), this->genomes.end(), genomes.begin());
-	return genomes;
-}
-
-vector<string> MetaGenome::getGenomeNames() const {
-	vector<string> names;
-	for(const deque<Genome>::value_type genome : genomes)
-		names.push_back(genome.getName());
-	return names;
-}
-
 size_t MetaGenome::getGenomeIndex(uint64_t loc) const {
 	uint64_t start = 0;
 	for(deque<Genome>::const_iterator genome = genomes.begin(); genome != genomes.end(); ++genome) {
@@ -122,8 +109,8 @@ ostream& MetaGenome::writeGFF(ostream& out, const GENOME_ANNOMAP& genomeAnnos, G
 		return writeGFF(out, ver, src);
 	/* write each genome with external annotations */
 	for(const Genome& genome : genomes) {
-		if(genomeAnnos.count(genome.getName())) { /* annotation exists */
-			genome.writeGFF(out, genomeAnnos.at(genome.getName()), ver, src);
+		if(genomeAnnos.count(genome.getId())) { /* annotation exists */
+			genome.writeGFF(out, genomeAnnos.at(genome.getId()), ver, src);
 		}
 		else {
 			genome.writeGFF(out, ver, src);
@@ -132,19 +119,19 @@ ostream& MetaGenome::writeGFF(ostream& out, const GENOME_ANNOMAP& genomeAnnos, G
 	return out;
 }
 
-size_t MetaGenome::countGenome(const string& genomeName) const {
-	string gname = Genome::formatName(genomeName);
+size_t MetaGenome::countGenome(const string& genomeId) const {
+	string gid = Genome::formatName(genomeId);
 	size_t c = 0;
 	for(const Genome& genome : genomes)
-		if(genome.getName() == gname)
+		if(genome.getId() == gid)
 			c++;
 	return c;
 }
 
-bool MetaGenome::hasGenome(const string& genomeName) const {
-	string gname = Genome::formatName(genomeName);
+bool MetaGenome::hasGenome(const string& genomeId) const {
+	string gid = Genome::formatName(genomeId);
 	for(const Genome& genome : genomes)
-		if(genome.getName() == gname)
+		if(genome.getId() == gid)
 			return true;
 	return false;
 }

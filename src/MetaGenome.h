@@ -36,7 +36,7 @@ using UCSC::GFF;
 class MetaGenome {
 public:
 	typedef map<size_t, uint64_t> GENOME_SHIFTMAP; /* genome shift in this MetaGenome */
-	typedef map<string, Genome::CHROM_ANNOMAP> GENOME_ANNOMAP; /* map from genome names to chrom-level maps */
+	typedef map<string, Genome::CHROM_ANNOMAP> GENOME_ANNOMAP; /* map from genome id to chrom-level maps */
 	/* constructors */
 	/** default constructor */
 //	MetaGenome() = default;
@@ -50,10 +50,14 @@ public:
 	}
 
 	/** get all Genomes in this MetaGenome */
-	vector<Genome> getGenomes() const;
+	const deque<Genome>& getGenomes() const {
+		return genomes;
+	}
 
-	/** get all genome names */
-	vector<string> getGenomeNames() const;
+	/** get a vector copy of Genomes in this MetaGenome */
+	vector<Genome> getGenomeList() const {
+		return vector<Genome>(genomes.begin(), genomes.end());
+	}
 
 	/**
 	 * get the genome index at given location, or -1 if not found
@@ -95,11 +99,11 @@ public:
 		return genomes[i];
 	}
 
-	/** count the number of genomes with a given name */
-	size_t countGenome(const string& genomeName) const;
+	/** count the number of genomes with a given ID */
+	size_t countGenome(const string& genomeId) const;
 
-	/** check whether this genome with given name exists */
-	bool hasGenome(const string& genomeName) const;
+	/** check whether this genome with given ID exists */
+	bool hasGenome(const string& genomeId) const;
 
 	/**
 	 * add a genome at the end of this MetaGenome

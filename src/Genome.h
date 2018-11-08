@@ -60,14 +60,30 @@ public:
 	Genome() = default;
 
 	/** construct genome with given name */
-	Genome(const string& name) : name(formatName(name))
+	Genome(const string& id, const string& name) : id(formatName(id)), name(formatName(name))
 	{  }
 
-	/** construct a genome with given name chromosomes */
-	Genome(const string& name, const vector<Chrom>& chroms) : name(formatName(name)), chroms(chroms)
+	/** deligating construct from name only */
+	Genome(const string& name) : Genome(name, name)
+	{  }
+
+	/** construct a genome with given id, name and chromosomes */
+	Genome(const string& id, const string& name, const vector<Chrom>& chroms) : id(formatName(id)), name(formatName(name)), chroms(chroms)
+	{  }
+
+	/** deligating construct a genome with give name and chromosomes */
+	Genome(const string& name, const vector<Chrom>& chroms) : Genome(name, name, chroms)
 	{  }
 
 	/* member methods */
+	const string& getId() const {
+		return id;
+	}
+
+	void setId(const string& id) {
+		this->id = formatName(id);
+	}
+
 	const string& getName() const {
 		return name;
 	}
@@ -134,6 +150,7 @@ public:
 
 	/* member fields */
 private:
+	string id; /* unique genome ID useful for upgrade */
 	string name;
 	vector<Chrom> chroms;
 

@@ -142,7 +142,7 @@ int main(int argc, char* argv[]) {
 	cout << endl;
 
 	if(listOut.is_open()) {
-		for(const string& genomeName : mtg.getGenomeNames())
-			listOut << genomeName << endl;
+		for(const Genome& genome : mtg.getGenomes())
+			listOut << genome.getId() << "\t" << genome.getName() << endl;
 	}
 }

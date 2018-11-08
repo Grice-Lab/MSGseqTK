@@ -66,9 +66,8 @@ void printUsage(const string& progName) {
 	cerr << "Usage:    " << progName << "  <SEQ-FILE1> [SEQ-FILE2 SEQ-FILE3 ...] <-n DBNAME> [options]" << endl
 		 << "SEQ-FILE  FILE                   : genome sequence file with one file per-genome in FASTA format" << ZLIB_SUPPORT << endl
 		 << "Options:    -n  STR              : database name" << endl
-		 << "            -l  FILE             : tab-delimited genome list with 1st field genome-names, 2nd field genomic seq file paths, and an optional 3rd field with genomic GFF annotation file paths" << endl
+		 << "            -l  FILE             : tab-delimited genome list with 1st field unique genome IDs, 2nd filed genome names, 3nd field genomic sequence file paths, and an optional 4th field with genomic GFF annotation file paths; if provided, <SEQ-FILE> options are ignored" << endl
 		 << "            -r|--update  STR     : update database based on this old DB, it can be the same name as -n, which will overwrite the old database" << endl
-		 << "            -f  FLAG             : during building/updating genomes already exist with the same names will be ignored, set this flag to force adding them" << endl
 		 << "            -b|--block  INT      : block size (in Mbp) for building FM-index, larget block size will lead to faster but more memory usage algorithm [" << DEFAULT_BLOCK_SIZE << "]" << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
@@ -87,8 +86,9 @@ ostream& writeGFFHeader(ostream& out, const string& dbName, GFF::Version ver = G
 
 int main(int argc, char* argv[]) {
 	/* variable declarations */
-	vector<string> inFns;
-	map<string, string> genomeFn2Name;
+	map<string, string> genomeId2Name;
+	map<string, string> genomeId2Fn;
+	map<string, string> genomeId2GffFn;
 	MetaGenome::GENOME_ANNOMAP genomeAnnos; /* external GFF annotation maps */
 	string dbName, oldDBName;
 	string listFn, gffFn, mtgFn, fmidxFn;
@@ -98,7 +98,6 @@ int main(int argc, char* argv[]) {
 	ofstream mtgOut, fmidxOut, gffOut;
 	const string fmt = "fasta";
 
-	bool isForce = false;
 	int blockSize = DEFAULT_BLOCK_SIZE;
 
 	/* parse options */
@@ -114,16 +113,11 @@ int main(int argc, char* argv[]) {
 		return EXIT_SUCCESS;
 	}
 
-	if(!(cmdOpts.numMainOpts() > 0)) {
-		cerr << "Error:" << endl;
-		printUsage(argv[0]);
-		return EXIT_FAILURE;
-	}
-
 	for(int i = 0; i < cmdOpts.numMainOpts(); ++i) {
 		string fn = cmdOpts.getMainOpt(i);
-		inFns.push_back(fn);
-		genomeFn2Name[fn] = fn; /* use filename as genome name by default */
+		/* use filename as ID and Name */
+		genomeId2Name[fn] = fn;
+		genomeId2Fn[fn] = fn;
 	}
 
 	if(cmdOpts.hasOpt("-n"))
@@ -136,9 +130,6 @@ int main(int argc, char* argv[]) {
 		oldDBName = cmdOpts.getOpt("-r");
 	if(cmdOpts.hasOpt("--update"))
 		oldDBName = cmdOpts.getOpt("--update");
-
-	if(cmdOpts.hasOpt("-f"))
-		isForce = true;
 
 	if(cmdOpts.hasOpt("-b"))
 		blockSize = ::atoi(cmdOpts.getOptStr("-b"));
@@ -165,87 +156,36 @@ int main(int argc, char* argv[]) {
 			cerr << "Unable to open '" << listFn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
-		int nRead = 0;
-		infoLog << "Read in genome names from " << listFn << endl;
-		inFns.clear(); /* clear inFiles */
+		infoLog << "Reading in genome names from " << listFn << endl;
+		genomeId2Name.clear();
+		genomeId2Fn.clear();
 		string line;
 		while(std::getline(listIn, line)) {
-			if(line.front() == '#')
+			if(line.empty() || line.front() == '#')
 				continue;
 			vector<string> fields;
 			boost::split(fields, line, boost::is_any_of("\t"));
 			if(fields.size() >= 2) {
-				string name = fields[0];
-				string fn = fields[1];
-				if(genomeFn2Name.count(fn)) { /* this is an input file */
-					inFns.push_back(fn);
-					genomeFn2Name[fn] = name; /* update the sample name */
-					if(fields.size() >= 3) { /* optional 3rd filed of external GFF exits */
-						string gname = Genome::formatName(name);
-						const string& gffFn = fields[2];
-						GFF::Version extVer = GFF::UNK; /* GFF version for this gffFn */
-						infoLog << "Readding external GFF annotation from '" << gffFn << "'" << endl;
-						/* open external GFF file, and guess GFF version */
-						boost::iostreams::filtering_istream gffIn;
-#ifdef HAVE_LIBZ
-						if(StringUtils::endsWith(gffFn, GZIP_FILE_SUFFIX)) {
-							gffIn.push(boost::iostreams::gzip_decompressor());
-							extVer = GFF::guessVersion(StringUtils::removeEnd(gffFn, GZIP_FILE_SUFFIX));
-						}
-						else if(StringUtils::endsWith(gffFn, BZIP2_FILE_SUFFIX)) {
-							gffIn.push(boost::iostreams::bzip2_decompressor());
-							extVer = GFF::guessVersion(StringUtils::removeEnd(gffFn, BZIP2_FILE_SUFFIX));
-						}
-						else {
-							extVer = GFF::guessVersion(gffFn);
-						}
-#endif
-						gffIn.push(boost::iostreams::file_source(gffFn));
-
-						if(extVer == GFF::UNK)
-							extVer = GFF::guessVersion(gffFn);
-
-						if(!gffIn.bad()) {
-							/* process comment lines, if any */
-							string line;
-							GFF gffRecord(extVer);
-							while(std::getline(gffIn, line)) {
-								if(line.empty())
-									continue;
-								else if(line.front() == GFF::COMMENT_CHAR) {
-									if(StringUtils::startsWith(line, "##gff-version 3")) {
-										gffRecord.setVer(GFF::GFF3);
-										debugLog << "GFF version determined by embedded comment" << endl;
-									}
-									else if(StringUtils::startsWith(line, "##gff-version 2")) {
-										gffRecord.setVer(GFF::GTF);
-										debugLog << "GFF version determined by embedded comment" << endl;
-									}
-									else
-										continue;
-								}
-								else {
-									istringstream iss(line);
-									iss >> gffRecord;
-									const string& chr = gffRecord.getSeqname();
-									genomeAnnos[gname][chr].push_back(gffRecord);
-								}
-							}
-						}
-						else
-							warningLog << "Unable to open external GFF file '" << gffFn << "' " << ::strerror(errno) << ", ignore" << endl;
-					} /* end if fields.size() >= 3 */
-					nRead++;
-				} /* end if is input */
-			} /* end if fields.size() >= 2 */
-		} /* end each line */
+				string id = fields[0];
+				string name = fields[1];
+				string fn = fields[2];
+				if(genomeId2Name.count(id)) {
+					warningLog << "Non-unique genome ID " << id << " found in " << listFn << ", ignore" << endl;
+					continue;
+				}
+				genomeId2Name[id] = name;
+				genomeId2Fn[id] = fn;
+				if(fields.size() > 3)
+					genomeId2GffFn[id] = fields[3];
+			}
+		}
 		listIn.close();
-		infoLog << nRead << " user-provided genome names read" << endl;
-		if(!genomeAnnos.empty())
-			infoLog << genomeAnnos.size() << " user-provided GFF annotations read" << endl;
+		infoLog << "Found " << genomeId2Fn.size() << " user-provided genome information" << endl;
+		if(!genomeId2GffFn.empty())
+			infoLog << "Found" << genomeId2GffFn.size() << " user-provided GFF annotation files" << endl;
 	}
-	if(inFns.empty()) {
-		cerr << "At least one valid genome file must be provided" << endl;
+	if(genomeId2Fn.empty()) {
+		cerr << "At least one genome file must be provided" << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -287,33 +227,36 @@ int main(int argc, char* argv[]) {
 	DNAseq blockSeq;
 	vector<Genome> blockGenomes;
 	int k = 0;
-	for(vector<string>::const_iterator inFn = inFns.begin(); inFn != inFns.end(); ++inFn) {
-		string genomeName = genomeFn2Name.at(*inFn);
-		if(!isForce && mtg.hasGenome(genomeName)) {
-			warningLog << "Genome '" << genomeName << "' already exists in the database, ignore" << endl;
+	for(const std::pair<string, string>& entry : genomeId2Fn) {
+		string genomeId = entry.first;
+		string genomeFn = entry.second;
+		string genomeName = genomeId2Name[genomeId];
+
+		if(mtg.hasGenome(genomeId)) {
+			warningLog << "Genome " << genomeId << " (" << genomeName << ") already exists in the database, ignore" << endl;
 			continue;
 		}
 
 		/* open genome file */
 		boost::iostreams::filtering_istream genomeIn;
 #ifdef HAVE_LIBZ
-		if(StringUtils::endsWith(*inFn, GZIP_FILE_SUFFIX))
+		if(StringUtils::endsWith(genomeFn, GZIP_FILE_SUFFIX))
 			genomeIn.push(boost::iostreams::gzip_decompressor());
-		else if(StringUtils::endsWith(*inFn, BZIP2_FILE_SUFFIX))
+		else if(StringUtils::endsWith(genomeFn, BZIP2_FILE_SUFFIX))
 			genomeIn.push(boost::iostreams::bzip2_decompressor());
 		else { }
 #endif
 
-		genomeIn.push(boost::iostreams::file_source(*inFn));
+		genomeIn.push(boost::iostreams::file_source(genomeFn));
 		if(genomeIn.bad()) {
-			cerr << "Unable to open genome seq file '" << *inFn << "' " << ::strerror(errno) << endl;
+			cerr << "Unable to open genome seq file '" << genomeFn << "' " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
 
 		/* read in genome sequence, concatenated with Ns */
-		infoLog << "Reading genome '" << genomeName << "'" << endl;
+		infoLog << "Reading genome " << genomeId << " (" << genomeName << ")" << endl;
 
-		Genome genome(genomeName);
+		Genome genome(genomeId, genomeName);
 		SeqIO seqI(&genomeIn, fmt);
 
 		while(seqI.hasNext()) {
@@ -328,7 +271,7 @@ int main(int argc, char* argv[]) {
 		}
 		blockGenomes.push_back(genome); /* add this genome to the block */
 		/* process block, if large enough */
-		bool isLast = inFn == inFns.end() - 1;
+		bool isLast = genomeId2Fn.upper_bound(genomeId) == genomeId2Fn.end();
 		if(blockSeq.length() >= blockSize * MBP_UNIT || isLast) { /* last genome or full block */
 			if(!isLast)
 				infoLog << "Adding " << blockGenomes.size() << " genomes in block " << ++k << " into database" << endl;
@@ -341,14 +284,71 @@ int main(int argc, char* argv[]) {
 			blockSeq.clear();
 			infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
 		}
+
+		/* process external GFF file, if exists */
+		if(genomeId2GffFn.count(genomeId)) {
+			const string& gid = Genome::formatName(genomeId); /* use formated ID */
+			const string& gffFn = genomeId2GffFn[genomeId];
+			GFF::Version extVer = GFF::UNK; /* GFF version for this gffFn */
+			/* open external GFF file, and guess GFF version */
+			boost::iostreams::filtering_istream gffIn;
+#ifdef HAVE_LIBZ
+			if(StringUtils::endsWith(gffFn, GZIP_FILE_SUFFIX)) {
+				gffIn.push(boost::iostreams::gzip_decompressor());
+				extVer = GFF::guessVersion(StringUtils::removeEnd(gffFn, GZIP_FILE_SUFFIX));
+			}
+			else if(StringUtils::endsWith(gffFn, BZIP2_FILE_SUFFIX)) {
+				gffIn.push(boost::iostreams::bzip2_decompressor());
+				extVer = GFF::guessVersion(StringUtils::removeEnd(gffFn, BZIP2_FILE_SUFFIX));
+			}
+			else {
+				extVer = GFF::guessVersion(gffFn);
+			}
+#endif
+			gffIn.push(boost::iostreams::file_source(gffFn));
+
+			if(extVer == GFF::UNK)
+				extVer = GFF::guessVersion(gffFn);
+
+			if(!gffIn.bad()) {
+				infoLog << "  reading external GFF annotation from '" << gffFn << "'" << endl;
+				/* process comment lines, if any */
+				string line;
+				GFF gffRecord(extVer);
+				while(std::getline(gffIn, line)) {
+					if(line.empty())
+						continue;
+					else if(line.front() == GFF::COMMENT_CHAR) {
+						if(StringUtils::startsWith(line, "##gff-version 3")) {
+							gffRecord.setVer(GFF::GFF3);
+							debugLog << "  GFF version determined by embedded comment" << endl;
+						}
+						else if(StringUtils::startsWith(line, "##gff-version 2")) {
+							gffRecord.setVer(GFF::GTF);
+							debugLog << "  GFF version determined by embedded comment" << endl;
+						}
+						else
+							continue;
+					}
+					else {
+						istringstream iss(line);
+						iss >> gffRecord;
+						const string& chr = gffRecord.getSeqname();
+						genomeAnnos[gid][chr].push_back(gffRecord);
+					}
+				}
+			}
+			else
+				warningLog << "Unable to open external GFF file '" << gffFn << "' " << ::strerror(errno) << ", ignore" << endl;
+		} /* end count */
+
 		/* incremental update backward */
 		nProcessed++;
 	}
 
-	if(oldDBName.empty())
-		infoLog << "MetaGenomics database build. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
-	else
-		infoLog << "MetaGenomics database updated. Newly added # of genomes: " << nProcessed << " total # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
+	if(!oldDBName.empty())
+		infoLog << "MetaGenomics database updated. Newly added # of genomes: " << nProcessed << endl;
+	infoLog << "MetaGenomics database build. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
 
 	if(dbName != oldDBName || nProcessed > 0) { /* building new or updated database */
 		/* set db file names */
