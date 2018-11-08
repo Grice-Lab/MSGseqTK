@@ -6,11 +6,7 @@
  */
 
 #include <algorithm>
-#include <boost/iostreams/filtering_stream.hpp> /* basic boost streams */
-#include <boost/iostreams/device/file.hpp> /* file sink and source */
-#include <boost/iostreams/filter/zlib.hpp> /* for zlib support */
-#include <boost/iostreams/filter/gzip.hpp>
-#include <boost/iostreams/filter/bzip2.hpp> /* for bzip2 support */
+#include <sstream>
 #include "MetaGenome.h"
 #include "StringUtils.h"
 #include "ProgEnv.h"
@@ -18,6 +14,7 @@
 
 namespace EGriceLab {
 namespace MSGseqTK {
+using std::istringstream;
 
 uint64_t MetaGenome::size() const {
 	uint64_t size = 0;
@@ -97,25 +94,17 @@ bool operator==(const MetaGenome& lhs, const MetaGenome& rhs) {
 	return true;
 }
 
-ostream& MetaGenome::writeGFF(ostream& out, GFF::Version ver, const string& src) const {
-	/* write each genome */
+ostream& MetaGenome::writeGFF(ostream& out) const {
+	/* write each genome with external annotations */
 	for(const Genome& genome : genomes)
-		genome.writeGFF(out, ver, src);
+		genome.writeGFF(out);
 	return out;
 }
 
-ostream& MetaGenome::writeGFF(ostream& out, const GENOME_ANNOMAP& genomeAnnos, GFF::Version ver, const string& src) const {
-	if(genomeAnnos.empty())
-		return writeGFF(out, ver, src);
-	/* write each genome with external annotations */
-	for(const Genome& genome : genomes) {
-		if(genomeAnnos.count(genome.getId())) { /* annotation exists */
-			genome.writeGFF(out, genomeAnnos.at(genome.getId()), ver, src);
-		}
-		else {
-			genome.writeGFF(out, ver, src);
-		}
-	}
+ostream& MetaGenome::writeGFFComment(ostream& out, const string& dbName) const {
+	out << "##gff-version " << Genome::GFF_VERSION << endl;
+	out << "#!processor " << progName << endl;
+	out << "##metagenome " << dbName << endl;
 	return out;
 }
 

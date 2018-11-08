@@ -200,7 +200,15 @@ int main(int argc, char* argv[]) {
 		fmidxFn = oldDBName + FMINDEX_FILE_SUFFIX;
 
 		mtgIn.open(mtgFn.c_str(), ios_base::binary);
+		if(!mtgIn.is_open()) {
+			cerr << "Unable to open old database file '" << mtgFn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
 		fmidxIn.open(fmidxFn.c_str(), ios_base::binary);
+		if(!fmidxIn.is_open()) {
+			cerr << "Unable to open old database file '" << fmidxFn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
 
 		loadProgInfo(mtgIn);
 		if(!mtgIn.bad())
@@ -269,21 +277,6 @@ int main(int argc, char* argv[]) {
 				blockSeq.push_back(DNAalphabet::N); /* add an N terminal */
 			blockSeq += chrSeq; /* N terminated chromosomes */
 		}
-		blockGenomes.push_back(genome); /* add this genome to the block */
-		/* process block, if large enough */
-		bool isLast = genomeId2Fn.upper_bound(genomeId) == genomeId2Fn.end();
-		if(blockSeq.length() >= blockSize * MBP_UNIT || isLast) { /* last genome or full block */
-			if(!isLast)
-				infoLog << "Adding " << blockGenomes.size() << " genomes in block " << ++k << " into database" << endl;
-			else
-				infoLog << "Adding " << blockGenomes.size() << " genomes in block " << ++k << " into database and building final sampled Suffix-Array" << endl;
-			mtg.prepend(blockGenomes);
-			fmidx = FMIndex(blockSeq, isLast) + fmidx; /* always use freshly built FMIndex as lhs */
-			assert(mtg.size() == fmidx.length());
-			blockGenomes.clear();
-			blockSeq.clear();
-			infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
-		}
 
 		/* process external GFF file, if exists */
 		if(genomeId2GffFn.count(genomeId)) {
@@ -310,37 +303,33 @@ int main(int argc, char* argv[]) {
 			if(extVer == GFF::UNK)
 				extVer = GFF::guessVersion(gffFn);
 
-			if(!gffIn.bad()) {
-				infoLog << "  reading external GFF annotation from '" << gffFn << "'" << endl;
-				/* process comment lines, if any */
-				string line;
-				GFF gffRecord(extVer);
-				while(std::getline(gffIn, line)) {
-					if(line.empty())
-						continue;
-					else if(line.front() == GFF::COMMENT_CHAR) {
-						if(StringUtils::startsWith(line, "##gff-version 3")) {
-							gffRecord.setVer(GFF::GFF3);
-							debugLog << "  GFF version determined by embedded comment" << endl;
-						}
-						else if(StringUtils::startsWith(line, "##gff-version 2")) {
-							gffRecord.setVer(GFF::GTF);
-							debugLog << "  GFF version determined by embedded comment" << endl;
-						}
-						else
-							continue;
-					}
-					else {
-						istringstream iss(line);
-						iss >> gffRecord;
-						const string& chr = gffRecord.getSeqname();
-						genomeAnnos[gid][chr].push_back(gffRecord);
-					}
+			if(extVer != GFF::UNK) {
+				if(!gffIn.bad()) {
+					infoLog << "  reading external GFF annotation from '" << gffFn << "'" << endl;
+					genome.readGFF(gffIn, extVer);
 				}
+				else
+					warningLog << "Unable to open external GFF file '" << gffFn << "' " << ::strerror(errno) << ", ignore" << endl;
 			}
 			else
-				warningLog << "Unable to open external GFF file '" << gffFn << "' " << ::strerror(errno) << ", ignore" << endl;
-		} /* end count */
+				warningLog << "Unable to determine the GFF version of file '" << gffFn << "', ignore" << endl;
+		} /* end processing external GFF file */
+
+		blockGenomes.push_back(genome); /* add this genome to the block */
+		/* process block, if large enough */
+		bool isLast = genomeId2Fn.upper_bound(genomeId) == genomeId2Fn.end();
+		if(blockSeq.length() >= blockSize * MBP_UNIT || isLast) { /* last genome or full block */
+			if(!isLast)
+				infoLog << "Adding " << blockGenomes.size() << " genomes in block " << ++k << " into database" << endl;
+			else
+				infoLog << "Adding " << blockGenomes.size() << " genomes in block " << ++k << " into database and building final sampled Suffix-Array" << endl;
+			mtg.prepend(blockGenomes);
+			fmidx = FMIndex(blockSeq, isLast) + fmidx; /* always use freshly built FMIndex as lhs */
+			assert(mtg.size() == fmidx.length());
+			blockGenomes.clear();
+			blockSeq.clear();
+			infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
+		}
 
 		/* incremental update backward */
 		nProcessed++;
@@ -392,8 +381,8 @@ int main(int argc, char* argv[]) {
 		infoLog << "RFM-index saved" << endl;
 
 		/* write GFF annotation file, and insert existing annotation if exist */
-		writeGFFHeader(gffOut, dbName, GFF::GFF3);
-		mtg.writeGFF(gffOut, genomeAnnos, GFF::GFF3, progName);
+		writeGFFHeader(gffOut, dbName, Genome::GFF_VERSION);
+		mtg.writeGFF(gffOut);
 		infoLog << "GFF3 annotation file written" << endl;
 	}
 	else

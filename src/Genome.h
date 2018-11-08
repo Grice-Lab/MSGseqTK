@@ -32,7 +32,7 @@ using UCSC::GFF;
  */
 class Genome {
 public:
-	typedef map<string, vector<GFF>> CHROM_ANNOMAP; /* type for external chromosome annotations */
+	typedef map<string, vector<GFF>> CHROM_ANNOMAP; /* chrom annotation map with chrom.name -> GFFs */
 	/* nested types and enums */
 	struct Chrom {
 		/** default constructor */
@@ -97,6 +97,11 @@ public:
 		return chroms.size();
 	}
 
+	/** get number of annotated chromosomes */
+	size_t numChromAnnos() const {
+		return chromAnnos.size();
+	}
+
 	/** get all chromosomes */
 	const vector<Chrom>& getChroms() const {
 		return chroms;
@@ -139,11 +144,14 @@ public:
 	/** load an object from binary input */
 	istream& load(istream& in);
 
-	/** write this object to text output in GFF format */
-	ostream& writeGFF(ostream& out, GFF::Version ver = GFF::GFF3, const string& src = ".", size_t shift = 0) const;
+	/** write GFF comment for this object */
+	ostream& writeGFFComment(ostream& out) const;
 
-	/** write this object to text output in GFF format, with provided external annotations */
-	ostream& writeGFF(ostream& out, const CHROM_ANNOMAP& extAnno, GFF::Version ver = GFF::GFF3, const string& src = ".", size_t shift = 0) const;
+	/** write this object to text output in GFF format */
+	ostream& writeGFF(ostream& out) const;
+
+	/** read in GFF records from text input in GFF format for this object */
+	istream& readGFF(istream& in, GFF::Version ver = GFF_VERSION);
 
 	/* non-member functions */
 	friend bool operator==(const Genome& lhs, const Genome& rhs);
@@ -153,13 +161,17 @@ private:
 	string id; /* unique genome ID useful for upgrade */
 	string name;
 	vector<Chrom> chroms;
+	CHROM_ANNOMAP chromAnnos; /* per-chromosome annotations */
 
 	/* class members */
 public:
+	static const GFF::Version GFF_VERSION = GFF::GFF3; /* always use GFF3 version for writing GFFs */
 	static const boost::regex INVALID_NAMEPREFIX_PATTERN;
 	static const boost::regex INVALID_NAME_PATTERN;
 	static const string REPLACEMENT_STR;
 
+	/* static methods */
+	/** format genome id/name */
 	static string formatName(const string& name);
 };
 

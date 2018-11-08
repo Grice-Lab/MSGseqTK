@@ -5,15 +5,17 @@
  *      Author: zhengqi
  */
 
+#include <sstream>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/regex.hpp>
 #include "MSGseqTKConst.h"
 #include "Genome.h"
+#include "ProgEnv.h"
 #include "StringUtils.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
-using namespace std;
+using std::istringstream;
 
 const boost::regex Genome::INVALID_NAMEPREFIX_PATTERN = boost::regex("^[^\\w.:^*$@!+?-|]+");
 const boost::regex Genome::INVALID_NAME_PATTERN = boost::regex("[^\\w.:^*$@!+?-|]+");
@@ -62,6 +64,15 @@ ostream& Genome::save(ostream& out) const {
 	out.write((const char*) &NChrom, sizeof(size_t));
 	for(const Chrom& chr : chroms)
 		chr.save(out);
+	size_t Nannos = numChromAnnos();
+	out.write((const char*) &Nannos, sizeof(size_t));
+	for(const std::pair<string, vector<GFF>>& anno : chromAnnos) {
+		StringUtils::saveString(anno.first, out);
+		size_t Ngff = anno.second.size();
+		out.write((const char*) &Ngff, sizeof(size_t));
+		for(const GFF& gff : anno.second)
+			gff.save(out);
+	}
 	return out;
 }
 
@@ -73,6 +84,17 @@ istream& Genome::load(istream& in) {
 	for(size_t i = 0; i < NChrom; ++i) {
 		chroms.push_back(Chrom()); /* default construct first */
 		chroms[i].load(in);
+	}
+	size_t Nannos = 0;
+	in.read((char*) &Nannos, sizeof(size_t));
+	for(size_t i = 0; i < Nannos; ++i) {
+		string chr;
+		StringUtils::loadString(chr, in);
+		size_t Ngff = 0;
+		in.read((char*) &Ngff, sizeof(size_t));
+		chromAnnos[chr].resize(Ngff);
+		for(size_t j = 0; j < Ngff; ++j)
+			chromAnnos[chr][j].load(in);
 	}
 	return in;
 }
@@ -96,55 +118,40 @@ bool operator==(const Genome& lhs, const Genome& rhs) {
 	return true;
 }
 
-ostream& Genome::writeGFF(ostream& out, UCSC::GFF::Version ver, const string& src, size_t shift) const {
-	/* write genome as first-level feature */
-	UCSC::GFF genomeGff(ver, name, src, "genome", shift + 1, shift + size(), UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
-	genomeGff.setAttr("ID", id);
-	genomeGff.setAttr("Name", name);
-	out << genomeGff << endl;
-	/* write each chromosome as second-level feature */
-	size_t chrShift = shift;
-	for(const Chrom& chr : chroms) {
-		UCSC::GFF chrGff(ver, name, src, "chromosome", chrShift + 1, chrShift + chr.size, UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
-		chrGff.setAttr("ID", chr.name);
-		chrGff.setAttr("Name", chr.name);
-		chrGff.setAttr("Parent", name);
-		out << chrGff << endl;
-		chrShift += chr.size + 1; /* including null terminal */
-	}
-
+ostream& Genome::writeGFFComment(ostream& out) const {
+	out << "##genome " << id << " (" << name << ")" << endl;
 	return out;
 }
 
-ostream& Genome::writeGFF(ostream& out, const CHROM_ANNOMAP& extAnno, GFF::Version ver, const string& src, size_t shift) const {
+ostream& Genome::writeGFF(ostream& out) const {
 	/* write per-genome comment */
-	out << "##genome " << id << " (" << name << ")" << endl;
+	writeGFFComment(out);
 	/* write genome as first-level feature */
-	UCSC::GFF genomeGff(ver, id, src, "genome", shift + 1, shift + size(), UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME);
+	GFF genomeGff(GFF_VERSION, id, progName, "genome", 1, size(), GFF::INVALID_SCORE, '.', GFF::INVALID_FRAME);
 	genomeGff.setAttr("ID", id);
 	genomeGff.setAttr("Name", name);
 	out << genomeGff << endl;
-	/* write each chromosome as second-level feature, with additional annotations inserted within */
-	size_t chrShift = shift;
+	/* write each chromosome as second-level feature, with additional annotations */
+	size_t shift = 0;
 	for(const Chrom& chr : chroms) {
-		UCSC::GFF chrGff(ver, id, src, "chromosome", chrShift + 1, chrShift + chr.size, UCSC::GFF::INVALID_SCORE, '.', UCSC::GFF::INVALID_FRAME); // use genome name as seqsrc
+		UCSC::GFF chrGff(GFF_VERSION, id, progName, "chromosome", shift + 1, shift + chr.size, GFF::INVALID_SCORE, '.', GFF::INVALID_FRAME); // use genome name as seqsrc
 		chrGff.setAttr("ID", chr.name);
 		chrGff.setAttr("Name", chr.name);
 		chrGff.setAttr("Parent", name);
-		assert(chrGff.getEnd() < genomeGff.getEnd()); /* genome end with null */
+		assert(chrGff.getEnd() < genomeGff.getEnd());
 		out << chrGff << endl;
-		/* write external annotations */
-		if(extAnno.count(chr.name) > 0) { /* this chromosome has external annotations */
-			for(GFF extGff : extAnno.at(chr.name)) { /* use a local copy */
-				extGff.setSeqname(id); // always use genome id
-				extGff.shift(chrShift);
-				if(!extGff.hasAttr("Parent")) /* top level features, i.e. region, gene */
-					extGff.setAttr("Parent", chr.name);
-				out << extGff << endl;
+		/* write GFF annotations */
+		if(chromAnnos.count(chr.name) > 0) { /* this chromosome has external annotations */
+			for(GFF gff : chromAnnos.at(chr.name)) { /* use a local copy */
+				gff.setSeqname(id); // always use genome id
+				gff.shift(shift);
+				if(!gff.hasAttr("Parent")) /* top level features, i.e. region, gene */
+					gff.setAttr("Parent", chr.name);
+				out << gff << endl;
 			}
 		}
 
-		chrShift += chr.size + 1; /* including null terminal */
+		shift += chr.size + 1; /* including null terminal */
 	}
 
 	return out;
@@ -154,6 +161,35 @@ string Genome::formatName(const string& name) {
 	return boost::replace_all_regex_copy(
 			boost::replace_all_regex_copy(name, INVALID_NAMEPREFIX_PATTERN, string("")),
 			INVALID_NAME_PATTERN, REPLACEMENT_STR);
+}
+
+istream& Genome::readGFF(istream& in, GFF::Version ver) {
+	string line;
+	GFF gffRecord(ver);
+	while(std::getline(in, line)) {
+		if(line.empty())
+			continue;
+		else if(line.front() == GFF::COMMENT_CHAR) {
+			if(StringUtils::startsWith(line, "##gff-version 3")) {
+				gffRecord.setVer(GFF::GFF3);
+				debugLog << "  GFF version determined by embedded comment" << endl;
+			}
+			else if(StringUtils::startsWith(line, "##gff-version 2")) {
+				gffRecord.setVer(GFF::GTF);
+				debugLog << "  GFF version determined by embedded comment" << endl;
+			}
+			else
+				continue;
+		}
+		else {
+			istringstream iss(line);
+			iss >> gffRecord;
+			const string& chr = gffRecord.getSeqname();
+			chromAnnos[chr].push_back(gffRecord);
+		}
+	}
+
+	return in;
 }
 
 } /* namespace MSGseqTK */

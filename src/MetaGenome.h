@@ -135,11 +135,11 @@ public:
 	/** load an object from binary input */
 	istream& load(istream& in);
 
-	/** write this object to text output in GFF format */
-	ostream& writeGFF(ostream& out, GFF::Version ver = GFF::GFF3, const string& src = ".") const;
+	/** write this object to text output in GFF format, with optional external annotation files optionally provided */
+	ostream& writeGFF(ostream& out) const;
 
-	/** write this object to text output in GFF format, with external annotation files optionally provided */
-	ostream& writeGFF(ostream& out, const GENOME_ANNOMAP& genomeAnnos, GFF::Version ver = GFF::GFF3, const string& src = ".") const;
+	/** write GFF comments to text output */
+	ostream& writeGFFComment(ostream& out, const string& dbName = ".") const;
 
 	/** merge this MetaGenome with another one,
 	 * with its name unchanged
