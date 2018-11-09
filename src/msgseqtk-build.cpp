@@ -182,7 +182,7 @@ int main(int argc, char* argv[]) {
 		listIn.close();
 		infoLog << "Found " << genomeId2Fn.size() << " user-provided genome information" << endl;
 		if(!genomeId2GffFn.empty())
-			infoLog << "Found" << genomeId2GffFn.size() << " user-provided GFF annotation files" << endl;
+			infoLog << "Found " << genomeId2GffFn.size() << " user-provided GFF annotation files" << endl;
 	}
 	if(genomeId2Fn.empty()) {
 		cerr << "At least one genome file must be provided" << endl;
