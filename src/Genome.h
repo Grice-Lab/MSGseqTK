@@ -154,6 +154,7 @@ public:
 	istream& readGFF(istream& in, GFF::Version ver = GFF_VERSION);
 
 	/* non-member functions */
+	/** test whether two Genomes are equal, all basic information but not auxinary annotations are tested */
 	friend bool operator==(const Genome& lhs, const Genome& rhs);
 
 	/* member fields */

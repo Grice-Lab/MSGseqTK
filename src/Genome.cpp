@@ -107,9 +107,7 @@ uint64_t Genome::size() const {
 }
 
 bool operator==(const Genome& lhs, const Genome& rhs) {
-	if(lhs.name != rhs.name)
-		return false;
-	if(lhs.chroms.size() != rhs.chroms.size())
+	if(!(lhs.id == rhs.id && lhs.name == rhs.name && lhs.chroms.size() == rhs.chroms.size()))
 		return false;
 
 	for(size_t i = 0; i < lhs.chroms.size(); ++i)
