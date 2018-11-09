@@ -13,6 +13,7 @@
 #include <utility>
 #include <iostream>
 #include <cassert>
+#include <cmath>
 #include "libsdsConst.h"
 #include "libsdsBitBasic.h"
 
@@ -212,13 +213,9 @@ public:
 	 */
 	size_t getValue(size_type start, size_type len) const {
 		assert(len <= wid);
-		if(len == 0)
-			return 0;
-		if((start + 1) * len > nB)
-			len = nB - start * len;
+		len = std::min(len, nB - start * len);
 		size_type i = start * len / wid;
 		size_type j = start * len - wid * i;
-		size_t result;
 		if (j + len <= wid)
 			return (data[i] << wid - j - len) >> (wid - len);
 		else
