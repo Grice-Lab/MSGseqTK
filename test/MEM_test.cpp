@@ -10,7 +10,6 @@
 #include <cstring>
 #include <algorithm>
 #include "MEM.h"
-#include "MSGseqTKEnv.h"
 
 using namespace std;
 using namespace EGriceLab::MSGseqTK;

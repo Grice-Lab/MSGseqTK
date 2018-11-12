@@ -30,6 +30,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <cassert>
+#include <limits>
 #include <boost/algorithm/string.hpp> /* for boost string algorithms */
 #include <boost/iostreams/filtering_stream.hpp> /* basic boost streams */
 #include <boost/iostreams/device/file.hpp> /* file sink and source */
@@ -60,13 +61,13 @@ void printIntro(void) {
 void printUsage(const string& progName) {
 	string ZLIB_SUPPORT;
 	#ifdef HAVE_LIBZ
-	ZLIB_SUPPORT = ", support .gz or .bz2 compressed file";
+	ZLIB_SUPPORT = ", support .gz or .bz2 compressed files";
 	#endif
 
 	cerr << "Usage:    " << progName << "  <SEQ-FILE1> [SEQ-FILE2 SEQ-FILE3 ...] <-n DBNAME> [options]" << endl
 		 << "SEQ-FILE  FILE                   : genome sequence file with one file per-genome in FASTA format" << ZLIB_SUPPORT << endl
 		 << "Options:    -n  STR              : database name" << endl
-		 << "            -l  FILE             : tab-delimited genome list with 1st field unique genome IDs, 2nd filed genome names, 3nd field genomic sequence file paths, and an optional 4th field with genomic GFF annotation file paths; if provided, <SEQ-FILE> options are ignored" << endl
+		 << "            -l  FILE             : tab-delimited genome list with 1st field unique genome IDs, 2nd filed genome names, 3nd field genomic sequence file paths, and an optional 4th field with genomic GFF annotation file paths; if provided, <SEQ-FILE> options are ignored" << ZLIB_SUPPORT << endl
 		 << "            -r|--update  STR     : update database based on this old DB, it can be the same name as -n, which will overwrite the old database" << endl
 		 << "            -b|--block  INT      : block size (in Mbp) for building FM-index, larget block size will lead to faster but more memory usage algorithm [" << DEFAULT_BLOCK_SIZE << "]" << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
@@ -84,16 +85,38 @@ ostream& writeGFFHeader(ostream& out, const string& dbName, GFF::Version ver = G
 	return out;
 }
 
+/**
+ * read pre-built GFF header comments
+ */
+istream& readGFFHeader(istream& in, string& dbName, GFF::Version& ver) {
+	string tag;
+	int gffVer;
+	in >> tag >> gffVer;
+	if(gffVer == 2)
+		ver = GFF::GTF;
+	else if(gffVer == 3)
+		ver = GFF::GFF3;
+	else
+		ver = GFF::UNK;
+
+	in.ignore(std::numeric_limits<streamsize>::max(), '\n');
+	in.ignore(std::numeric_limits<streamsize>::max(), '\n');
+	in >> tag >> std::ws;
+	std::getline(in, dbName);
+	return in;
+}
+
 int main(int argc, char* argv[]) {
 	/* variable declarations */
 	map<string, string> genomeId2Name;
 	map<string, string> genomeId2Fn;
 	map<string, string> genomeId2GffFn;
-	MetaGenome::GENOME_ANNOMAP genomeAnnos; /* external GFF annotation maps */
+
 	string dbName, oldDBName;
+	string oldGFFRecords;
 	string listFn, gffFn, mtgFn, fmidxFn;
 
-	ifstream listIn, mtgIn, fmidxIn;
+	ifstream listIn, mtgIn, fmidxIn, gffIn;
 
 	ofstream mtgOut, fmidxOut, gffOut;
 	const string fmt = "fasta";
@@ -191,6 +214,7 @@ int main(int argc, char* argv[]) {
 
 	MetaGenome mtg;
 	FMIndex fmidx;
+	MetaGenomeAnno mtgAnno;
 
 	/* try to open existing DB */
 	if(!oldDBName.empty()) { /* is an update */
@@ -198,6 +222,7 @@ int main(int argc, char* argv[]) {
 		/* set oldDBName */
 		mtgFn = oldDBName + METAGENOME_FILE_SUFFIX;
 		fmidxFn = oldDBName + FMINDEX_FILE_SUFFIX;
+		gffFn = oldDBName + GFF::GFF3_SUFFIX;
 
 		mtgIn.open(mtgFn.c_str(), ios_base::binary);
 		if(!mtgIn.is_open()) {
@@ -207,6 +232,11 @@ int main(int argc, char* argv[]) {
 		fmidxIn.open(fmidxFn.c_str(), ios_base::binary);
 		if(!fmidxIn.is_open()) {
 			cerr << "Unable to open old database file '" << fmidxFn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
+		gffIn.open(gffFn.c_str());
+		if(!gffIn.is_open()) {
+			cerr << "Unable to open old database annotation file '" << gffFn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
 
@@ -226,8 +256,21 @@ int main(int argc, char* argv[]) {
 			return EXIT_FAILURE;
 		}
 
+		string db;
+		GFF::Version ver;
+		readGFFHeader(gffIn, db, ver);
+		if(!(db == oldDBName && ver == GFF::GFF3)) {
+			cerr << "db: '" << db << "' oldDBName: " << oldDBName << endl;
+			cerr << "Old database annotation file '" << gffFn << " doesn't match" << endl;
+			return EXIT_FAILURE;
+		}
+		/* copy old records */
+		oldGFFRecords = MetaGenomeAnno::read(gffIn);
+		cerr << "old GFF copied" << endl;
+
 		mtgIn.close();
 		fmidxIn.close();
+		gffIn.close();
 	}
 
 	/* process each file */
@@ -278,11 +321,27 @@ int main(int argc, char* argv[]) {
 			blockSeq += chrSeq; /* N terminated chromosomes */
 		}
 
+		blockGenomes.push_back(genome); /* add this genome to the block */
+		/* process block, if large enough */
+		bool isLast = genomeId2Fn.upper_bound(genomeId) == genomeId2Fn.end();
+		if(blockSeq.length() >= blockSize * MBP_UNIT || isLast) { /* last genome or full block */
+			if(!isLast)
+				infoLog << "Adding " << blockGenomes.size() << " genomes in block " << ++k << " into database" << endl;
+			else
+				infoLog << "Adding " << blockGenomes.size() << " genomes in block " << ++k << " into database and building final sampled Suffix-Array" << endl;
+			mtg.prepend(blockGenomes);
+			fmidx = FMIndex(blockSeq, isLast) + fmidx; /* always use freshly built FMIndex as lhs */
+			assert(mtg.size() == fmidx.length());
+			blockGenomes.clear();
+			blockSeq.clear();
+			infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
+		}
+
 		/* process external GFF file, if exists */
 		if(genomeId2GffFn.count(genomeId)) {
-			const string& gid = Genome::formatName(genomeId); /* use formated ID */
-			const string& gffFn = genomeId2GffFn[genomeId];
+			GenomeAnno anno(genome);
 			GFF::Version extVer = GFF::UNK; /* GFF version for this gffFn */
+
 			/* open external GFF file, and guess GFF version */
 			boost::iostreams::filtering_istream gffIn;
 #ifdef HAVE_LIBZ
@@ -306,7 +365,8 @@ int main(int argc, char* argv[]) {
 			if(extVer != GFF::UNK) {
 				if(!gffIn.bad()) {
 					infoLog << "  reading external GFF annotation from '" << gffFn << "'" << endl;
-					genome.readGFF(gffIn, extVer);
+					anno.read(gffIn, extVer);
+					mtgAnno.push_back(anno);
 				}
 				else
 					warningLog << "Unable to open external GFF file '" << gffFn << "' " << ::strerror(errno) << ", ignore" << endl;
@@ -314,22 +374,6 @@ int main(int argc, char* argv[]) {
 			else
 				warningLog << "Unable to determine the GFF version of file '" << gffFn << "', ignore" << endl;
 		} /* end processing external GFF file */
-
-		blockGenomes.push_back(genome); /* add this genome to the block */
-		/* process block, if large enough */
-		bool isLast = genomeId2Fn.upper_bound(genomeId) == genomeId2Fn.end();
-		if(blockSeq.length() >= blockSize * MBP_UNIT || isLast) { /* last genome or full block */
-			if(!isLast)
-				infoLog << "Adding " << blockGenomes.size() << " genomes in block " << ++k << " into database" << endl;
-			else
-				infoLog << "Adding " << blockGenomes.size() << " genomes in block " << ++k << " into database and building final sampled Suffix-Array" << endl;
-			mtg.prepend(blockGenomes);
-			fmidx = FMIndex(blockSeq, isLast) + fmidx; /* always use freshly built FMIndex as lhs */
-			assert(mtg.size() == fmidx.length());
-			blockGenomes.clear();
-			blockSeq.clear();
-			infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
-		}
 
 		/* incremental update backward */
 		nProcessed++;
@@ -380,9 +424,10 @@ int main(int argc, char* argv[]) {
 		}
 		infoLog << "RFM-index saved" << endl;
 
-		/* write GFF annotation file, and insert existing annotation if exist */
-		writeGFFHeader(gffOut, dbName, Genome::GFF_VERSION);
-		mtg.writeGFF(gffOut);
+		/* write MetaGenome annotations, and insert existing annotation if exist */
+		writeGFFHeader(gffOut, dbName, GenomeAnno::FORMAT);
+		mtgAnno.write(gffOut);
+		gffOut << oldGFFRecords; /* append all old records */
 		infoLog << "GFF3 annotation file written" << endl;
 	}
 	else

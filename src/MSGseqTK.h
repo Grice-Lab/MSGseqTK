@@ -16,7 +16,7 @@
 #include "MEM.h"
 #include "MEMS.h"
 #include "MetaGenome.h"
+#include "MetaGenomeAnno.h"
 #include "MSGseqTKConst.h"
-#include "MSGseqTKEnv.h"
 
 #endif /* SRC_MSGSEQTK_H_ */

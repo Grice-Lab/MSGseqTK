@@ -15,7 +15,6 @@
 #include <cstdint> // C++11
 #include <boost/algorithm/string/regex.hpp>
 #include "DNAseq.h"
-#include "GFF.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
@@ -25,14 +24,12 @@ using std::map;
 using std::vector;
 using std::istream;
 using std::ostream;
-using UCSC::GFF;
 
 /**
  * Basic information of a genome (within a MetaGenome)
  */
 class Genome {
 public:
-	typedef map<string, vector<GFF>> CHROM_ANNOMAP; /* chrom annotation map with chrom.name -> GFFs */
 	/* nested types and enums */
 	struct Chrom {
 		/** default constructor */
@@ -97,11 +94,6 @@ public:
 		return chroms.size();
 	}
 
-	/** get number of annotated chromosomes */
-	size_t numChromAnnos() const {
-		return chromAnnos.size();
-	}
-
 	/** get all chromosomes */
 	const vector<Chrom>& getChroms() const {
 		return chroms;
@@ -144,15 +136,6 @@ public:
 	/** load an object from binary input */
 	istream& load(istream& in);
 
-	/** write GFF comment for this object */
-	ostream& writeGFFComment(ostream& out) const;
-
-	/** write this object to text output in GFF format */
-	ostream& writeGFF(ostream& out) const;
-
-	/** read in GFF records from text input in GFF format for this object */
-	istream& readGFF(istream& in, GFF::Version ver = GFF_VERSION);
-
 	/* non-member functions */
 	/** test whether two Genomes are equal, all basic information but not auxinary annotations are tested */
 	friend bool operator==(const Genome& lhs, const Genome& rhs);
@@ -162,11 +145,9 @@ private:
 	string id; /* unique genome ID useful for upgrade */
 	string name;
 	vector<Chrom> chroms;
-	CHROM_ANNOMAP chromAnnos; /* per-chromosome annotations */
 
 	/* class members */
 public:
-	static const GFF::Version GFF_VERSION = GFF::GFF3; /* always use GFF3 version for writing GFFs */
 	static const boost::regex INVALID_NAMEPREFIX_PATTERN;
 	static const boost::regex INVALID_NAME_PATTERN;
 	static const string REPLACEMENT_STR;

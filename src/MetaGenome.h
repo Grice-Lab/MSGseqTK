@@ -28,15 +28,13 @@ using std::istream;
 using std::ostream;
 using std::vector;
 using std::deque;
-using UCSC::GFF;
 
 /**
- * class representing a genome basic information
+ * class representing a MetaGenome basic information
  */
 class MetaGenome {
 public:
 	typedef map<size_t, uint64_t> GENOME_SHIFTMAP; /* genome shift in this MetaGenome */
-	typedef map<string, Genome::CHROM_ANNOMAP> GENOME_ANNOMAP; /* map from genome id to chrom-level maps */
 	/* constructors */
 	/** default constructor */
 //	MetaGenome() = default;
@@ -137,9 +135,6 @@ public:
 
 	/** write this object to text output in GFF format, with optional external annotation files optionally provided */
 	ostream& writeGFF(ostream& out) const;
-
-	/** write GFF comments to text output */
-	ostream& writeGFFComment(ostream& out, const string& dbName = ".") const;
 
 	/** merge this MetaGenome with another one,
 	 * with its name unchanged

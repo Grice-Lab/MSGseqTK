@@ -94,20 +94,6 @@ bool operator==(const MetaGenome& lhs, const MetaGenome& rhs) {
 	return true;
 }
 
-ostream& MetaGenome::writeGFF(ostream& out) const {
-	/* write each genome with external annotations */
-	for(const Genome& genome : genomes)
-		genome.writeGFF(out);
-	return out;
-}
-
-ostream& MetaGenome::writeGFFComment(ostream& out, const string& dbName) const {
-	out << "##gff-version " << Genome::GFF_VERSION << endl;
-	out << "#!processor " << progName << endl;
-	out << "##metagenome " << dbName << endl;
-	return out;
-}
-
 size_t MetaGenome::countGenome(const string& genomeId) const {
 	string gid = Genome::formatName(genomeId);
 	size_t c = 0;

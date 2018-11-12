@@ -10,7 +10,6 @@
 #include <cstring>
 #include "Genome.h"
 #include "MetaGenome.h"
-#include "MSGseqTKEnv.h"
 
 using namespace std;
 using namespace EGriceLab::MSGseqTK;
