@@ -137,6 +137,7 @@ public:
 	istream& load(istream& in);
 
 	/* non-member functions */
+	/* relationship operators */
 	/** test whether two Genomes are equal, all basic information but not auxinary annotations are tested */
 	friend bool operator==(const Genome& lhs, const Genome& rhs);
 
@@ -156,6 +157,10 @@ public:
 	/** format genome id/name */
 	static string formatName(const string& name);
 };
+
+inline bool operator==(const Genome& lhs, const Genome& rhs) {
+	return lhs.id == rhs.id && lhs.name == rhs.name && lhs.chroms == rhs.chroms;
+}
 
 inline bool operator==(const Genome::Chrom& lhs, const Genome::Chrom& rhs) {
 	return lhs.name == rhs.name && lhs.size == rhs.size;

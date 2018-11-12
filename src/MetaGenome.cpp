@@ -60,7 +60,6 @@ MetaGenome::GENOME_SHIFTMAP MetaGenome::getGenomeShift() const {
 	return shiftMap;
 }
 
-
 ostream& MetaGenome::save(ostream& out) const {
 	size_t N = numGenomes();
 	out.write((const char*) &N, sizeof(size_t));
@@ -72,26 +71,15 @@ ostream& MetaGenome::save(ostream& out) const {
 istream& MetaGenome::load(istream& in) {
 	size_t N = 0;
 	in.read((char*) &N, sizeof(size_t));
-	for(size_t i = 0; i < N; ++i) {
-		Genome genome;
-		genome.load(in);
-		push_back(genome);
-	}
+	genomes.resize(N);
+	for(size_t i = 0; i < N; ++i)
+		genomes[i].load(in);
 	return in;
 }
 
 MetaGenome& MetaGenome::operator+=(const MetaGenome& other) {
 	genomes.insert(genomes.end(), other.genomes.begin(), other.genomes.end());
 	return *this;
-}
-
-bool operator==(const MetaGenome& lhs, const MetaGenome& rhs) {
-	if(lhs.genomes.size() != rhs.genomes.size())
-		return false;
-	for(deque<Genome>::size_type i = 0; i < lhs.genomes.size(); ++i)
-		if(lhs.genomes[i] != rhs.genomes[i])
-			return false;
-	return true;
 }
 
 size_t MetaGenome::countGenome(const string& genomeId) const {

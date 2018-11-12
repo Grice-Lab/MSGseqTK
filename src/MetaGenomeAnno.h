@@ -47,6 +47,12 @@ public:
 		genomeAnnos.insert(genomeAnnos.end(), blockAnnos.begin(), blockAnnos.end());
 	}
 
+	/** save this object to binary output */
+	ostream& save(ostream& out) const;
+
+	/** load an object from binary input */
+	istream& load(istream& in);
+
 	/** write this object to text output in GFF format */
 	ostream& write(ostream& out) const;
 

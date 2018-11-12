@@ -133,9 +133,6 @@ public:
 	/** load an object from binary input */
 	istream& load(istream& in);
 
-	/** write this object to text output in GFF format, with optional external annotation files optionally provided */
-	ostream& writeGFF(ostream& out) const;
-
 	/** merge this MetaGenome with another one,
 	 * with its name unchanged
 	 */
@@ -149,16 +146,17 @@ public:
 		return mgMerged;
 	}
 
-	/**
-	 * test whether two MeteGenomes are equal
-	 * @return  true if and only if all their Genomes are equal and in same order
-	 */
+	/** relational operators */
 	friend bool operator==(const MetaGenome& lhs, const MetaGenome& rhs);
 
 	/* member fields */
 private:
 	deque<Genome> genomes;
 };
+
+inline bool operator==(const MetaGenome& lhs, const MetaGenome& rhs) {
+	return lhs.genomes == rhs.genomes;
+}
 
 inline bool operator!=(const MetaGenome& lhs, const MetaGenome& rhs) {
 	return !(lhs == rhs);

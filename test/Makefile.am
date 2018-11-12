@@ -27,6 +27,7 @@ PrimarySeq_test \
 SeqIO_test \
 FMIndex_test \
 Genome_test \
+GenomeAnno_test \
 MEM_test
 
 LIBDIVSUFSORT_PKG_NAME=libdivsufsort64
@@ -56,6 +57,11 @@ Genome_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/util/libEGUtil.a
 
+GenomeAnno_test_SOURCES = GenomeAnno_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
+GenomeAnno_test_LDADD = \
+$(top_srcdir)/src/libMSGseqTK.a \
+$(top_srcdir)/src/util/libEGUtil.a
+
 MEM_test_SOURCES = MEM_test.cpp 
 MEM_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
@@ -69,4 +75,5 @@ PrimarySeq_test \
 SeqIO_test \
 FMIndex_test \
 Genome_test \
+GenomeAnno_test \
 MEM_test

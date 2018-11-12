@@ -84,16 +84,6 @@ uint64_t Genome::size() const {
 	return size + numChroms(); /* add one null gap after each chromosome */
 }
 
-bool operator==(const Genome& lhs, const Genome& rhs) {
-	if(!(lhs.id == rhs.id && lhs.name == rhs.name && lhs.chroms.size() == rhs.chroms.size()))
-		return false;
-
-	for(size_t i = 0; i < lhs.chroms.size(); ++i)
-		if(lhs.chroms[i] != rhs.chroms[i])
-			return false;
-	return true;
-}
-
 string Genome::formatName(const string& name) {
 	return boost::replace_all_regex_copy(
 			boost::replace_all_regex_copy(name, INVALID_NAMEPREFIX_PATTERN, string("")),

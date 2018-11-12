@@ -322,6 +322,47 @@ int main(int argc, char* argv[]) {
 		}
 
 		blockGenomes.push_back(genome); /* add this genome to the block */
+
+		/* process external GFF file, if exists */
+		if(genomeId2GffFn.count(genomeId)) {
+			GenomeAnno anno(genome);
+			gffFn = genomeId2GffFn[genomeId];
+			GFF::Version extVer = GFF::UNK; /* GFF version for this gffFn */
+			infoLog << "  Reading external GFF annotation from '" << gffFn << "'" << endl;
+
+			/* open external GFF file, and guess GFF version */
+			boost::iostreams::filtering_istream gffIn;
+#ifdef HAVE_LIBZ
+			if(StringUtils::endsWith(gffFn, GZIP_FILE_SUFFIX)) {
+				gffIn.push(boost::iostreams::gzip_decompressor());
+				extVer = GFF::guessVersion(StringUtils::removeEnd(static_cast<const string&>(gffFn), GZIP_FILE_SUFFIX));
+			}
+			else if(StringUtils::endsWith(gffFn, BZIP2_FILE_SUFFIX)) {
+				gffIn.push(boost::iostreams::bzip2_decompressor());
+				extVer = GFF::guessVersion(StringUtils::removeEnd(static_cast<const string&>(gffFn), BZIP2_FILE_SUFFIX));
+			}
+			else {
+				extVer = GFF::guessVersion(gffFn);
+			}
+#endif
+			gffIn.push(boost::iostreams::file_source(gffFn));
+
+			if(extVer == GFF::UNK)
+				extVer = GFF::guessVersion(gffFn);
+
+			if(extVer != GFF::UNK) {
+				if(!gffIn.bad()) {
+					anno.read(gffIn, extVer);
+					debugLog << "  read in " << anno.numAnnotated() << " external annotations" << endl;
+					mtgAnno.push_back(anno);
+				}
+				else
+					warningLog << "Unable to open external GFF file '" << gffFn << "' " << ::strerror(errno) << ", ignore" << endl;
+			}
+			else
+				warningLog << "Unable to determine the GFF version of file '" << gffFn << "', ignore" << endl;
+		} /* end processing external GFF file */
+
 		/* process block, if large enough */
 		bool isLast = genomeId2Fn.upper_bound(genomeId) == genomeId2Fn.end();
 		if(blockSeq.length() >= blockSize * MBP_UNIT || isLast) { /* last genome or full block */
@@ -336,45 +377,6 @@ int main(int argc, char* argv[]) {
 			blockSeq.clear();
 			infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
 		}
-
-		/* process external GFF file, if exists */
-		if(genomeId2GffFn.count(genomeId)) {
-			GenomeAnno anno(genome);
-			GFF::Version extVer = GFF::UNK; /* GFF version for this gffFn */
-
-			/* open external GFF file, and guess GFF version */
-			boost::iostreams::filtering_istream gffIn;
-#ifdef HAVE_LIBZ
-			if(StringUtils::endsWith(gffFn, GZIP_FILE_SUFFIX)) {
-				gffIn.push(boost::iostreams::gzip_decompressor());
-				extVer = GFF::guessVersion(StringUtils::removeEnd(gffFn, GZIP_FILE_SUFFIX));
-			}
-			else if(StringUtils::endsWith(gffFn, BZIP2_FILE_SUFFIX)) {
-				gffIn.push(boost::iostreams::bzip2_decompressor());
-				extVer = GFF::guessVersion(StringUtils::removeEnd(gffFn, BZIP2_FILE_SUFFIX));
-			}
-			else {
-				extVer = GFF::guessVersion(gffFn);
-			}
-#endif
-			gffIn.push(boost::iostreams::file_source(gffFn));
-
-			if(extVer == GFF::UNK)
-				extVer = GFF::guessVersion(gffFn);
-
-			if(extVer != GFF::UNK) {
-				if(!gffIn.bad()) {
-					infoLog << "  reading external GFF annotation from '" << gffFn << "'" << endl;
-					anno.read(gffIn, extVer);
-					mtgAnno.push_back(anno);
-				}
-				else
-					warningLog << "Unable to open external GFF file '" << gffFn << "' " << ::strerror(errno) << ", ignore" << endl;
-			}
-			else
-				warningLog << "Unable to determine the GFF version of file '" << gffFn << "', ignore" << endl;
-		} /* end processing external GFF file */
-
 		/* incremental update backward */
 		nProcessed++;
 	}

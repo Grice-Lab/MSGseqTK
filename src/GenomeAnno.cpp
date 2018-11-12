@@ -18,9 +18,16 @@ using std::cout;
 using std::endl;
 using std::istringstream;
 
+size_t GenomeAnno::numAnnotated() const {
+	size_t N = 0;
+	for(const CHROM_ANNOMAP::value_type& entry : chromAnnos)
+		N += entry.second.size();
+	return N;
+}
+
 ostream& GenomeAnno::save(ostream& out) const {
 	genome.save(out);
-	size_t Nannos = numAnnotated();
+	size_t Nannos = numChromAnnotated();
 	out.write((const char*) &Nannos, sizeof(size_t));
 	for(const CHROM_ANNOMAP::value_type& anno : chromAnnos) {
 		StringUtils::saveString(anno.first, out);

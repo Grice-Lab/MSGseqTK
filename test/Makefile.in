@@ -90,10 +90,10 @@ host_triplet = @host@
 target_triplet = @target@
 check_PROGRAMS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
 	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
-	MEM_test$(EXEEXT)
+	GenomeAnno_test$(EXEEXT) MEM_test$(EXEEXT)
 TESTS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
 	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
-	MEM_test$(EXEEXT)
+	GenomeAnno_test$(EXEEXT) MEM_test$(EXEEXT)
 subdir = test
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -124,6 +124,12 @@ FMIndex_test_OBJECTS = $(am_FMIndex_test_OBJECTS)
 FMIndex_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
 	$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	$(top_srcdir)/src/libsds/src/libsds.la \
+	$(top_srcdir)/src/util/libEGUtil.a
+am__dirstamp = $(am__leading_dot)dirstamp
+am_GenomeAnno_test_OBJECTS = GenomeAnno_test.$(OBJEXT) \
+	$(top_srcdir)/src/MSGseqTKEnv.$(OBJEXT)
+GenomeAnno_test_OBJECTS = $(am_GenomeAnno_test_OBJECTS)
+GenomeAnno_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
 	$(top_srcdir)/src/util/libEGUtil.a
 am_Genome_test_OBJECTS = Genome_test.$(OBJEXT)
 Genome_test_OBJECTS = $(am_Genome_test_OBJECTS)
@@ -177,11 +183,13 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(DNAseq_test_SOURCES) $(FMIndex_test_SOURCES) \
-	$(Genome_test_SOURCES) $(MEM_test_SOURCES) \
-	$(PrimarySeq_test_SOURCES) $(SeqIO_test_SOURCES)
+	$(GenomeAnno_test_SOURCES) $(Genome_test_SOURCES) \
+	$(MEM_test_SOURCES) $(PrimarySeq_test_SOURCES) \
+	$(SeqIO_test_SOURCES)
 DIST_SOURCES = $(DNAseq_test_SOURCES) $(FMIndex_test_SOURCES) \
-	$(Genome_test_SOURCES) $(MEM_test_SOURCES) \
-	$(PrimarySeq_test_SOURCES) $(SeqIO_test_SOURCES)
+	$(GenomeAnno_test_SOURCES) $(Genome_test_SOURCES) \
+	$(MEM_test_SOURCES) $(PrimarySeq_test_SOURCES) \
+	$(SeqIO_test_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -592,6 +600,11 @@ Genome_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/util/libEGUtil.a
 
+GenomeAnno_test_SOURCES = GenomeAnno_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
+GenomeAnno_test_LDADD = \
+$(top_srcdir)/src/libMSGseqTK.a \
+$(top_srcdir)/src/util/libEGUtil.a
+
 MEM_test_SOURCES = MEM_test.cpp 
 MEM_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
@@ -649,6 +662,19 @@ DNAseq_test$(EXEEXT): $(DNAseq_test_OBJECTS) $(DNAseq_test_DEPENDENCIES) $(EXTRA
 FMIndex_test$(EXEEXT): $(FMIndex_test_OBJECTS) $(FMIndex_test_DEPENDENCIES) $(EXTRA_FMIndex_test_DEPENDENCIES) 
 	@rm -f FMIndex_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(FMIndex_test_OBJECTS) $(FMIndex_test_LDADD) $(LIBS)
+$(top_srcdir)/src/$(am__dirstamp):
+	@$(MKDIR_P) $(top_srcdir)/src
+	@: > $(top_srcdir)/src/$(am__dirstamp)
+$(top_srcdir)/src/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) $(top_srcdir)/src/$(DEPDIR)
+	@: > $(top_srcdir)/src/$(DEPDIR)/$(am__dirstamp)
+$(top_srcdir)/src/MSGseqTKEnv.$(OBJEXT):  \
+	$(top_srcdir)/src/$(am__dirstamp) \
+	$(top_srcdir)/src/$(DEPDIR)/$(am__dirstamp)
+
+GenomeAnno_test$(EXEEXT): $(GenomeAnno_test_OBJECTS) $(GenomeAnno_test_DEPENDENCIES) $(EXTRA_GenomeAnno_test_DEPENDENCIES) 
+	@rm -f GenomeAnno_test$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(GenomeAnno_test_OBJECTS) $(GenomeAnno_test_LDADD) $(LIBS)
 
 Genome_test$(EXEEXT): $(Genome_test_OBJECTS) $(Genome_test_DEPENDENCIES) $(EXTRA_Genome_test_DEPENDENCIES) 
 	@rm -f Genome_test$(EXEEXT)
@@ -668,12 +694,15 @@ SeqIO_test$(EXEEXT): $(SeqIO_test_OBJECTS) $(SeqIO_test_DEPENDENCIES) $(EXTRA_Se
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f $(top_srcdir)/src/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@$(top_srcdir)/src/$(DEPDIR)/MSGseqTKEnv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DNAseq_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FMIndex_test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GenomeAnno_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Genome_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MEM_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PrimarySeq_test.Po@am__quote@
@@ -937,6 +966,13 @@ Genome_test.log: Genome_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+GenomeAnno_test.log: GenomeAnno_test$(EXEEXT)
+	@p='GenomeAnno_test$(EXEEXT)'; \
+	b='GenomeAnno_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 MEM_test.log: MEM_test$(EXEEXT)
 	@p='MEM_test$(EXEEXT)'; \
 	b='MEM_test'; \
@@ -1024,6 +1060,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-test -z "$(top_srcdir)/src/$(DEPDIR)/$(am__dirstamp)" || rm -f $(top_srcdir)/src/$(DEPDIR)/$(am__dirstamp)
+	-test -z "$(top_srcdir)/src/$(am__dirstamp)" || rm -f $(top_srcdir)/src/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -1034,7 +1072,7 @@ clean-am: clean-checkPROGRAMS clean-generic clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf $(top_srcdir)/src/$(DEPDIR) ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1080,7 +1118,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf $(top_srcdir)/src/$(DEPDIR) ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

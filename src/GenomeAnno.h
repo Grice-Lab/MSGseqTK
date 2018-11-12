@@ -40,10 +40,23 @@ public:
 	{  }
 
 	/* member methods */
+	/** get annotating genome */
+	const Genome& getGenome() const {
+		return genome;
+	}
+
+	/** set annotating genome */
+	void setGenome(const Genome& genome) {
+		this->genome = genome;
+	}
+
 	/** get number of annotated chromosomes */
-	size_t numAnnotated() const {
+	size_t numChromAnnotated() const {
 		return chromAnnos.size();
 	}
+
+	/** get number of total annotations */
+	size_t numAnnotated() const;
 
 	/** add a new GFF record for given genomeID */
 	GenomeAnno& addAnno(const string& chr, const GFF& record) {
@@ -64,9 +77,11 @@ public:
 	istream& read(istream& in, GFF::Version ver = FORMAT);
 
 	/* member fields */
+private:
 	Genome genome; /* genome these annotations belong to */
 	CHROM_ANNOMAP chromAnnos;
 
+public:
 	/* static member fields */
 	static const GFF::Version FORMAT = GFF::GFF3;
 
@@ -76,6 +91,7 @@ public:
 
 	/** read given genome info from comment */
 	static istream& readGFFComment(istream& in, string& id, string& name);
+
 };
 
 } /* namespace MSGseqTK */

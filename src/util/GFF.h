@@ -12,6 +12,7 @@
 #include <map>
 #include <iostream>
 #include <stdexcept>
+#include <cmath> // C99
 
 namespace EGriceLab {
 namespace UCSC {
@@ -196,12 +197,6 @@ public:
 	/* unformated write */
 	friend ostream& operator<<(ostream& out, const GFF& record);
 
-	/* relationship operators */
-	/** compare whether two GFF objects is the same
-	 * @return true  if and only if all fields except the attrs are equal
-	 */
-	friend bool operator==(const GFF& lhs, const GFF& rhs);
-
 private:
 	/* member fields */
 	string seqname;
@@ -232,10 +227,6 @@ public:
 	/* static methods */
 	static Version guessVersion(const string& fn);
 };
-
-inline bool operator!=(const GFF& lhs, const GFF& rhs) {
-	return !(lhs == rhs);
-}
 
 inline void GFF::readAttributes(const string& attrStr) {
 	if(attrStr.empty())
