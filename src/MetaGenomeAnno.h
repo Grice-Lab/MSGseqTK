@@ -79,6 +79,16 @@ public:
 	static string read(istream& in) {
 		return string(std::istreambuf_iterator<char>(in), { });
 	}
+
+	/**
+	 * write GFF header comments
+	 */
+	static ostream& writeGFFHeader(ostream& out, const string& dbName, GFF::Version ver = GFF::GFF3);
+
+	/**
+	 * read pre-built GFF header comments
+	 */
+	static istream& readGFFHeader(istream& in, string& dbName, GFF::Version& ver);
 };
 
 inline MetaGenomeAnno& MetaGenomeAnno::operator+=(const MetaGenomeAnno& other) {

@@ -36,6 +36,7 @@
 using namespace std;
 using namespace EGriceLab;
 using namespace EGriceLab::MSGseqTK;
+using UCSC::GFF;
 
 /**
  * Print introduction of this program
@@ -60,7 +61,7 @@ int main(int argc, char* argv[]) {
 	/* variable declarations */
 	vector<string> inDBNames;
 	string dbName;
-	ofstream mtgOut, fmidxOut;
+	ofstream mtgOut, fmidxOut, gffOut;
 
 	/* parse options */
 	CommandOptions cmdOpts(argc, argv);
@@ -102,6 +103,7 @@ int main(int argc, char* argv[]) {
 	/* set dbName */
 	string mtgFn = dbName + METAGENOME_FILE_SUFFIX;
 	string fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
+	string gffFn = dbName + GFF::GFF3_SUFFIX;
 
 	/* open outputs */
 	mtgOut.open(mtgFn.c_str(), ios_base::out | ios_base::binary);
@@ -114,15 +116,22 @@ int main(int argc, char* argv[]) {
 		cerr << "Unable to write to '" << fmidxFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
+	gffOut.open(gffFn.c_str());
+	if(!gffOut.is_open()) {
+		cerr << "Unable to write to '" << gffFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
 
 	MetaGenome mtg;
-	FMIndex fmidx; /* keepSA == false */
+	FMIndex fmidx;
+	string mtgAnno;
 
 	/* process each database */
 	for(vector<string>::const_iterator inDB = inDBNames.begin(); inDB != inDBNames.end(); ++inDB) {
 		bool isLast = inDB == inDBNames.end() - 1;
 		string mtgInfn = *inDB + METAGENOME_FILE_SUFFIX;
 		string fmidxInfn = *inDB + FMINDEX_FILE_SUFFIX;
+		string gffInfn = *inDB + GFF::GFF3_SUFFIX;
 		/* open DB files */
 		ifstream mtgIn(mtgInfn.c_str(), ios_base::binary);
 		if(!mtgIn.is_open()) {
@@ -134,8 +143,13 @@ int main(int argc, char* argv[]) {
 			cerr << "Unable to open '" << fmidxInfn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
+		ifstream gffIn(gffInfn.c_str());
+		if(!gffIn.is_open()) {
+			cerr << "Unable to open '" << gffInfn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
 
-		/* read in genome sequence, concatenated with Ns */
+		/* read in database files */
 		infoLog << "Loading database '" << *inDB << "'" << endl;
 		MetaGenome mtgPart;
 		FMIndex fmidxPart;
@@ -154,6 +168,16 @@ int main(int argc, char* argv[]) {
 			cerr << "Unable to load '" << fmidxInfn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
+
+		string db;
+		GFF::Version ver;
+		MetaGenomeAnno::readGFFHeader(gffIn, db, ver);
+		if(db == *inDB && ver == GFF::GFF3) {
+			mtgAnno += MetaGenomeAnno::read(gffIn);
+			debugLog << "GFF records copied from '" << gffFn << "'" << endl;
+		}
+		else
+			warningLog << "Content from database annotation file '" << gffFn << " doesn't match its name, ignored" << endl;
 
 		/* incremental update */
 		if(!isLast) {
@@ -184,8 +208,13 @@ int main(int argc, char* argv[]) {
 	saveProgInfo(fmidxOut);
 	fmidx.save(fmidxOut);
 	if(fmidxOut.bad()) {
-		cerr << "Unable to save RFM-index: " << ::strerror(errno) << endl;
+		cerr << "Unable to save FM-index: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	infoLog << "RFM-index saved" << endl;
+	infoLog << "FM-index saved" << endl;
+
+	/* write MetaGenome annotations */
+	MetaGenomeAnno::writeGFFHeader(gffOut, dbName, GenomeAnno::FORMAT);
+	gffOut << mtgAnno;
+	infoLog << "GFF3 annotation file written" << endl;
 }

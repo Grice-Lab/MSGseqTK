@@ -4,7 +4,8 @@
  *  Created on: Nov 12, 2018
  *      Author: zhengqi
  */
-
+#include <limits>
+#include "ProgEnv.h"
 #include "MetaGenomeAnno.h"
 
 namespace EGriceLab {
@@ -32,6 +33,34 @@ ostream& MetaGenomeAnno::write(ostream& out) const {
 	for(const GenomeAnno& genome : genomeAnnos)
 		genome.write(out);
 	return out;
+}
+
+ostream& MetaGenomeAnno::writeGFFHeader(ostream& out, const string& dbName, GFF::Version ver) {
+	out << "##gff-version " << ver << endl;
+	out << "#!processor " << progName << endl;
+	out << "##metagenome " << dbName << endl;
+	return out;
+}
+
+/**
+ * read pre-built GFF header comments
+ */
+istream& MetaGenomeAnno::readGFFHeader(istream& in, string& dbName, GFF::Version& ver) {
+	string tag;
+	int gffVer;
+	in >> tag >> gffVer;
+	if(gffVer == 2)
+		ver = GFF::GTF;
+	else if(gffVer == 3)
+		ver = GFF::GFF3;
+	else
+		ver = GFF::UNK;
+
+	in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+	in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+	in >> tag >> std::ws;
+	std::getline(in, dbName);
+	return in;
 }
 
 } /* namespace MSGseqTK */

@@ -75,36 +75,7 @@ void printUsage(const string& progName) {
 		 << "            -h|--help            : print this message and exit" << endl;
 }
 
-/**
- * write GFF header comments
- */
-ostream& writeGFFHeader(ostream& out, const string& dbName, GFF::Version ver = GFF::GFF3) {
-	out << "##gff-version " << ver << endl;
-	out << "#!processor " << progName << endl;
-	out << "##metagenome " << dbName << endl;
-	return out;
-}
 
-/**
- * read pre-built GFF header comments
- */
-istream& readGFFHeader(istream& in, string& dbName, GFF::Version& ver) {
-	string tag;
-	int gffVer;
-	in >> tag >> gffVer;
-	if(gffVer == 2)
-		ver = GFF::GTF;
-	else if(gffVer == 3)
-		ver = GFF::GFF3;
-	else
-		ver = GFF::UNK;
-
-	in.ignore(std::numeric_limits<streamsize>::max(), '\n');
-	in.ignore(std::numeric_limits<streamsize>::max(), '\n');
-	in >> tag >> std::ws;
-	std::getline(in, dbName);
-	return in;
-}
 
 int main(int argc, char* argv[]) {
 	/* variable declarations */
@@ -258,15 +229,14 @@ int main(int argc, char* argv[]) {
 
 		string db;
 		GFF::Version ver;
-		readGFFHeader(gffIn, db, ver);
-		if(!(db == oldDBName && ver == GFF::GFF3)) {
-			cerr << "db: '" << db << "' oldDBName: " << oldDBName << endl;
-			cerr << "Old database annotation file '" << gffFn << " doesn't match" << endl;
-			return EXIT_FAILURE;
+		MetaGenomeAnno::readGFFHeader(gffIn, db, ver);
+		if(db == oldDBName && ver == GFF::GFF3) {
+			/* copy old records */
+			oldGFFRecords = MetaGenomeAnno::read(gffIn);
+			debugLog << "old GFF records copied from '" << gffFn << "'" << endl;
 		}
-		/* copy old records */
-		oldGFFRecords = MetaGenomeAnno::read(gffIn);
-		cerr << "old GFF copied" << endl;
+		else
+			warningLog << "Content from old database annotation file '" << gffFn << " doesn't match its name, ignored" << endl;
 
 		mtgIn.close();
 		fmidxIn.close();
@@ -421,13 +391,13 @@ int main(int argc, char* argv[]) {
 		saveProgInfo(fmidxOut);
 		fmidx.save(fmidxOut);
 		if(fmidxOut.bad()) {
-			cerr << "Unable to save RFM-index: " << ::strerror(errno) << endl;
+			cerr << "Unable to save FM-index: " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
-		infoLog << "RFM-index saved" << endl;
+		infoLog << "FM-index saved" << endl;
 
 		/* write MetaGenome annotations, and insert existing annotation if exist */
-		writeGFFHeader(gffOut, dbName, GenomeAnno::FORMAT);
+		MetaGenomeAnno::writeGFFHeader(gffOut, dbName, GenomeAnno::FORMAT);
 		mtgAnno.write(gffOut);
 		gffOut << oldGFFRecords; /* append all old records */
 		infoLog << "GFF3 annotation file written" << endl;
