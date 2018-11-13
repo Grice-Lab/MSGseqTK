@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
 	/* variable declarations */
 	string dbName;
 	string listFn;
-	ifstream mtgIn, fmidxIn;
+	ifstream mtgIn, fmidxIn, gffIn;
 	ofstream listOut;
 
 	/* parse options */

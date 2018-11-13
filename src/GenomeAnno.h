@@ -76,6 +76,12 @@ public:
 	/** read into this object from text GFF format */
 	istream& read(istream& in, GFF::Version ver = FORMAT);
 
+	/** write start comment of this genome anno to text GFF output */
+	ostream& writeStartComment(ostream& out) const;
+
+	/** write end comment of this genome anno to text GFF output */
+	ostream& writeEndComment(ostream& out) const;
+
 	/* member fields */
 private:
 	Genome genome; /* genome these annotations belong to */
@@ -84,13 +90,12 @@ private:
 public:
 	/* static member fields */
 	static const GFF::Version FORMAT = GFF::GFF3;
+	static const string RECORD_START_TAG;
+	static const string RECORD_END_TAG;
 
 	/* static methods */
-	/** write given genome info to comment */
-	static ostream& writeGFFComment(ostream& out, const string& id, const string& name);
-
 	/** read given genome info from comment */
-	static istream& readGFFComment(istream& in, string& id, string& name);
+	static istream& readStartComment(istream& in, string& id, string& name);
 
 };
 

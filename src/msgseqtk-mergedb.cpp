@@ -173,7 +173,7 @@ int main(int argc, char* argv[]) {
 		GFF::Version ver;
 		MetaGenomeAnno::readGFFHeader(gffIn, db, ver);
 		if(db == *inDB && ver == GFF::GFF3) {
-			mtgAnno += MetaGenomeAnno::read(gffIn);
+			mtgAnno += MetaGenomeAnno::readAll(gffIn);
 			debugLog << "GFF records copied from '" << gffFn << "'" << endl;
 		}
 		else

@@ -13,6 +13,7 @@
 #include <vector>
 #include <map>
 #include <iterator>
+#include <algorithm>
 #include "GenomeAnno.h"
 
 namespace EGriceLab {
@@ -47,6 +48,16 @@ public:
 		genomeAnnos.insert(genomeAnnos.end(), blockAnnos.begin(), blockAnnos.end());
 	}
 
+	/** get a GenomeAnno iterator by id */
+	vector<GenomeAnno>::const_iterator getAnno(const string& id) const {
+		return std::find_if(genomeAnnos.begin(), genomeAnnos.end(), [&id](const GenomeAnno& anno) { return anno.getGenome().getId() == id; });
+	}
+
+	/** get a GenomeAnno iterator by id, non-const version*/
+	vector<GenomeAnno>::iterator getAnno(const string& id) {
+		return std::find_if(genomeAnnos.begin(), genomeAnnos.end(), [&id](GenomeAnno& anno) { return anno.getGenome().getId() == id; });
+	}
+
 	/** save this object to binary output */
 	ostream& save(ostream& out) const;
 
@@ -55,6 +66,9 @@ public:
 
 	/** write this object to text output in GFF format */
 	ostream& write(ostream& out) const;
+
+	/** read aggregated GFF annotations for this MetaGenomeAnno */
+	istream& read(istream& in);
 
 	/** merge this MetaGenomeAnno with another one,
 	 * with its name unchanged
@@ -76,7 +90,7 @@ private:
 	/* static methods */
 public:
 	/** read in all content from a GFF text input */
-	static string read(istream& in) {
+	static string readAll(istream& in) {
 		return string(std::istreambuf_iterator<char>(in), { });
 	}
 

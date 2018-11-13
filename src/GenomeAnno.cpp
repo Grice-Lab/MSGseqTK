@@ -18,6 +18,9 @@ using std::cout;
 using std::endl;
 using std::istringstream;
 
+const string GenomeAnno::RECORD_START_TAG = "##genome";
+const string GenomeAnno::RECORD_END_TAG = "##end-genome";
+
 size_t GenomeAnno::numAnnotated() const {
 	size_t N = 0;
 	for(const CHROM_ANNOMAP::value_type& entry : chromAnnos)
@@ -59,8 +62,7 @@ ostream& GenomeAnno::write(ostream& out) const {
 	const string& id = genome.getId();
 	const string& name = genome.getName();
 	/* write per-genome comment */
-	writeGFFComment(out, id, name);
-
+	writeStartComment(out);
 	/* write genome as first-level feature */
 	GFF genomeGff(FORMAT, id, progName, "genome", 1, genome.size(), GFF::INVALID_SCORE, '.', GFF::INVALID_FRAME);
 	genomeGff.setAttr("ID", id);
@@ -85,16 +87,21 @@ ostream& GenomeAnno::write(ostream& out) const {
 
 		shift += chr.size + 1; /* including null terminal */
 	}
-
+	writeEndComment(out);
 	return out;
 }
 
-ostream& GenomeAnno::writeGFFComment(ostream& out, const string& id, const string& name) {
-	out << "##genome " << id << " (" << name << ")" << endl;
+ostream& GenomeAnno::writeStartComment(ostream& out) const {
+	out << RECORD_START_TAG << " " << genome.getId() << " (" << genome.getName() << ")" << endl;
 	return out;
 }
 
-istream& GenomeAnno::readGFFComment(istream& in, string& id, string& name) {
+ostream& GenomeAnno::writeEndComment(ostream& out) const {
+	out << RECORD_END_TAG << endl;
+	return out;
+}
+
+istream& GenomeAnno::readStartComment(istream& in, string& id, string& name) {
 	string tag;
 	in >> tag >> id >> name;
 	name = StringUtils::stripQuotes(name, "()");
@@ -116,6 +123,8 @@ istream& GenomeAnno::read(istream& in, GFF::Version ver) {
 				gffRecord.setVer(GFF::GTF);
 				debugLog << "  GFF version determined by embedded comment" << endl;
 			}
+			else if(line == RECORD_END_TAG)
+				break;
 			else
 				continue;
 		}

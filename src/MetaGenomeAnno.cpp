@@ -5,11 +5,14 @@
  *      Author: zhengqi
  */
 #include <limits>
+#include <sstream>
 #include "ProgEnv.h"
 #include "MetaGenomeAnno.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
+
+using std::istringstream;
 
 ostream& MetaGenomeAnno::save(ostream& out) const {
 	size_t N = numAnnotated();
@@ -33,6 +36,22 @@ ostream& MetaGenomeAnno::write(ostream& out) const {
 	for(const GenomeAnno& genome : genomeAnnos)
 		genome.write(out);
 	return out;
+}
+
+istream& MetaGenomeAnno::read(istream& in) {
+	string line, id, name; /* current genome name */
+	vector<GenomeAnno>::iterator annoIt = genomeAnnos.end();
+	while(std::getline(in, line)) {
+		if(StringUtils::startsWith(line, GenomeAnno::RECORD_START_TAG)) { /* a new section of genome */
+			istringstream iss(line);
+			GenomeAnno::readStartComment(iss, id, name);
+			debugLog << "Reading GFF annotation for " << id << " (" << name << ")" << endl;
+			annoIt = getAnno(id);
+			if(annoIt != genomeAnnos.end()) /* a valid GenomeAnno */
+				annoIt->read(in);
+		}
+	}
+	return in;
 }
 
 ostream& MetaGenomeAnno::writeGFFHeader(ostream& out, const string& dbName, GFF::Version ver) {

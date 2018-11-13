@@ -102,6 +102,7 @@ int main() {
 
 	MetaGenomeAnno mta = mta1 + mta2;
 
+	/* binary IO test */
 	mta.save(out);
 	if(out.bad()) {
 		cerr << "Failed to save MetaGenomeAnno: " << ::strerror(errno) << endl;
@@ -115,12 +116,30 @@ int main() {
 		return EXIT_FAILURE;
 	}
 
+	/* text IO test */
 	ostringstream gffO, gffON;
 	mta.write(gffO);
 	mtaN.write(gffON);
 
 	if(gffON.str() != gffO.str()) {
 		cerr << "Unmatched MetaGenone GFF annotation" << endl;
+		cerr << gffO.str() << endl <<
+				"-----" << endl <<
+				gffON.str() << endl;
+	}
+
+	/* re-read and write test */
+	istringstream gffI(gffO.str());
+	mtaN.read(gffI);
+	if(gffI.bad()) {
+		cerr << "Failed to read MetaGenomeAnno: " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	gffON.str("");
+	mtaN.write(gffON);
+
+	if(gffON.str() != gffO.str()) {
+		cerr << "Re-read gffON doesn't match MetaGenone GFF annotation" << endl;
 		cerr << gffO.str() << endl <<
 				"-----" << endl <<
 				gffON.str() << endl;

@@ -232,7 +232,7 @@ int main(int argc, char* argv[]) {
 		MetaGenomeAnno::readGFFHeader(gffIn, db, ver);
 		if(db == oldDBName && ver == GFF::GFF3) {
 			/* copy old records */
-			oldGFFRecords = MetaGenomeAnno::read(gffIn);
+			oldGFFRecords = MetaGenomeAnno::readAll(gffIn);
 			debugLog << "old GFF records copied from '" << gffFn << "'" << endl;
 		}
 		else
