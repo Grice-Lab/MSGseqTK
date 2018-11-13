@@ -150,7 +150,7 @@ int main(int argc, char* argv[]) {
 			cerr << "Unable to open '" << listFn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
-		infoLog << "Reading in genome names from " << listFn << endl;
+		infoLog << "Reading in genome names from '" << listFn << "'" << endl;
 		genomeId2Name.clear();
 		genomeId2Fn.clear();
 		string line;
@@ -159,7 +159,7 @@ int main(int argc, char* argv[]) {
 				continue;
 			vector<string> fields;
 			boost::split(fields, line, boost::is_any_of("\t"));
-			if(fields.size() >= 2) {
+			if(fields.size() >= 3) {
 				string id = fields[0];
 				string name = fields[1];
 				string fn = fields[2];
