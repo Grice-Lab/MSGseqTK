@@ -123,7 +123,7 @@ istream& GenomeAnno::read(istream& in, GFF::Version ver) {
 				gffRecord.setVer(GFF::GTF);
 				debugLog << "  GFF version determined by embedded comment" << endl;
 			}
-			else if(line == RECORD_END_TAG)
+			else if(StringUtils::startsWith(line, RECORD_END_TAG))
 				break;
 			else
 				continue;
