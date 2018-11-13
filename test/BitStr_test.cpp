@@ -101,7 +101,7 @@ int main() {
 		return EXIT_FAILURE;
 
 	/* value setting tests */
-	BitStr32 bst1(512);
+	BitStr32 bst1(490);
 	for(size_t i = 0, len = 1; i * bst1.getWid() < bst1.length() && len < 16; ++len) {
 		uint32_t val = len;
 		fprintf(stderr, "bst1.setValue(%d, %d, %d)\n", i, len, val);
