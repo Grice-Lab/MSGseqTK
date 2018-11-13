@@ -90,7 +90,8 @@ int main(int argc, char* argv[]) {
 	/* check options */
 	/* set dbName */
 	string mtgFn = dbName + METAGENOME_FILE_SUFFIX;
-	string rfmFn = dbName + FMINDEX_FILE_SUFFIX;
+	string fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
+	string gffFn = dbName + GFF::GFF3_SUFFIX;
 
 	/* open inputs */
 	mtgIn.open(mtgFn.c_str(), ios_base::binary);
@@ -98,9 +99,14 @@ int main(int argc, char* argv[]) {
 		cerr << "Unable to open '" << mtgFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	fmidxIn.open(rfmFn.c_str(), ios_base::binary);
+	fmidxIn.open(fmidxFn.c_str(), ios_base::binary);
 	if(!fmidxIn.is_open()) {
-		cerr << "Unable to open '" << rfmFn << "': " << ::strerror(errno) << endl;
+		cerr << "Unable to open '" << fmidxFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	gffIn.open(gffFn.c_str());
+	if(!gffIn.is_open()) {
+		cerr << "Unable to open '" << gffFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -135,11 +141,28 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
+	MetaGenomeAnno mtgAnno(mtg);
+	infoLog << "Loading MetaGenome annotation ..." << endl;
+	string db;
+	GFF::Version ver;
+	MetaGenomeAnno::readGFFHeader(gffIn, db, ver);
+	if(!(db == dbName && ver == GFF::GFF3)) {
+		cerr << "Content from database annotation file '" << gffFn << " doesn't match its name" << endl;
+		return EXIT_FAILURE;
+	}
+	mtgAnno.read(gffIn);
+	if(gffIn.bad()) {
+		cerr << "Unable to read MetaGenome annotation: " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+
 	cout << "MetaGenome info: # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
 	cout << "FM-index info: length: " << fmidx.length() << " baseCount: ";
 	for(int8_t b = DNAalphabet::A; b < DNAalphabet::SIZE; ++b)
 		cout << " " << DNAalphabet::decode(b) << ":" << fmidx.getBaseCount(b);
 	cout << endl;
+	cout << "# of annotated genomes: " << mtgAnno.numAnnotated() <<
+			" # of total annotations: " << mtgAnno.numAnnotations() << endl;
 
 	if(listOut.is_open()) {
 		for(const Genome& genome : mtg.getGenomes())

@@ -14,6 +14,18 @@ namespace MSGseqTK {
 
 using std::istringstream;
 
+MetaGenomeAnno::MetaGenomeAnno(const MetaGenome& mtg) {
+	for(const Genome& genome : mtg.getGenomes())
+		genomeAnnos.push_back(GenomeAnno(genome));
+}
+
+size_t MetaGenomeAnno::numAnnotations() const {
+	size_t N = 0;
+	for(const GenomeAnno& anno : genomeAnnos)
+		N += anno.numAnnotated();
+	return N;
+}
+
 ostream& MetaGenomeAnno::save(ostream& out) const {
 	size_t N = numAnnotated();
 	out.write((const char*) &N, sizeof(size_t));

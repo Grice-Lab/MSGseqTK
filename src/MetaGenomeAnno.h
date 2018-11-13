@@ -14,6 +14,7 @@
 #include <map>
 #include <iterator>
 #include <algorithm>
+#include "MetaGenome.h"
 #include "GenomeAnno.h"
 
 namespace EGriceLab {
@@ -30,11 +31,19 @@ using std::vector;
 class MetaGenomeAnno {
 public:
 	/* constructors */
+	/** default constructor */
+	MetaGenomeAnno() = default;
+
+	/** construct an MetaGenomeAnno for a given MetaGenome, while each Genome has empty annotations */
+	explicit MetaGenomeAnno(const MetaGenome& mtg);
 
 	/** get total number of genomes */
 	size_t numAnnotated() const {
 		return genomeAnnos.size();
 	}
+
+	/** get total number of annotations */
+	size_t numAnnotations() const;
 
 	/**
 	 * add an annotation at the end

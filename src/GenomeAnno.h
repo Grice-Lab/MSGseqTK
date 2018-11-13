@@ -36,7 +36,7 @@ public:
 	GenomeAnno() = default;
 
 	/** construct a GenomeAnno with empty annotations */
-	GenomeAnno(const Genome& genome) : genome(genome)
+	explicit GenomeAnno(const Genome& genome) : genome(genome)
 	{  }
 
 	/* member methods */
