@@ -92,10 +92,12 @@ check_PROGRAMS = GFF_test$(EXEEXT)
 TESTS = GFF_test$(EXEEXT)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
-	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
-	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_with_htslib.m4 \
+	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
+	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
+	$(top_srcdir)/m4/lt~obsolete.m4 \
 	$(top_srcdir)/m4/m4_ax_boost_base.m4 \
+	$(top_srcdir)/m4/m4_ax_cxx_compile_stdcxx.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
@@ -145,7 +147,9 @@ libEGUtil_a_AR = $(AR) $(ARFLAGS)
 libEGUtil_a_LIBADD =
 am_libEGUtil_a_OBJECTS = CommandOptions.$(OBJEXT) ProgLog.$(OBJEXT) \
 	StringUtils.$(OBJEXT) TSVRecord.$(OBJEXT) TSVScanner.$(OBJEXT) \
-	VersionSequence.$(OBJEXT) ProgEnv.$(OBJEXT) GFF.$(OBJEXT)
+	VersionSequence.$(OBJEXT) ProgEnv.$(OBJEXT) GFF.$(OBJEXT) \
+	BAMheader.$(OBJEXT) HTSindex.$(OBJEXT) BAM.$(OBJEXT) \
+	SAMfile.$(OBJEXT)
 libEGUtil_a_OBJECTS = $(am_libEGUtil_a_OBJECTS)
 am_GFF_test_OBJECTS = GFF_test.$(OBJEXT)
 GFF_test_OBJECTS = $(am_GFF_test_OBJECTS)
@@ -445,6 +449,10 @@ EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 GREP = @GREP@
+HAVE_CXX11 = @HAVE_CXX11@
+HTSDIR = @HTSDIR@
+HTSLIB_CPPFLAGS = @HTSLIB_CPPFLAGS@
+HTSLIB_LDFLAGS = @HTSLIB_LDFLAGS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -530,6 +538,7 @@ psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
+subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
@@ -538,7 +547,9 @@ top_srcdir = @top_srcdir@
 
 # This is the Makefile for the EGUtil library
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = $(BOOST_CPPFLAGS)
+AM_CPPFLAGS = \
+$(BOOST_CPPFLAGS)
+
 
 # Build a static/shared library
 lib_LIBRARIES = libEGUtil.a
@@ -550,7 +561,11 @@ TSVRecord.cpp \
 TSVScanner.cpp \
 VersionSequence.cpp \
 ProgEnv.cpp \
-GFF.cpp
+GFF.cpp \
+BAMheader.cpp \
+HTSindex.cpp \
+BAM.cpp \
+SAMfile.cpp
 
 GFF_test_SOURCES = GFF_test.cpp
 GFF_test_LDADD = libEGUtil.a
@@ -663,11 +678,15 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BAM.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BAMheader.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CommandOptions.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GFF.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GFF_test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/HTSindex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ProgEnv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ProgLog.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SAMfile.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/StringUtils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TSVRecord.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TSVScanner.Po@am__quote@

@@ -1,7 +1,8 @@
 # This is the Makefile for the EGUtil library
 ACLOCAL_AMFLAGS = -I m4
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS)
+AM_CPPFLAGS = \
+$(BOOST_CPPFLAGS)
 
 # Build a static/shared library
 lib_LIBRARIES = libEGUtil.a
@@ -13,7 +14,11 @@ TSVRecord.cpp \
 TSVScanner.cpp \
 VersionSequence.cpp \
 ProgEnv.cpp \
-GFF.cpp
+GFF.cpp \
+BAMheader.cpp \
+HTSindex.cpp \
+BAM.cpp \
+SAMfile.cpp
 
 check_PROGRAMS = \
 GFF_test 
