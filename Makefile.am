@@ -1,3 +1,5 @@
+SUBDIRS=. UCSC SAMtools test
+
 # This is the Makefile for the EGUtil library
 ACLOCAL_AMFLAGS = -I m4
 
@@ -13,7 +15,3 @@ TSVRecord.cpp \
 TSVScanner.cpp \
 VersionSequence.cpp \
 ProgEnv.cpp
-
-check_PROGRAMS = 
-
-TESTS = 
