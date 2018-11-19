@@ -12,6 +12,8 @@
 #include <map>
 #include <iostream>
 #include <stdexcept>
+#include <cmath>
+#include <cstdint>
 
 namespace EGriceLab {
 namespace UCSC {
@@ -32,17 +34,15 @@ public:
 	typedef vector<string> attr_list;
 	typedef map<string, string> attr_map;
 
-	enum VERSION { UNK = 1, GTF, GFF3 };
+	enum Version { UNK = 1, GTF, GFF3 };
 
 	/* constructors */
 	/** construct am empty GFF with given version */
-	explicit GFF(VERSION ver) : ver(ver) {
-		if(ver == UNK)
-			throw std::invalid_argument("Unknown GFF version");
-	}
+	explicit GFF(Version ver = GFF::UNK) : ver(ver)
+	{ 	}
 
 	/** construct a GFF record with given info */
-	GFF(VERSION ver, const string& seqname, const string& source, const string& type,
+	GFF(Version ver, const string& seqname, const string& source, const string& type,
 			long start, long end, double score, char strand, int frame, const string& attrStr = "")
 	: ver(ver), seqname(seqname), source(source), type(type),
 	  start(start), end(end), score(score), strand(strand), frame(frame) {
@@ -123,11 +123,11 @@ public:
 		this->type = type;
 	}
 
-	VERSION getVer() const {
+	Version getVer() const {
 		return ver;
 	}
 
-	void setVer(VERSION ver) {
+	void setVer(Version ver) {
 		this->ver = ver;
 	}
 
@@ -158,6 +158,13 @@ public:
 	/** test whether this attr name exists */
 	bool hasAttr(const string& name) const {
 		return attrValues.count(name) > 0;
+	}
+
+	/** shift this GFF record of given offset */
+	GFF& shift(long offset) {
+		start += offset;
+		end += offset;
+		return *this;
 	}
 
 	/** load object from binary input */
@@ -191,45 +198,37 @@ public:
 	/* unformated write */
 	friend ostream& operator<<(ostream& out, const GFF& record);
 
-	/* relationship operators */
-	/** compare whether two GFF objects is the same
-	 * @return true  if and only if all fields except the attrs are equal
-	 */
-	friend bool operator==(const GFF& lhs, const GFF& rhs);
-
 private:
 	/* member fields */
 	string seqname;
 	string source;
 	string type;
-	long start; /* 1-based */
-	long end;   /* 1-based */
-	double score;
-	char strand;
-	int frame;
+	int64_t start = 0; /* 1-based */
+	int64_t end = 0;   /* 1-based */
+	double score = INVALID_SCORE;
+	char strand = DEFAULT_STRAND;
+	int frame = INVALID_FRAME;
 	vector<string> attrNames; /* attr names in original order */
 	attr_map attrValues; /* attribute name->value map */
 
-	VERSION ver;
+	Version ver;
 
 public:
 	/* class constants */
+	static const char COMMENT_CHAR = '#';
 	static const char SEP = '\t';
 	static const string GFF_SUFFIX;
 	static const string GTF_SUFFIX;
 	static const string GFF3_SUFFIX;
 	static const double INVALID_SCORE;
+	static const char DEFAULT_STRAND = '.';
 	static const int INVALID_FRAME = -1;
 	static const char INVALID_FLAG = '.';
 	static const string INVALID_TOKEN;
 
 	/* static methods */
-	static VERSION guessVersion(const string& fn);
+	static Version guessVersion(const string& fn);
 };
-
-inline bool operator!=(const GFF& lhs, const GFF& rhs) {
-	return !(lhs == rhs);
-}
 
 inline void GFF::readAttributes(const string& attrStr) {
 	if(attrStr.empty())

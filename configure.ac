@@ -14,7 +14,15 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+AC_TYPE_INT32_T
+AC_TYPE_INT64_T
+AC_TYPE_INT8_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
+AC_TYPE_UINT8_T
 AC_PROG_RANLIB
+
 
 # Checks for libraries.
 
@@ -32,9 +40,13 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE()
 
 # Checks for autoconf-archive macros
+AX_CXX_COMPILE_STDCXX(11)
 AX_BOOST_BASE([1.50.0])
 
 # Checks for library functions.
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile
+				UCSC/Makefile
+				SAMtools/Makefile
+				test/Makefile])
 AC_OUTPUT
