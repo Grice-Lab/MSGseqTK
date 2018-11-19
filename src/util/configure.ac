@@ -14,7 +14,15 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+AC_TYPE_INT32_T
+AC_TYPE_INT64_T
+AC_TYPE_INT8_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
+AC_TYPE_UINT8_T
 AC_PROG_RANLIB
+
 
 # Checks for libraries.
 
@@ -38,5 +46,8 @@ AX_WITH_HTSLIB
 
 # Checks for library functions.
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile
+				UCSC/Makefile
+				SAMtools/Makefile
+				test/Makefile])
 AC_OUTPUT
