@@ -57,6 +57,16 @@ public:
 	}
 
 	/* member methods */
+	/** get BAMheader of this file */
+	const BAMheader& getHeader() const {
+		return header;
+	}
+
+	/** set header of this file */
+	void setHeader(const BAMheader& header) {
+		this->header = header;
+	}
+
 	/**
 	 * load an existing index from a given BAM file basename and optional suffix
 	 */
@@ -66,6 +76,21 @@ public:
 		else
 			idx = HTSindex(sam_index_load2(samFh, basename.c_str(), (basename + suffix).c_str()));
 		return *this;
+	}
+
+	/**
+	 * read a bamHeader to this file
+	 * return the newly build header
+	 */
+	const BAMheader& readHeader() {
+		return (header = BAMheader(sam_hdr_read(samFh)));
+	}
+
+	/**
+	 * write the bamHeader to this file
+	 */
+	int writeHeader() const {
+		return sam_hdr_write(samFh, header.bamHeader);
 	}
 
 	/**
@@ -88,7 +113,7 @@ public:
 	/**
 	 * build and save an SAM/BAM index file for a given SAMfile basename, given suffix and given shift
 	 */
-	static int buildIndex(const string& basename, const string& suffix = HTSindex::DEFAULT_INDEX_SUFFIX,
+	static int buildIndex(const string& basename, const string& suffix = "",
 			int shift = DEFAULT_INDEX_SHIFT) {
 		if(suffix.empty())
 			return sam_index_build(basename.c_str(), shift);
@@ -99,8 +124,8 @@ public:
 	/**
 	 * build and save an SAM/BAM index file for a given SAMfile basename, given suffix, given shift and given threads
 	 */
-	static int buildIndex(const string& basename, const string& suffix = HTSindex::DEFAULT_INDEX_SUFFIX,
-			int shift = DEFAULT_INDEX_SHIFT, int nThreads = DEFAULT_INDEX_BUILD_THREAD) {
+	static int buildIndex(const string& basename, int nThreads, const string& suffix = HTSindex::DEFAULT_INDEX_SUFFIX,
+			int shift = DEFAULT_INDEX_SHIFT) {
 		return sam_index_build3(basename.c_str(), (basename + suffix).c_str(), shift, nThreads);
 	}
 

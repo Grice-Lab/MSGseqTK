@@ -4,6 +4,7 @@
  *  Created on: Nov 14, 2018
  *      Author: zhengqi
  */
+#include <iostream>
 #include <cstdint>
 #include <algorithm>
 #include <utility>
@@ -16,7 +17,7 @@ namespace SAMtools {
 
 BAM::BAM(const string& qname, uint16_t flag, int32_t tid, int32_t pos, uint8_t mapQ,
 		const cigar_str& cigar, uint32_t l_seq, const seq_str& seq, const qual_str& qual,
-		int32_t mtid, int32_t mpos, int32_t isize, uint64_t id) {
+		int32_t mtid, int32_t mpos, int32_t isize, uint64_t id) : BAM() {
 	assert(seq.length() == (l_seq + 1) / 2);
 	assert(qual.length() == l_seq);
 	/* set core data */
