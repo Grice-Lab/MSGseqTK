@@ -378,7 +378,6 @@ public:
 		return bam_is_mrev(bamAln);
 	}
 
-
 	/**
 	 Get the CIGAR array
 	 @return    pointer to the CIGAR array
@@ -576,6 +575,27 @@ public:
 	int removeAux(const string& tag) {
 		return bam_aux_del(bamAln, bam_aux_get(bamAln, tag.c_str()));
 	}
+
+	/** get query length from cigar */
+	int getCigarQLen() const {
+		return bam_cigar2qlen(bamAln->core.n_cigar, getCigar());
+	}
+
+	/** get reference length from cigar */
+	int getCigarRLen() const {
+		return bam_cigar2rlen(bamAln->core.n_cigar, getCigar());
+	}
+
+	/** get alignment length, alias to getCigarRLen() */
+	int getAlignLen() const {
+		return getCigarRLen();
+	}
+
+	/** get alignment end, 1-based */
+	int32_t getAlignEnd() const {
+		return getPos() + getAlignLen();
+	}
+
 
 	/* member fields */
 private:

@@ -48,6 +48,8 @@ BAM::BAM(const string& qname, uint16_t flag, int32_t tid, int32_t pos, uint8_t m
 	ptr += seq.length();
 	std::copy(qual.begin(), qual.end(), ptr); // copy qual
 	ptr += qual.length();
+	/* set bin */
+	bamAln->core.bin = hts_reg2bin(getPos(), bamAln->core.pos + getAlignLen(), 14, 5); // 14, 5 are fixed values for BAM bins
 }
 
 void BAM::setQName(uint8_t l, const char* name) {

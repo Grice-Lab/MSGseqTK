@@ -44,7 +44,7 @@ public:
 
 	/** move assignment */
 	SAMfile& operator=(SAMfile&& other) {
-		sam_close(samFh);
+		close();
 		samFh = std::move(other.samFh);
 		header = std::move(other.header);
 		idx = std::move(other.idx);
@@ -53,7 +53,7 @@ public:
 
 	/** destructor */
 	virtual ~SAMfile() {
-		sam_close(samFh);
+		close();
 	}
 
 	/* member methods */
@@ -76,6 +76,18 @@ public:
 		else
 			idx = HTSindex(sam_index_load2(samFh, basename.c_str(), (basename + suffix).c_str()));
 		return *this;
+	}
+
+	/** close a SAMfile, return 0 if success,
+	 * if already closed, return 0
+	 */
+	int close() {
+		int status = 0;
+		if(samFh != nullptr) {
+			status = sam_close(samFh);
+			samFh = nullptr;
+		}
+		return status;
 	}
 
 	/**
@@ -131,7 +143,6 @@ public:
 
 	/* static member fields */
 	static const int DEFAULT_INDEX_SHIFT = 0;
-	static const int DEFAULT_INDEX_BUILD_THREAD = 1;
 
 	/* member fields */
 private:
