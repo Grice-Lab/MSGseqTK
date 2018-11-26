@@ -530,47 +530,58 @@ public:
 	uint32_t getAuxLen() const {
 		return bam_get_l_aux(bamAln);
 	}
+
 	/** get a aux of int type */
 	int64_t getAuxInt(const string& tag) const {
 		return bam_aux2i(bam_aux_get(bamAln, tag.c_str()));
 	}
+
 	/** get a aux of float type */
 	double getAuxFloat(const string& tag) const {
 		return bam_aux2f(bam_aux_get(bamAln, tag.c_str()));
 	}
+
 	/** get a aux of char type */
 	char getAuxChar(const string& tag) const {
 		return bam_aux2A(bam_aux_get(bamAln, tag.c_str()));
 	}
+
 	/** get a aux of string type */
 	string getAuxStr(const string& tag) const {
 		return bam_aux2Z(bam_aux_get(bamAln, tag.c_str()));
 	}
+
 	/** get a aux of array of int type at position i */
 	int64_t getAuxInt(const string& tag, uint32_t i) const {
 		return bam_auxB2i(bam_aux_get(bamAln, tag.c_str()), i);
 	}
+
 	/** get a aux of array of float type at position i */
 	double getAuxFloat(const string& tag, uint32_t i) const {
 		return bam_auxB2f(bam_aux_get(bamAln, tag.c_str()), i);
 	}
+
 	/** add or update a new int tag for this BAM record */
 	int setAux(const string& tag, int64_t val) {
 		return bam_aux_update_int(bamAln, tag.c_str(), val);
 	}
+
 	/** add or update a new float tag for this BAM record */
 	int setAux(const string& tag, float val) {
 		return bam_aux_update_float(bamAln, tag.c_str(), val);
 	}
+
 	/** add or update a new string tag for this BAM record */
 	int setAux(const string& tag, const string& val) {
-		return bam_aux_update_str(bamAln, tag.c_str(), val.length(), val.c_str());
+		return bam_aux_update_str(bamAln, tag.c_str(), val.length() + 1, val.c_str()); // null included
 	}
+
 	/** add or update a new array type aux record for this BAM */
 	template<typename T>
 	int setAux(const string& tag, uint8_t type, uint32_t nItems, T* data) {
 		return bam_aux_update_array(bamAln, tag.c_str(), type, nItems, (void *) data);
 	}
+
 	/** remove a aux tag from this BAM */
 	int removeAux(const string& tag) {
 		return bam_aux_del(bamAln, bam_aux_get(bamAln, tag.c_str()));
