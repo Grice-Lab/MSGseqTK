@@ -94,10 +94,9 @@ bin_PROGRAMS = msgseqtk-clean$(EXEEXT) msgseqtk-build$(EXEEXT) \
 	msgseqtk-inspect$(EXEEXT) msgseqtk-mergedb$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/ax_with_htslib.m4 \
-	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
-	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
-	$(top_srcdir)/m4/lt~obsolete.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
+	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
+	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
 	$(top_srcdir)/m4/m4_ax_boost_base.m4 \
 	$(top_srcdir)/m4/m4_ax_boost_iostreams.m4 \
 	$(top_srcdir)/m4/m4_ax_boost_regex.m4 \
@@ -132,8 +131,10 @@ am_msgseqtk_build_OBJECTS = msgseqtk-build.$(OBJEXT) \
 msgseqtk_build_OBJECTS = $(am_msgseqtk_build_OBJECTS)
 am__DEPENDENCIES_1 =
 msgseqtk_build_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
+	util/UCSC/libEGUCSC.a \
 	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-	libsds/src/libsds.la $(am__DEPENDENCIES_1)
+	libsds/src/libsds.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -142,20 +143,24 @@ am_msgseqtk_clean_OBJECTS = msgseqtk-clean.$(OBJEXT) \
 	MSGseqTKEnv.$(OBJEXT)
 msgseqtk_clean_OBJECTS = $(am_msgseqtk_clean_OBJECTS)
 msgseqtk_clean_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
-	math/libEGMath.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-	libsds/src/libsds.la $(am__DEPENDENCIES_1)
+	util/UCSC/libEGUCSC.a math/libEGMath.a \
+	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+	libsds/src/libsds.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_msgseqtk_inspect_OBJECTS = msgseqtk-inspect.$(OBJEXT) \
 	MSGseqTKEnv.$(OBJEXT)
 msgseqtk_inspect_OBJECTS = $(am_msgseqtk_inspect_OBJECTS)
 msgseqtk_inspect_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
+	util/UCSC/libEGUCSC.a \
 	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-	libsds/src/libsds.la
+	libsds/src/libsds.la $(am__DEPENDENCIES_1)
 am_msgseqtk_mergedb_OBJECTS = msgseqtk-mergedb.$(OBJEXT) \
 	MSGseqTKEnv.$(OBJEXT)
 msgseqtk_mergedb_OBJECTS = $(am_msgseqtk_mergedb_OBJECTS)
 msgseqtk_mergedb_DEPENDENCIES = libMSGseqTK.a util/libEGUtil.a \
+	util/UCSC/libEGUCSC.a \
 	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-	libsds/src/libsds.la
+	libsds/src/libsds.la $(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -299,9 +304,6 @@ EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 GREP = @GREP@
 HAVE_CXX11 = @HAVE_CXX11@
-HTSDIR = @HTSDIR@
-HTSLIB_CPPFLAGS = @HTSLIB_CPPFLAGS@
-HTSLIB_LDFLAGS = @HTSLIB_LDFLAGS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -401,16 +403,22 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = libdivsufsort libsds util math
-AM_CFLAGS = -I$(top_srcdir)/src \
+AM_CFLAGS = \
+-I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
+-I$(top_srcdir)/src/util/UCSC \
+-I$(top_srcdir)/src/util/GFF \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
 $(BOOST_CPPFLAGS) \
 $(OPENMP_CFLAGS)
 
-AM_CXXFLAGS = -I$(top_srcdir)/src \
+AM_CXXFLAGS = \
+-I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
+-I$(top_srcdir)/src/util/UCSC \
+-I$(top_srcdir)/src/util/GFF \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
@@ -420,7 +428,6 @@ $(OPENMP_CXXFLAGS)
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENMP_CXXFLAGS)
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(OPENMP_CXXFLAGS)
-AM_LDADD = $(BOOST_REGEX_LIB)
 
 # Build convenient non-install libraries
 noinst_LIBRARIES = libMSGseqTK.a
@@ -443,32 +450,40 @@ msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTKEnv.cpp
 msgseqtk_clean_LDADD = \
 libMSGseqTK.a \
 util/libEGUtil.a \
+util/UCSC/libEGUCSC.a \
 math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
-$(BOOST_IOSTREAMS_LIB)
+$(BOOST_IOSTREAMS_LIB) \
+$(BOOST_REGEX_LIB)
 
 msgseqtk_build_SOURCES = msgseqtk-build.cpp MSGseqTKEnv.cpp
 msgseqtk_build_LDADD = \
 libMSGseqTK.a \
 util/libEGUtil.a \
+util/UCSC/libEGUCSC.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
-$(BOOST_IOSTREAMS_LIB)
+$(BOOST_IOSTREAMS_LIB) \
+$(BOOST_REGEX_LIB)
 
 msgseqtk_inspect_SOURCES = msgseqtk-inspect.cpp MSGseqTKEnv.cpp
 msgseqtk_inspect_LDADD = \
 libMSGseqTK.a \
 util/libEGUtil.a \
+util/UCSC/libEGUCSC.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libsds/src/libsds.la
+libsds/src/libsds.la \
+$(BOOST_REGEX_LIB)
 
 msgseqtk_mergedb_SOURCES = msgseqtk-mergedb.cpp MSGseqTKEnv.cpp
 msgseqtk_mergedb_LDADD = \
 libMSGseqTK.a \
 util/libEGUtil.a \
+util/UCSC/libEGUCSC.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libsds/src/libsds.la
+libsds/src/libsds.la \
+$(BOOST_REGEX_LIB)
 
 all: all-recursive
 
