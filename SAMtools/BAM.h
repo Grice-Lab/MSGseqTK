@@ -10,6 +10,7 @@
 
 #include <string>
 #include <utility>
+#include <boost/algorithm/string/regex.hpp>
 #include <htslib/sam.h>
 
 namespace EGriceLab {
@@ -378,7 +379,6 @@ public:
 		return bam_is_mrev(bamAln);
 	}
 
-
 	/**
 	 Get the CIGAR array
 	 @return    pointer to the CIGAR array
@@ -531,56 +531,98 @@ public:
 	uint32_t getAuxLen() const {
 		return bam_get_l_aux(bamAln);
 	}
+
 	/** get a aux of int type */
 	int64_t getAuxInt(const string& tag) const {
 		return bam_aux2i(bam_aux_get(bamAln, tag.c_str()));
 	}
+
 	/** get a aux of float type */
 	double getAuxFloat(const string& tag) const {
 		return bam_aux2f(bam_aux_get(bamAln, tag.c_str()));
 	}
+
 	/** get a aux of char type */
 	char getAuxChar(const string& tag) const {
 		return bam_aux2A(bam_aux_get(bamAln, tag.c_str()));
 	}
+
 	/** get a aux of string type */
 	string getAuxStr(const string& tag) const {
 		return bam_aux2Z(bam_aux_get(bamAln, tag.c_str()));
 	}
+
 	/** get a aux of array of int type at position i */
 	int64_t getAuxInt(const string& tag, uint32_t i) const {
 		return bam_auxB2i(bam_aux_get(bamAln, tag.c_str()), i);
 	}
+
 	/** get a aux of array of float type at position i */
 	double getAuxFloat(const string& tag, uint32_t i) const {
 		return bam_auxB2f(bam_aux_get(bamAln, tag.c_str()), i);
 	}
+
+	/** add or update a new int tag for this BAM record */
+	int setAux(const string& tag, int32_t val) {
+		return bam_aux_update_int(bamAln, tag.c_str(), val);
+	}
+
 	/** add or update a new int tag for this BAM record */
 	int setAux(const string& tag, int64_t val) {
 		return bam_aux_update_int(bamAln, tag.c_str(), val);
 	}
+
 	/** add or update a new float tag for this BAM record */
 	int setAux(const string& tag, float val) {
 		return bam_aux_update_float(bamAln, tag.c_str(), val);
 	}
+
+	/** add or update a new float tag for this BAM record */
+	int setAux(const string& tag, double val) {
+		return bam_aux_update_float(bamAln, tag.c_str(), static_cast<float>(val));
+	}
+
 	/** add or update a new string tag for this BAM record */
 	int setAux(const string& tag, const string& val) {
-		return bam_aux_update_str(bamAln, tag.c_str(), val.length(), val.c_str());
+		return bam_aux_update_str(bamAln, tag.c_str(), val.length() + 1, val.c_str()); // null included
 	}
+
 	/** add or update a new array type aux record for this BAM */
 	template<typename T>
 	int setAux(const string& tag, uint8_t type, uint32_t nItems, T* data) {
 		return bam_aux_update_array(bamAln, tag.c_str(), type, nItems, (void *) data);
 	}
+
 	/** remove a aux tag from this BAM */
 	int removeAux(const string& tag) {
 		return bam_aux_del(bamAln, bam_aux_get(bamAln, tag.c_str()));
+	}
+
+	/** get query length from cigar */
+	int getCigarQLen() const {
+		return bam_cigar2qlen(bamAln->core.n_cigar, getCigar());
+	}
+
+	/** get reference length from cigar */
+	int getCigarRLen() const {
+		return bam_cigar2rlen(bamAln->core.n_cigar, getCigar());
+	}
+
+	/** get alignment length, alias to getCigarRLen() */
+	int getAlignLen() const {
+		return getCigarRLen();
+	}
+
+	/** get alignment end, 1-based */
+	int32_t getAlignEnd() const {
+		return getPos() + getAlignLen();
 	}
 
 	/* member fields */
 private:
 	bam1_t *bamAln = nullptr;
 
+public:
 	friend class SAMfile;
 
 	/* static methods */
@@ -622,6 +664,13 @@ private:
 	 */
 	static string nt16Decode(const seq_str& seq);
 
+	/** encode cigar operator from character to int
+	 * @return -1  if not valid
+	 */
+	static int encodeCigar(char op) {
+		return string(BAM_CIGAR_STR).find(op);
+	}
+
 	/*
 	 * encode readable cigar string to cigar_str
 	 * @param  str  readable cigar string
@@ -643,6 +692,9 @@ private:
 	static uint32_t getCigarType(uint32_t op) {
 		return bam_cigar_type(op);
 	}
+
+	/* static fields */
+	static const boost::regex CIGAR_PATTERN;
 };
 
 } /* namespace SAMtools */

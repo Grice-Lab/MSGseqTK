@@ -44,7 +44,7 @@ public:
 
 	/** move assignment */
 	SAMfile& operator=(SAMfile&& other) {
-		sam_close(samFh);
+		close();
 		samFh = std::move(other.samFh);
 		header = std::move(other.header);
 		idx = std::move(other.idx);
@@ -53,10 +53,20 @@ public:
 
 	/** destructor */
 	virtual ~SAMfile() {
-		sam_close(samFh);
+		close();
 	}
 
 	/* member methods */
+	/** get BAMheader of this file */
+	const BAMheader& getHeader() const {
+		return header;
+	}
+
+	/** set header of this file */
+	void setHeader(const BAMheader& header) {
+		this->header = header;
+	}
+
 	/**
 	 * load an existing index from a given BAM file basename and optional suffix
 	 */
@@ -66,6 +76,33 @@ public:
 		else
 			idx = HTSindex(sam_index_load2(samFh, basename.c_str(), (basename + suffix).c_str()));
 		return *this;
+	}
+
+	/** close a SAMfile, return 0 if success,
+	 * if already closed, return 0
+	 */
+	int close() {
+		int status = 0;
+		if(samFh != nullptr) {
+			status = sam_close(samFh);
+			samFh = nullptr;
+		}
+		return status;
+	}
+
+	/**
+	 * read a bamHeader to this file
+	 * return the newly build header
+	 */
+	const BAMheader& readHeader() {
+		return (header = BAMheader(sam_hdr_read(samFh)));
+	}
+
+	/**
+	 * write the bamHeader to this file
+	 */
+	int writeHeader() const {
+		return sam_hdr_write(samFh, header.bamHeader);
 	}
 
 	/**
@@ -88,7 +125,7 @@ public:
 	/**
 	 * build and save an SAM/BAM index file for a given SAMfile basename, given suffix and given shift
 	 */
-	static int buildIndex(const string& basename, const string& suffix = HTSindex::DEFAULT_INDEX_SUFFIX,
+	static int buildIndex(const string& basename, const string& suffix = "",
 			int shift = DEFAULT_INDEX_SHIFT) {
 		if(suffix.empty())
 			return sam_index_build(basename.c_str(), shift);
@@ -99,14 +136,13 @@ public:
 	/**
 	 * build and save an SAM/BAM index file for a given SAMfile basename, given suffix, given shift and given threads
 	 */
-	static int buildIndex(const string& basename, const string& suffix = HTSindex::DEFAULT_INDEX_SUFFIX,
-			int shift = DEFAULT_INDEX_SHIFT, int nThreads = DEFAULT_INDEX_BUILD_THREAD) {
+	static int buildIndex(const string& basename, int nThreads, const string& suffix = HTSindex::DEFAULT_INDEX_SUFFIX,
+			int shift = DEFAULT_INDEX_SHIFT) {
 		return sam_index_build3(basename.c_str(), (basename + suffix).c_str(), shift, nThreads);
 	}
 
 	/* static member fields */
 	static const int DEFAULT_INDEX_SHIFT = 0;
-	static const int DEFAULT_INDEX_BUILD_THREAD = 1;
 
 	/* member fields */
 private:

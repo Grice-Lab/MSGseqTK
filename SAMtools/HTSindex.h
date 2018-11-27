@@ -10,6 +10,7 @@
 
 #include <string>
 #include <cstdint>
+#include <cstdlib>
 #include <utility>
 #include <htslib/hts.h>
 

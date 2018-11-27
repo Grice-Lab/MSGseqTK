@@ -4,6 +4,9 @@
 /* define if the Boost library is available */
 #define HAVE_BOOST /**/
 
+/* define if the Boost::Regex library is available */
+#define HAVE_BOOST_REGEX /**/
+
 /* define if the compiler supports basic C++11 syntax */
 #define HAVE_CXX11 1
 
