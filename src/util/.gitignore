@@ -24,5 +24,8 @@ config.status
 **/*.swp
 **/config.h
 # ignore test binaries
-**/*test
+**/*_test
 UCSC/.dirstamp
+**/*.bam
+**/*.sam
+**/*.bai

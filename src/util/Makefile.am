@@ -4,6 +4,7 @@ SUBDIRS=. UCSC SAMtools test
 ACLOCAL_AMFLAGS = -I m4
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS)
 
 # Build a static/shared library
 lib_LIBRARIES = libEGUtil.a
