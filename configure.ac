@@ -42,6 +42,7 @@ AM_INIT_AUTOMAKE()
 # Checks for autoconf-archive macros
 AX_CXX_COMPILE_STDCXX(11)
 AX_BOOST_BASE([1.50.0])
+AX_BOOST_REGEX()
 AX_WITH_HTSLIB
 
 # Checks for library functions.
