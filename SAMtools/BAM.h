@@ -10,6 +10,7 @@
 
 #include <string>
 #include <utility>
+#include <boost/algorithm/string/regex.hpp>
 #include <htslib/sam.h>
 
 namespace EGriceLab {
@@ -562,6 +563,11 @@ public:
 	}
 
 	/** add or update a new int tag for this BAM record */
+	int setAux(const string& tag, int32_t val) {
+		return bam_aux_update_int(bamAln, tag.c_str(), val);
+	}
+
+	/** add or update a new int tag for this BAM record */
 	int setAux(const string& tag, int64_t val) {
 		return bam_aux_update_int(bamAln, tag.c_str(), val);
 	}
@@ -569,6 +575,11 @@ public:
 	/** add or update a new float tag for this BAM record */
 	int setAux(const string& tag, float val) {
 		return bam_aux_update_float(bamAln, tag.c_str(), val);
+	}
+
+	/** add or update a new float tag for this BAM record */
+	int setAux(const string& tag, double val) {
+		return bam_aux_update_float(bamAln, tag.c_str(), static_cast<float>(val));
 	}
 
 	/** add or update a new string tag for this BAM record */
@@ -607,11 +618,11 @@ public:
 		return getPos() + getAlignLen();
 	}
 
-
 	/* member fields */
 private:
 	bam1_t *bamAln = nullptr;
 
+public:
 	friend class SAMfile;
 
 	/* static methods */
@@ -653,6 +664,13 @@ private:
 	 */
 	static string nt16Decode(const seq_str& seq);
 
+	/** encode cigar operator from character to int
+	 * @return -1  if not valid
+	 */
+	static int encodeCigar(char op) {
+		return string(BAM_CIGAR_STR).find(op);
+	}
+
 	/*
 	 * encode readable cigar string to cigar_str
 	 * @param  str  readable cigar string
@@ -674,6 +692,9 @@ private:
 	static uint32_t getCigarType(uint32_t op) {
 		return bam_cigar_type(op);
 	}
+
+	/* static fields */
+	static const boost::regex CIGAR_PATTERN;
 };
 
 } /* namespace SAMtools */

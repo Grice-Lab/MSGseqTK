@@ -26,7 +26,7 @@ BAMheader::BAMheader(const targetMap& targetDict) : BAMheader() {
 		const string& tname = target.first;
 		const uint32_t tlen = target.second;
 		bamHeader->target_len[i] = tlen;
-		bamHeader->target_name[i] = new char[tname.length()];
+		bamHeader->target_name[i] = new char[tname.length() + 1](); /* including null in target name */
 		std::copy(tname.begin(), tname.end(), bamHeader->target_name[i]);
 		i++;
 	}
