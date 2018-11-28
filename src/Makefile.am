@@ -38,6 +38,7 @@ SeqIO.cpp \
 Loc.cpp \
 MEM.cpp \
 MEMS.cpp \
+ScoreScheme.cpp \
 FMIndex.cpp \
 Genome.cpp \
 MetaGenome.cpp \
