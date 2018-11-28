@@ -10,11 +10,13 @@
 
 #include <string>
 #include <climits>
-#include <cstdint> // C++11
+#include <cstdint>
+#include <array>
 
 namespace EGriceLab {
 namespace MSGseqTK {
 using std::string;
+using std::array;
 
 /**
  *  A DNA alphabet class provide static methods for encoding and decoding characters to/from small integers
@@ -23,15 +25,17 @@ using std::string;
  */
 class DNAalphabet {
 public:
+	typedef array<int8_t, CHAR_MAX + 1> base_map; /* base map whose value type is base */
+	typedef array<char, INT8_MAX + 1> sym_map; /* symbol map whose value type is symbol */
 	/* nested enum and types */
 	enum Base { N, A, C, G, T };
 
 private:
 	/* static fields */
-	static const int8_t* sym2base; /* internal map from symbol to base, static zero initiated by default */
-	static const char* base2sym; /* internal map from base to symbol, static zero initiated by default */
-	static const char* sym2comp;  /* internal complement map from symbol to symbol, static zero initiated by default */
-	static const int8_t* base2comp;  /* internal complement map from base to base, static zero initiated by default */
+	static const base_map sym2base; /* internal map from symbol to base, static zero initiated by default */
+	static const sym_map base2sym; /* internal map from base to symbol, static zero initiated by default */
+	static const sym_map sym2comp;  /* internal complement map from symbol to symbol, static zero initiated by default */
+	static const base_map base2comp;  /* internal complement map from base to base, static zero initiated by default */
 
 	/* static methods */
 public:
@@ -90,16 +94,16 @@ public:
 
 private:
 	/** initiate the internal sym2base map */
-	static int8_t* initSym2Base();
+	static base_map initSym2Base();
 
 	/** initiate the internal base2sym map */
-	static char* initBase2Sym();
+	static sym_map initBase2Sym();
 
 	/** initiate the internal sym2comp map */
-	static char* initSym2Comp();
+	static sym_map initSym2Comp();
 
 	/** initiate the internal base2comp map */
-	static int8_t* initBase2Comp();
+	static base_map initBase2Comp();
 
 public:
 	static const int SIZE = 5;

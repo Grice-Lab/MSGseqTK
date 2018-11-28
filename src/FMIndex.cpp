@@ -170,7 +170,7 @@ DNAseq FMIndex::getSeq() const {
 	for(saidx_t i = 0, shift = 0; seq.length() < length() - 1;) {
 		sauchar_t b = bwt.access(i);
 		seq.push_back(b);
-		i = b != 0 ? LF(i) - 1 : ++shift;
+		i = b != 0 ? LF(b, i) - 1 : ++shift;
 	}
 	std::reverse(seq.begin(), seq.end());
 	return seq;

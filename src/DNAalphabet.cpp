@@ -11,15 +11,15 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 
-const int8_t* DNAalphabet::sym2base = initSym2Base();
-const char* DNAalphabet::base2sym = initBase2Sym();
-const char* DNAalphabet::sym2comp = initSym2Comp();
-const int8_t* DNAalphabet::base2comp = initBase2Comp();
+const DNAalphabet::base_map DNAalphabet::sym2base = initSym2Base();
+const DNAalphabet::sym_map DNAalphabet::base2sym = initBase2Sym();
+const DNAalphabet::sym_map DNAalphabet::sym2comp = initSym2Comp();
+const DNAalphabet::base_map DNAalphabet::base2comp = initBase2Comp();
 
-int8_t* DNAalphabet::initSym2Base() {
-	/* sym2base will be zero initiated by default */
-	static int8_t sym2base[CHAR_MAX + 1];
-	std::fill(sym2base, sym2base + CHAR_MAX + 1, -1);
+DNAalphabet::base_map DNAalphabet::initSym2Base() {
+	base_map sym2base;
+	sym2base.fill(-1); /* fill -1 as default */
+
 	/* basic symbols */
 	sym2base['A'] = sym2base['a'] = A;
 	sym2base['C'] = sym2base['c'] = C;
@@ -41,9 +41,9 @@ int8_t* DNAalphabet::initSym2Base() {
 	return sym2base;
 }
 
-char* DNAalphabet::initBase2Sym() {
-	/* base2sym will be zero initiated by default */
-	static char base2sym[INT8_MAX + 1];
+DNAalphabet::sym_map DNAalphabet::initBase2Sym() {
+	sym_map base2sym;
+	base2sym.fill('\0'); /* fill null as default */
 	base2sym[A] = 'A';
 	base2sym[C] = 'C';
 	base2sym[G] = 'G';
@@ -52,8 +52,10 @@ char* DNAalphabet::initBase2Sym() {
 	return base2sym;
 }
 
-char* DNAalphabet::initSym2Comp() {
-	static char sym2comp[CHAR_MAX]; /* sym2comp  will be zero initiated */
+DNAalphabet::sym_map DNAalphabet::initSym2Comp() {
+	sym_map sym2comp;
+	sym2comp.fill('\0'); /* fill null as default */
+
 	/* basic symbols, upper case */
 	sym2comp['N'] = 'N';
 	sym2comp['A'] = 'T';
@@ -93,8 +95,9 @@ char* DNAalphabet::initSym2Comp() {
 	return sym2comp;
 }
 
-int8_t* DNAalphabet::initBase2Comp() {
-	static int8_t base2comp[INT8_MAX];
+DNAalphabet::base_map DNAalphabet::initBase2Comp() {
+	base_map base2comp;
+	base2comp.fill(-1); /* fill -1 as default */
 	base2comp[A] = T;
 	base2comp[C] = G;
 	base2comp[G] = C;
