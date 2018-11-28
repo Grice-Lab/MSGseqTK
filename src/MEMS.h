@@ -69,6 +69,11 @@ public:
 	 */
 	MEMS& filterLocs(const MetaGenome& mtg, double maxIndel);
 
+	/** get strand of this MEMS */
+	MEM::STRAND getStrand() const {
+		return front().strand;
+	}
+
 	/* static methods */
 	/**
 	 * get MEMS by MCMC sampling matches between db and seq
@@ -96,6 +101,11 @@ public:
 	 */
 	static double loglik(const MEMS_PE& mems_pe) {
 		return mems_pe.first.loglik() + mems_pe.second.loglik();
+	}
+
+	/** get strand of a MEMS_PE */
+	static MEM::STRAND getStrand(const MEMS_PE& mems_pe) {
+		return mems_pe.first.getStrand();
 	}
 
 	/* static fields */
