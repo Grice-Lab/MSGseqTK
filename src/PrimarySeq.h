@@ -34,16 +34,24 @@ public:
 	/** default constructor */
 	PrimarySeq() = default;
 
-	/** construct a PrimarySeq with given seq, qual, name and optional desc and encoded quality string */
+	/** construct a PrimarySeq with given data */
+	PrimarySeq(const DNAseq& seq, const string& name, const string& desc,
+			const QualStr& qual, uint8_t qShift = QualStr::DEFAULT_Q_SHIFT)
+	: seq(seq), name(name), desc(desc), qual(qual)
+	{
+		this->qual.setQShift(qShift);
+	}
+
+	/** delegating construct a PrimarySeq with given seq, qual, name and optional desc and encoded quality string */
 	PrimarySeq(const DNAseq& seq, const string& name, const string& desc = "",
 			const string& qStr = "", uint8_t qShift = QualStr::DEFAULT_Q_SHIFT)
-	: seq(seq), name(name), desc(desc), qual(qStr, qShift)
+	: PrimarySeq(seq, name, desc, QualStr(qStr, qShift), qShift)
 	{  }
 
-	/** construct using a seq string instead of DNAseq */
+	/** delegating construct using a seq string instead of DNAseq */
 	PrimarySeq(const string& seqStr, const string& name, const string& desc = "",
 			const string& qStr = "", uint8_t qShift = QualStr::DEFAULT_Q_SHIFT)
-	: seq(seqStr), name(name), desc(desc), qual(qStr, qShift)
+	: PrimarySeq(DNAseq(seqStr), name, desc, QualStr(qStr, qShift), qShift)
 	{  }
 
 	/* getters and setters */
@@ -130,6 +138,22 @@ public:
 	PrimarySeq revcom() const {
 		PrimarySeq rcSeq(*this);
 		return rcSeq.revcom();
+	}
+
+	/**
+	 * truncate this PrimarySeq to a substring
+	 * @param start  0-based start of substring
+	 * @param len  length of substring
+	 */
+	PrimarySeq& trunc(size_t start, size_t len);
+
+	/**
+	 * get a substring copy of this PrimarySeq
+	 */
+	PrimarySeq substr(size_t start, size_t len) const {
+		return qual.empty() ?
+				PrimarySeq(seq.substr(start, len), name, desc, qual) :
+				PrimarySeq(seq.substr(start, len), name, desc, qual.substr(start, len));
 	}
 
 	/* non-member functions */

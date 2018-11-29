@@ -46,6 +46,13 @@ PrimarySeq& PrimarySeq::complement() {
 	return *this;
 }
 
+PrimarySeq& PrimarySeq::trunc(size_t start, size_t len) {
+	seq = seq.substr(start, len);
+	if(!qual.empty())
+		qual = qual.substr(start, len);
+	return *this;
+}
+
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */
 

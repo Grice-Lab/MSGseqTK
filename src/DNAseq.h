@@ -42,7 +42,6 @@ public:
 	explicit DNAseq(int8_t b) : std::basic_string<int8_t>({ b })
 	{  }
 
-
 	/** constructing a DNAseq from a symbol string */
 	explicit DNAseq(const string& str) {
 		assign(str);
@@ -108,12 +107,7 @@ public:
 	}
 
 	/** get a substr copy of this object */
-	DNAseq substr(size_t pos = 0, size_t len = npos) const {
-		DNAseq seg;
-		for(size_t i = pos; i < length() && i < pos + len; ++i)
-			seg.push_back((*this)[i]);
-		return seg;
-	}
+	DNAseq substr(size_t pos = 0, size_t len = npos) const;
 
 	/**
 	 * Get the decoded character at given position

@@ -30,6 +30,15 @@ string QualStr::decode() const {
 	return qStr;
 }
 
+QualStr QualStr::substr(size_t pos, size_t len) const {
+	QualStr seg;
+	if(pos + len >= length())
+		len = length() - pos;
+	seg.resize(len);
+	std::copy(begin() + pos, begin() + pos + len, seg.begin());
+	return seg;
+}
+
 istream& operator>>(istream& in, QualStr& qual) {
 	string str;
 	in >> str;

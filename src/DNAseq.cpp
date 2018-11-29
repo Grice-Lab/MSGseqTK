@@ -88,6 +88,15 @@ DNAseq& DNAseq::trimGaps(int mode) {
 	return *this;
 }
 
+DNAseq DNAseq::substr(size_t pos, size_t len) const {
+	DNAseq seg;
+	if(pos + len >= length())
+		len = length() - pos;
+	seg.resize(len);
+	std::copy(begin() + pos, begin() + pos + len, seg.begin());
+	return seg;
+}
+
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */
 

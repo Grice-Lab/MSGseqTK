@@ -49,6 +49,16 @@ public:
 	}
 
 	/* member methods */
+	/** get qShift */
+	uint8_t getQShift() const {
+		return qShift;
+	}
+
+	/** set qShift */
+	void setQShift(uint8_t qShift) {
+		this->qShift = qShift;
+	}
+
 	/** assign a string to this QualStr */
 	QualStr& assign(const string& str);
 
@@ -59,6 +69,9 @@ public:
 	string toString() const {
 		return decode();
 	}
+
+	/** get a substr copy of this QualStr */
+	QualStr substr(size_t pos = 0, size_t len = npos) const;
 
 	/** save this QualStr to binary output */
 	ostream& save(ostream& out) const {
