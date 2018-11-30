@@ -44,9 +44,7 @@ public:
 		return assign(str);
 	}
 
-	virtual ~QualStr() {
-		// TODO Auto-generated destructor stub
-	}
+	/** no virtual destructor since STL classes are not designed for inheritence */
 
 	/* member methods */
 	/** get qShift */

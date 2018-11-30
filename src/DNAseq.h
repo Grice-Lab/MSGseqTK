@@ -35,8 +35,7 @@ public:
 	/** default constructor */
 	DNAseq() = default;
 
-	/** virtual destructor */
-	virtual ~DNAseq() {  }
+	/** no virtual destructor since STL classes are not designed for inheritence */
 
 	/** construct a DNAseq from a given value */
 	explicit DNAseq(int8_t b) : std::basic_string<int8_t>({ b })
@@ -212,7 +211,6 @@ inline DNAseq operator+(const DNAseq& lhs, const DNAseq& rhs) {
 	seq += rhs;
 	return seq;
 }
-
 
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */
