@@ -49,7 +49,7 @@ using namespace EGriceLab::MSGseqTK;
 static const double DEFAULT_MIN_LOD = 0;
 //static const double MAX_EVAL = 1;
 static const int DEFAULT_STRAND = 3;
-static const double DEFAULT_INDEL_RATE = 0.01;
+//static const double DEFAULT_INDEL_RATE = 0.01;
 static const string ASSIGNMENT_BASIC_HEADER = "id\tdescription\tref_loglik\tbg_loglik\tLOD";
 static const string ASSIGNMENT_SE_DETAIL = "ref_MEMS\tbg_MEMS";
 static const string ASSIGNMENT_PE_DETAIL = "ref_MEMS_fwd\tref_MEMS_rev\tbg_MEMS_fwd\tbg_MEMS_rev";
@@ -93,6 +93,22 @@ void printUsage(const string& progName) {
 		 << "            -h|--help            : print this message and exit" << endl;
 }
 
+/**
+ * main function to process single-ended reads
+ * @return 0 if success, return non-zero otherwise
+ */
+int main_SE(MetaGenome& refMtg, MetaGenome& bgMtg, FMIndex& refFmidx, FMIndex& bgFmidx,
+		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut, RNG& rng,
+		bool withDetail, double minLod, int strand);
+
+/**
+ * main function to process paired-ended reads
+ * @return 0 if success, return non-zero otherwise
+ */
+int main_PE(MetaGenome& refMtg, MetaGenome& bgMtg, FMIndex& refFmidx, FMIndex& bgFmidx,
+		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut, RNG& rng,
+		bool withDetail, double minLod, int strand);
+
 int main(int argc, char* argv[]) {
 	/* variable declarations */
 	string fwdInFn, revInFn;
@@ -108,7 +124,7 @@ int main(int argc, char* argv[]) {
 	double minLod = DEFAULT_MIN_LOD;
 	int strand = DEFAULT_STRAND;
 	unsigned seed = time(NULL); // using time as default seed
-	double maxIndelRate = DEFAULT_INDEL_RATE;
+//	double maxIndelRate = DEFAULT_INDEL_RATE;
 	int nThreads = DEFAULT_NUM_THREADS;
 
 	typedef boost::random::mt11213b RNG; /* random number generator type */
@@ -256,7 +272,6 @@ int main(int argc, char* argv[]) {
 	/* open SeqIO input */
 	SeqIO fwdI(dynamic_cast<istream*>(&fwdIn), fmt);
 	SeqIO revI(dynamic_cast<istream*>(&revIn), fmt);
-
 	string refMtgFn = refDB + METAGENOME_FILE_SUFFIX;
 	string refFmidxFn = refDB + FMINDEX_FILE_SUFFIX;
 	string bgMtgFn = bgDB + METAGENOME_FILE_SUFFIX;
@@ -377,72 +392,96 @@ int main(int argc, char* argv[]) {
 		assignOut << header << endl;
 	}
 
-	infoLog << "Filtering input reads/pairs" << endl;
+	/* main processing */
+	if(!isPaired)
+		return main_SE(refMtg, bgMtg, refFmidx, bgFmidx, fwdI, fwdO, assignOut, rng, withDetail, minLod, strand);
+	else
+		return main_PE(refMtg, bgMtg, refFmidx, bgFmidx, fwdI, revI, fwdO, revO, assignOut, rng, withDetail, minLod, strand);
+}
+
+int main_SE(MetaGenome& refMtg, MetaGenome& bgMtg, FMIndex& refFmidx, FMIndex& bgFmidx,
+		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut, RNG& rng,
+		bool withDetail, double minLod, int strand) {
+	infoLog << "Filtering input reads" << endl;
 	/* search MEMS for each read */
 #pragma omp parallel
 	{
 #pragma omp single
 		{
-			while(fwdI.hasNext() && (!isPaired || revI.hasNext())) {
-				string id;
-				string desc;
-				PrimarySeq fwdRead;
-				PrimarySeq revRead;
-				fwdRead = fwdI.nextSeq();
-				id = fwdRead.getName();
-				desc = fwdRead.getDesc();
-				if(isPaired) {
-					revRead = revI.nextSeq();
-					assert(revRead.getName() == id);
-				}
+			while(seqI.hasNext()) {
+				PrimarySeq read = seqI.nextSeq();
+				const string& id = read.getName();
+				const string& desc = read.getDesc();
 #pragma omp task
 				{
-					if(!isPaired) {
-						MEMS refMems = MEMS::sampleMEMS(&fwdRead, &refFmidx, rng, strand, withDetail);
-						MEMS bgMems = MEMS::sampleMEMS(&fwdRead, &bgFmidx, rng, strand, withDetail);
-						double refLoglik = refMems.loglik();
-						double bgLoglik = bgMems.loglik();
-						double lod = - refLoglik + bgLoglik;
-						if(lod >= minLod)
+					MEMS refMems = MEMS::sampleMEMS(&read, &refFmidx, rng, strand, withDetail);
+					MEMS bgMems = MEMS::sampleMEMS(&read, &bgFmidx, rng, strand, withDetail);
+					double refLoglik = refMems.loglik();
+					double bgLoglik = bgMems.loglik();
+					double lod = - refLoglik + bgLoglik;
+					if(lod >= minLod)
 #pragma omp critical(writeSeq)
-							fwdO.writeSeq(fwdRead);
-						if(assignOut.is_open()) {
+						seqO.writeSeq(read);
+					if(assignOut.is_open()) {
 #pragma omp critical(writeAssign)
-							{
-								assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod;
-								if(withDetail)
-									assignOut << "\t" << refMems << "\t" << bgMems;
-								assignOut << endl;
-							}
-						}
-					}
-					else {
-						MEMS_PE refMems_pe = MEMS::sampleMEMS(&fwdRead, &revRead, &refFmidx, rng, strand, withDetail);
-						MEMS_PE bgMems_pe = MEMS::sampleMEMS(&fwdRead, &revRead, &bgFmidx, rng, strand, withDetail);
-						double refLoglik = MEMS::loglik(refMems_pe);
-						double bgLoglik = MEMS::loglik(bgMems_pe);
-						double lod = - refLoglik + bgLoglik;
-						if(lod >= minLod) {
-#pragma omp critical(writeSeq)
-							{
-								fwdO.writeSeq(fwdRead);
-								revO.writeSeq(revRead);
-							}
-						}
-						if(assignOut.is_open()) {
-#pragma omp critical(writeAssign)
-							{
-								assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod;
-								if(withDetail)
-									assignOut << refMems_pe.first << "\t" << refMems_pe.second << "\t"
-									<< bgMems_pe.first << "\t" << bgMems_pe.second;
-								assignOut << endl;
-							}
+						{
+							assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod;
+							if(withDetail)
+								assignOut << "\t" << refMems << "\t" << bgMems;
+							assignOut << endl;
 						}
 					}
 				} /* end task */
-			} /* end each read/pair */
+			} /* end each read */
 		} /* end single */
 #pragma omp taskwait
 	} /* end parallel */
+	return EXIT_SUCCESS;
+}
+
+int main_PE(MetaGenome& refMtg, MetaGenome& bgMtg, FMIndex& refFmidx, FMIndex& bgFmidx,
+		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut, RNG& rng,
+		bool withDetail, double minLod, int strand) {
+	infoLog << "Filtering input paired-end reads" << endl;
+	/* search MEMS for each pair */
+#pragma omp parallel
+	{
+#pragma omp single
+		{
+			while(fwdI.hasNext() && revI.hasNext()) {
+				PrimarySeq fwdRead = fwdI.nextSeq();
+				PrimarySeq revRead = revI.nextSeq();
+				assert(fwdRead.getName() == revRead.getName());
+				const string& id = fwdRead.getName();
+				const string& desc = fwdRead.getDesc();
+#pragma omp task
+				{
+					MEMS_PE refMems_pe = MEMS::sampleMEMS(&fwdRead, &revRead, &refFmidx, rng, strand, withDetail);
+					MEMS_PE bgMems_pe = MEMS::sampleMEMS(&fwdRead, &revRead, &bgFmidx, rng, strand, withDetail);
+					double refLoglik = MEMS::loglik(refMems_pe);
+					double bgLoglik = MEMS::loglik(bgMems_pe);
+					double lod = - refLoglik + bgLoglik;
+					if(lod >= minLod) {
+#pragma omp critical(writeSeq)
+						{
+							fwdO.writeSeq(fwdRead);
+							revO.writeSeq(revRead);
+						}
+					}
+					if(assignOut.is_open()) {
+#pragma omp critical(writeAssign)
+						{
+							assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod;
+							if(withDetail)
+								assignOut << refMems_pe.first << "\t" << refMems_pe.second << "\t"
+								<< bgMems_pe.first << "\t" << bgMems_pe.second;
+							assignOut << endl;
+						}
+					}
+				} /* end task */
+			} /* end each pair */
+		} /* end single */
+#pragma omp taskwait
+	} /* end parallel */
+	return EXIT_SUCCESS;
 }
