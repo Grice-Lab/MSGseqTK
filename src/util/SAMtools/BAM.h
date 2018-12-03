@@ -695,6 +695,7 @@ public:
 
 	/* static fields */
 	static const boost::regex CIGAR_PATTERN;
+	static const double DEFAULT_AUX_DATA_FACTOR; // data factor between m_data and l_data, to avoid too much internal re-allocation by htslib
 };
 
 } /* namespace SAMtools */
