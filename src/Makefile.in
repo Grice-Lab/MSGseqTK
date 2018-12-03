@@ -123,7 +123,7 @@ am_libMSGseqTK_a_OBJECTS = DNAalphabet.$(OBJEXT) DNAseq.$(OBJEXT) \
 	Loc.$(OBJEXT) MEM.$(OBJEXT) MEMS.$(OBJEXT) \
 	ScoreScheme.$(OBJEXT) FMIndex.$(OBJEXT) Genome.$(OBJEXT) \
 	MetaGenome.$(OBJEXT) GenomeAnno.$(OBJEXT) \
-	MetaGenomeAnno.$(OBJEXT)
+	MetaGenomeAnno.$(OBJEXT) AlignmentSE.$(OBJEXT)
 libMSGseqTK_a_OBJECTS = $(am_libMSGseqTK_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -409,6 +409,7 @@ AM_CFLAGS = \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/util/UCSC \
 -I$(top_srcdir)/src/util/GFF \
+-I$(top_srcdir)/src/util/SAMtools \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
@@ -420,6 +421,7 @@ AM_CXXFLAGS = \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/util/UCSC \
 -I$(top_srcdir)/src/util/GFF \
+-I$(top_srcdir)/src/util/SAMtools \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
@@ -446,7 +448,8 @@ FMIndex.cpp \
 Genome.cpp \
 MetaGenome.cpp \
 GenomeAnno.cpp \
-MetaGenomeAnno.cpp
+MetaGenomeAnno.cpp \
+AlignmentSE.cpp
 
 msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTKEnv.cpp
 msgseqtk_clean_LDADD = \
@@ -600,6 +603,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AlignmentSE.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DNAalphabet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DNAseq.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FMIndex.Po@am__quote@

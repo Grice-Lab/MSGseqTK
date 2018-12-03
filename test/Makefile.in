@@ -90,10 +90,12 @@ host_triplet = @host@
 target_triplet = @target@
 check_PROGRAMS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
 	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
-	GenomeAnno_test$(EXEEXT) MEM_test$(EXEEXT)
+	GenomeAnno_test$(EXEEXT) MEM_test$(EXEEXT) \
+	AlignmentSE_test$(EXEEXT)
 TESTS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
 	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
-	GenomeAnno_test$(EXEEXT) MEM_test$(EXEEXT)
+	GenomeAnno_test$(EXEEXT) MEM_test$(EXEEXT) \
+	AlignmentSE_test$(EXEEXT)
 subdir = test
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -112,13 +114,23 @@ DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am_DNAseq_test_OBJECTS = DNAseq_test.$(OBJEXT)
-DNAseq_test_OBJECTS = $(am_DNAseq_test_OBJECTS)
-DNAseq_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a
+am_AlignmentSE_test_OBJECTS = AlignmentSE_test.$(OBJEXT)
+AlignmentSE_test_OBJECTS = $(am_AlignmentSE_test_OBJECTS)
+am__DEPENDENCIES_1 =
+AlignmentSE_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
+	$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+	$(top_srcdir)/src/libsds/src/libsds.la \
+	$(top_srcdir)/src/util/libEGUtil.a \
+	$(top_srcdir)/src/util/UCSC/libEGUCSC.a \
+	$(top_srcdir)/src/util/SAMtools/libEGSAMtools.a \
+	$(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_DNAseq_test_OBJECTS = DNAseq_test.$(OBJEXT)
+DNAseq_test_OBJECTS = $(am_DNAseq_test_OBJECTS)
+DNAseq_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a
 am_FMIndex_test_OBJECTS = FMIndex_test.$(OBJEXT)
 FMIndex_test_OBJECTS = $(am_FMIndex_test_OBJECTS)
 FMIndex_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
@@ -129,7 +141,6 @@ am__dirstamp = $(am__leading_dot)dirstamp
 am_GenomeAnno_test_OBJECTS = GenomeAnno_test.$(OBJEXT) \
 	$(top_srcdir)/src/MSGseqTKEnv.$(OBJEXT)
 GenomeAnno_test_OBJECTS = $(am_GenomeAnno_test_OBJECTS)
-am__DEPENDENCIES_1 =
 GenomeAnno_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
 	$(top_srcdir)/src/util/libEGUtil.a \
 	$(top_srcdir)/src/util/UCSC/libEGUCSC.a $(am__DEPENDENCIES_1)
@@ -186,14 +197,14 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(DNAseq_test_SOURCES) $(FMIndex_test_SOURCES) \
-	$(GenomeAnno_test_SOURCES) $(Genome_test_SOURCES) \
-	$(MEM_test_SOURCES) $(PrimarySeq_test_SOURCES) \
-	$(SeqIO_test_SOURCES)
-DIST_SOURCES = $(DNAseq_test_SOURCES) $(FMIndex_test_SOURCES) \
-	$(GenomeAnno_test_SOURCES) $(Genome_test_SOURCES) \
-	$(MEM_test_SOURCES) $(PrimarySeq_test_SOURCES) \
-	$(SeqIO_test_SOURCES)
+SOURCES = $(AlignmentSE_test_SOURCES) $(DNAseq_test_SOURCES) \
+	$(FMIndex_test_SOURCES) $(GenomeAnno_test_SOURCES) \
+	$(Genome_test_SOURCES) $(MEM_test_SOURCES) \
+	$(PrimarySeq_test_SOURCES) $(SeqIO_test_SOURCES)
+DIST_SOURCES = $(AlignmentSE_test_SOURCES) $(DNAseq_test_SOURCES) \
+	$(FMIndex_test_SOURCES) $(GenomeAnno_test_SOURCES) \
+	$(Genome_test_SOURCES) $(MEM_test_SOURCES) \
+	$(PrimarySeq_test_SOURCES) $(SeqIO_test_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -565,6 +576,7 @@ AM_CFLAGS = \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/util/UCSC \
 -I$(top_srcdir)/src/util/GFF \
+-I$(top_srcdir)/src/util/SAMtools \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
 $(BOOST_CPPFLAGS) \
@@ -575,6 +587,7 @@ AM_CXXFLAGS = \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/util/UCSC \
 -I$(top_srcdir)/src/util/GFF \
+-I$(top_srcdir)/src/util/SAMtools \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
@@ -626,6 +639,17 @@ $(top_srcdir)/src/util/libEGUtil.a \
 $(top_srcdir)/src/util/UCSC/libEGUCSC.a \
 $(BOOST_REGEX_LIB)
 
+AlignmentSE_test_SOURCES = AlignmentSE_test.cpp 
+AlignmentSE_test_LDADD = \
+$(top_srcdir)/src/libMSGseqTK.a \
+$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+$(top_srcdir)/src/libsds/src/libsds.la \
+$(top_srcdir)/src/util/libEGUtil.a \
+$(top_srcdir)/src/util/UCSC/libEGUCSC.a \
+$(top_srcdir)/src/util/SAMtools/libEGSAMtools.a \
+$(BOOST_REGEX_LIB) \
+-lhts
+
 all: all-am
 
 .SUFFIXES:
@@ -668,6 +692,10 @@ clean-checkPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
+
+AlignmentSE_test$(EXEEXT): $(AlignmentSE_test_OBJECTS) $(AlignmentSE_test_DEPENDENCIES) $(EXTRA_AlignmentSE_test_DEPENDENCIES) 
+	@rm -f AlignmentSE_test$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(AlignmentSE_test_OBJECTS) $(AlignmentSE_test_LDADD) $(LIBS)
 
 DNAseq_test$(EXEEXT): $(DNAseq_test_OBJECTS) $(DNAseq_test_DEPENDENCIES) $(EXTRA_DNAseq_test_DEPENDENCIES) 
 	@rm -f DNAseq_test$(EXEEXT)
@@ -714,6 +742,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@$(top_srcdir)/src/$(DEPDIR)/MSGseqTKEnv.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AlignmentSE_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DNAseq_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FMIndex_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GenomeAnno_test.Po@am__quote@
@@ -990,6 +1019,13 @@ GenomeAnno_test.log: GenomeAnno_test$(EXEEXT)
 MEM_test.log: MEM_test$(EXEEXT)
 	@p='MEM_test$(EXEEXT)'; \
 	b='MEM_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+AlignmentSE_test.log: AlignmentSE_test$(EXEEXT)
+	@p='AlignmentSE_test$(EXEEXT)'; \
+	b='AlignmentSE_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

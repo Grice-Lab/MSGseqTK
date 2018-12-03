@@ -5,6 +5,7 @@ AM_CFLAGS = \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/util/UCSC \
 -I$(top_srcdir)/src/util/GFF \
+-I$(top_srcdir)/src/util/SAMtools \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
@@ -16,6 +17,7 @@ AM_CXXFLAGS = \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/util/UCSC \
 -I$(top_srcdir)/src/util/GFF \
+-I$(top_srcdir)/src/util/SAMtools \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
@@ -43,7 +45,8 @@ FMIndex.cpp \
 Genome.cpp \
 MetaGenome.cpp \
 GenomeAnno.cpp \
-MetaGenomeAnno.cpp
+MetaGenomeAnno.cpp \
+AlignmentSE.cpp
 
 # Build the executables
 bin_PROGRAMS = \

@@ -26,10 +26,10 @@ using std::vector;
 using std::pair;
 typedef boost::random::mt11213b RNG;
 
-class MEMS;
+struct MEMS;
 typedef pair<MEMS, MEMS> MEMS_PE;
 
-class MEMS : public vector<MEM> {
+struct MEMS : public vector<MEM> {
 public:
 	/* constructors */
 	/** default constructor */

@@ -6,6 +6,7 @@ AM_CFLAGS = \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/util/UCSC \
 -I$(top_srcdir)/src/util/GFF \
+-I$(top_srcdir)/src/util/SAMtools \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
 $(BOOST_CPPFLAGS) \
@@ -16,6 +17,7 @@ AM_CXXFLAGS = \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/util/UCSC \
 -I$(top_srcdir)/src/util/GFF \
+-I$(top_srcdir)/src/util/SAMtools \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
@@ -32,7 +34,8 @@ SeqIO_test \
 FMIndex_test \
 Genome_test \
 GenomeAnno_test \
-MEM_test
+MEM_test \
+AlignmentSE_test
 
 LIBDIVSUFSORT_PKG_NAME=libdivsufsort64
 
@@ -79,6 +82,16 @@ $(top_srcdir)/src/util/libEGUtil.a \
 $(top_srcdir)/src/util/UCSC/libEGUCSC.a \
 $(BOOST_REGEX_LIB)
 
+AlignmentSE_test_SOURCES = AlignmentSE_test.cpp 
+AlignmentSE_test_LDADD = \
+$(top_srcdir)/src/libMSGseqTK.a \
+$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+$(top_srcdir)/src/libsds/src/libsds.la \
+$(top_srcdir)/src/util/libEGUtil.a \
+$(top_srcdir)/src/util/UCSC/libEGUCSC.a \
+$(top_srcdir)/src/util/SAMtools/libEGSAMtools.a \
+$(BOOST_REGEX_LIB) \
+-lhts
 
 TESTS = \
 DNAseq_test \
@@ -87,4 +100,5 @@ SeqIO_test \
 FMIndex_test \
 Genome_test \
 GenomeAnno_test \
-MEM_test
+MEM_test \
+AlignmentSE_test

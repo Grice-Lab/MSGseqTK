@@ -60,6 +60,19 @@ MetaGenome::GENOME_SHIFTMAP MetaGenome::getGenomeShift() const {
 	return shiftMap;
 }
 
+size_t MetaGenome::getLocId(uint64_t loc) const {
+	uint64_t start = 0;
+	size_t id = 0;
+	for(const Genome genome: genomes) {
+		for(const Genome::Chrom& chr : genome.getChroms()) {
+			if(start <= loc && loc < start + chr.size)
+				return id;
+			start += chr.size + 1; // including null
+		}
+	}
+	return -1;
+}
+
 ostream& MetaGenome::save(ostream& out) const {
 	size_t N = numGenomes();
 	out.write((const char*) &N, sizeof(size_t));
