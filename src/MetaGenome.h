@@ -13,10 +13,10 @@
 #include <iostream>
 #include <vector>
 #include <map>
-#include <deque>
 #include <algorithm>
 #include "DNAseq.h"
 #include "Genome.h"
+#include "Loc.h"
 #include "StringUtils.h"
 
 namespace EGriceLab {
@@ -34,10 +34,12 @@ using std::deque;
  */
 class MetaGenome {
 public:
-	typedef map<size_t, uint64_t> GENOME_SHIFTMAP; /* genome shift in this MetaGenome */
+	typedef map<string, size_t> GENOME_INDEX; /* genome name->id map */
+	typedef map<string, size_t> CHROM_INDEX;  /* chrom name->id map */
+	typedef map<size_t, Loc> GENOME_LOCMAP; /* genome id->Loc map */
+	typedef map<size_t, Loc> CHROM_LOCMAP;  /* chromosome id->Loc map */
+
 	/* constructors */
-	/** default constructor */
-//	MetaGenome() = default;
 
 	/** get total size of this MetaGenome */
 	uint64_t size() const;
@@ -47,69 +49,122 @@ public:
 		return genomes.size();
 	}
 
+	/** get total number of chromosomes */
+	size_t numChroms() const;
+
 	/** get all Genomes in this MetaGenome */
-	const deque<Genome>& getGenomes() const {
+	const vector<Genome>& getGenomes() const {
 		return genomes;
 	}
 
-	/** get a vector copy of Genomes in this MetaGenome */
-	vector<Genome> getGenomeList() const {
-		return vector<Genome>(genomes.begin(), genomes.end());
+	/**
+	 * get genome index by name
+	 * @return  index of given genome name,
+	 * or -1 if not found
+	 */
+	size_t getGenomeIndex(const string& gname) const {
+		return genomeId2Idx.count(gname) > 0 ? genomeId2Idx.at(gname) : -1;
 	}
 
 	/**
-	 * get the genome index at given location, or -1 if not found
-	 * @param loc  0-based location on the concatenated MetaGenome
-	 * @return  the index of the genome that covers this loc,
+	 * get the genome index at given location,
 	 * or -1 if not found
 	 */
 	size_t getGenomeIndex(uint64_t loc) const;
 
 	/**
-	 * get the chromosome index of given location, or -1 if not found
-	 * @param loc  0-based on the concatenated location
-	 * @return  the index of chromosome that covers this loc,
+	 * get chrom index by name
+	 * @return  index of given chrom,
+	 * or -1 if not found
+	 */
+	size_t getChromIndex(const string& cname) const {
+		return chromName2Idx.count(cname) > 0 ? chromName2Idx.at(cname) : -1;
+	}
+
+	/**
+	 * get the chromosome index of given location,
 	 * or -1 if not found
 	 */
 	size_t getChromIndex(uint64_t loc) const;
 
 	/**
-	 * get the genome at given location, or throws out_of_range exception
+	 * get a general id for given loc,
+	 * alias to getChromIndex
+	 */
+	size_t getLocId(uint64_t loc) const {
+		return getChromIndex(loc);
+	}
+
+	/**
+	 * get the genome at given location
 	 */
 	const Genome& getGenomeAtLoc(uint64_t loc) const {
 		return genomes.at(getGenomeIndex(loc));
 	}
 
 	/**
-	 * get the shift of the i-th genome
-	 * @param i  index of the genome
-	 * @return  shift or total size of genomes before this
+	 * get the Loc of i-th genome
 	 */
-	uint64_t getGenomeShift(size_t i) const;
+	const Loc& getGenomeLoc(size_t i) const {
+		return genomeIdx2Loc.at(i);
+	}
 
 	/**
-	 * get the shift of the i-th genome
-	 * @param i  index of the genome
-	 * @return  shift or total size of genomes before this
+	 * get the start of the i-th genome
 	 */
-	GENOME_SHIFTMAP getGenomeShift() const;
+	int64_t getGenomeStart(size_t i) const {
+		return getGenomeLoc(i).start;
+	}
 
 	/**
-	 * get a unique genome/chromo location id, which is the sorted chromosome first cover this region,
-	 * or -1 if not found
+	 * get the end of the i-th genome
 	 */
-	size_t getLocId(uint64_t loc) const;
+	int64_t getGenomeEnd(size_t i) const {
+		return getGenomeLoc(i).end;
+	}
+
+	/**
+	 * get the Loc of i-th chrom
+	 */
+	const Loc& getChromLoc(size_t i) const {
+		return chromIdx2Loc.at(i);
+	}
+
+	/**
+	 * get the start of the i-th chrom
+	 */
+	int64_t getChromStart(size_t i) const {
+		return getChromLoc(i).start;
+	}
+
+	/**
+	 * get the end of the i-th chrom
+	 */
+	int64_t getChromEnd(size_t i) const {
+		return getChromLoc(i).end;
+	}
+
+	/**
+	 * get the idx->Loc map for all genomes
+	 */
+	const GENOME_LOCMAP& getGenomeLocs() const {
+		return genomeIdx2Loc;
+	}
 
 	/** get genome by index */
 	const Genome& getGenome(size_t i) const {
 		return genomes[i];
 	}
 
-	/** count the number of genomes with a given ID */
-	size_t countGenome(const string& genomeId) const;
+	/** get genome by index, non-const version */
+	Genome& getGenome(size_t i) {
+		return genomes[i];
+	}
 
 	/** check whether this genome with given ID exists */
-	bool hasGenome(const string& genomeId) const;
+	bool hasGenome(const string& genomeId) const {
+		return genomeId2Idx.count(genomeId) > 0;
+	}
 
 	/**
 	 * add a genome at the end of this MetaGenome
@@ -122,7 +177,7 @@ public:
 	 * add a genome at the beginning of this MetaGenome
 	 */
 	void push_front(const Genome& genome) {
-		genomes.push_front(genome);
+		genomes.insert(genomes.begin(), genome);
 	}
 
 	/** append multiple genomes at the end of this MetaGenome */
@@ -140,6 +195,9 @@ public:
 
 	/** load an object from binary input */
 	istream& load(istream& in);
+
+	/** update all index, should be called if any containing Genome/Chrom changes */
+	void updateIndex();
 
 	/** merge this MetaGenome with another one,
 	 * with its name unchanged
@@ -159,15 +217,34 @@ public:
 
 	/* member fields */
 private:
-	deque<Genome> genomes;
+	vector<Genome> genomes;
+	GENOME_INDEX genomeId2Idx;
+	CHROM_INDEX chromName2Idx;
+	GENOME_LOCMAP genomeIdx2Loc; // index->0-based start
+	CHROM_LOCMAP chromIdx2Loc; // index->0-based start
+
 };
 
 inline bool operator==(const MetaGenome& lhs, const MetaGenome& rhs) {
-	return lhs.genomes == rhs.genomes;
+	return lhs.genomes == rhs.genomes; /* equal genomes guarantees equal index */
 }
 
 inline bool operator!=(const MetaGenome& lhs, const MetaGenome& rhs) {
 	return !(lhs == rhs);
+}
+
+inline size_t MetaGenome::getGenomeIndex(uint64_t loc) const {
+	GENOME_LOCMAP::const_iterator result = std::find_if(genomeIdx2Loc.begin(), genomeIdx2Loc.end(),
+			[=] (const GENOME_LOCMAP::value_type& item) { return item.second.start <= loc && loc < item.second.end; }
+	);
+	return result != genomeIdx2Loc.end() ? result->first : -1;
+}
+
+inline size_t MetaGenome::getChromIndex(uint64_t loc) const {
+	CHROM_LOCMAP::const_iterator result = std::find_if(chromIdx2Loc.begin(), chromIdx2Loc.end(),
+			[=] (const CHROM_LOCMAP::value_type& item) { return item.second.start <= loc && loc < item.second.end; }
+	);
+	return result != chromIdx2Loc.end() ? result->first : -1;
 }
 
 } /* namespace MSGseqTK */

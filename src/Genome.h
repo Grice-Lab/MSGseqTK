@@ -156,6 +156,10 @@ public:
 	/* static methods */
 	/** format genome id/name */
 	static string formatName(const string& name);
+
+	/* friend declarations */
+	friend class MetaGenome;
+	friend class MetaGenomeAnno;
 };
 
 inline bool operator==(const Genome& lhs, const Genome& rhs) {

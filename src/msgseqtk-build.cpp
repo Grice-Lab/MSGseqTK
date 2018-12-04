@@ -350,6 +350,7 @@ int main(int argc, char* argv[]) {
 		/* incremental update backward */
 		nProcessed++;
 	}
+	mtg.updateIndex();
 
 	if(!oldDBName.empty())
 		infoLog << "MetaGenomics database updated. Newly added # of genomes: " << nProcessed << endl;

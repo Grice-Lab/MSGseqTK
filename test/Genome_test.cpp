@@ -16,11 +16,11 @@ using namespace EGriceLab::MSGseqTK;
 
 int main() {
 	/* part 1, Genome test */
-	Genome g1("Staphylococcus aureus");
+	Genome g1("g1", "Staphylococcus aureus");
 	g1.addChrom("chr1", DNAseq("ATCGNatcgnTCGANtcgan").length());
 	g1.addChrom("chr2", DNAseq("TCGANtcganATCGNatcgn").length());
 
-	Genome g2("Homo sapiens");
+	Genome g2("g2", "Homo sapiens");
 	g2.addChrom("chr1", DNAseq("AAAAANgggggNCCCCCNtttttn").length());
 	g2.addChrom("chr2", DNAseq("TTTTTNcccccNGGGGGNaaaaan").length());
 
@@ -95,6 +95,9 @@ int main() {
 	mtg1.push_front(g2);
 	mtg2.push_front(g1N);
 	mtg2.push_front(g2N);
+	mtg1.updateIndex();
+	mtg2.updateIndex();
+
 	if(mtg1 != mtg2) {
 		cerr << "Metagenome mtg1 and mtg2 don't match" << endl;
 		return EXIT_FAILURE;
@@ -123,6 +126,9 @@ int main() {
 		return EXIT_FAILURE;
 	}
 
+	/* avoid genome ID collistions */
+	mtg2.getGenome(0).setId("g1N");
+	mtg2.getGenome(1).setId("g2N");
 	MetaGenome mtg = mtg1 + mtg2;
 	if(mtg.size() != mtg1.size() + mtg1.size()) {
 		cerr << "Merged MetaGenome size doesn't match" << endl;

@@ -50,8 +50,21 @@ struct Loc {
 	static int64_t dist(const Loc& loc1, const Loc& loc2);
 
 	/* non-member methods */
+	/** formatted output */
 	friend ostream& operator<<(ostream& out, const Loc& loc);
+	/** formatted input */
 	friend istream& operator>>(istream& in, Loc& loc);
+
+	/* relational operators */
+	/**
+	 * return true if lhs' start is smaller
+	 * or they are equal and end is smaller
+	 */
+	friend bool operator<(const Loc& lhs, const Loc& rhs);
+	/**
+	 * return true if start and end are all equal
+	 */
+	friend bool operator==(const Loc& lhs, const Loc& rhs);
 
 	/* member fields */
 	int64_t start = 0; /* 0-based */
@@ -64,6 +77,33 @@ inline ostream& operator<<(ostream& out, const Loc& loc) {
 
 inline istream& operator>>(istream& in, Loc& loc) {
 	return loc.read(in);
+}
+
+inline bool operator<(const Loc& lhs, const Loc& rhs) {
+	if(lhs.start != rhs.start)
+		return lhs.start < rhs.start;
+	else
+		return lhs.end < rhs.end;
+}
+
+inline bool operator==(const Loc& lhs, const Loc& rhs) {
+	return lhs.start == rhs.start && lhs.end == rhs.end;
+}
+
+inline bool operator!=(const Loc& lhs, const Loc& rhs) {
+	return !(lhs == rhs);
+}
+
+inline bool operator>(const Loc& lhs, const Loc& rhs) {
+	return rhs < lhs;
+}
+
+inline bool operator>=(const Loc& lhs, const Loc& rhs) {
+	return !(lhs < rhs);
+}
+
+inline bool operator<=(const Loc& lhs, const Loc& rhs) {
+	return lhs < rhs || lhs == rhs;
 }
 
 } /* namespace MSGseqTK */

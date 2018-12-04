@@ -144,7 +144,8 @@ GenomeAnno_test_OBJECTS = $(am_GenomeAnno_test_OBJECTS)
 GenomeAnno_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
 	$(top_srcdir)/src/util/libEGUtil.a \
 	$(top_srcdir)/src/util/UCSC/libEGUCSC.a $(am__DEPENDENCIES_1)
-am_Genome_test_OBJECTS = Genome_test.$(OBJEXT)
+am_Genome_test_OBJECTS = Genome_test.$(OBJEXT) \
+	$(top_srcdir)/src/MSGseqTKEnv.$(OBJEXT)
 Genome_test_OBJECTS = $(am_Genome_test_OBJECTS)
 Genome_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
 	$(top_srcdir)/src/util/libEGUtil.a \
@@ -616,7 +617,7 @@ $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 $(top_srcdir)/src/libsds/src/libsds.la \
 $(top_srcdir)/src/util/libEGUtil.a
 
-Genome_test_SOURCES = Genome_test.cpp
+Genome_test_SOURCES = Genome_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
 Genome_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/util/libEGUtil.a \

@@ -59,7 +59,7 @@ $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 $(top_srcdir)/src/libsds/src/libsds.la \
 $(top_srcdir)/src/util/libEGUtil.a
 
-Genome_test_SOURCES = Genome_test.cpp
+Genome_test_SOURCES = Genome_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
 Genome_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/util/libEGUtil.a \

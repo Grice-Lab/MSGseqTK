@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include "Loc.h"
 #include "MetaGenome.h"
 #include "StringUtils.h"
 #include "ProgEnv.h"
@@ -15,6 +16,7 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 using std::istringstream;
+using std::pair;
 
 uint64_t MetaGenome::size() const {
 	uint64_t size = 0;
@@ -23,93 +25,71 @@ uint64_t MetaGenome::size() const {
 	return size; /* include null terminal for each Genome */
 }
 
-size_t MetaGenome::getGenomeIndex(uint64_t loc) const {
-	uint64_t start = 0;
-	for(deque<Genome>::const_iterator genome = genomes.begin(); genome != genomes.end(); ++genome) {
-		if(start <= loc && loc < start + genome->size())
-			return genome - genomes.begin();
-		start += genome->size(); /* no null-terminal for genome */
-	}
-	return -1;
-}
-
-size_t MetaGenome::getChromIndex(uint64_t loc) const {
-	size_t start = 0;
-	for(const Genome& genome : genomes) {
-		if(start <= loc && loc < start + genome.size())
-			return genome.getChromIndex(loc - start);
-		start += genome.size(); /* no null-terminal for genome */
-	}
-	return -1;
-}
-
-uint64_t MetaGenome::getGenomeShift(size_t i) const {
-	uint64_t shift = 0;
-	for(size_t k = 0; k < i; ++k)
-		shift += getGenome(k).size();
-	return shift;
-}
-
-MetaGenome::GENOME_SHIFTMAP MetaGenome::getGenomeShift() const {
-	GENOME_SHIFTMAP shiftMap;
-	uint64_t shift = 0;
-	for(size_t i = 0; i < numGenomes(); ++i) {
-		shiftMap[i] = shift;
-		shift += getGenome(i).size();
-	}
-	return shiftMap;
-}
-
-size_t MetaGenome::getLocId(uint64_t loc) const {
-	uint64_t start = 0;
-	size_t id = 0;
-	for(const Genome genome: genomes) {
-		for(const Genome::Chrom& chr : genome.getChroms()) {
-			if(start <= loc && loc < start + chr.size)
-				return id;
-			start += chr.size + 1; // including null
-		}
-	}
-	return -1;
+size_t MetaGenome::numChroms() const {
+	size_t N = 0;
+	for(const Genome& genome : genomes)
+		N += genome.numChroms();
+	return N;
 }
 
 ostream& MetaGenome::save(ostream& out) const {
-	size_t N = numGenomes();
-	out.write((const char*) &N, sizeof(size_t));
+	/* save basic info */
+	const size_t NG = numGenomes();
+	out.write((const char*) &NG, sizeof(size_t));
 	for(const deque<Genome>::value_type& genome : genomes)
 		genome.save(out);
+
 	return out;
 }
 
 istream& MetaGenome::load(istream& in) {
-	size_t N = 0;
-	in.read((char*) &N, sizeof(size_t));
-	genomes.resize(N);
-	for(size_t i = 0; i < N; ++i)
+	/* load basic info */
+	size_t NG = 0;
+	in.read((char*) &NG, sizeof(size_t));
+	genomes.resize(NG);
+	for(size_t i = 0; i < NG; ++i)
 		genomes[i].load(in);
+
+	updateIndex();
 	return in;
 }
 
 MetaGenome& MetaGenome::operator+=(const MetaGenome& other) {
 	genomes.insert(genomes.end(), other.genomes.begin(), other.genomes.end());
+	updateIndex();
 	return *this;
 }
 
-size_t MetaGenome::countGenome(const string& genomeId) const {
-	string gid = Genome::formatName(genomeId);
-	size_t c = 0;
-	for(const Genome& genome : genomes)
-		if(genome.getId() == gid)
-			c++;
-	return c;
-}
-
-bool MetaGenome::hasGenome(const string& genomeId) const {
-	string gid = Genome::formatName(genomeId);
-	for(const Genome& genome : genomes)
-		if(genome.getId() == gid)
-			return true;
-	return false;
+void MetaGenome::updateIndex() {
+	/* clear old data */
+	genomeId2Idx.clear();
+	chromName2Idx.clear();
+	genomeIdx2Loc.clear();
+	chromIdx2Loc.clear();
+	size_t gid = 0;
+	size_t cid = 0;
+	uint64_t gStart = 0;
+	for(Genome& genome : genomes) {
+		uint64_t cStart = 0;
+		if(genomeId2Idx.count(genome.id) != 0)
+			cerr << "genome " << genome.id << " exists with idx: " << genomeId2Idx.at(genome.id) << endl;
+		assert(genomeId2Idx.count(genome.id) == 0);
+		genomeId2Idx[genome.id] = gid;
+		for(Genome::Chrom& chr : genome.chroms) {
+			if(chromName2Idx.count(chr.name)) {
+				warningLog << "Redundant chrom name '" << chr.name << "' found in genome '" << genome.id << " replacing it with '" << genome.id + "." + chr.name << "'" << endl;
+				chr.name = genome.id + "." + chr.name;
+			}
+			chromName2Idx[chr.name] = cid;
+			chromIdx2Loc[cid] = Loc(cStart, cStart + chr.size + 1); // include the null terminal
+			cid++;
+			cStart += chr.size + 1;
+		}
+		assert(cStart == genome.size());
+		genomeIdx2Loc[gid] = Loc(gStart, gStart + cStart);
+		gid++;
+		gStart += cStart;
+	}
 }
 
 } /* namespace MSGseqTK */
