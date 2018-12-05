@@ -37,18 +37,25 @@ public:
 	enum Version { UNK = 1, GTF, GFF3 };
 
 	/* constructors */
-	/** construct am empty GFF with given version */
-	explicit GFF(Version ver = GFF::UNK) : ver(ver)
-	{ 	}
+	/** default constructor */
+	GFF() = default;
+
+	/** construct a GFF with given attr_map */
+	GFF(const string& seqname, const string& source, const string& type,
+			long start, long end, double score, char strand, int frame, const attr_map& attrs)
+	: seqname(seqname), source(source), type(type),
+	  start(start), end(end), score(score), strand(strand), frame(frame), attrValues(attrs) {
+		attrNames.reserve(attrValues.size());
+		for(const attr_map::value_type& entry : attrValues) // use natual order
+			attrNames.push_back(entry.first);
+	}
 
 	/** construct a GFF record with given info */
-	GFF(Version ver, const string& seqname, const string& source, const string& type,
+	GFF(GFF::Version ver, const string& seqname, const string& source, const string& type,
 			long start, long end, double score, char strand, int frame, const string& attrStr = "")
-	: ver(ver), seqname(seqname), source(source), type(type),
+	: seqname(seqname), source(source), type(type),
 	  start(start), end(end), score(score), strand(strand), frame(frame) {
-		if(ver == UNK)
-			throw std::invalid_argument("Unknown GFF version");
-		readAttributes(attrStr);
+		readAttributes(attrStr, ver);
 	}
 
 	const vector<string>& getAttrNames() const {
@@ -123,14 +130,6 @@ public:
 		this->type = type;
 	}
 
-	Version getVer() const {
-		return ver;
-	}
-
-	void setVer(Version ver) {
-		this->ver = ver;
-	}
-
 	/* member methods */
 	/** test whether this GFF is valid */
 	bool isValid() const {
@@ -145,6 +144,20 @@ public:
 	/** get number of attrs */
 	size_t numAttrs() const {
 		return attrNames.size();
+	}
+
+	/** clear all content and reset this GFF to defaul state */
+	void clear() {
+		seqname.clear();
+		source.clear();
+		type.clear();
+		start = 0;
+		end = 0;
+		score = INVALID_SCORE;
+		strand = DEFAULT_STRAND;
+		frame = INVALID_FRAME;
+		attrNames.clear();
+		attrValues.clear();
 	}
 
 	/** get the attr value given its name */
@@ -173,11 +186,17 @@ public:
 	/** save object to binary output */
 	ostream& save(ostream& out) const;
 
+	/** formated write to text output */
+	ostream& write(ostream& out, GFF::Version ver = GFF::GFF3) const;
+
+	/** formated read from text input */
+	istream& read(istream& in, GFF::Version ver = GFF::GFF3);
+
 	/** read attrs from formated text */
-	void readAttributes(const string& attrStr);
+	void readAttributes(const string& attrStr, GFF::Version ver);
 
 	/** write attrs to formated text */
-	string writeAttributes() const;
+	string writeAttributes(GFF::Version ver) const;
 
 	/** read attrs from formated text in GTF format */
 	void readGTFAttributes(const string& attrStr);
@@ -192,12 +211,14 @@ public:
 	string writeGFF3Attributes() const;
 
 	/* non-member operators */
-	/* unformated read */
+	/* formatted read */
 	friend istream& operator>>(istream& in, GFF& record);
 
-	/* unformated write */
+	/* formatted write */
 	friend ostream& operator<<(ostream& out, const GFF& record);
 
+	/** relational operators */
+	friend bool operator==(const GFF& lhs, const GFF& rhs);
 private:
 	/* member fields */
 	string seqname;
@@ -210,8 +231,6 @@ private:
 	int frame = INVALID_FRAME;
 	vector<string> attrNames; /* attr names in original order */
 	attr_map attrValues; /* attribute name->value map */
-
-	Version ver;
 
 public:
 	/* class constants */
@@ -230,9 +249,7 @@ public:
 	static Version guessVersion(const string& fn);
 };
 
-inline void GFF::readAttributes(const string& attrStr) {
-	if(attrStr.empty())
-		return;
+inline void GFF::readAttributes(const string& attrStr, GFF::Version ver) {
 	switch(ver) {
 	case GTF:
 		return readGTFAttributes(attrStr);
@@ -241,7 +258,7 @@ inline void GFF::readAttributes(const string& attrStr) {
 	}
 }
 
-inline string GFF::writeAttributes() const {
+inline string GFF::writeAttributes(GFF::Version ver) const {
 	switch(ver) {
 	case GTF:
 		return writeGTFAttributes();
@@ -250,6 +267,25 @@ inline string GFF::writeAttributes() const {
 	default:
 		return "";
 	}
+}
+
+inline istream& operator>>(istream& in, GFF& record) {
+	return record.read(in);
+}
+
+inline ostream& operator<<(ostream& out, const GFF& record) {
+	return record.write(out);
+}
+
+inline bool operator==(const GFF& lhs, const GFF& rhs) {
+	return lhs.seqname == rhs.seqname && lhs.source == rhs.source && lhs.type == rhs.type &&
+			lhs.start == rhs.start && lhs.end == rhs.end &&
+			(std::isnan(lhs.score) && std::isnan(rhs.score) || lhs.score == rhs.score) &&
+			lhs.strand == rhs.strand && lhs.frame == rhs.frame;
+}
+
+inline bool operator!=(const GFF& lhs, const GFF& rhs) {
+	return !(lhs == rhs);
 }
 
 } /* namespace UCSC */

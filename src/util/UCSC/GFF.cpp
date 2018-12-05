@@ -5,7 +5,7 @@
  *      Author: zhengqi
  */
 
-#include <math.h> // requires C99
+#include <cmath>
 #include <limits>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
@@ -67,42 +67,41 @@ ostream& GFF::save(ostream& out) const {
 	return out;
 }
 
-istream& operator>>(istream& in, GFF& record) {
+istream& GFF::read(istream& in, GFF::Version ver) {
 	string token;
-	std::getline(in, record.seqname, GFF::SEP);
-	std::getline(in, record.source, GFF::SEP);
-	std::getline(in, record.type, GFF::SEP);
-	in >> record.start >> record.end;
+	std::getline(in, seqname, GFF::SEP);
+	std::getline(in, source, GFF::SEP);
+	std::getline(in, type, GFF::SEP);
+	in >> start >> end;
 	/* safe-guard invalid fields */
 	in >> token;
-	record.score = token != GFF::INVALID_TOKEN ? boost::lexical_cast<double>(token) : GFF::INVALID_SCORE;
+	score = token != GFF::INVALID_TOKEN ? boost::lexical_cast<double>(token) : GFF::INVALID_SCORE;
 
-	in >> record.strand;
+	in >> strand;
 
 	in >> token;
-	record.frame = token != GFF::INVALID_TOKEN ? boost::lexical_cast<int>(token) : GFF::INVALID_FRAME;
+	frame = token != GFF::INVALID_TOKEN ? boost::lexical_cast<int>(token) : GFF::INVALID_FRAME;
 
 	in.ignore(std::numeric_limits<streamsize>::max(), GFF::SEP);
 	string attrStr;
 	std::getline(in, attrStr);
-	record.readAttributes(attrStr);
+	readAttributes(attrStr, ver);
 	return in;
 }
 
-ostream& operator<<(ostream& out, const GFF& record) {
-	out << record.seqname << GFF::SEP << record.source << GFF::SEP << record.type << GFF::SEP
-		<< record.start << GFF::SEP << record.end << GFF::SEP;
-	if(::isnan(record.score))
+ostream& GFF::write(ostream& out, GFF::Version ver) const {
+	out << seqname << GFF::SEP << source << GFF::SEP << type << GFF::SEP
+		<< start << GFF::SEP << end << GFF::SEP;
+	if(std::isnan(score))
 		out << GFF::INVALID_FLAG;
 	else
-		out << record.score;
-	out << GFF::SEP << record.strand << GFF::SEP;
-	if(record.frame == GFF::INVALID_FRAME)
+		out << score;
+	out << GFF::SEP << strand << GFF::SEP;
+	if(frame == GFF::INVALID_FRAME)
 		out << GFF::INVALID_FLAG;
 	else
-		out << record.frame;
-	out << GFF::SEP << record.writeAttributes();
-
+		out << frame;
+	out << GFF::SEP << writeAttributes(ver);
 	return out;
 }
 
