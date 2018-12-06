@@ -4,5 +4,6 @@ msgseqtk-build
 msgseqtk-inspect
 msgseqtk-mergedb
 msgseqtk-sim
+msgseqtk-anno
 *.exe
 .*

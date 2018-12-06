@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
 	/* variable declarations */
 	vector<string> inDBNames;
 	string dbName;
-	ofstream mtgOut, fmidxOut, gffOut;
+	ofstream mtgOut, fmidxOut;
 
 	/* parse options */
 	CommandOptions cmdOpts(argc, argv);
@@ -103,7 +103,6 @@ int main(int argc, char* argv[]) {
 	/* set dbName */
 	string mtgFn = dbName + METAGENOME_FILE_SUFFIX;
 	string fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
-	string gffFn = dbName + GFF::GFF3_SUFFIX;
 
 	/* open outputs */
 	mtgOut.open(mtgFn.c_str(), ios_base::out | ios_base::binary);
@@ -111,20 +110,15 @@ int main(int argc, char* argv[]) {
 		cerr << "Unable to write to '" << mtgFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
+
 	fmidxOut.open(fmidxFn.c_str(), ios_base::out | ios_base::binary);
 	if(!fmidxOut.is_open()) {
 		cerr << "Unable to write to '" << fmidxFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	gffOut.open(gffFn.c_str());
-	if(!gffOut.is_open()) {
-		cerr << "Unable to write to '" << gffFn << "': " << ::strerror(errno) << endl;
-		return EXIT_FAILURE;
-	}
 
 	MetaGenome mtg;
 	FMIndex fmidx;
-	string mtgAnno;
 
 	/* process each database */
 	for(vector<string>::const_iterator inDB = inDBNames.begin(); inDB != inDBNames.end(); ++inDB) {
@@ -138,14 +132,10 @@ int main(int argc, char* argv[]) {
 			cerr << "Unable to open '" << mtgInfn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
+
 		ifstream fmidxIn(fmidxInfn.c_str(), ios_base::binary);
 		if(!fmidxIn.is_open()) {
 			cerr << "Unable to open '" << fmidxInfn << "': " << ::strerror(errno) << endl;
-			return EXIT_FAILURE;
-		}
-		ifstream gffIn(gffInfn.c_str());
-		if(!gffIn.is_open()) {
-			cerr << "Unable to open '" << gffInfn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
 
@@ -169,21 +159,12 @@ int main(int argc, char* argv[]) {
 			return EXIT_FAILURE;
 		}
 
-		string db;
-		GFF::Version ver;
-		MetaGenomeAnno::readGFFHeader(gffIn, db, ver);
-		if(db == *inDB && ver == GFF::GFF3) {
-			mtgAnno += MetaGenomeAnno::readAll(gffIn);
-			debugLog << "GFF records copied from '" << gffFn << "'" << endl;
-		}
-		else
-			warningLog << "Content from database annotation file '" << gffFn << " doesn't match its name, ignored" << endl;
-
 		/* incremental update */
 		if(!isLast) {
 			debugLog << "Removing SA info from intermediate FM-index" << endl;
 			fmidxPart.clearSA(); /* do not store SA info for intermediate parts */
 		}
+
 		if(!isLast)
 			infoLog << "Merging into new database" << endl;
 		else
@@ -212,9 +193,4 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 	infoLog << "FM-index saved" << endl;
-
-	/* write MetaGenome annotations */
-	MetaGenomeAnno::writeGFFHeader(gffOut, dbName, GenomeAnno::FORMAT);
-	gffOut << mtgAnno;
-	infoLog << "GFF3 annotation file written" << endl;
 }

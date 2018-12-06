@@ -15,7 +15,7 @@
 #include <iterator>
 #include <algorithm>
 #include "MetaGenome.h"
-#include "GenomeAnno.h"
+#include "GFF.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
@@ -24,47 +24,49 @@ using std::string;
 using std::istream;
 using std::ostream;
 using std::vector;
+using UCSC::GFF;
 
 /**
  * class for MetaGenome annotations
  */
 class MetaGenomeAnno {
 public:
+	typedef map<string, vector<GFF>> GENOME_ANNOMAP; // per-genome annos
+	typedef map<string, vector<GFF>> CHROM_ANNOMAP;  // per-chrom annos
 	/* constructors */
 	/** default constructor */
 	MetaGenomeAnno() = default;
 
-	/** construct an MetaGenomeAnno for a given MetaGenome, while each Genome has empty annotations */
+	/** construct MetaGenomeAnno from MetaGenome, and add genome-level annos */
 	explicit MetaGenomeAnno(const MetaGenome& mtg);
 
-	/** get total number of genomes */
-	size_t numAnnotated() const {
+	/** get total number of annotated genomes */
+	size_t numAnnotatedGenomes() const {
 		return genomeAnnos.size();
+	}
+
+	/** get total number of annotated chromosomes */
+	size_t numAnnotatedChroms() const {
+		return chromAnnos.size();
 	}
 
 	/** get total number of annotations */
 	size_t numAnnotations() const;
 
+	/** add a Genome to this annotation, create associated per-genome annotations */
+	void addGenome(const Genome& genome);
+
+	/** add a new genome-level GFF annotation */
+	void addGenomeAnno(const string& id, const GFF& gff) {
+		genomeAnnos[id].push_back(gff);
+	}
+
 	/**
-	 * add an annotation at the end
+	 * add a new chrom-level GFF annotations
+	 * @param chrId  a unique id for a chrom
 	 */
-	void push_back(const GenomeAnno& anno) {
-		genomeAnnos.push_back(anno);
-	}
-
-	/** append multiple annotations at the end */
-	void append(const vector<GenomeAnno>& blockAnnos) {
-		genomeAnnos.insert(genomeAnnos.end(), blockAnnos.begin(), blockAnnos.end());
-	}
-
-	/** get a GenomeAnno iterator by id */
-	vector<GenomeAnno>::const_iterator getAnno(const string& id) const {
-		return std::find_if(genomeAnnos.begin(), genomeAnnos.end(), [&id](const GenomeAnno& anno) { return anno.getGenome().getId() == id; });
-	}
-
-	/** get a GenomeAnno iterator by id, non-const version*/
-	vector<GenomeAnno>::iterator getAnno(const string& id) {
-		return std::find_if(genomeAnnos.begin(), genomeAnnos.end(), [&id](GenomeAnno& anno) { return anno.getGenome().getId() == id; });
+	void addChromAnno(const string& chrId, const GFF& gff) {
+		chromAnnos[chrId].push_back(gff);
 	}
 
 	/** save this object to binary output */
@@ -73,13 +75,20 @@ public:
 	/** load an object from binary input */
 	istream& load(istream& in);
 
-	/** write this object to text output in GFF format */
-	ostream& write(ostream& out) const;
+	/** write annotations to GFF text output for given genome */
+	ostream& write(ostream& out, const Genome& genome) const;
 
-	/** read aggregated GFF annotations for this MetaGenomeAnno */
-	istream& read(istream& in);
+	/** read annotations and associated genome from GFF text input for given genomeId */
+	istream& read(istream& in, const Genome& gnome, GFF::Version ver = ANNO_VER);
 
-	/** merge this MetaGenomeAnno with another one,
+	/** write all annotations to GFF text output */
+	ostream& write(ostream& out, const MetaGenome& mtg) const;
+
+	/** read all GFF annotations from GFF text input */
+	istream& read(istream& in, const MetaGenome& mtg);
+
+	/**
+	 * merge this MetaGenomeAnno with another one,
 	 * with its name unchanged
 	 */
 	MetaGenomeAnno& operator+=(const MetaGenomeAnno& other);
@@ -92,12 +101,26 @@ public:
 		return annoMerged;
 	}
 
+	/** relational operators */
+	friend bool operator==(const MetaGenomeAnno& lhs, const MetaGenomeAnno& rhs);
+
 	/* member fields */
 private:
-	vector<GenomeAnno> genomeAnnos;
+	GENOME_ANNOMAP genomeAnnos; // genome id->vector<GFF>
+	CHROM_ANNOMAP chromAnnos;   // chrom id (genomeId.chrName)->vector<GFF>
+
+public:
+	/* static member fields */
+	static const GFF::Version ANNO_VER = GFF::GFF3;
+	static const string GENOME_START_TAG;
+	static const string GENOME_END_TAG;
 
 	/* static methods */
-public:
+	/** get the default GFF annotation filename from a database name */
+	static string getDBAnnoFn(const string& dbName) {
+		return dbName + GFF::GFF3_SUFFIX;
+	}
+
 	/** read in all content from a GFF text input */
 	static string readAll(istream& in) {
 		return string(std::istreambuf_iterator<char>(in), { });
@@ -112,11 +135,28 @@ public:
 	 * read pre-built GFF header comments
 	 */
 	static istream& readGFFHeader(istream& in, string& dbName, GFF::Version& ver);
+
+	/** read given genome info from comment */
+	static istream& readStartComment(istream& in, Genome& genome);
+
+	/** write start comment of given genome anno to text GFF output */
+	static ostream& writeStartComment(ostream& out, const Genome& genome);
+
+	/** write end comment of this genome anno to text GFF output */
+	static ostream& writeEndComment(ostream& out);
 };
 
-inline MetaGenomeAnno& MetaGenomeAnno::operator+=(const MetaGenomeAnno& other) {
-	genomeAnnos.insert(genomeAnnos.end(), other.genomeAnnos.begin(), other.genomeAnnos.end());
-	return *this;
+inline MetaGenomeAnno::MetaGenomeAnno(const MetaGenome& mtg) {
+	for(const Genome& genome : mtg.getGenomes())
+		addGenome(genome);
+}
+
+inline bool operator==(const MetaGenomeAnno& lhs, const MetaGenomeAnno& rhs) {
+	return lhs.genomeAnnos == rhs.genomeAnnos && lhs.chromAnnos == rhs.chromAnnos;
+}
+
+inline bool operator!=(const MetaGenomeAnno& lhs, const MetaGenomeAnno& rhs) {
+	return !(lhs == rhs);
 }
 
 } /* namespace MSGseqTK */

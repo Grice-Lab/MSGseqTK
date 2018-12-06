@@ -44,7 +44,6 @@ ScoreScheme.cpp \
 FMIndex.cpp \
 Genome.cpp \
 MetaGenome.cpp \
-GenomeAnno.cpp \
 MetaGenomeAnno.cpp \
 AlignmentSE.cpp
 
@@ -52,14 +51,15 @@ AlignmentSE.cpp
 bin_PROGRAMS = \
 msgseqtk-clean \
 msgseqtk-build \
+msgseqtk-anno \
 msgseqtk-inspect \
 msgseqtk-mergedb
 
 msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTKEnv.cpp
 msgseqtk_clean_LDADD = \
 libMSGseqTK.a \
-util/libEGUtil.a \
 util/UCSC/libEGUCSC.a \
+util/libEGUtil.a \
 math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
@@ -69,8 +69,18 @@ $(BOOST_REGEX_LIB)
 msgseqtk_build_SOURCES = msgseqtk-build.cpp MSGseqTKEnv.cpp
 msgseqtk_build_LDADD = \
 libMSGseqTK.a \
-util/libEGUtil.a \
 util/UCSC/libEGUCSC.a \
+util/libEGUtil.a \
+libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+libsds/src/libsds.la \
+$(BOOST_IOSTREAMS_LIB) \
+$(BOOST_REGEX_LIB)
+
+msgseqtk_anno_SOURCES = msgseqtk-anno.cpp MSGseqTKEnv.cpp
+msgseqtk_anno_LDADD = \
+libMSGseqTK.a \
+util/UCSC/libEGUCSC.a \
+util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB) \
@@ -79,8 +89,8 @@ $(BOOST_REGEX_LIB)
 msgseqtk_inspect_SOURCES = msgseqtk-inspect.cpp MSGseqTKEnv.cpp
 msgseqtk_inspect_LDADD = \
 libMSGseqTK.a \
-util/libEGUtil.a \
 util/UCSC/libEGUCSC.a \
+util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_REGEX_LIB)
@@ -88,8 +98,8 @@ $(BOOST_REGEX_LIB)
 msgseqtk_mergedb_SOURCES = msgseqtk-mergedb.cpp MSGseqTKEnv.cpp
 msgseqtk_mergedb_LDADD = \
 libMSGseqTK.a \
-util/libEGUtil.a \
 util/UCSC/libEGUCSC.a \
+util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_REGEX_LIB)

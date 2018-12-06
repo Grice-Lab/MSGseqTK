@@ -25,124 +25,69 @@ int main() {
 	g2.addChrom("chr1", DNAseq("AAAAANgggggNCCCCCNtttttn").length());
 	g2.addChrom("chr2", DNAseq("TTTTTNcccccNGGGGGNaaaaan").length());
 
-	GenomeAnno a1(g1);
-	a1.addAnno("chr1", GFF(GFF::GFF3, "chr1", "test", "gene", 1, 8, 0, '.', 0));
-	a1.addAnno("chr1", GFF(GFF::GFF3, "chr1", "test", "gene", 11, 18, 0, '.', 0));
+	MetaGenomeAnno mta1;
+	MetaGenomeAnno mta2;
 
-	GenomeAnno a2(g2);
-	a2.addAnno("chr1", GFF(GFF::GFF3, "chr1", "test", "gene", 1, 8, 0, '.', 0));
-	a2.addAnno("chr1", GFF(GFF::GFF3, "chr1", "test", "gene", 11, 18, 0, '.', 0));
+	mta1.addGenome(g1);
+	mta2.addGenome(g2);
+
+	mta1.addChromAnno(MetaGenome::getChromId(g1.getId(), "chr1"), GFF(GFF::GFF3, "chr1", "test", "gene", 1, 8, 0, '.', 0));
+	mta1.addChromAnno(MetaGenome::getChromId(g1.getId(), "chr1"), GFF(GFF::GFF3, "chr1", "test", "gene", 11, 18, 0, '.', 0));
+
+	mta2.addChromAnno(MetaGenome::getChromId(g2.getId(), "chr1"), GFF(GFF::GFF3, "chr1", "test", "gene", 1, 8, 0, '.', 0));
+	mta2.addChromAnno(MetaGenome::getChromId(g2.getId(), "chr1"), GFF(GFF::GFF3, "chr1", "test", "gene", 11, 18, 0, '.', 0));
 
 	ostringstream out;
-	a1.save(out);
+	mta1.save(out);
 	if(out.bad()) {
-		cerr << "Failed to save '" << a1.getGenome().getName() << "': " << ::strerror(errno) << endl;
+		cerr << "Failed to save mta1: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	a2.save(out);
+	mta2.save(out);
 	if(out.bad()) {
-		cerr << "Failed to save '" << a2.getGenome().getName() << "': " << ::strerror(errno) << endl;
+		cerr << "Failed to save mta2: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
 	/* binary IO tests */
-	GenomeAnno a1N, a2N;
+	MetaGenomeAnno mta1N, mta2N;
 	istringstream in(out.str());
-	a1N.load(in);
+	mta1N.load(in);
 	if(in.bad()) {
 		cerr << "Failed to load a1N: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	a2N.load(in);
+	mta2N.load(in);
 	if(in.bad()) {
 		cerr << "Failed to load a2N: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	ostringstream outN;
-	a1N.save(outN);
-	if(outN.bad()) {
-		cerr << "Failed to save '" << a1N.getGenome().getName() << "': " << ::strerror(errno) << endl;
+	if(mta1 != mta1N) {
+		cerr << "Loaded mta1 doesn't equal original copy" << endl;
 		return EXIT_FAILURE;
 	}
-	a2N.save(outN);
-	if(outN.bad()) {
-		cerr << "Failed to save '" << a2N.getGenome().getName() << "': " << ::strerror(errno) << endl;
+	if(mta2 != mta2N) {
+		cerr << "Loaded mta1 doesn't equal original copy" << endl;
 		return EXIT_FAILURE;
 	}
-	if(outN.str() != out.str()) {
-		cerr << "Loaded and re-saved GenomeAnno objects don't match" << endl;
-		return EXIT_FAILURE;
-	}
-
-	/* GFF IO tests */
-	/* write individually */
-	out.str("");
-	a1.write(out);
-	a2.write(out);
-	/* write as MetaGenome annotations */
-	ostringstream outM;
-	MetaGenomeAnno aM;
-	aM.push_back(a1);
-	aM.push_back(a2);
-	aM.write(outM);
-	if(out.str() != outM.str()) {
-		cerr << "Individual and MetaGenome annotations don't match: -----" << endl
-				<< out.str() << endl << "-----" << endl
-				<< outM.str() << endl << "-----" << endl;
-		return EXIT_FAILURE;
-	}
-
-	/* part 2, MetaGenomeAnno test */
-	out.str("");
-	MetaGenomeAnno mta1, mta2;
-	mta1.push_back(a1);
-	mta1.push_back(a2);
-	mta2.push_back(a1N);
-	mta2.push_back(a2N);
 
 	MetaGenomeAnno mta = mta1 + mta2;
-
-	/* binary IO test */
 	mta.save(out);
 	if(out.bad()) {
-		cerr << "Failed to save MetaGenomeAnno: " << ::strerror(errno) << endl;
+		cerr << "Failed to save mta: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 	in.str(out.str());
 	MetaGenomeAnno mtaN;
 	mtaN.load(in);
 	if(in.bad()) {
-		cerr << "Failed to load MetaGenomeAnno: " << ::strerror(errno) << endl;
+		cerr << "Failed to load mtaN: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
-	/* text IO test */
-	ostringstream gffO, gffON;
-	mta.write(gffO);
-	mtaN.write(gffON);
-
-	if(gffON.str() != gffO.str()) {
-		cerr << "Unmatched MetaGenone GFF annotation" << endl;
-		cerr << gffO.str() << endl <<
-				"-----" << endl <<
-				gffON.str() << endl;
-	}
-
-	/* re-read and write test */
-	istringstream gffI(gffO.str());
-	mtaN.read(gffI);
-	if(gffI.bad()) {
-		cerr << "Failed to read MetaGenomeAnno: " << ::strerror(errno) << endl;
+	if(mtaN != mta) {
+		cerr << "Loaded mtaN doesn't equal original copy" << endl;
 		return EXIT_FAILURE;
-	}
-	gffON.str("");
-	mtaN.write(gffON);
-
-	if(gffON.str() != gffO.str()) {
-		cerr << "Re-read gffON doesn't match MetaGenone GFF annotation" << endl;
-		cerr << gffO.str() << endl <<
-				"-----" << endl <<
-				gffON.str() << endl;
 	}
 
 	cout << "MetaGenomeAnno tests passed" << endl;

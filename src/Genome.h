@@ -89,6 +89,11 @@ public:
 		this->name = formatName(name);
 	}
 
+	/** get a display id of this genome */
+	string displayId() const {
+		return id + " (" + name + ")";
+	}
+
 	/** get number of chromosomes */
 	size_t numChroms() const {
 		return chroms.size();
@@ -159,6 +164,7 @@ public:
 
 	/* friend declarations */
 	friend class MetaGenome;
+	friend class GenomeAnno;
 	friend class MetaGenomeAnno;
 };
 

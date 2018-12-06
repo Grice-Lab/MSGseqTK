@@ -156,6 +156,11 @@ public:
 		return genomes[i];
 	}
 
+	/** get genome by name */
+	const Genome& getGenome(const string& gname) const {
+		return getGenome(getGenomeIndex(gname));
+	}
+
 	/** get genome by index, non-const version */
 	Genome& getGenome(size_t i) {
 		return genomes[i];
@@ -196,7 +201,10 @@ public:
 	/** load an object from binary input */
 	istream& load(istream& in);
 
-	/** update all index, should be called if any containing Genome/Chrom changes */
+	/**
+	 * update all index, should be called if any containing Genome/Chrom changes
+	 * it will rename genome ids and chrom names (with warnings), if non-unique ID/names found
+	 */
 	void updateIndex();
 
 	/** merge this MetaGenome with another one,
@@ -223,6 +231,12 @@ private:
 	GENOME_LOCMAP genomeIdx2Loc; // index->0-based start
 	CHROM_LOCMAP chromIdx2Loc; // index->0-based start
 
+public:
+	/* static methods */
+	/** get a unique chrom id from genome.id and chrom.name */
+	static string getChromId(const string& genomeId, const string& chrName) {
+		return genomeId + "." + chrName;
+	}
 };
 
 inline bool operator==(const MetaGenome& lhs, const MetaGenome& rhs) {

@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <boost/lexical_cast.hpp>
 #include "Loc.h"
 #include "MetaGenome.h"
 #include "StringUtils.h"
@@ -71,14 +72,16 @@ void MetaGenome::updateIndex() {
 	uint64_t gStart = 0;
 	for(Genome& genome : genomes) {
 		uint64_t cStart = 0;
-		if(genomeId2Idx.count(genome.id) != 0)
-			cerr << "genome " << genome.id << " exists with idx: " << genomeId2Idx.at(genome.id) << endl;
-		assert(genomeId2Idx.count(genome.id) == 0);
+		if(genomeId2Idx.count(genome.id) > 0) { // genome.id must be unique
+			cerr << "Error: Redundant genome " << genome.displayId() << " found in database" << endl;
+			abort();
+		}
 		genomeId2Idx[genome.id] = gid;
 		for(Genome::Chrom& chr : genome.chroms) {
 			if(chromName2Idx.count(chr.name)) {
-				warningLog << "Redundant chrom name '" << chr.name << "' found in genome '" << genome.id << " replacing it with '" << genome.id + "." + chr.name << "'" << endl;
-				chr.name = genome.id + "." + chr.name;
+				warningLog << "Non-unique chrom name '" << chr.name << "' from genome '" << genome.displayId() << "' found, ";
+				chr.name = getChromId(genome.id, chr.name);
+				warningLog << "replacing with '" << chr.name << "'" << endl;
 			}
 			chromName2Idx[chr.name] = cid;
 			chromIdx2Loc[cid] = Loc(cStart, cStart + chr.size + 1); // include the null terminal
