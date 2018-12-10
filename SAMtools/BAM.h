@@ -693,6 +693,26 @@ public:
 		return bam_cigar_type(op);
 	}
 
+	/** get query length from a given cigar */
+	static int cigar2QLen(uint32_t n, const uint32_t* cigar) {
+		return bam_cigar2qlen(n, cigar);
+	}
+
+	/** get query length from a given cigar_str */
+	static int cigar2QLen(const cigar_str& cigar) {
+		return cigar2QLen(cigar.length(), cigar.c_str());
+	}
+
+	/** get reference length from cigar */
+	static int cigar2RLen(uint32_t n, const uint32_t* cigar) {
+		return bam_cigar2rlen(n, cigar);
+	}
+
+	/** get reference length from cigar_str */
+	static int cigar2RLen(const cigar_str& cigar) {
+		return cigar2RLen(cigar.length(), cigar.c_str());
+	}
+
 	/* static fields */
 	static const boost::regex CIGAR_PATTERN;
 	static const double DEFAULT_AUX_DATA_FACTOR; // data factor between m_data and l_data, to avoid too much internal re-allocation by htslib
