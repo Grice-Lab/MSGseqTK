@@ -22,7 +22,7 @@ using std::array;
 struct ScoreScheme {
 	/* constructors */
 	/** construct from all given values */
-	ScoreScheme(uint32_t matchScore, uint32_t mismatchPenalty, uint32_t gapOPenalty, uint32_t gapEPenalty, uint32_t clipPenalty);
+	ScoreScheme(double matchScore, double mismatchPenalty, double gapOPenalty, double gapEPenalty, double clipPenalty);
 
 	/** default constructor */
 	ScoreScheme()
@@ -31,12 +31,12 @@ struct ScoreScheme {
 
 	/* member methods */
 	/** get match score between two DNA::alpahbet bases */
-	uint32_t getScore(int8_t b1, int8_t b2) const {
+	double getScore(int8_t b1, int8_t b2) const {
 		return SCORE[b1][b2];
 	}
 
 	/** get affine gap penalty of a given length */
-	uint32_t gapPenalty(uint32_t length) const {
+	double gapPenalty(uint32_t length) const {
 		if(length == 0)
 			return 0;
 		else
@@ -44,27 +44,27 @@ struct ScoreScheme {
 	}
 
 	/** get affine gap penalty of opening a gap */
-	uint32_t openGapPenalty() const {
+	double openGapPenalty() const {
 		return gapOPenalty + gapEPenalty;
 	}
 
 	/** get affine gap penalty of extending a gap */
-	uint32_t extGapPenalty() const {
+	double extGapPenalty() const {
 		return gapEPenalty;
 	}
 
 	/* member fields */
-	array<array<uint32_t, DNAalphabet::SIZE>, DNAalphabet::SIZE> SCORE; /* match/mismatch score matrix */
-	uint32_t gapOPenalty;
-	uint32_t gapEPenalty;
-	uint32_t clipPenalty;
+	array<array<double, DNAalphabet::SIZE>, DNAalphabet::SIZE> SCORE; /* match/mismatch score matrix */
+	double gapOPenalty;
+	double gapEPenalty;
+	double clipPenalty;
 
 	/* static fields */
-	static const uint32_t DEFAULT_MATCH_SCORE = 1;
-	static const uint32_t DEFAULT_MISMATCH_PENALTY = 4;
-	static const uint32_t DEFAULT_GAP_OPEN_PENALTY = 5;
-	static const uint32_t DEFAULT_GAP_EXT_PENALTY = 3;
-	static const uint32_t DEFAULT_CLIP_PENALTY = 5; /* 5' and 3' soft-clip (S) penalty for reads */
+	static const double DEFAULT_MATCH_SCORE;
+	static const double DEFAULT_MISMATCH_PENALTY;
+	static const double DEFAULT_GAP_OPEN_PENALTY;
+	static const double DEFAULT_GAP_EXT_PENALTY;
+	static const double DEFAULT_CLIP_PENALTY; /* 5' and 3' soft-clip (S) penalty for reads */
 };
 
 } /* namespace MSGseqTK */
