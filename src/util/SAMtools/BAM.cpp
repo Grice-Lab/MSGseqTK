@@ -151,7 +151,7 @@ BAM::cigar_str BAM::encodeCigar(const string& str) {
 	cigar_str cigar;
 	boost::smatch match;
 	for(string::const_iterator searchStart(str.cbegin()); boost::regex_search(searchStart, str.cend(), match, CIGAR_PATTERN); searchStart = match[0].second)
-		cigar.push_back(bam_cigar_gen(boost::lexical_cast<uint32_t>(string(match[1])), encodeCigar(string(match[2]).front())));
+		cigar.push_back(bam_cigar_gen(boost::lexical_cast<uint32_t>(match.str(1)), encodeCigar(match.str(2).front())));
 	return cigar;
 }
 
