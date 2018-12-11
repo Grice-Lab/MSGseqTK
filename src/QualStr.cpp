@@ -13,12 +13,8 @@ namespace MSGseqTK {
 
 QualStr& QualStr::assign(const string& str) {
 	clear();
-	for(char q : str) {
-		uint8_t qScore = q - qShift;
-		if(qScore < MIN_Q_SCORE)
-			qScore = MIN_Q_SCORE;
-		push_back(qScore);
-	}
+	for(char q : str)
+		push_back(std::max<uint8_t>(q - qShift, MIN_Q_SCORE));
 	return *this;
 }
 
@@ -35,14 +31,14 @@ QualStr QualStr::substr(size_t pos, size_t len) const {
 	if(pos + len >= length())
 		len = length() - pos;
 	seg.resize(len);
-	std::copy(begin() + pos, begin() + pos + len, seg.begin());
+	std::copy_n(begin() + pos, len, seg.begin());
 	return seg;
 }
 
-istream& operator>>(istream& in, QualStr& qual) {
+istream& QualStr::read(istream& in) {
 	string str;
 	in >> str;
-	qual.assign(str);
+	assign(str);
 	return in;
 }
 

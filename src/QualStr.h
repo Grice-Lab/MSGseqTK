@@ -68,6 +68,16 @@ public:
 		return decode();
 	}
 
+	/** test whether a given loc is valid */
+	bool isValid(QualStr::size_type i) const {
+		return (*this)[i] != INVALID_Q_SCORE;
+	}
+
+	/** test whether all quals are valid */
+	bool isValid() const {
+		return std::none_of(begin(), end(), [] (QualStr::value_type q) { return q == INVALID_Q_SCORE; });
+	}
+
 	/** get a substr copy of this QualStr */
 	QualStr substr(size_t pos = 0, size_t len = npos) const;
 
@@ -81,6 +91,14 @@ public:
 		return StringUtils::loadString(*this, in);
 	}
 
+	/** write this QualStr to formatted output */
+	ostream& write(ostream& out) const {
+		return out << decode();
+	}
+
+	/** read a QualStr from formatted input */
+	istream& read(istream& in);
+
 	/** reverse this QualStr */
 	QualStr& reverse();
 
@@ -91,8 +109,9 @@ public:
 	}
 
 	/* non-member methods */
+	/** formatted output */
 	friend ostream& operator<<(ostream& out, const QualStr& qual);
-
+	/** formatted input */
 	friend istream& operator>>(istream& in, QualStr& qual);
 
 	/* member fields */
@@ -104,10 +123,15 @@ public:
 	static const uint8_t DEFAULT_Q_SCORE = 30;
 	static const uint8_t DEFAULT_Q_SHIFT = 33;
 	static const uint8_t MIN_Q_SCORE = 2; /* prevent Inf */
+	static const uint8_t INVALID_Q_SCORE = 0xFF;
 };
 
 inline ostream& operator<<(ostream& out, const QualStr& qual) {
-	return out << qual.decode();
+	return qual.write(out);
+}
+
+inline istream& operator>>(istream& out, QualStr& qual) {
+	return qual.read(out);
 }
 
 } /* namespace MSGseqTK */

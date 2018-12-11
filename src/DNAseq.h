@@ -60,7 +60,7 @@ public:
 	/**
 	 * test whether the whole sequence is valid
 	 */
-	bool allValid() const;
+	bool isValid() const;
 
 	/**
 	 * test whether position i is a valid base (non-gap)
@@ -72,7 +72,10 @@ public:
 	/**
 	 * test whether the whole sequence is all base, no gap
 	 */
-	bool allBase() const;
+	bool isBase() const;
+
+	/** test whether any base is gap */
+	bool hasGap() const;
 
 	/** reverse this object */
 	DNAseq& reverse();
@@ -193,12 +196,16 @@ inline ostream& DNAseq::save(ostream& out) const {
 	return StringUtils::saveString(*this, out);
 }
 
-inline bool DNAseq::allValid() const {
-	return std::all_of(begin(), end(), [](int8_t b) { return DNAalphabet::isValid(b); } );
+inline bool DNAseq::isValid() const {
+	return std::all_of(begin(), end(), [](DNAseq::value_type b) { return DNAalphabet::isValid(b); });
 }
 
-inline bool DNAseq::allBase() const {
-	return std::all_of(begin(), end(), [](int8_t b) { return DNAalphabet::isBase(b); } );
+inline bool DNAseq::isBase() const {
+	return std::all_of(begin(), end(), [](DNAseq::value_type b) { return DNAalphabet::isBase(b); });
+}
+
+inline bool DNAseq::hasGap() const {
+	return std::any_of(begin(), end(), [](DNAseq::value_type b) { return DNAalphabet::isGap(b); });
 }
 
 inline DNAseq& DNAseq::operator=(const string& str) {
