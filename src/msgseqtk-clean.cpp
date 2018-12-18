@@ -97,7 +97,7 @@ void printUsage(const string& progName) {
  * main function to process single-ended reads
  * @return 0 if success, return non-zero otherwise
  */
-int main_SE(MetaGenome& refMtg, MetaGenome& bgMtg, FMIndex& refFmidx, FMIndex& bgFmidx,
+int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& refFmidx, const FMIndex& bgFmidx,
 		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut, RNG& rng,
 		bool withDetail, double minLod, int strand);
 
@@ -105,7 +105,7 @@ int main_SE(MetaGenome& refMtg, MetaGenome& bgMtg, FMIndex& refFmidx, FMIndex& b
  * main function to process paired-ended reads
  * @return 0 if success, return non-zero otherwise
  */
-int main_PE(MetaGenome& refMtg, MetaGenome& bgMtg, FMIndex& refFmidx, FMIndex& bgFmidx,
+int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& refFmidx, const FMIndex& bgFmidx,
 		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut, RNG& rng,
 		bool withDetail, double minLod, int strand);
 
@@ -399,7 +399,7 @@ int main(int argc, char* argv[]) {
 		return main_PE(refMtg, bgMtg, refFmidx, bgFmidx, fwdI, revI, fwdO, revO, assignOut, rng, withDetail, minLod, strand);
 }
 
-int main_SE(MetaGenome& refMtg, MetaGenome& bgMtg, FMIndex& refFmidx, FMIndex& bgFmidx,
+int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& refFmidx, const FMIndex& bgFmidx,
 		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut, RNG& rng,
 		bool withDetail, double minLod, int strand) {
 	infoLog << "Filtering input reads" << endl;
@@ -439,7 +439,7 @@ int main_SE(MetaGenome& refMtg, MetaGenome& bgMtg, FMIndex& refFmidx, FMIndex& b
 	return EXIT_SUCCESS;
 }
 
-int main_PE(MetaGenome& refMtg, MetaGenome& bgMtg, FMIndex& refFmidx, FMIndex& bgFmidx,
+int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& refFmidx, const FMIndex& bgFmidx,
 		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut, RNG& rng,
 		bool withDetail, double minLod, int strand) {
 	infoLog << "Filtering input paired-end reads" << endl;
