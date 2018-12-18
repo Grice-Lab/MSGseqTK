@@ -568,7 +568,17 @@ public:
 	}
 
 	/** add or update a new int tag for this BAM record */
+	int setAux(const string& tag, uint32_t val) {
+		return bam_aux_update_int(bamAln, tag.c_str(), val);
+	}
+
+	/** add or update a new int tag for this BAM record */
 	int setAux(const string& tag, int64_t val) {
+		return bam_aux_update_int(bamAln, tag.c_str(), val);
+	}
+
+	/** add or update a new int tag for this BAM record */
+	int setAux(const string& tag, uint64_t val) {
 		return bam_aux_update_int(bamAln, tag.c_str(), val);
 	}
 
