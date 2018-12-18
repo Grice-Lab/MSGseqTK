@@ -172,7 +172,7 @@ DNAseq FMIndex::getSeq() const {
 		seq.push_back(b);
 		i = b != 0 ? LF(b, i) - 1 : ++shift;
 	}
-	std::reverse(seq.begin(), seq.end());
+	std::reverse(seq.begin(), seq.end()); // bwt is based on reversed seq
 	return seq;
 }
 

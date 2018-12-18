@@ -147,7 +147,6 @@ struct AlignmentSE {
 				seed.shiftQuery(shift);
 			return *this;
 		}
-
 	};
 
 	typedef vector<SeedMatch> SeedMatchList;

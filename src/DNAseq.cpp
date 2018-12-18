@@ -97,6 +97,30 @@ DNAseq DNAseq::substr(size_t pos, size_t len) const {
 	return seg;
 }
 
+DNAseq::dna_nt2 DNAseq::nt2Encode(const DNAseq& seq) {
+	dna_nt2 nt;
+	nt.reserve((seq.length() + 1) / 4);
+	size_t i = 0;
+	dna_nt2 n = 0;
+	while(i < seq.length()) {
+		if(seq[i] == 0) { // N
+			n = 0;
+			i++;
+		}
+		else {
+
+		}
+
+	}
+}
+
+/**
+ * decode a nt2_str into a DNAseq
+ */
+DNAseq DNAseq::nt2Decode(const dna_nt2& nt2Seq) {
+
+}
+
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */
 

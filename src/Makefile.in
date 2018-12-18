@@ -90,9 +90,9 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-bin_PROGRAMS = msgseqtk-clean$(EXEEXT) msgseqtk-build$(EXEEXT) \
-	msgseqtk-anno$(EXEEXT) msgseqtk-inspect$(EXEEXT) \
-	msgseqtk-mergedb$(EXEEXT)
+bin_PROGRAMS = msgseqtk-build$(EXEEXT) msgseqtk-anno$(EXEEXT) \
+	msgseqtk-inspect$(EXEEXT) msgseqtk-mergedb$(EXEEXT) \
+	msgseqtk-clean$(EXEEXT) msgseqtk-align$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -128,18 +128,26 @@ am_libMSGseqTK_a_OBJECTS = DNAalphabet.$(OBJEXT) DNAseq.$(OBJEXT) \
 libMSGseqTK_a_OBJECTS = $(am_libMSGseqTK_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_msgseqtk_anno_OBJECTS = msgseqtk-anno.$(OBJEXT) \
+am_msgseqtk_align_OBJECTS = msgseqtk-align.$(OBJEXT) \
 	MSGseqTKEnv.$(OBJEXT)
-msgseqtk_anno_OBJECTS = $(am_msgseqtk_anno_OBJECTS)
+msgseqtk_align_OBJECTS = $(am_msgseqtk_align_OBJECTS)
 am__DEPENDENCIES_1 =
-msgseqtk_anno_DEPENDENCIES = libMSGseqTK.a util/UCSC/libEGUCSC.a \
-	util/libEGUtil.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+msgseqtk_align_DEPENDENCIES = libMSGseqTK.a util/UCSC/libEGUCSC.a \
+	util/libEGUtil.a util/SAMtools/libEGSAMtools.a \
+	math/libEGMath.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	libsds/src/libsds.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_msgseqtk_anno_OBJECTS = msgseqtk-anno.$(OBJEXT) \
+	MSGseqTKEnv.$(OBJEXT)
+msgseqtk_anno_OBJECTS = $(am_msgseqtk_anno_OBJECTS)
+msgseqtk_anno_DEPENDENCIES = libMSGseqTK.a util/UCSC/libEGUCSC.a \
+	util/libEGUtil.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+	libsds/src/libsds.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_msgseqtk_build_OBJECTS = msgseqtk-build.$(OBJEXT) \
 	MSGseqTKEnv.$(OBJEXT)
 msgseqtk_build_OBJECTS = $(am_msgseqtk_build_OBJECTS)
@@ -201,12 +209,14 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(libMSGseqTK_a_SOURCES) $(msgseqtk_anno_SOURCES) \
-	$(msgseqtk_build_SOURCES) $(msgseqtk_clean_SOURCES) \
-	$(msgseqtk_inspect_SOURCES) $(msgseqtk_mergedb_SOURCES)
-DIST_SOURCES = $(libMSGseqTK_a_SOURCES) $(msgseqtk_anno_SOURCES) \
-	$(msgseqtk_build_SOURCES) $(msgseqtk_clean_SOURCES) \
-	$(msgseqtk_inspect_SOURCES) $(msgseqtk_mergedb_SOURCES)
+SOURCES = $(libMSGseqTK_a_SOURCES) $(msgseqtk_align_SOURCES) \
+	$(msgseqtk_anno_SOURCES) $(msgseqtk_build_SOURCES) \
+	$(msgseqtk_clean_SOURCES) $(msgseqtk_inspect_SOURCES) \
+	$(msgseqtk_mergedb_SOURCES)
+DIST_SOURCES = $(libMSGseqTK_a_SOURCES) $(msgseqtk_align_SOURCES) \
+	$(msgseqtk_anno_SOURCES) $(msgseqtk_build_SOURCES) \
+	$(msgseqtk_clean_SOURCES) $(msgseqtk_inspect_SOURCES) \
+	$(msgseqtk_mergedb_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -455,17 +465,6 @@ MetaGenome.cpp \
 MetaGenomeAnno.cpp \
 AlignmentSE.cpp
 
-msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTKEnv.cpp
-msgseqtk_clean_LDADD = \
-libMSGseqTK.a \
-util/UCSC/libEGUCSC.a \
-util/libEGUtil.a \
-math/libEGMath.a \
-libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libsds/src/libsds.la \
-$(BOOST_IOSTREAMS_LIB) \
-$(BOOST_REGEX_LIB)
-
 msgseqtk_build_SOURCES = msgseqtk-build.cpp MSGseqTKEnv.cpp
 msgseqtk_build_LDADD = \
 libMSGseqTK.a \
@@ -503,6 +502,30 @@ util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_REGEX_LIB)
+
+msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTKEnv.cpp
+msgseqtk_clean_LDADD = \
+libMSGseqTK.a \
+util/UCSC/libEGUCSC.a \
+util/libEGUtil.a \
+math/libEGMath.a \
+libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+libsds/src/libsds.la \
+$(BOOST_IOSTREAMS_LIB) \
+$(BOOST_REGEX_LIB)
+
+msgseqtk_align_SOURCES = msgseqtk-align.cpp MSGseqTKEnv.cpp
+msgseqtk_align_LDADD = \
+libMSGseqTK.a \
+util/UCSC/libEGUCSC.a \
+util/libEGUtil.a \
+util/SAMtools/libEGSAMtools.a \
+math/libEGMath.a \
+libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+libsds/src/libsds.la \
+$(BOOST_IOSTREAMS_LIB) \
+$(BOOST_REGEX_LIB) \
+-lhts
 
 all: all-recursive
 
@@ -595,6 +618,10 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
+msgseqtk-align$(EXEEXT): $(msgseqtk_align_OBJECTS) $(msgseqtk_align_DEPENDENCIES) $(EXTRA_msgseqtk_align_DEPENDENCIES) 
+	@rm -f msgseqtk-align$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(msgseqtk_align_OBJECTS) $(msgseqtk_align_LDADD) $(LIBS)
+
 msgseqtk-anno$(EXEEXT): $(msgseqtk_anno_OBJECTS) $(msgseqtk_anno_DEPENDENCIES) $(EXTRA_msgseqtk_anno_DEPENDENCIES) 
 	@rm -f msgseqtk-anno$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(msgseqtk_anno_OBJECTS) $(msgseqtk_anno_LDADD) $(LIBS)
@@ -636,6 +663,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QualStr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ScoreScheme.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SeqIO.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqtk-align.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqtk-anno.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqtk-build.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgseqtk-clean.Po@am__quote@

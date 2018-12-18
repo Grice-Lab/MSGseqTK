@@ -16,6 +16,7 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 using std::string;
+using std::basic_string;
 using std::array;
 
 /**

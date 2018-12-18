@@ -181,7 +181,6 @@ public:
 
 	/* static member fields */
 	static const int MIN_GENOME_GAP = 10;
-
 };
 
 inline ostream& operator<<(ostream& out, const DNAseq& seq) {

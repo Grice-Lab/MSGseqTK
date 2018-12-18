@@ -49,22 +49,12 @@ AlignmentSE.cpp
 
 # Build the executables
 bin_PROGRAMS = \
-msgseqtk-clean \
 msgseqtk-build \
 msgseqtk-anno \
 msgseqtk-inspect \
-msgseqtk-mergedb
-
-msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTKEnv.cpp
-msgseqtk_clean_LDADD = \
-libMSGseqTK.a \
-util/UCSC/libEGUCSC.a \
-util/libEGUtil.a \
-math/libEGMath.a \
-libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libsds/src/libsds.la \
-$(BOOST_IOSTREAMS_LIB) \
-$(BOOST_REGEX_LIB)
+msgseqtk-mergedb \
+msgseqtk-clean \
+msgseqtk-align
 
 msgseqtk_build_SOURCES = msgseqtk-build.cpp MSGseqTKEnv.cpp
 msgseqtk_build_LDADD = \
@@ -103,3 +93,27 @@ util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_REGEX_LIB)
+
+msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTKEnv.cpp
+msgseqtk_clean_LDADD = \
+libMSGseqTK.a \
+util/UCSC/libEGUCSC.a \
+util/libEGUtil.a \
+math/libEGMath.a \
+libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+libsds/src/libsds.la \
+$(BOOST_IOSTREAMS_LIB) \
+$(BOOST_REGEX_LIB)
+
+msgseqtk_align_SOURCES = msgseqtk-align.cpp MSGseqTKEnv.cpp
+msgseqtk_align_LDADD = \
+libMSGseqTK.a \
+util/UCSC/libEGUCSC.a \
+util/libEGUtil.a \
+util/SAMtools/libEGSAMtools.a \
+math/libEGMath.a \
+libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+libsds/src/libsds.la \
+$(BOOST_IOSTREAMS_LIB) \
+$(BOOST_REGEX_LIB) \
+-lhts
