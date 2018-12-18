@@ -11,6 +11,8 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 
+const double QualStr::PHRED_SCALE = -10;
+
 QualStr& QualStr::assign(const string& str) {
 	clear();
 	for(char q : str)

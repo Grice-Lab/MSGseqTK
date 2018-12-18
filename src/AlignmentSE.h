@@ -8,6 +8,8 @@
 #ifndef SRC_ALIGNMENTSE_H_
 #define SRC_ALIGNMENTSE_H_
 
+#define _USE_MATH_DEFINES
+
 #include <string>
 #include <Eigen/Dense>
 #include <iostream>
@@ -19,6 +21,7 @@
 #include "ScoreScheme.h"
 #include "MEM.h"
 #include "MEMS.h"
+#include "MetaGenome.h"
 #include "BAM.h"
 
 namespace EGriceLab {
@@ -44,8 +47,8 @@ struct AlignmentSE {
 		SeedPair() = default;
 
 		/** construct from given values */
-		SeedPair(uint32_t from, uint32_t start, uint32_t len, double logP = NAN)
-		: from(from), start(start), to(from + len), end(start + len), logP(logP)
+		SeedPair(uint32_t from, uint32_t start, uint32_t len, int32_t tid, uint32_t qShift = 0, uint32_t tShift = 0)
+		: from(from), start(start), to(from + len), end(start + len), tid(tid), qShift(qShift), tShift(tShift)
 		{ 	}
 
 		/* member methods */
@@ -58,40 +61,41 @@ struct AlignmentSE {
 		uint32_t to = 0;   /* 1-based query position */
 		uint32_t start = 0; /* 0-based target position */
 		uint32_t end = 0; /* 1-based target position */
-		double logP = NAN; /* logliklihood if this SeedPair is from random match */
+		uint32_t qShift = 0;  /* query shift */
+		uint32_t tShift = 0;  /* target shift relative to chromosome */
+		int32_t tid = -1; /* tid as chromId/locId determined by database */
 
 		/**
-		 * get loglikelihood of observing this SeedPair by chance
+		 * shift on target
+		 * @param shift  positions to shift, positive indicating shifting right
 		 */
-		double loglik() const {
-			return logP;
-		}
-
-		/** get the pvalue of observing this SeedPair by chance */
-		double pvalue() const {
-			return ::exp(loglik());
+		SeedPair& shiftTarget(int32_t shift) {
+			start -= shift;
+			end -= shift;
+			tShift += shift;
+			return *this;
 		}
 
 		/**
-		 * get in-del rate of two SeedPairs, return signed rate of the length difference devided by the longer region
+		 * shift on query
+		 * @param shift  positions to shift, positive indicating shifting right
 		 */
-		static double indelRate(const SeedPair& lhs, const SeedPair& rhs) {
-			return (lhs.length() - rhs.length()) / std::max(lhs.length(), rhs.length());
+		SeedPair& shiftQuery(int32_t shift) {
+			from -= shift;
+			to -= shift;
+			qShift += shift;
+			return *this;
 		}
 
-		/** test whether twoo SeedPairs overlap (on query or target) */
-		static bool isOverlap(const SeedPair& seed1, const SeedPair& seed2) {
-			return seed1.from < seed2.to && seed1.to > seed2.from ||
-					seed1.start < seed2.end && seed1.end > seed2.start;
+		/** test whether two SeedPairs overlap (on target) */
+		static bool isOverlap(const SeedPair& lhs, const SeedPair& rhs) {
+			return lhs.tid == rhs.tid && lhs.start < rhs.end && lhs.end > rhs.start;
 		}
 
 		/** test whether two SeedPairs are compatitable (no overlaps) */
-		static bool isCompatitable(const SeedPair& seed1, const SeedPair& seed2) {
-			return !isOverlap(seed1, seed2);
+		static bool isCompatitable(const SeedPair& lhs, const SeedPair& rhs) {
+			return lhs.tid == rhs.tid && !(lhs.start < rhs.end && lhs.end > rhs.start);
 		}
-
-		/* static fields */
-		static const double DEFAULT_INDEL_RATE;
 	};
 
 	/**
@@ -105,14 +109,45 @@ struct AlignmentSE {
 		/** get total length of SeedPairs within */
 		uint32_t length() const;
 
-		/**
-		 * get max indel rate of between its consecutive SeedPairs
-		 * @return singed max in-del rate, positive value suggesting insertion, and negative suggesting deletion
-		 */
-		double maxIndelRate() const;
+		/** get tid of this SeedMatch */
+		int32_t getTId() const {
+			return front().tid;
+		}
 
-		/** get the aggrate loglik of this SeedMatch as observing it by chance */
-		double loglik() const;
+		/** get start position of this SeedMatch as the first SeedPair start */
+		uint32_t getStart() const {
+			return front().start;
+		}
+
+		/** get end position of this SeedMatch as the last SeedPair end */
+		uint32_t getEnd() const {
+			return back().end;
+		}
+
+		/** get start position of this SeedPair given max indel-rate */
+		uint32_t getStart(double maxIndelRate) const {
+			return getStart() - front().from * maxIndelRate;
+		}
+
+		/** get end position of this SeedPair given max indel-rate */
+		uint32_t getEnd(uint32_t qLen, double maxIndelRate) const {
+			return getEnd() + (qLen - back().to) * maxIndelRate;
+		}
+
+		/** shift SeedMatch on target */
+		SeedMatch& shiftTarget(int32_t shift) {
+			for(SeedMatch::value_type& seed : *this)
+				seed.shiftTarget(shift);
+			return *this;
+		}
+
+		/** shift SeedMatch on query */
+		SeedMatch& shiftQuery(int32_t shift) {
+			for(SeedMatch::value_type& seed : *this)
+				seed.shiftQuery(shift);
+			return *this;
+		}
+
 	};
 
 	typedef vector<SeedMatch> SeedMatchList;
@@ -122,37 +157,65 @@ struct AlignmentSE {
 	/** default constructor */
 	AlignmentSE() = default;
 
-	/** construct an AlignmentSE between query and target seq */
-	AlignmentSE(const DNAseq& query, const DNAseq& target, const string& qname, int32_t tid, const ScoreScheme* ss)
-	: query(query), target(target), qname(qname), tid(tid), ss(ss),
+	/** construct an AlignmentSE with all fields */
+	AlignmentSE(const DNAseq& query, const DNAseq& target,
+			const string& qname, int32_t tid, const ScoreScheme* ss,
+			const QualStr& qual, int32_t qShift, int32_t tShift,
+			uint16_t flag, uint8_t mapQ, int32_t mtid, int32_t mpos, int32_t isize, uint32_t id)
+	: query(query), target(target), qname(qname), tid(tid), ss(ss), qual(qual), qShift(qShift), tShift(tShift),
+	  flag(flag), mapQ(mapQ), mtid(mtid), mpos(mpos), isize(isize), id(id),
 	  qLen(query.length()), tLen(target.length()),
-	  M(qLen + 1, tLen + 1), D(qLen + 1, tLen + 1), I(qLen + 1, tLen + 1) {
+	  M(qLen + 1, tLen + 1), I(qLen + 1, tLen + 1), D(qLen + 1, tLen + 1) {
+		if(this->qual.length() != query.length())
+			this->qual.resize(qLen, QualStr::INVALID_Q_SCORE);
+		initScores();
+	}
+
+	/** construct an AlignmentSE with required fields */
+	AlignmentSE(const DNAseq& query, const DNAseq& target,
+			const string& qname, int32_t tid, const ScoreScheme* ss,
+			int32_t tShift = 0, const QualStr& qual = QualStr(), uint16_t flag = 0)
+	: query(query), target(target), qname(qname), tid(tid), ss(ss), tShift(tShift), qual(qual), flag(flag),
+	  qLen(query.length()), tLen(target.length()),
+	  M(qLen + 1, tLen + 1), I(qLen + 1, tLen + 1), D(qLen + 1, tLen + 1) {
+		if(this->qual.length() != query.length())
+			this->qual.resize(qLen, QualStr::INVALID_Q_SCORE);
 		initScores();
 	}
 
 	/* member methods */
 	/** test whether this alignment is initiated */
 	bool isInitiated() const {
-		return !query.empty() && !target.empty() && ss != nullptr;
+		return !query.empty() && !target.empty() && !qual.empty() && ss != nullptr;
 	}
 
 	/** initiate all score matrices */
-	void initScores();
+	AlignmentSE& initScores();
 
 	/** calculate all scores in the entire region using Dynamic-Programming, return the alnScore as the maximum score found */
-	double calculateScores() {
+	AlignmentSE& calculateScores() {
 		calculateScores(0, qLen, 0, tLen);
-		return (alnScore = M.maxCoeff(&alnTo, &alnEnd)); // determine aign 3' and score simultaneously
+		alnScore = M.maxCoeff(&alnTo, &alnEnd); // determine aign 3' and score simultaneously
+		return *this;
 	}
 
 	/** calculate all scores in the restricted "SeedMatch" regions using Dynamic-Programming, return the alnScore as the maximum score found */
-	int calculateScores(const SeedMatch& seeds);
+	AlignmentSE& calculateScores(const SeedMatch& seeds);
 
 	/** backtrace alnPath */
-	void backTrace();
+	AlignmentSE& backTrace();
 
-	/** geters and setters */
+	/** get 5' soft-clip size */
+	uint32_t getClip5Len() const {
+		return alnFrom - 0;
+	}
 
+	/** get 3' soft-clip size */
+	uint32_t getClip3Len() const {
+		return query.length() - alnTo;
+	}
+
+	/** get pos of */
 
 	/** get align query length */
 	uint32_t getAlnQLen() const {
@@ -164,10 +227,8 @@ struct AlignmentSE {
 		return alnEnd - alnStart;
 	}
 
-	/** get align length, alias to getAlnTLen() */
-	uint32_t getAlnLen() const {
-		return getAlnTLen();
-	}
+	/** get align length, determined by alnPath, including M=XIDX but not H,P,N */
+	uint32_t getAlnLen() const;
 
 	/** get decoded aligned query seq */
 	string getAlnQSeq() const;
@@ -186,21 +247,60 @@ struct AlignmentSE {
 	/** get MD:Z tag for this Alignment */
 	string getAlnMDTag() const;
 
+	/** get alignment score of this alignment, ignore soft-clips */
+	double getAlnScore() const {
+		return alnScore;
+	}
+
+	/** get overall score of this alignment, including soft-clips */
+	double getScore() const {
+		return alnScore - ss->clipPenalty * (getClip5Len() + getClip3Len());
+	}
+
+	/** evaluate this alignment log-liklihood using seq, align-path and quality */
+	void evaluate();
+
+	/** get log10-liklihood of this alignment */
+	double log10lik() const {
+		return log10P;
+	}
+
+	/** get log-liklihood of this alignment */
+	double loglik() const {
+		return log10lik() / ::log10(M_E);
+	}
+
+	/** get the p-value of this alignment */
+	double pvalue() const {
+		return ::pow(10.0, log10lik());
+	}
+
 	/**
-	 * export this alignment to BAM record, given additional required fields
-	 * @param tShift  shift of this alignment relative to target
-	 * @param qShift  shift of this alignment relative to query
+	 * export core info of this alignment to a BAM record, with no aux data
 	 */
-	BAM exportBAM(const string& qname, BAM::qual_str qual, int32_t tid, int32_t tShift,
-			int32_t qShift = 0, uint16_t flag = 0, uint8_t mapQ = 0,
-			int32_t mtid = -1, int32_t mpos = -1, int32_t isize = 0, uint64_t id = 0) const;
+	BAM exportBAM() const {
+		return BAM(qname, flag, tid, tShift + alnStart, mapQ,
+				getAlnCigar(), qLen, nt16Encode(query), qual,
+				mtid, mpos, isize, id);
+	}
 
 	/* member fields */
-	DNAseq query; /* query */
-	DNAseq target; /* target */
+	/* htslib required fields */
+	DNAseq query;  // query
+	DNAseq target; // target
+	QualStr qual; // query qual
 	string qname; // query name
+
+	int32_t qShift = 0; // query shift relative to original read
+	int32_t tShift = 0; // target shift relative to the target (chromo)
 	int32_t tid = -1;  // target id, should be determined from the database
 	const ScoreScheme* ss = nullptr;
+	uint16_t flag = 0;
+	uint8_t mapQ = INVALID_MAP_Q;
+	int32_t mtid = -1;
+	int32_t mpos = -1;
+	int32_t isize = 0;
+	uint64_t id = 0;
 
 	uint32_t qLen = 0; // query length
 	uint32_t tLen = 0; // target length
@@ -216,10 +316,17 @@ struct AlignmentSE {
 	double alnScore = infV; // alignment score
 	state_str alnPath; // backtrace alignment path using cigar ops defined htslib/sam.h
 //	BAM::cigar_str alnCigar; // cigar_str compressed from alnPath
+	double score = infV; // overall score of alignment, including 5'/3' clips
+	double log10P = NAN;  // log10-liklihood of this alignment, given the alignment and quality
+	double postP = NAN;   // posterior probability of this alignment, given all candidate alignments
 
 	/* static fileds */
+	static const uint8_t INVALID_MAP_Q = 0xff;
+	static const uint32_t MAX_ITER = UINT16_MAX;
+	static const double DEFAULT_INDEL_RATE;
+	static const double MAX_INDEL_RATE;
 	static const string STATES; // human readable STATES
-	static const double DEFAULT_SEEDMATCH_EPSILON;
+	static const double DEFAULT_SCORE_REL_EPSILON; // default relative min score comparing to best score
 	static const char ALIGN_GAP = '-';
 	static const char ALIGN_MD_INS = '^'; // symbol use in MD:Z tag
 	static const boost::regex MDTAG_LEADING_PATTERN;
@@ -239,26 +346,20 @@ struct AlignmentSE {
 	/** get algnQLen by MD tag */
 	static uint32_t mdTag2alnQLen(const string& mdTag);
 
+	/** get a search region given max indel-rate */
+	static Loc getSearchRegion(uint64_t start, uint64_t end);
 
 	/** get SeedMatchList from a pre-calculated MEMS and its shift of this region */
-	static SeedMatchList getSeedMatchList(const MEMS& mems, uint32_t tShift,
-			uint32_t qShift = 0, uint32_t maxIt = UINT16_MAX);
-
-	/** sort SeedMatchList by their loglik, those with smaller loglik (less random) are better */
-	static SeedMatchList& sortSeedMatchList(SeedMatchList& list) {
-		std::sort(list.begin(), list.end(),
-				[](const SeedMatch& lhs, const SeedMatch& rhs) { return lhs.loglik() < rhs.loglik(); }
-		);
-		return list;
-	}
+	static SeedMatchList getSeedMatchList(const MetaGenome& mtg, const MEMS& mems,
+			uint32_t maxIt = MAX_ITER);
 
 	/**
-	 * filter SeedMatchList by using a loglik threshold that is not too much larger than the best (top) SeedMatch,
-	 * assummly the input SeedMatchList is sorted
+	 * calculate mapQ as posterior probability of candidate alignments using a uniform prior
+	 * set the mapQ value of all alignments
 	 */
-	static SeedMatchList& filterSeedMatchList(SeedMatchList& sortedList, double epsilon = DEFAULT_SEEDMATCH_EPSILON);
+	static vector<AlignmentSE>& calcMapQ(vector<AlignmentSE>& alnList);
 
-	/* private utility methods */
+	/* utility methods */
 	/**
 	 * calculate all scores in a given region using Dynamic-Programming
 	 * @param from, start  0-based

@@ -17,11 +17,10 @@ namespace MSGseqTK {
 using std::unordered_set;
 using std::stack;
 
-double MEMS::loglik() const {
-	double ll = 0;
+void MEMS::evaluate() {
+	logP = 0;
 	for(const MEM& mem : *this)
-		ll += mem.loglik();
-	return ll;
+		logP += mem.loglik();
 }
 
 uint64_t MEMS::length() const {
@@ -35,8 +34,6 @@ MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
 		RNG& rng, int strand, bool keepLoc) {
 	assert(strand != 0);
 	MEMS fwdMems, revMems;
-	double fwdLoglik = 0;
-	double revLoglik = 0;
 	/* scan fwd strand */
 	if(strand & MEM::FWD != 0) {
 		for(int64_t i = 0; i < seq->length();) {
@@ -49,11 +46,11 @@ MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
 			if(acceptible) {
 				fwdMems.push_back(!keepLoc ? mem : mem.findLocs());
 				i = mem.to + 1;
-				fwdLoglik += mem.loglik();
 			}
 			else
 				i++;
 		}
+		fwdMems.evaluate();
 	}
 	/* scal rev strand */
 	if(strand & MEM::REV != 0) {
@@ -66,11 +63,11 @@ MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
 			if(acceptible) {
 				revMems.push_back(!keepLoc ? mem : mem.findLocs());
 				i = mem.to + 1;
-				revLoglik += mem.loglik();
 			}
 			else
 				i++;
 		}
+		revMems.evaluate();
 	}
 
 	if(strand & MEM::FWD != 0 && strand & MEM::REV == 0) /* fwd only */
@@ -78,7 +75,7 @@ MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
 	else if(strand & MEM::FWD == 0 && strand & MEM::REV != 0) /* rev only */
 		return revMems;
 	else
-		return fwdLoglik < revLoglik ? fwdMems : revMems; /* return the most significant result */
+		return fwdMems.loglik() < revMems.loglik() ? fwdMems : revMems; /* return the most significant result */
 }
 
 size_t MEMS::bestMEMIndex() const {
@@ -91,11 +88,9 @@ size_t MEMS::bestMEMIndex() const {
 }
 
 ostream& MEMS::write(ostream& out) const {
-	for(MEMS::const_iterator mem = begin(); mem != end(); ++mem) {
-		if(mem != begin())
-			out << ';';
-		out << *mem;
-	}
+	for(const MEM& mem : *this)
+		out << mem << ';';
+	out << "strand=" << getStrand() << ";loglik=" << loglik();
 
 	return out;
 }
@@ -104,8 +99,6 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 		RNG& rng, int strand, bool keepLoc) {
 	assert(strand != 0);
 	MEMS_PE sense_mems_pe, revcom_mems_pe;
-	double senseLoglik = 0;
-	double revcomLoglik = 0;
 	/* scan fwd strand */
 	if(strand & MEM::FWD != 0) {
 		for(int64_t i = 0; i < fwdSeq->length();) {
@@ -118,7 +111,6 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 			if(acceptible) {
 				sense_mems_pe.first.push_back(!keepLoc ? mem : mem.findLocs());
 				i = mem.to + 1;
-				senseLoglik += mem.loglik();
 			}
 			else
 				i++;
@@ -133,11 +125,12 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 			if(acceptible) {
 				sense_mems_pe.second.push_back(!keepLoc ? mem : mem.findLocs());
 				i = mem.to + 1;
-				senseLoglik += mem.loglik();
 			}
 			else
 				i++;
 		}
+		sense_mems_pe.first.evaluate();
+		sense_mems_pe.second.evaluate();
 	}
 	/* scal rev strand */
 	if(strand & MEM::REV != 0) {
@@ -151,7 +144,6 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 			if(acceptible) {
 				revcom_mems_pe.first.push_back(!keepLoc ? mem : mem.findLocs());
 				i = mem.to + 1;
-				revcomLoglik += mem.loglik();
 			}
 			else
 				i++;
@@ -165,11 +157,12 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 			if(acceptible) {
 				revcom_mems_pe.second.push_back(!keepLoc ? mem : mem.findLocs());
 				i = mem.to + 1;
-				revcomLoglik += mem.loglik();
 			}
 			else
 				i++;
 		}
+		sense_mems_pe.first.evaluate();
+		sense_mems_pe.second.evaluate();
 	}
 
 	if(strand & MEM::FWD != 0 && strand & MEM::REV == 0) /* fwd only */
@@ -177,7 +170,7 @@ MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, con
 	else if(strand & MEM::FWD == 0 && strand & MEM::REV != 0)
 		return revcom_mems_pe;
 	else
-		return senseLoglik < revcomLoglik ? sense_mems_pe : revcom_mems_pe; /* return the most significant result */
+		return loglik(sense_mems_pe) < loglik(revcom_mems_pe) ? sense_mems_pe : revcom_mems_pe; /* return the most significant result */
 }
 
 } /* namespace UCSC */

@@ -34,10 +34,11 @@ using std::deque;
  */
 class MetaGenome {
 public:
+	typedef vector<string> NAME_INDEX;    /* id->name vector */
 	typedef map<string, size_t> GENOME_INDEX; /* genome name->id map */
 	typedef map<string, size_t> CHROM_INDEX;  /* chrom name->id map */
-	typedef map<size_t, Loc> GENOME_LOCMAP; /* genome id->Loc map */
-	typedef map<size_t, Loc> CHROM_LOCMAP;  /* chromosome id->Loc map */
+	typedef vector<Loc> GENOME_LOC; /* genome id->Loc map */
+	typedef vector<Loc> CHROM_LOC;  /* chromosome id->Loc map */
 
 	/* constructors */
 
@@ -55,6 +56,46 @@ public:
 	/** get all Genomes in this MetaGenome */
 	const vector<Genome>& getGenomes() const {
 		return genomes;
+	}
+
+	/** get all genomeIds */
+	const NAME_INDEX& getGenomeIds() const {
+		return genomeIds;
+	}
+
+	/** get all chromNames */
+	const NAME_INDEX& getChromNames() const {
+		return chromNames;
+	}
+
+	/** get genomeId2Idx */
+	const GENOME_INDEX& getGenomeId2Idx() const {
+		return genomeId2Idx;
+	}
+
+	/** get chromName2Idx */
+	const CHROM_INDEX& getChromName2Idx() const {
+		return chromName2Idx;
+	}
+
+	/** get genomeIdx2Loc */
+	const GENOME_LOC& getGenomeIdx2Loc() const {
+		return genomeIdx2Loc;
+	}
+
+	/** get chromName2Loc */
+	const CHROM_LOC& getChromIdx2Loc() const {
+		return chromIdx2Loc;
+	}
+
+	/** get genomeId of given pos */
+	const string& getGenomeId(size_t i) const {
+		return genomeIds[i];
+	}
+
+	/** get chromName of given pos */
+	const string& getChromName(size_t i) const {
+		return chromNames[i];
 	}
 
 	/**
@@ -106,7 +147,7 @@ public:
 	 * get the Loc of i-th genome
 	 */
 	const Loc& getGenomeLoc(size_t i) const {
-		return genomeIdx2Loc.at(i);
+		return genomeIdx2Loc[i];
 	}
 
 	/**
@@ -127,7 +168,7 @@ public:
 	 * get the Loc of i-th chrom
 	 */
 	const Loc& getChromLoc(size_t i) const {
-		return chromIdx2Loc.at(i);
+		return chromIdx2Loc[i];
 	}
 
 	/**
@@ -145,9 +186,16 @@ public:
 	}
 
 	/**
+	 * get the length of the i-th chrom
+	 */
+	uint64_t getChromLen(size_t i) const {
+		return getChromLoc(i).length();
+	}
+
+	/**
 	 * get the idx->Loc map for all genomes
 	 */
-	const GENOME_LOCMAP& getGenomeLocs() const {
+	const GENOME_LOC& getGenomeLocs() const {
 		return genomeIdx2Loc;
 	}
 
@@ -226,10 +274,12 @@ public:
 	/* member fields */
 private:
 	vector<Genome> genomes;
+	NAME_INDEX genomeIds;
+	NAME_INDEX chromNames;
 	GENOME_INDEX genomeId2Idx;
 	CHROM_INDEX chromName2Idx;
-	GENOME_LOCMAP genomeIdx2Loc; // index->0-based start
-	CHROM_LOCMAP chromIdx2Loc; // index->0-based start
+	GENOME_LOC genomeIdx2Loc; // index->0-based start
+	CHROM_LOC chromIdx2Loc; // index->0-based start
 
 public:
 	/* static methods */
@@ -248,17 +298,17 @@ inline bool operator!=(const MetaGenome& lhs, const MetaGenome& rhs) {
 }
 
 inline size_t MetaGenome::getGenomeIndex(uint64_t loc) const {
-	GENOME_LOCMAP::const_iterator result = std::find_if(genomeIdx2Loc.begin(), genomeIdx2Loc.end(),
-			[=] (const GENOME_LOCMAP::value_type& item) { return item.second.start <= loc && loc < item.second.end; }
+	GENOME_LOC::const_iterator result = std::find_if(genomeIdx2Loc.begin(), genomeIdx2Loc.end(),
+			[=] (const GENOME_LOC::value_type& item) { return item.start <= loc && loc < item.end; }
 	);
-	return result != genomeIdx2Loc.end() ? result->first : -1;
+	return result != genomeIdx2Loc.end() ? result - genomeIdx2Loc.begin() : -1;
 }
 
 inline size_t MetaGenome::getChromIndex(uint64_t loc) const {
-	CHROM_LOCMAP::const_iterator result = std::find_if(chromIdx2Loc.begin(), chromIdx2Loc.end(),
-			[=] (const CHROM_LOCMAP::value_type& item) { return item.second.start <= loc && loc < item.second.end; }
+	CHROM_LOC::const_iterator result = std::find_if(chromIdx2Loc.begin(), chromIdx2Loc.end(),
+			[=] (const CHROM_LOC::value_type& item) { return item.start <= loc && loc < item.end; }
 	);
-	return result != chromIdx2Loc.end() ? result->first : -1;
+	return result != chromIdx2Loc.end() ? result - chromIdx2Loc.begin() : -1;
 }
 
 } /* namespace MSGseqTK */

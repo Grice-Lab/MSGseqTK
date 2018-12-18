@@ -36,8 +36,13 @@ public:
 	MEMS() = default;
 
 	/* member methods */
+	/** evaluate the log-liklihood of this MEMS */
+	void evaluate();
+
 	/** get the loglik of the entire MEMS if it is from random matches */
-	double loglik() const;
+	double loglik() const {
+		return logP;
+	}
 
 	/** get the probability of MEMS if it is a correct (non-random) match */
 	double Pr() const {
@@ -73,6 +78,9 @@ public:
 	MEM::STRAND getStrand() const {
 		return front().strand;
 	}
+
+	/* member fields */
+	double logP = NAN; // loglik of this MEMS if comes from random
 
 	/* static methods */
 	/**

@@ -11,6 +11,7 @@
 #include <string>
 #include <cstdint>
 #include <iostream>
+#include <cmath>
 #include "StringUtils.h"
 
 namespace EGriceLab {
@@ -124,6 +125,17 @@ public:
 	static const uint8_t DEFAULT_Q_SHIFT = 33;
 	static const uint8_t MIN_Q_SCORE = 2; /* prevent Inf */
 	static const uint8_t INVALID_Q_SCORE = 0xFF;
+	static const uint8_t MAX_Q_SCORE = 250;
+	static const double PHRED_SCALE;
+
+	/* static methods */
+	static double phredQ2P(double q) {
+		return ::pow(10.0, q / -PHRED_SCALE);
+	}
+
+	static double phreadP2Q(double p) {
+		return -PHRED_SCALE * ::log10(p);
+	}
 };
 
 inline ostream& operator<<(ostream& out, const QualStr& qual) {

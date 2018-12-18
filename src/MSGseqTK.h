@@ -17,6 +17,8 @@
 #include "MEMS.h"
 #include "MetaGenome.h"
 #include "MetaGenomeAnno.h"
+#include "ScoreScheme.h"
+#include "AlignmentSE.h"
 #include "MSGseqTKConst.h"
 
 #endif /* SRC_MSGSEQTK_H_ */

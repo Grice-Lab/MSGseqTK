@@ -10,20 +10,23 @@
 #include <algorithm>
 #include <cmath>
 #include <boost/lexical_cast.hpp>
+#include <Eigen/Dense>
 #include "AlignmentSE.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
+using namespace Eigen;
 using std::cerr;
 using std::endl;
 
+const double AlignmentSE::DEFAULT_INDEL_RATE = 0.02;
+const double AlignmentSE::MAX_INDEL_RATE = 0.15;
 const string AlignmentSE::STATES = BAM_CIGAR_STR;
-const double AlignmentSE::SeedPair::DEFAULT_INDEL_RATE = 0.02;
-const double AlignmentSE::DEFAULT_SEEDMATCH_EPSILON = 30;
+const double AlignmentSE::DEFAULT_SCORE_REL_EPSILON = 0.85;
 const boost::regex AlignmentSE::MDTAG_LEADING_PATTERN = boost::regex("^\\d+");
 const boost::regex AlignmentSE::MDTAG_MAIN_PATTERN = boost::regex("([A-Z]|\\^[A-Z]+)(\\d+)");
 
-void AlignmentSE::initScores() {
+AlignmentSE& AlignmentSE::initScores() {
 //	assert(isInitiated());
 	M.row(0).setZero();
 	M.col(0).setZero();
@@ -31,9 +34,10 @@ void AlignmentSE::initScores() {
 	D.col(0).setConstant(infV);
 	I.row(0).setConstant(infV);
 	I.col(0).setConstant(infV);
+	return *this;
 }
 
-int AlignmentSE::calculateScores(const SeedMatch& seeds) {
+AlignmentSE& AlignmentSE::calculateScores(const SeedMatch& seeds) {
 	assert(!seeds.empty());
 	assert(seeds.isCompatitable());
 	/* DP at 5' */
@@ -48,10 +52,11 @@ int AlignmentSE::calculateScores(const SeedMatch& seeds) {
 	}
 	/* DP at 3' */
 	calculateScores(seeds.back().to, qLen, seeds.back().end, tLen); /* could be empty loop */
-	return (alnScore = M.maxCoeff(&alnTo, &alnEnd)); // determine aign 3' and score simultaneously
+	alnScore = M.maxCoeff(&alnTo, &alnEnd); // determine aign 3' and score simultaneously
+	return *this;
 }
 
-void AlignmentSE::backTrace() {
+AlignmentSE& AlignmentSE::backTrace() {
 	assert(alnScore > INT_MIN);
 	assert(alnTo > 0 && alnEnd > 0);
 	alnPath.clear();
@@ -87,6 +92,7 @@ void AlignmentSE::backTrace() {
 	/* reverse alnPath */
 	std::reverse(alnPath.begin(), alnPath.end());
 //	assert(alnPath.front() == BAM_CMATCH && alnPath.back() == BAM_CMATCH);
+	return *this;
 }
 
 BAM::cigar_str AlignmentSE::getAlnCigar() const {
@@ -159,16 +165,6 @@ string AlignmentSE::getAlnMDTag() const {
 	return mdTag;
 }
 
-
-BAM AlignmentSE::exportBAM(const string& qname, BAM::qual_str qual, int32_t tid, int32_t tShift,
-		int32_t qShift, uint16_t flag, uint8_t mapQ,
-		int32_t mtid, int32_t mpos, int32_t isize, uint64_t id) const {
-	assert(!alnPath.empty());
-	return BAM(qname, flag, tid, tShift + alnStart - 1, mapQ,
-			getAlnCigar(), qLen, nt16Encode(query), qual,
-			mtid, mpos, isize, id);
-}
-
 BAM::seq_str AlignmentSE::nt16Encode(const DNAseq& seq) {
 	const uint32_t L = seq.length();
 	BAM::seq_str seq16((L + 1) / 2, 0); // ceil(L / 2)
@@ -181,7 +177,8 @@ bool AlignmentSE::SeedMatch::isCompatitable() const {
 	if(size() <= 1) // less than 1 SeedPair
 		return true;
 	for(SeedMatch::size_type i = 0; i < size() - 1; ++i)
-		if(SeedPair::isOverlap((*this)[i], (*this)[i + 1]))
+		if(!((*this)[i].tid == (*this)[i+1].tid &&
+			 (*this)[i].to < (*this)[i+1].from && (*this)[i].end < (*this)[i+1].start))
 			return false;
 	return true;
 }
@@ -193,36 +190,34 @@ uint32_t AlignmentSE::SeedMatch::length() const {
 	return len;
 }
 
-double AlignmentSE::SeedMatch::maxIndelRate() const {
-	double maxIndel = 0;
-	for(SeedMatch::size_type i = 0; i < size() - 1; ++i) {
-		double indelRate = SeedPair::indelRate((*this)[i], (*this)[i + 1]);
-		if(::abs(indelRate) > ::abs(maxIndel))
-			maxIndel = indelRate;
-	}
-	return maxIndel;
-}
-
-AlignmentSE::SeedMatchList AlignmentSE::getSeedMatchList(const MEMS& mems, uint32_t tShift,
-		uint32_t qShift, uint32_t maxIt) {
+AlignmentSE::SeedMatchList AlignmentSE::getSeedMatchList(const MetaGenome& mtg, const MEMS& mems,
+		uint32_t maxIt) {
 	/* get a raw SeedMatchList to store all matches of each MEMS */
 	const size_t N = mems.size();
 	SeedMatchList rawList, outputList;
 	rawList.resize(N);
 	for(size_t i = 0; i < N; ++i) {
 		const MEM& mem = mems[i];
-		for(const Loc& loc : mem.locs)
-			rawList[i].push_back(SeedPair(mem.from - qShift, loc.start - tShift, mem.length()));
+		for(const Loc& loc : mem.locs) {
+			int32_t tid = mtg.getChromIndex(loc.start);
+			int64_t shift = mtg.getChromStart(tid); // shift on the MetaGenome, not chrom
+			assert(loc.start - shift <= UINT32_MAX);
+			/* rawList SeedPair start/end is relative to the chromosome */
+			rawList[i].push_back(SeedPair(mem.from, loc.start - shift, mem.length(), tid));
+		}
 	}
 
 	vector<size_t> idx(N, 0); // index to keep track of next element in each of the N SeedMatch
 	/* non-recursive algorithm to get SeedMatchList by randomly picking up elements from rawList */
 	while(outputList.size() <= maxIt) {
-		/* add current combination */
-		outputList.push_back(SeedMatch()); // add a default SeedMatch
+		/* get current combination */
+		SeedMatch combination;
+		combination.reserve(N);
 		outputList.back().reserve(N);
 		for(size_t i = 0; i < N; ++i)
-			outputList.back().push_back(rawList[i][idx[i]]);
+			combination.push_back(rawList[i][idx[i]]);
+		if(combination.isCompatitable())
+			outputList.push_back(combination); // add this combination
 
 		/* find the rightmost SeedMatch that has more elemtns left after current element */
 		size_t next = N - 1;
@@ -238,22 +233,6 @@ AlignmentSE::SeedMatchList AlignmentSE::getSeedMatchList(const MEMS& mems, uint3
 	}
 
 	return outputList;
-}
-
-double AlignmentSE::SeedMatch::loglik() const {
-	double ll = 0;
-	for(const SeedPair& seed : *this)
-		ll += seed.loglik();
-	return ll;
-}
-
-AlignmentSE::SeedMatchList& AlignmentSE::filterSeedMatchList(SeedMatchList& sortedList, double epsilon) {
-	assert(epsilon >= 0);
-	double bestLoglik = sortedList.front().loglik();
-	sortedList.erase(
-			std::find_if(sortedList.begin(), sortedList.end(), [&](const SeedMatch& match) { return match.loglik() > bestLoglik + epsilon; }), // first element that has too large loglik
-			sortedList.end());
-	return sortedList;
 }
 
 /** get decoded aligned query seq */
@@ -318,6 +297,77 @@ uint32_t AlignmentSE::mdTag2alnQLen(const string& mdTag) {
 		len += boost::lexical_cast<uint32_t>(match.str(2));
 	}
 	return len;
+}
+
+uint32_t AlignmentSE::getAlnLen() const {
+	uint32_t alnLen = 0;
+	for(state_str::value_type s : alnPath) {
+		if(bam_cigar_type(s))
+			alnLen++;
+	}
+	return alnLen;
+}
+
+void AlignmentSE::evaluate() {
+	if(alnPath.empty())
+		return;
+	log10P = 0;
+	/* process 5' soft-clips, if any */
+	for(uint32_t i = 0; i < getClip5Len(); ++i)
+		log10P += qual[i] / QualStr::PHRED_SCALE - (ss->clipPenalty - ss->mismatchPenalty); // use additional penalty as the difference between mismatch and clip
+
+	for(uint32_t k = 0, i = alnFrom, j = alnStart; k < alnPath.length(); ++k) { /* k on alnPath, i on query, j on target */
+		state_str::value_type s = alnPath[k];
+		switch(s) {
+		case BAM_CMATCH:
+			if(query[i] == target[j]) // BAM_CEQUAL
+				log10P += ::log10(1 - QualStr::phredQ2P(qual[i]));
+			else
+				log10P += qual[i] / QualStr::PHRED_SCALE;
+			i++;
+			j++;
+			break;
+		case BAM_CINS:
+			if(k == 0 || alnPath[k - 1] != BAM_CINS) // gap open
+				log10P += -ss->gapOPenalty;
+			log10P += -ss->gapEPenalty;
+			i++;
+			break;
+		case BAM_CDEL:
+			if(k == 0 || alnPath[k - 1] != BAM_CDEL) // gap open
+				log10P += -ss->gapOPenalty;
+			log10P += -ss->gapEPenalty;
+			j++;
+			break;
+		}
+	}
+
+	/* process 3' soft-clips, if any */
+	for(uint32_t i = alnTo; i < query.length(); ++i) {
+		log10P += qual[i] / QualStr::PHRED_SCALE - (ss->clipPenalty - ss->mismatchPenalty); // use additional penalty as the difference between mismatch and clip
+	}
+}
+
+vector<AlignmentSE>& AlignmentSE::calcMapQ(vector<AlignmentSE>& alnList) {
+	if(alnList.empty())
+		return alnList;
+	const size_t N = alnList.size();
+//	VectorXd prior = VectorXd::Ones(N); // use a uniform prior
+	VectorXd pr(N);    // alignment probability
+	for(size_t i = 0; i < N; ++i)
+		pr(N) = alnList[i].loglik();
+	pr = pr.array().exp();
+	/* get postP */
+//	VectorXd postP = prior.cwiseProduct(pr);
+	VectorXd postP = pr / pr.sum(); // uniform prior ignored
+	/* assign postP and mapQ */
+	for(size_t i = 0; i < N; ++i) {
+		alnList[i].postP = postP(i);
+		double mapQ = QualStr::phreadP2Q(1 - postP(i));
+		assert(!::isnan(mapQ));
+		alnList[i].mapQ = std::min(static_cast<uint8_t>(::round(mapQ)), QualStr::MAX_Q_SCORE);
+	}
+	return alnList;
 }
 
 } /* namespace MSGseqTK */

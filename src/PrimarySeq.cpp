@@ -37,7 +37,7 @@ ostream& PrimarySeq::save(ostream& out) const {
 
 PrimarySeq& PrimarySeq::reverse() {
 	seq.reverse();
-	std::reverse(qual.begin(), qual.end());
+	qual.reverse();
 	return *this;
 }
 

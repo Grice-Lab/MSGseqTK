@@ -25,6 +25,8 @@ const string GZIP_FILE_SUFFIX = ".gz";
 const string BZIP2_FILE_SUFFIX = ".bz2";
 const string METAGENOME_FILE_SUFFIX = ".mtg";
 const string FMINDEX_FILE_SUFFIX = ".fmidx";
+const string SAM_SUFFIX = ".sam";
+const string BAM_SUFFIX = ".bam";
 
 const int MAX_NAME_LENGTH = 4096;
 const double PHRED_LOG_BASE = 10;
