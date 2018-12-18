@@ -21,15 +21,23 @@ using std::array;
  */
 struct ScoreScheme {
 	/* constructors */
-	/** construct from all given values */
-	ScoreScheme(double matchScore, double mismatchPenalty, double gapOPenalty, double gapEPenalty, double clipPenalty);
-
 	/** default constructor */
-	ScoreScheme()
-	: ScoreScheme(DEFAULT_MATCH_SCORE, DEFAULT_MISMATCH_PENALTY, DEFAULT_GAP_OPEN_PENALTY, DEFAULT_GAP_EXT_PENALTY, DEFAULT_CLIP_PENALTY)
-	{  }
+	ScoreScheme() {
+		initScores();
+	}
+
+	/** construct from all given values */
+	ScoreScheme(double matchScore, double mismatchPenalty, double gapOPenalty, double gapEPenalty, double clipPenalty)
+	: matchScore(matchScore), mismatchPenalty(mismatchPenalty),
+	  gapOPenalty(gapOPenalty), gapEPenalty(gapEPenalty), clipPenalty(clipPenalty)
+	{
+		initScores();
+	}
 
 	/* member methods */
+	/* init match/mismatch scores */
+	void initScores();
+
 	/** get match score between two DNA::alpahbet bases */
 	double getScore(int8_t b1, int8_t b2) const {
 		return SCORE[b1][b2];
@@ -53,11 +61,19 @@ struct ScoreScheme {
 		return gapEPenalty;
 	}
 
+	/** set match score */
+	void setMatchScore(double matchScore);
+
+	/** set mis-match penalty */
+	void setMismatchPenalty(double misPenalty);
+
 	/* member fields */
 	array<array<double, DNAalphabet::SIZE>, DNAalphabet::SIZE> SCORE; /* match/mismatch score matrix */
-	double gapOPenalty;
-	double gapEPenalty;
-	double clipPenalty;
+	double matchScore = DEFAULT_MATCH_SCORE;
+	double mismatchPenalty = DEFAULT_MISMATCH_PENALTY;
+	double gapOPenalty = DEFAULT_GAP_OPEN_PENALTY;
+	double gapEPenalty = DEFAULT_GAP_EXT_PENALTY;
+	double clipPenalty = DEFAULT_CLIP_PENALTY;
 
 	/* static fields */
 	static const double DEFAULT_MATCH_SCORE;

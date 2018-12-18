@@ -16,11 +16,22 @@ const double ScoreScheme::DEFAULT_GAP_OPEN_PENALTY = 5;
 const double ScoreScheme::DEFAULT_GAP_EXT_PENALTY = 3;
 const double ScoreScheme::DEFAULT_CLIP_PENALTY = 5; /* 5' and 3' soft-clip (S) penalty for reads */
 
-ScoreScheme::ScoreScheme(double matchScore, double mismatchPenalty, double gapOPenalty, double gapEPenalty, double clipPenalty)
-: gapOPenalty(gapOPenalty), gapEPenalty(gapEPenalty), clipPenalty(clipPenalty) {
+void ScoreScheme::initScores() {
 	for(uint32_t i = 0; i < DNAalphabet::SIZE; ++i)
 		for(uint32_t j = 0; j < DNAalphabet::SIZE; ++j)
 			SCORE[i][j] = i == j ? matchScore : -mismatchPenalty;
+}
+
+void ScoreScheme::setMatchScore(double matchScore) {
+	for(uint32_t i = 0; i < DNAalphabet::SIZE; ++i)
+		SCORE[i][i] = matchScore;
+}
+
+void ScoreScheme::setMismatchPenalty(double misPenalty) {
+	for(uint32_t i = 0; i < DNAalphabet::SIZE; ++i)
+		for(uint32_t j = 0; j < DNAalphabet::SIZE; ++j)
+			if(i != j)
+				SCORE[i][j] = -misPenalty;
 }
 
 } /* namespace MSGseqTK */
