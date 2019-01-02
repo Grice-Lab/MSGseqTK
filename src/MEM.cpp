@@ -25,7 +25,7 @@ MEM& MEM::evaluate() {
 	logP = 0;
 	const uint64_t N = fmidx->totalBases();
 	for(int64_t i = from; i < to; ++i) {
-		int8_t b = seq->getBase(i);
+		DNAseq::value_type b = seq->getBase(i);
 		if(strand == REV)
 			b = DNAalphabet::complement(b);
 		logP += ::log(fmidx->getBaseCount(b));

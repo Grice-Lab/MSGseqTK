@@ -9,11 +9,12 @@
 #define SRC_FMINDEX_H_
 
 #include <vector>
+#include <array>
 #include <iostream>
 #include <string>
 #include <set>
 #include <algorithm>
-#include <cstdint> // C++11
+#include <cstdint>
 #include <limits>
 #include <stdexcept>
 #include "DNAseq.h"
@@ -27,6 +28,7 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 using std::vector;
+using std::array;
 using EGriceLab::libSDS::BitStr32;
 using EGriceLab::libSDS::BitSeqRRR;
 using EGriceLab::libSDS::WaveletTreeRRR;
@@ -35,6 +37,7 @@ using EGriceLab::libSDS::WaveletTreeRRR;
  * FM-index with merge support
  */
 class FMIndex {
+	typedef array<saidx_t, DNAalphabet::SIZE> BCarray_t; /* fixed array to store base counts */
 	typedef vector<saidx_t> SArray_t; /* store sampled Suffix-Array in std::vector */
 
 public:
@@ -49,10 +52,7 @@ public:
 	}
 
 	/** construct an FMIndex from pre-built values */
-	FMIndex(const saidx_t* B, const saidx_t* C, const DNAseq& bwtSeq, bool keepSA = false);
-
-	/** destructor */
-	virtual ~FMIndex() { 	}
+	FMIndex(const BCarray_t& B, const BCarray_t& C, const DNAseq& bwtSeq, bool keepSA = false);
 
 	/**
 	 * LF-mapping given position and character
@@ -84,13 +84,23 @@ public:
 	}
 
 	/** get baseCount array of this index */
-	const saidx_t* getBaseCount() const {
+	const BCarray_t& getBaseCount() const {
 		return B;
 	}
 
 	/** get baseCount of given base */
 	saidx_t getBaseCount(sauchar_t b) const {
 		return B[b];
+	}
+
+	/** get baseCount of basic bases (A,T,C,G) */
+	saidx_t getBasicBaseCount() const {
+		return B[DNAalphabet::A] + B[DNAalphabet::C] + B[DNAalphabet::G] + B[DNAalphabet::T];
+	}
+
+	/** get baseCount of extended/ambigous bases (IUPAC non-A,T,C,G) */
+	saidx_t getExtBaseCount() const {
+		return C[DNAalphabet::NT16_MAX] - getBasicBaseCount();
 	}
 
 	/** get cumulative base count of given base */
@@ -200,8 +210,8 @@ private:
 
 	/* member fields */
 private:
-	saidx_t B[UINT8_MAX + 1] = { 0 }; /* base count of each alphabetbase */
-	saidx_t C[UINT8_MAX + 1] = { 0 }; /* cumulative count of each alphabet base, C[i] = B(0) + B(1) + ... + B(i-1) */
+	BCarray_t B = { }; /* base count of each alphabetbase */
+	BCarray_t C = { }; /* cumulative count of each alphabet base, C[i] = B(0) + B(1) + ... + B(i-1) */
 	WaveletTreeRRR bwt; /* Wavelet-Tree transformed BWT string for reversed DNAseq */
 	bool keepSA = false; /* whether to keep SAidx and SAsampled during building */
 	BitSeqRRR SAbit; /* BitSeq index telling whether a SA was sampled */

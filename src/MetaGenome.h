@@ -37,6 +37,8 @@ public:
 	typedef vector<string> NAME_INDEX;    /* id->name vector */
 	typedef map<string, size_t> GENOME_INDEX; /* genome name->id map */
 	typedef map<string, size_t> CHROM_INDEX;  /* chrom name->id map */
+	typedef vector<size_t> INDEX_MAP;  /* chrom idx->genome idx */
+	typedef vector<size_t> BEFORE_MAP; /* chrom idx-># chroms before */
 	typedef vector<Loc> GENOME_LOC; /* genome id->Loc map */
 	typedef vector<Loc> CHROM_LOC;  /* chromosome id->Loc map */
 
@@ -44,6 +46,11 @@ public:
 
 	/** get total size of this MetaGenome */
 	uint64_t size() const;
+
+	/** test whether this MetaGnome is empty */
+	bool empty() const {
+		return genomes.empty();
+	}
 
 	/** get total number of genomes */
 	size_t numGenomes() const {
@@ -99,12 +106,12 @@ public:
 	}
 
 	/**
-	 * get genome index by name
-	 * @return  index of given genome name,
+	 * get genome index by id
+	 * @return  index of given genome id,
 	 * or -1 if not found
 	 */
-	size_t getGenomeIndex(const string& gname) const {
-		return genomeId2Idx.count(gname) > 0 ? genomeId2Idx.at(gname) : -1;
+	size_t getGenomeIndex(const string& genomeId) const {
+		return genomeId2Idx.count(genomeId) > 0 ? genomeId2Idx.at(genomeId) : -1;
 	}
 
 	/**
@@ -113,13 +120,18 @@ public:
 	 */
 	size_t getGenomeIndex(uint64_t loc) const;
 
+	/** get genome index by chrom index */
+	size_t getGenomeIndexByChromIdx(size_t chrIdx) const {
+		return chromIdx2GenomeIdx[chrIdx];
+	}
+
 	/**
 	 * get chrom index by name
 	 * @return  index of given chrom,
 	 * or -1 if not found
 	 */
-	size_t getChromIndex(const string& cname) const {
-		return chromName2Idx.count(cname) > 0 ? chromName2Idx.at(cname) : -1;
+	size_t getChromIndex(const string& chrName) const {
+		return chromName2Idx.count(chrName) > 0 ? chromName2Idx.at(chrName) : -1;
 	}
 
 	/**
@@ -134,6 +146,16 @@ public:
 	 */
 	size_t getLocId(uint64_t loc) const {
 		return getChromIndex(loc);
+	}
+
+	/** get # chroms before given chrom index in its genome */
+	size_t getChromNbefore(size_t chromIdx) const {
+		return chromIdx2Nbefore[chromIdx];
+	}
+
+	/** get relative chromId of a chrom index, alias as getChromNbefore */
+	size_t getRelChromIndex(size_t chromIdx) const {
+		return getChromNbefore(chromIdx);
 	}
 
 	/**
@@ -226,21 +248,31 @@ public:
 		genomes.push_back(genome);
 	}
 
-	/**
-	 * add a genome at the beginning of this MetaGenome
-	 */
-	void push_front(const Genome& genome) {
-		genomes.insert(genomes.begin(), genome);
+	/** get the last genome in this MetaGenome */
+	const Genome& top_back() const {
+		return genomes.back();
 	}
 
-	/** append multiple genomes at the end of this MetaGenome */
-	void append(const vector<Genome>& blockGenomes) {
-		genomes.insert(genomes.end(), blockGenomes.begin(), blockGenomes.end());
+	/** erase the last genome, if any */
+	void pop_back() {
+		if(genomes.empty())
+			return;
+		genomes.erase(genomes.end() - 1);
 	}
 
-	/** prepend multiple genomes at the beginning of this MetaGenome */
-	void prepend(const vector<Genome>& blockGenomes) {
-		genomes.insert(genomes.begin(), blockGenomes.begin(), blockGenomes.end());
+	/** get chrom seq by genome index and chrom index */
+	const DNAseq& getChromSeq(size_t genomeIdx, size_t chrIdx) const {
+		return genomes[genomeIdx].chroms[getChromNbefore(chrIdx)].seq;
+	}
+
+	/** get chrom seq by chrom index only */
+	const DNAseq& getChromSeq(size_t chrIdx) const {
+		return getChromSeq(getGenomeIndexByChromIdx(chrIdx), chrIdx);
+	}
+
+	/** get genome seq by genome index */
+	DNAseq getGenomeSeq(size_t genomeIdx) const {
+		return genomes[genomeIdx].getSeq();
 	}
 
 	/** save this object to binary output */
@@ -262,11 +294,7 @@ public:
 
 	/* non-member operators */
 	/** concate two MetaGenomes and return a new copy */
-	friend MetaGenome operator+(const MetaGenome& lhs, const MetaGenome& rhs) {
-		MetaGenome mgMerged(lhs);
-		mgMerged += rhs;
-		return mgMerged;
-	}
+	friend MetaGenome operator+(const MetaGenome& lhs, const MetaGenome& rhs);
 
 	/** relational operators */
 	friend bool operator==(const MetaGenome& lhs, const MetaGenome& rhs);
@@ -278,6 +306,8 @@ private:
 	NAME_INDEX chromNames;
 	GENOME_INDEX genomeId2Idx;
 	CHROM_INDEX chromName2Idx;
+	INDEX_MAP chromIdx2GenomeIdx;
+	BEFORE_MAP chromIdx2Nbefore;
 	GENOME_LOC genomeIdx2Loc; // index->0-based start
 	CHROM_LOC chromIdx2Loc; // index->0-based start
 
@@ -285,7 +315,7 @@ public:
 	/* static methods */
 	/** get a unique chrom id from genome.id and chrom.name */
 	static string getChromId(const string& genomeId, const string& chrName) {
-		return genomeId + "." + chrName;
+		return genomeId + ":" + chrName;
 	}
 };
 

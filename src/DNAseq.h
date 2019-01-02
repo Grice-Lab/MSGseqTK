@@ -13,6 +13,7 @@
 #include <algorithm>
 #include "DNAalphabet.h"
 #include "StringUtils.h"
+#include "BAM.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
@@ -20,13 +21,15 @@ namespace MSGseqTK {
 using std::string;
 using std::istream;
 using std::ostream;
+using SAMtools::BAM;
 
 /**
- * A DNASeq is a basic_string in int8_t type and always uses the DNAalphabet,
+ * A DNASeq is a basic_string with nt16_t type values defined in DNAalphabet,
  * with added functions to handle unencoded strings directly
+ * it stores the nt16_t values uncompressed, but support read/write to compressed manner
  */
 
-class DNAseq: public std::basic_string<int8_t> {
+class DNAseq: public std::basic_string<nt16_t> {
 public:
 	/* nested types and enums */
 	enum TRIM_MODE { FIVE_PRIME = 1, THREE_PRIME, BOTH_PRIME };
@@ -37,41 +40,33 @@ public:
 
 	/** no virtual destructor since STL classes are not designed for inheritence */
 
-	/** construct a DNAseq from a given value */
-	explicit DNAseq(int8_t b) : std::basic_string<int8_t>({ b })
-	{  }
+	/** construct a DNAseq from copy of values */
+	DNAseq(size_t n, value_type c) : basic_string(n, c)
+	{   }
 
 	/** constructing a DNAseq from a symbol string */
 	explicit DNAseq(const string& str) {
 		assign(str);
 	}
 
-	/** additional copy assignment operator */
+	/* member methods */
+	/** copy assignment a DNAseq from a symbol string */
 	DNAseq& operator=(const string& str);
 
-	/* member methods */
-	/**
-	 * test whether position i is a valid
-	 */
+	/** test whether position i is a valid */
 	bool isValid(DNAseq::size_type i) const {
 		return DNAalphabet::isValid((*this)[i]);
 	}
 
-	/**
-	 * test whether the whole sequence is valid
-	 */
+	/** test whether the whole sequence is valid */
 	bool isValid() const;
 
-	/**
-	 * test whether position i is a valid base (non-gap)
-	 */
+	/** test whether position i is a valid base (non-gap) */
 	bool isBase(DNAseq::size_type i) const {
 		return DNAalphabet::isBase((*this)[i]);
 	}
 
-	/**
-	 * test whether the whole sequence is all base, no gap
-	 */
+	/** test whether the whole sequence is all base, no gap */
 	bool isBase() const;
 
 	/** test whether any base is gap */
@@ -133,7 +128,7 @@ public:
 	}
 
 	/** Re-introduce all base class assign methods */
-	using basic_string<int8_t>::assign;
+	using basic_string<nt16_t>::assign;
 
 	/** Assign a string as a DNAseq */
 	DNAseq& assign(const string& str);
@@ -141,7 +136,7 @@ public:
 	/**
 	 * Re-introduce all base class append methods
 	 */
-	using basic_string<int8_t>::append;
+	using basic_string<nt16_t>::append;
 
 	/**
 	 * Append a seq string (symbols) to this DNAseq
@@ -149,42 +144,59 @@ public:
 	 */
 	DNAseq& append(const string& str);
 
-	/** load a DNAseq from binary input, override the old one */
+	/** load a DNAseq from binary input */
 	istream& load(istream& in);
 
 	/** save a DNAseq to binary output */
 	ostream& save(ostream& out) const;
 
-	/** remove invalid bases (zero value) */
+	/** read a DNAseq from text input */
+	istream& read(istream& in);
+
+	/** write a DNAseq to text output */
+	ostream& write(ostream& out) const {
+		return out << toString();
+	}
+
+	/** encode this DNAseq to a BAM::seq_str in nt16 encoding */
+	BAM::seq_str nt16Encode() const;
+
+	/** load a DNAseq from binary input with compressed nt16 encoding */
+	istream& nt16Load(istream& in);
+
+	/** save a DNAseq to binary output with compressed nt16 encoding */
+	ostream& nt16Save(ostream& out) const;
+
+	/** remove invalid bases */
 	DNAseq& removeInvalid();
 
 	/** remove gap bases */
 	DNAseq& removeGaps();
 
-	/** remove genomic gaps (runs of Ns) and replace with a single N to save storage space */
-	DNAseq& compressGaps(int minNGap = MIN_GENOME_GAP);
-
-	/** trim genomic gaps (runs of Ns) at the end of the genome to prevent BWT errors
-	 * 1 for 5', 2 for 3' and 3 for both
-	 */
-	DNAseq& trimGaps(int mode = BOTH_PRIME);
-
 	/* non-member functions */
-	/** read a DNAseq from text input, override the old one */
+	/** read a DNAseq from text input */
 	friend istream& operator>>(istream& in, DNAseq& seq);
 
 	/** write a DNAseq to text output */
 	friend ostream& operator<<(ostream& out, const DNAseq& seq);
 
-	/** concat this seq with another seq */
+	/** concat two DNAseq */
 	friend DNAseq operator+(const DNAseq& lhs, const DNAseq& rhs);
 
-	/* static member fields */
-	static const int MIN_GENOME_GAP = 10;
+	/* static methods */
+	/** decode a DNAseq from a nt16 bits encoded version and known length */
+	static DNAseq nt16Decode(size_t L, const BAM::seq_str& seqNt16);
+
+	/* static fields */
+	static const DNAseq DNAgap; /* single base gap DNAseq */
 };
 
 inline ostream& operator<<(ostream& out, const DNAseq& seq) {
-	return out << seq.decode();
+	return seq.write(out);
+}
+
+inline istream& operator>>(istream&in, DNAseq& seq) {
+	return seq.read(in);
 }
 
 inline istream& DNAseq::load(istream& in) {

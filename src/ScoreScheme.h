@@ -23,7 +23,7 @@ struct ScoreScheme {
 	/* constructors */
 	/** default constructor */
 	ScoreScheme() {
-		initScores();
+		updateScores();
 	}
 
 	/** construct from all given values */
@@ -31,12 +31,12 @@ struct ScoreScheme {
 	: matchScore(matchScore), mismatchPenalty(mismatchPenalty),
 	  gapOPenalty(gapOPenalty), gapEPenalty(gapEPenalty), clipPenalty(clipPenalty)
 	{
-		initScores();
+		updateScores();
 	}
 
 	/* member methods */
-	/* init match/mismatch scores */
-	void initScores();
+	/* update match/mismatch scores */
+	void updateScores();
 
 	/** get match score between two DNA::alpahbet bases */
 	double getScore(int8_t b1, int8_t b2) const {
@@ -62,10 +62,16 @@ struct ScoreScheme {
 	}
 
 	/** set match score */
-	void setMatchScore(double matchScore);
+	void setMatchScore(double matchScore) {
+		this->matchScore = matchScore;
+		updateScores();
+	}
 
 	/** set mis-match penalty */
-	void setMismatchPenalty(double misPenalty);
+	void setMismatchPenalty(double mismatchPenalty) {
+		this->mismatchPenalty = mismatchPenalty;
+		updateScores();
+	}
 
 	/* member fields */
 	array<array<double, DNAalphabet::SIZE>, DNAalphabet::SIZE> SCORE; /* match/mismatch score matrix */

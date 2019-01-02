@@ -17,12 +17,12 @@ using namespace EGriceLab::MSGseqTK;
 int main() {
 	/* part 1, Genome test */
 	Genome g1("g1", "Staphylococcus aureus");
-	g1.addChrom("chr1", DNAseq("ATCGNatcgnTCGANtcgan").length());
-	g1.addChrom("chr2", DNAseq("TCGANtcganATCGNatcgn").length());
+	g1.addChrom(Genome::Chrom("chr1", DNAseq("ATCGNatcgnTCGANtcgan")));
+	g1.addChrom(Genome::Chrom("chr2", DNAseq("TCGANtcganATCGNatcgn")));
 
 	Genome g2("g2", "Homo sapiens");
-	g2.addChrom("chr1", DNAseq("AAAAANgggggNCCCCCNtttttn").length());
-	g2.addChrom("chr2", DNAseq("TTTTTNcccccNGGGGGNaaaaan").length());
+	g2.addChrom(Genome::Chrom("chr1", DNAseq("AAAAANgggggNCCCCCNtttttn")));
+	g2.addChrom(Genome::Chrom("chr2", DNAseq("TTTTTNcccccNGGGGGNaaaaan")));
 
 	ostringstream out;
 	g1.save(out);
@@ -51,38 +51,22 @@ int main() {
 
 	if(g1N != g1) {
 		cerr << "loaded genome g1 differs from original copy" << endl;
+		cerr << "g1.id: " << g1.getId() << " g1N.id: " << g1N.getId() << endl;
+		cerr << "g1.name: " << g1.getName() << " g1N.name: " << g1N.getName() << endl;
+		cerr << "g1.numChroms(): " << g1.numChroms() << endl;
+		cerr << "g1N.numChroms(): " << g1N.numChroms() << endl;
+		cerr << "g1.chr1 == g1N.chr1: " << (g1.getChrom(0) == g1N.getChrom(0)) << endl;
+		cerr << "g1.chr1.name: " << g1.getChrom(0).name << endl;
+		cerr << "g1N.chr1.name: " << g1N.getChrom(0).name << endl;
+		cerr << "g1.chr1.seq: " << g1.getChrom(0).seq << endl;
+		cerr << "g1N.chr1.seq:" << g1N.getChrom(0).seq << endl;
+		cerr << "g1.chr1.name: " << g1.getChrom(0).name << endl;
+		cerr << "g1.chr2 == g1N.chr2: " << (g1.getChrom(1) == g1N.getChrom(1)) << endl;
+
 		return EXIT_FAILURE;
 	}
 	if(g2N != g2) {
 		cerr << "loaded genome g2 differs from original copy" << endl;
-		return EXIT_FAILURE;
-	}
-
-	size_t i1;
-	if((i1 = g1.getChromIndex(0)) != 0) {
-		cerr << "chromIndex of g1 at loc 0 should be 0 but found " << i1 << endl;
-		return EXIT_FAILURE;
-	}
-	if((i1 = g1.getChromIndex(20)) != 0) {
-		cerr << "chromIndex of g1 at loc 20 should be 0 but found " << i1 << endl;
-		return EXIT_FAILURE;
-	}
-	if((i1 = g1.getChromIndex(21)) != 1) {
-		cerr << "chromIndex of g1 at loc 21 should be 1 but found " << i1 << endl;
-		return EXIT_FAILURE;
-	}
-
-	size_t i2;
-	if((i2 = g2.getChromIndex(0)) != 0) {
-		cerr << "chromIndex of g2 at loc 0 should be 0 but found " << i2 << endl;
-		return EXIT_FAILURE;
-	}
-	if((i2 = g2.getChromIndex(24)) != 0) {
-		cerr << "chromIndex of g2 at loc 24 should be 0 but found " << i2 << endl;
-		return EXIT_FAILURE;
-	}
-	if((i2 = g2.getChromIndex(25)) != 1) {
-		cerr << "chromIndex of g2 at loc 25 should be 1 but found " << i2 << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -91,10 +75,10 @@ int main() {
 	/* part 2, MetaGenome test */
 	out.str("");
 	MetaGenome mtg1, mtg2;
-	mtg1.push_front(g1);
-	mtg1.push_front(g2);
-	mtg2.push_front(g1N);
-	mtg2.push_front(g2N);
+	mtg1.push_back(g2);
+	mtg1.push_back(g1);
+	mtg2.push_back(g2N);
+	mtg2.push_back(g1N);
 	mtg1.updateIndex();
 	mtg2.updateIndex();
 
@@ -103,6 +87,7 @@ int main() {
 		return EXIT_FAILURE;
 	}
 
+	size_t i1, i2;
 	size_t j1, j2;
 
 	if((i1 = mtg1.getGenomeIndex(0)) != 0 && (j1 = mtg1.getChromIndex(0)) != 0) {

@@ -45,7 +45,7 @@ using namespace EGriceLab;
 using namespace EGriceLab::MSGseqTK;
 
 //static const int DEFAULT_NUM_THREADS = 1;
-static const int DEFAULT_BLOCK_SIZE = 1000;
+static const int DEFAULT_BLOCK_SIZE = 2000;
 static const size_t MBP_UNIT = 1000000;
 
 /**
@@ -215,21 +215,17 @@ int main(int argc, char* argv[]) {
 		fmidxIn.close();
 	}
 
-	/* process each genomic file */
+	/* read all genomic files */
 	size_t nProcessed = 0;
-	DNAseq blockSeq;
-	vector<Genome> blockGenomes;
-	int k = 0;
 	for(const std::map<string, string>::value_type& entry : genomeId2Fn) {
-		string genomeId = entry.first;
-		string genomeFn = entry.second;
-		string genomeName = genomeId2Name[genomeId];
+		const string& genomeId = entry.first;
+		const string& genomeFn = entry.second;
+		const string& genomeName = genomeId2Name[genomeId];
 
 		if(mtg.hasGenome(genomeId)) {
-			warningLog << "Genome " << genomeId << " (" << genomeName << ") already exists in the database, ignore" << endl;
+			warningLog << "Genome " << Genome::displayId(genomeId, genomeName) << " already exists in the database, ignore" << endl;
 			continue;
 		}
-
 		/* open genome file */
 		boost::iostreams::filtering_istream genomeIn;
 #ifdef HAVE_LIBZ
@@ -246,85 +242,90 @@ int main(int argc, char* argv[]) {
 			return EXIT_FAILURE;
 		}
 
-		/* read in genome sequence, concatenated with Ns */
-		infoLog << "Reading genome " << genomeId << " (" << genomeName << ")" << endl;
-
+		/* read in genome sequences */
 		Genome genome(genomeId, genomeName);
+		infoLog << "Reading genome " << genome.displayId() << endl;
 		SeqIO seqI(&genomeIn, fmt);
-
 		while(seqI.hasNext()) {
 			const PrimarySeq& chr = seqI.nextSeq();
 			string chrName = chr.getName();
-			DNAseq chrSeq = chr.getSeq().reverse(); /* reverse seq at each chrom */
+			const DNAseq& chrSeq = chr.getSeq();
 			debugLog << "  adding " << chrName << " with length " << chrSeq.length() << endl;
-			genome.addChrom(chrName, chrSeq.length());
-			if(!blockSeq.empty())
-				blockSeq.push_back(DNAalphabet::N); /* add an N terminal */
-			blockSeq += chrSeq; /* N terminated chromosomes */
+			genome.addChrom(Genome::Chrom(chrName, chrSeq));
 		}
 
-		blockGenomes.push_back(genome); /* add this genome to the block */
-
-		/* process block, if large enough */
-		bool isLast = genomeId2Fn.upper_bound(genomeId) == genomeId2Fn.end();
-		if(blockSeq.length() >= blockSize * MBP_UNIT || isLast) { /* last genome or full block */
-			if(!isLast)
-				infoLog << "Adding " << blockGenomes.size() << " genomes in block " << ++k << " into database" << endl;
-			else
-				infoLog << "Adding " << blockGenomes.size() << " genomes in block " << ++k << " into database and building final sampled Suffix-Array" << endl;
-			mtg.prepend(blockGenomes);
-			fmidx = FMIndex(blockSeq, isLast) + fmidx; /* always use freshly built FMIndex as lhs */
-			assert(mtg.size() == fmidx.length());
-			blockGenomes.clear();
-			blockSeq.clear();
-			infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
-		}
-		/* incremental update backward */
-		nProcessed++;
+		/* add this genome */
+		infoLog << "  genome " << genome.displayId() << " added into database" << endl;
+		mtg.push_back(genome);
 	}
 	/* update final index */
-	infoLog << "Update MetaGenome indices" << endl;
+	infoLog << "Updating MetaGenome indices" << endl;
 	mtg.updateIndex();
+	if(dbName == oldDBName && nProcessed == 0) {
+		infoLog << "No new genomes found, database not modified, quit updating" << endl;
+		return EXIT_SUCCESS;
+	}
+	const uint64_t mtgSize = mtg.size();
+
+	/* save metagenome */
+	infoLog << "Saving MetaGenome ..." << endl;
+	mtgFn = dbName + METAGENOME_FILE_SUFFIX;
+	/* open output */
+	mtgOut.open(mtgFn.c_str(), ios_base::out | ios_base::binary);
+	if(!mtgOut.is_open()) {
+		cerr << "Unable to write to '" << mtgFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	saveProgInfo(mtgOut);
+	mtg.save(mtgOut);
+	if(mtgOut.bad()) {
+		cerr << "Unable to save MetaGenome: " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	infoLog << "MetaGenome info saved to '" << mtgFn << "'" << endl;
+
+	infoLog << "Building FM-index with backward-incremental method" << endl;
+	DNAseq blockSeq;
+	size_t k = 0;
+	while(mtg.numGenomes() > 0) {
+		if(!blockSeq.empty())
+			blockSeq.push_back(DNAalphabet::GAP_BASE);
+		blockSeq += mtg.top_back().getSeq(); // append seq of the last genome
+		mtg.pop_back(); // remove last genome
+		bool isLast = mtg.empty();
+
+		/* process block, if large enough */
+		if(blockSeq.length() >= blockSize * MBP_UNIT || isLast) { /* last genome or full block */
+			if(!isLast)
+				infoLog << "Adding block " << ++k << " into FM-index" << endl;
+			else
+				infoLog << "Adding block " << ++k << " into FM-index and building final sampled Suffix-Array" << endl;
+			blockSeq.reverse(); // reverse genome sequences
+			fmidx = FMIndex(blockSeq, isLast) + fmidx; /* always use freshly built FMIndex as lhs */
+			blockSeq.clear();
+			infoLog << "Currrent # of bases in FM-index: " << fmidx.length() << endl;
+		}
+	}
+	assert(mtgSize == fmidx.length());
+
+	infoLog << "Saving FM-index ..." << endl;
+	fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
+	/* open output */
+	fmidxOut.open(fmidxFn.c_str(), ios_base::out | ios_base::binary);
+	if(!fmidxOut.is_open()) {
+		cerr << "Unable to write to '" << fmidxFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	saveProgInfo(fmidxOut);
+	fmidx.save(fmidxOut);
+	if(fmidxOut.bad()) {
+		cerr << "Unable to save FM-index: " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	infoLog << "FM-index saved to '" << fmidxFn << "'" << endl;
+
 
 	if(!oldDBName.empty())
-		infoLog << "MetaGenomics database updated. Newly added # of genomes: " << nProcessed << endl;
-	infoLog << "MetaGenomics database build. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
-
-	if(dbName != oldDBName || nProcessed > 0) { /* building new or updated database */
-		/* set db file names */
-		mtgFn = dbName + METAGENOME_FILE_SUFFIX;
-		fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
-		/* open output files */
-		mtgOut.open(mtgFn.c_str(), ios_base::out | ios_base::binary);
-		if(!mtgOut.is_open()) {
-			cerr << "Unable to write to '" << mtgFn << "': " << ::strerror(errno) << endl;
-			return EXIT_FAILURE;
-		}
-
-		fmidxOut.open(fmidxFn.c_str(), ios_base::out | ios_base::binary);
-		if(!fmidxOut.is_open()) {
-			cerr << "Unable to write to '" << fmidxFn << "': " << ::strerror(errno) << endl;
-			return EXIT_FAILURE;
-		}
-
-		infoLog << "Saving database files ..." << endl;
-		/* write database files, all with prepend program info */
-		saveProgInfo(mtgOut);
-		mtg.save(mtgOut);
-		if(mtgOut.bad()) {
-			cerr << "Unable to save MetaGenome: " << ::strerror(errno) << endl;
-			return EXIT_FAILURE;
-		}
-		infoLog << "MetaGenome info saved" << endl;
-
-		saveProgInfo(fmidxOut);
-		fmidx.save(fmidxOut);
-		if(fmidxOut.bad()) {
-			cerr << "Unable to save FM-index: " << ::strerror(errno) << endl;
-			return EXIT_FAILURE;
-		}
-		infoLog << "FM-index saved" << endl;
-	}
-	else
-		infoLog << "Database was not modified" << endl;
+		infoLog << "Database updated. Newly added # of genomes: " << nProcessed << " new size: " << mtg.size() << endl;
+	infoLog << "Database built. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
 }

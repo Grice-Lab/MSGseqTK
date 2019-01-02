@@ -23,7 +23,7 @@ uint64_t MetaGenome::size() const {
 	uint64_t size = 0;
 	for(const Genome& genome : genomes)
 		size += genome.size();
-	return size; /* include null terminal for each Genome */
+	return size;
 }
 
 size_t MetaGenome::numChroms() const {
@@ -37,9 +37,8 @@ ostream& MetaGenome::save(ostream& out) const {
 	/* save basic info */
 	const size_t NG = numGenomes();
 	out.write((const char*) &NG, sizeof(size_t));
-	for(const deque<Genome>::value_type& genome : genomes)
+	for(const Genome& genome : genomes)
 		genome.save(out);
-
 	return out;
 }
 
@@ -50,7 +49,6 @@ istream& MetaGenome::load(istream& in) {
 	genomes.resize(NG);
 	for(size_t i = 0; i < NG; ++i)
 		genomes[i].load(in);
-
 	updateIndex();
 	return in;
 }
@@ -61,23 +59,38 @@ MetaGenome& MetaGenome::operator+=(const MetaGenome& other) {
 	return *this;
 }
 
+MetaGenome operator+(const MetaGenome& lhs, const MetaGenome& rhs) {
+	MetaGenome mtg;
+	mtg.genomes.insert(mtg.genomes.end(), lhs.genomes.begin(), lhs.genomes.end());
+	mtg.genomes.insert(mtg.genomes.end(), rhs.genomes.begin(), rhs.genomes.end());
+	mtg.updateIndex();
+	return mtg;
+}
+
 void MetaGenome::updateIndex() {
 	/* clear old data */
 	genomeIds.clear();
 	chromNames.clear();
 	genomeId2Idx.clear();
 	chromName2Idx.clear();
+	chromIdx2GenomeIdx.clear();
+	chromIdx2Nbefore.clear();
 	genomeIdx2Loc.clear();
 	chromIdx2Loc.clear();
+	const size_t NG = numGenomes();
+	const size_t NC = numChroms();
 	size_t gid = 0;
 	size_t cid = 0;
 	uint64_t gStart = 0;
-	genomeIds.reserve(numGenomes());
-	chromNames.reserve(numChroms());
-	genomeIdx2Loc.reserve(numGenomes());
-	chromIdx2Loc.reserve(numChroms());
+	genomeIds.reserve(NG);
+	chromNames.reserve(NC);
+	genomeIdx2Loc.reserve(NG);
+	chromIdx2Loc.reserve(NC);
+	chromIdx2GenomeIdx.reserve(NC);
+	chromIdx2Nbefore.reserve(NC);
 	for(Genome& genome : genomes) {
 		uint64_t cStart = 0;
+		size_t nid = 0; // # of chrom before in this genome
 		if(genomeId2Idx.count(genome.id) > 0) { // genome.id must be unique
 			cerr << "Error: Redundant genome " << genome.displayId() << " found in database" << endl;
 			abort();
@@ -92,9 +105,12 @@ void MetaGenome::updateIndex() {
 			}
 			chromNames.push_back(chr.name);
 			chromName2Idx[chr.name] = cid;
-			chromIdx2Loc.push_back(Loc(cStart, cStart + chr.size + 1)); // include the null terminal
+			chromIdx2GenomeIdx.push_back(gid);
+			chromIdx2Nbefore.push_back(nid);
+			chromIdx2Loc.push_back(Loc(cStart, cStart + chr.size() + 1)); // include the null terminal
 			cid++;
-			cStart += chr.size + 1;
+			nid++;
+			cStart += chr.size() + 1;
 		}
 		assert(cStart == genome.size());
 		genomeIdx2Loc.push_back(Loc(gStart, gStart + cStart));

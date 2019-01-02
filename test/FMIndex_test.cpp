@@ -32,6 +32,7 @@ int main() {
 	cout << "fmidx1.length(): " << fmidx1.length() << endl;
 	cout << "fmidx1.getBWT():" << endl << fmidx1.getBWT() << endl;
 	cout << "fmidx1.getSeq():" << endl << fmidx1.getSeq() << endl;
+	cout << "seqM1:" << endl << seqM1 << endl;
 	if(fmidx1.getSeq() != seqM1)
 		return EXIT_FAILURE;
 	count1 = fmidx1.count(pat);
@@ -47,11 +48,12 @@ int main() {
 
 	DNAseq seq2("CTAGCATCGAC");
 	cout << "seq2:" << endl << seq2 << endl;
-	seqM1 += DNAseq(0) + seq2;
+	seqM1 += DNAseq::DNAgap + seq2;
 	fmidx1 += FMIndex(seq2);
 	cout << "fmidx1.length(): " << fmidx1.length() << endl;
 	cout << "fmidx1.getBWT():" << endl << fmidx1.getBWT() << endl;
 	cout << "fmidx1.getSeq():" << endl << fmidx1.getSeq() << endl;
+	cout << "seqM1:" << endl << seqM1 << endl;
 	if(fmidx1.getSeq() != seqM1)
 		return EXIT_FAILURE;
 	count1 = fmidx1.count(pat);
@@ -67,11 +69,12 @@ int main() {
 
 	DNAseq seq3("CTAGCATGGAC");
 	cout << "seq3:" << endl << seq3 << endl;
-	seqM1 += DNAseq(0) + seq3;
+	seqM1 += DNAseq::DNAgap + seq3;
 	fmidx1 += FMIndex(seq3);
 	cout << "fmidx1.length(): " << fmidx1.length() << endl;
 	cout << "fmidx1.getBWT():" << endl << fmidx1.getBWT() << endl;
 	cout << "fmidx1.getSeq():" << endl << fmidx1.getSeq() << endl;
+	cout << "seqM1:" << endl << seqM1 << endl;
 	if(fmidx1.getSeq() != seqM1)
 		return EXIT_FAILURE;
 	count1 = fmidx1.count(pat);
@@ -87,11 +90,12 @@ int main() {
 
 	DNAseq seq4("CTAGCATTGAC");
 	cout << "seq4:" << endl << seq4 << endl;
-	seqM1 += DNAseq(0) + seq4;
+	seqM1 += DNAseq::DNAgap + seq4;
 	fmidx1 += FMIndex(seq4);
 	cout << "fmidx1.length(): " << fmidx1.length() << endl;
 	cout << "fmidx1.getBWT():" << endl << fmidx1.getBWT() << endl;
 	cout << "fmidx1.getSeq():" << endl << fmidx1.getSeq() << endl;
+	cout << "seqM1:" << endl << seqM1 << endl;
 	if(fmidx1.getSeq() != seqM1)
 		return EXIT_FAILURE;
 	count1 = fmidx1.count(pat);
@@ -113,6 +117,7 @@ int main() {
 	cout << "fmidx2.length(): " << fmidx2.length() << endl;
 	cout << "fmidx2.getBWT():" << endl << fmidx2.getBWT() << endl;
 	cout << "fmidx2.getSeq():" << endl << fmidx2.getSeq() << endl;
+	cout << "seqM2:" << endl << seqM2 << endl;
 	if(fmidx2.getSeq() != seqM2)
 		return EXIT_FAILURE;
 	count2 = fmidx2.count(pat);
@@ -128,11 +133,12 @@ int main() {
 
 	DNAseq seq6("CTAGCACCTAG");
 	cout << "seq6:" << endl << seq6 << endl;
-	seqM2 = seq6 + DNAseq(0) + seqM2;
+	seqM2 = seq6 + DNAseq::DNAgap + seqM2;
 	fmidx2 = FMIndex(seq6) + fmidx2;
 	cout << "fmidx2.length(): " << fmidx2.length() << endl;
 	cout << "fmidx2.getBWT():" << endl << fmidx2.getBWT() << endl;
 	cout << "fmidx2.getSeq():" << endl << fmidx2.getSeq() << endl;
+	cout << "seqM2:" << endl << seqM2 << endl;
 	if(fmidx2.getSeq() != seqM2)
 		return EXIT_FAILURE;
 	count2 = fmidx2.count(pat);
@@ -148,11 +154,12 @@ int main() {
 
 	DNAseq seq7("CTAGCAGCTAG");
 	cout << "seq7:" << endl << seq7 << endl;
-	seqM2 = seq7 + DNAseq(0) + seqM2;
+	seqM2 = seq7 + DNAseq::DNAgap + seqM2;
 	fmidx2 = FMIndex(seq7) + fmidx2;
 	cout << "fmidx2.length(): " << fmidx2.length() << endl;
 	cout << "fmidx2.getBWT():" << endl << fmidx2.getBWT() << endl;
 	cout << "fmidx2.getSeq():" << endl << fmidx2.getSeq() << endl;
+	cout << "seqM2:" << endl << seqM2 << endl;
 	if(fmidx2.getSeq() != seqM2)
 		return EXIT_FAILURE;
 	count2 = fmidx2.count(pat);
@@ -168,11 +175,12 @@ int main() {
 
 	DNAseq seq8("CTAGCATCTAG");
 	cout << "seq8:" << endl << seq8 << endl;
-	seqM2 = seq8 + DNAseq(0) + seqM2;
+	seqM2 = seq8 + DNAseq::DNAgap + seqM2;
 	fmidx2 = FMIndex(seq8) + fmidx2;
 	cout << "fmidx2.length(): " << fmidx2.length() << endl;
 	cout << "fmidx2.getBWT():" << endl << fmidx2.getBWT() << endl;
 	cout << "fmidx2.getSeq():" << endl << fmidx2.getSeq() << endl;
+	cout << "seqM2:" << endl << seqM2 << endl;
 	if(fmidx2.getSeq() != seqM2)
 		return EXIT_FAILURE;
 	count2 = fmidx2.count(pat);
@@ -187,7 +195,7 @@ int main() {
 		return EXIT_FAILURE;
 
 	/* hierarchical merge test */
-	DNAseq seqM = seqM1 + DNAseq(0) + seqM2;
+	DNAseq seqM = seqM1 + DNAseq::DNAgap + seqM2;
 	cout << "seqM:" << endl << seqM << endl;
 	FMIndex fmidx = fmidx1 + fmidx2;
 	cout << "fmidx.length(): " << fmidx.length() << endl;

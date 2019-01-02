@@ -14,6 +14,7 @@
 
 using std::string;
 using std::cout;
+using std::cerr;
 using std::endl;
 using std::istringstream;
 using std::ostringstream;
@@ -39,8 +40,12 @@ int main() {
 	SeqIO seqI(&in, "fasta");
 	SeqIO stdO(&cout, "fasta");
 	PrimarySeq dest1 = seqI.nextSeq();
-	if(dest1 != src1)
-		return 1;
+	if(dest1 != src1) {
+		cerr << "Read in dest1 is different than src1" << endl <<
+				"src1:  " << src1.getSeq() << endl <<
+				"dest1: " << dest1.getSeq() << endl;
+		return EXIT_FAILURE;
+	}
 	else
 		stdO.writeSeq(dest1);
 

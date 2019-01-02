@@ -19,7 +19,7 @@ using EGriceLab::libSDS::BitStr32;
 
 const saidx_t FMIndex::totalBases() const {
 	saidx_t N = 0;
-	for(int8_t i = DNAalphabet::A; i <= DNAalphabet::T; i++)
+	for(saidx_t i = 0; i <= DNAalphabet::NT16_MAX; ++i)
 		N += B[i];
 	return N;
 }
@@ -41,15 +41,15 @@ void FMIndex::buildCounts(const DNAseq& seq) {
 
 	/* calculate cumulative counts (total counts smaller than this character) */
     saidx_t sum = 0;
-    for(int i = 0; i <= DNAalphabet::SIZE; ++i) {
+    for(size_t i = 0; i <= DNAalphabet::NT16_MAX; ++i) {
     	C[i] = sum; /* use sum before adding current B[i] */
     	sum += B[i];
     }
 }
 
 ostream& FMIndex::save(ostream& out) const {
-	out.write((const char*) B, (UINT8_MAX + 1) * sizeof(saidx_t));
-	out.write((const char*) C, (UINT8_MAX + 1) * sizeof(saidx_t));
+	out.write((const char*) B.data(), B.size() * sizeof(BCarray_t::value_type));
+	out.write((const char*) C.data(), C.size() * sizeof(BCarray_t::value_type));
 	bwt.save(out);
 	out.write((const char*) &keepSA, sizeof(bool));
 	if(keepSA) {
@@ -63,8 +63,8 @@ ostream& FMIndex::save(ostream& out) const {
 }
 
 istream& FMIndex::load(istream& in) {
-	in.read((char*) B, (UINT8_MAX + 1) * sizeof(saidx_t));
-	in.read((char*) C, (UINT8_MAX + 1) * sizeof(saidx_t));
+	in.read((char*) B.data(), B.size() * sizeof(BCarray_t::value_type));
+	in.read((char*) C.data(), C.size() * sizeof(BCarray_t::value_type));
 	bwt.load(in);
 	in.read((char*) &keepSA, sizeof(bool));
 	if(keepSA) {
@@ -86,7 +86,7 @@ saidx_t FMIndex::count(const DNAseq& pattern) const {
 
     saidx_t start = 0;
     saidx_t end = length() - 1;
-	/* search pattern left-to-right, as bwt is the reverse FM-index */
+	/* backward search of pattern */
     for(DNAseq::const_reverse_iterator b = pattern.rbegin(); b != pattern.rend() && start <= end; ++b) {
     	if(start == 0) {
     		start = C[*b];
@@ -135,13 +135,11 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
 	bwtM.reserve(N);
 	for(saidx_t i = 0, j = 0, k = 0; k < N; ++k)
 		bwtM.push_back(bstr.test(k) ? bwt.access(i++) : other.bwt.access(j++));
-	std::cerr << "bwtM constructed" << std::endl;
 	/* update bwtRRR */
-    bwt = WaveletTreeRRR(bwtM, DNAalphabet::N, DNAalphabet::T, RRR_SAMPLE_RATE);
-	std::cerr << "bwt constructed" << std::endl;
+    bwt = WaveletTreeRRR(bwtM, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
 
 	/* merging B[] and C[] */
-	for(saidx_t i = 0; i <= DNAalphabet::SIZE; ++i) {
+	for(saidx_t i = 0; i <= DNAalphabet::NT16_MAX; ++i) {
 		B[i] += other.B[i];
 		C[i] += other.C[i];
 	}
@@ -192,7 +190,7 @@ void FMIndex::buildBWT(const DNAseq& seq) {
     delete[] SA;
 
 	/* construct BWTRRR */
-    bwt = WaveletTreeRRR(bwtSeq, DNAalphabet::N, DNAalphabet::T, RRR_SAMPLE_RATE);
+    bwt = WaveletTreeRRR(bwtSeq, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
 
 	if(keepSA)
 		buildSA(bwtSeq);
@@ -280,12 +278,9 @@ Loc FMIndex::reverseLoc(const Loc& loc) const {
 	return Loc(reverseLoc(loc.end - 1) - 1, reverseLoc(loc.start));
 }
 
-FMIndex::FMIndex(const saidx_t* B, const saidx_t* C, const DNAseq& bwtSeq, bool keepSA)
-: bwt(WaveletTreeRRR(bwtSeq, DNAalphabet::N, DNAalphabet::T, RRR_SAMPLE_RATE)), keepSA(keepSA)
+FMIndex::FMIndex(const BCarray_t& B, const BCarray_t& C, const DNAseq& bwtSeq, bool keepSA)
+: B(B), C(C), bwt(WaveletTreeRRR(bwtSeq, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE)), keepSA(keepSA)
 {
-	/* copy B and C */
-	std::copy(B, B + UINT8_MAX + 1, this->B);
-	std::copy(C, C + UINT8_MAX + 1, this->C);
 	/* build SA using customized bitstr */
 	if(keepSA)
 		buildSA(bwtSeq);
@@ -300,10 +295,10 @@ FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {
 	const saidx_t N1 = lhs.length();
 	const saidx_t N2 = rhs.length();
 	const saidx_t N = N1 + N2;
-	saidx_t BMerged[UINT8_MAX + 1] = { 0 };
-	saidx_t CMerged[UINT8_MAX + 1] = { 0 };
+	FMIndex::BCarray_t BMerged;
+	FMIndex::BCarray_t CMerged;
 	/* build merged B and C */
-	for(saidx_t i = 0; i <= DNAalphabet::SIZE; ++i) {
+	for(saidx_t i = 0; i <= DNAalphabet::NT16_MAX; ++i) {
 		BMerged[i] = lhs.B[i] + rhs.B[i];
 		CMerged[i] = lhs.C[i] + rhs.C[i];
 	}

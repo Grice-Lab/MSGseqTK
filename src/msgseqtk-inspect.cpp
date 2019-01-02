@@ -173,9 +173,12 @@ int main(int argc, char* argv[]) {
 	}
 
 	cout << "MetaGenome info: # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
-	cout << "FM-index info: length: " << fmidx.length() << " baseCount: ";
-	for(int8_t b = DNAalphabet::A; b < DNAalphabet::SIZE; ++b)
-		cout << " " << DNAalphabet::decode(b) << ":" << fmidx.getBaseCount(b);
+	cout << "FM-index info: length: " << fmidx.length();
+	cout << " A: " << fmidx.getBaseCount(DNAalphabet::A);
+	cout << " C: " << fmidx.getBaseCount(DNAalphabet::C);
+	cout << " G: " << fmidx.getBaseCount(DNAalphabet::G);
+	cout << " T: " << fmidx.getBaseCount(DNAalphabet::T);
+//	cout << " IUPAC ambigous bases: " << fmidx.getExtBaseCount();
 	cout << endl;
 
 	if(gffIn.is_open()) {

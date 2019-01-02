@@ -36,8 +36,13 @@ public:
 		Chrom() = default;
 
 		/** construct from given info */
-		Chrom(const string& name, uint64_t size) : name(formatName(name)), size(size)
+		Chrom(const string& name, const DNAseq& seq) : name(name), seq(seq)
 		{  }
+
+		/** get size of this Chrom */
+		uint64_t size() const {
+			return seq.length();
+		}
 
 		/** save this Chrom to binary output */
 		ostream& save(ostream& out) const;
@@ -48,8 +53,8 @@ public:
 		/* non-member functions */
 		friend bool operator==(const Chrom& lhs, const Chrom& rhs);
 
-		string name;
-		uint64_t size = 0;
+		string name; // chrom name from input
+		DNAseq seq; // chrom seq
 	};
 
 	/* constructors */
@@ -57,7 +62,7 @@ public:
 	Genome() = default;
 
 	/** construct genome with given name */
-	Genome(const string& id, const string& name) : id(formatName(id)), name(formatName(name))
+	Genome(const string& id, const string& name) : id(id), name(name)
 	{  }
 
 	/** deligating construct from name only */
@@ -65,11 +70,8 @@ public:
 	{  }
 
 	/** construct a genome with given id, name and chromosomes */
-	Genome(const string& id, const string& name, const vector<Chrom>& chroms) : id(formatName(id)), name(formatName(name)), chroms(chroms)
-	{  }
-
-	/** deligating construct a genome with give name and chromosomes */
-	Genome(const string& name, const vector<Chrom>& chroms) : Genome(name, name, chroms)
+	Genome(const string& id, const string& name, const vector<Chrom>& chroms)
+	: id(id), name(name), chroms(chroms)
 	{  }
 
 	/* member methods */
@@ -91,7 +93,7 @@ public:
 
 	/** get a display id of this genome */
 	string displayId() const {
-		return id + " (" + name + ")";
+		return displayId(id, name);
 	}
 
 	/** get number of chromosomes */
@@ -123,17 +125,8 @@ public:
 		chroms.push_back(chr);
 	}
 
-	/** add a new chromosome with given name and size */
-	void addChrom(const string& chrName, uint64_t size) {
-		addChrom(Chrom(chrName, size));
-	}
-
-	/**
-	 * get chromosome index given a relative loc of this Genome
-	 * @param  loc  0-based loc relative to this Genome
-	 * @return  0-based relative order, or -1 if not exists
-	 */
-	size_t getChromIndex(uint64_t loc) const;
+	/** get concatenated seq of this genome, with a GAP_BASE after each chrom but not the last one */
+	DNAseq getSeq() const;
 
 	/** save this object to binary output */
 	ostream& save(ostream& out) const;
@@ -162,6 +155,11 @@ public:
 	/** format genome id/name */
 	static string formatName(const string& name);
 
+	/** get displayId of given id and name */
+	static string displayId(const string& id, const string& name) {
+		return id + " (" + name + ")";
+	}
+
 	/* friend declarations */
 	friend class MetaGenome;
 	friend class GenomeAnno;
@@ -173,7 +171,7 @@ inline bool operator==(const Genome& lhs, const Genome& rhs) {
 }
 
 inline bool operator==(const Genome::Chrom& lhs, const Genome::Chrom& rhs) {
-	return lhs.name == rhs.name && lhs.size == rhs.size;
+	return lhs.name == rhs.name && lhs.seq == rhs.seq;
 }
 
 inline bool operator!=(const Genome::Chrom& lhs, const Genome::Chrom& rhs) {

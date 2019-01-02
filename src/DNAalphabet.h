@@ -19,33 +19,58 @@ using std::string;
 using std::basic_string;
 using std::array;
 
+typedef uint8_t nt16_t;
+
 /**
- *  A DNA alphabet class provide static methods for encoding and decoding characters to/from small integers
- *  the assembly gaps (Ns) are treated specially
- *  but accept IUPAC ambiguous codes except the gaps
+ *  This DNA alphabet class use the same nt16 (4bits) encoding as in the htslib package except for Ns,
+ *  which encodes A, C, G, T as 1/2/4/8 bits, and IUPAC codes as the mixture of these bits,
+ *  and encode N as genomic gap 0 (null char),
+ *  and uses the null terminal ('\0') as genomic gaps (between chromsomes)
+ *  It provide static methods for encoding and decoding characters to/from small integers
  */
 class DNAalphabet {
 public:
-	typedef array<int8_t, CHAR_MAX + 1> base_map; /* base map whose value type is base */
-	typedef array<char, INT8_MAX + 1> sym_map; /* symbol map whose value type is symbol */
+	typedef array<nt16_t, 256> base_map; /* base map whose value type is base */
+	typedef array<char, 256> sym_map; /* symbol map whose value type is symbol */
 	/* nested enum and types */
-	enum Base { N, A, C, G, T };
+	enum Base
+	{ N = 0, A = 1, C = 2, G = 4, T = 8,
+		U = T,
+		R = A | G, // R is A or G
+		Y = C | T, // Y is C or T
+		S = G | C, // S is G or C
+		W = A | T, // W is A or T
+		K = G | T, // K is G or T
+		M = A | C, // M is A or C
+		B = C | G | T, // B is C or G or T
+		D = A | G | T, // D is A or G or T
+		H = A | C | T, // H is A or C or T
+		V = A | C | G // V is A or C or G
+	};
+	static const nt16_t GAP_BASE = 0;
+	static const nt16_t NT16_MIN = 1;
+	static const nt16_t NT16_MAX = 0xE;
+	static const nt16_t SIZE = NT16_MAX + 1;
+	static const char GAP_SYM = '-'; /* IUPAC gap */
+	static const char GAP_ALT = '.'; /* IUPAC alternative gap */
+	static const uint32_t NT16_LOWER_MASK = 0xf;
+	static const uint32_t NT16_UPPER_MASK = 0xf << 4;
 
 private:
 	/* static fields */
-	static const base_map sym2base; /* internal map from symbol to base, static zero initiated by default */
-	static const sym_map base2sym; /* internal map from base to symbol, static zero initiated by default */
+	static const base_map sym2base; /* internal symbo->base map, almost the same as the nt16 encoding except Ns */
+	static const sym_map base2sym;  /* internal base->sym map, almost the same as nt16 decoding except Ns */
 	static const sym_map sym2comp;  /* internal complement map from symbol to symbol, static zero initiated by default */
 	static const base_map base2comp;  /* internal complement map from base to base, static zero initiated by default */
 
 	/* static methods */
 public:
 	/** encode a DNA symbol to a base value */
-	static int8_t encode(char s) {
+	static nt16_t encode(char s) {
 		return sym2base[s];
 	}
 
-	/** decode a DNA base to a symbol */
+	/** decode a DNA base to from a char symbol */
 	static char decode(int8_t b) {
 		return base2sym[b];
 	}
@@ -56,23 +81,23 @@ public:
 	}
 
 	/** get complement base of a given base */
-	static int8_t complement(int8_t b) {
+	static nt16_t complement(nt16_t b) {
 		return base2comp[b];
 	}
 
-	/** test whether a base is valid */
-	static bool isValid(int8_t b) {
-		return b >= 0;
+	/** test whether a base is valid ( a gap or base ) */
+	static bool isValid(nt16_t b) {
+		return b <= NT16_MAX;
 	}
 
 	/** test whether a base is a gap */
-	static bool isGap(int8_t b) {
-		return b == N;
+	static bool isGap(nt16_t b) {
+		return b == GAP_BASE;
 	}
 
 	/** test whether a base is a valid base */
-	static bool isBase(int8_t b) {
-		return b > 0;
+	static bool isBase(nt16_t b) {
+		return NT16_MIN <= b && b <= NT16_MAX;
 	}
 
 	/** test whether a symbol is valid */
@@ -80,34 +105,18 @@ public:
 		return isValid(encode(s));
 	}
 
-	/** test whether a base is a valid base */
+	/** test whether a symbol is a base */
 	static bool isBase(char s) {
 		return isBase(encode(s));
 	}
 
-	/** test whether a base is a gap */
+	/** test whether a symbol is a gap base */
 	static bool isGap(char s) {
-		return isGap(encode(s));
+		return s == GAP_SYM || s == GAP_ALT;
 	}
 
 	/** get a reverse-completed copy of a dna string */
 	static string revcom(const string& str);
-
-private:
-	/** initiate the internal sym2base map */
-	static base_map initSym2Base();
-
-	/** initiate the internal base2sym map */
-	static sym_map initBase2Sym();
-
-	/** initiate the internal sym2comp map */
-	static sym_map initSym2Comp();
-
-	/** initiate the internal base2comp map */
-	static base_map initBase2Comp();
-
-public:
-	static const int SIZE = 5;
 };
 
 } /* namespace MSGSeqClean */

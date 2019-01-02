@@ -10,11 +10,12 @@
 
 namespace EGriceLab {
 namespace MSGseqTK {
+const DNAseq DNAseq::DNAgap(1, DNAalphabet::GAP_BASE); /* single base gap DNAseq */
 
 string DNAseq::decode() const {
 	string seq;
 	seq.reserve(length());
-	for(int8_t b : *this)
+	for(DNAseq::value_type b : *this)
 		seq.push_back(DNAalphabet::decode(b));
 	return seq;
 }
@@ -25,66 +26,40 @@ DNAseq& DNAseq::reverse() {
 }
 
 DNAseq& DNAseq::complement() {
-	for(DNAseq::size_type i = 0; i < length(); ++i)
-		(*this)[i] = DNAalphabet::complement((*this)[i]);
+	for(DNAseq::value_type& b: *this)
+		b = DNAalphabet::complement(b);
 	return *this;
 }
 
 DNAseq& DNAseq::assign(const string& str) {
-	clear();
-	reserve(str.length());
-	for(char s : str)
-		push_back(DNAalphabet::encode(s));
+	resize(str.length());
+	std::transform(str.begin(), str.end(), begin(), DNAalphabet::encode);
 	return *this;
 }
 
 DNAseq& DNAseq::append(const string& str) {
+	reserve(length() + str.length());
 	for(char s : str)
 		push_back(DNAalphabet::encode(s));
 	return *this;
 }
 
-istream& operator>>(istream& in, DNAseq& seq) {
+istream& DNAseq::read(istream& in) {
 	string str;
 	in >> str;
-	seq.assign(str);
+	assign(str);
 	return in;
 }
 
 DNAseq& DNAseq::removeInvalid() {
-	erase(std::remove(begin(), end(), 0), end());
+	erase(std::remove_if(begin(), end(),
+			[](DNAseq::value_type b) { return !DNAalphabet::isValid(b); }),
+			end());
 	return *this;
 }
 
 DNAseq& DNAseq::removeGaps() {
-	erase(std::remove(begin(), end(), DNAalphabet::N), end());
-	return *this;
-}
-
-DNAseq& DNAseq::compressGaps(int minNGap) {
-	assert(minNGap > 1);
-	DNAseq::reverse_iterator gap_rstart, gap_rend;
-	while((gap_rstart = std::search_n(rbegin(), rend(), minNGap, DNAalphabet::N)) != rend()) { /* reverse gaps backward */
-		for(gap_rend = gap_rstart; *gap_rend == DNAalphabet::N; ++gap_rend) /* find gap end on reverse order */
-			continue;
-		erase(gap_rend.base() + 1, gap_rstart.base());
-	}
-	return *this;
-}
-
-DNAseq& DNAseq::trimGaps(int mode) {
-	if(mode | THREE_PRIME) { /* backward search */
-		DNAseq::reverse_iterator gap_rend;
-		for(gap_rend = rbegin(); DNAalphabet::isGap(*gap_rend) && gap_rend != rend(); ++gap_rend)
-			continue;
-		erase(gap_rend.base(), end());
-	}
-	if(mode | FIVE_PRIME) { /* forward search */
-		DNAseq::iterator gap_end;
-		for(gap_end = begin(); DNAalphabet::isGap(*gap_end) && gap_end != end(); ++gap_end)
-			continue;
-		erase(begin(), gap_end);
-	}
+	erase(std::remove(begin(), end(), DNAalphabet::GAP_BASE), end());
 	return *this;
 }
 
@@ -93,35 +68,47 @@ DNAseq DNAseq::substr(size_t pos, size_t len) const {
 	if(pos + len >= length())
 		len = length() - pos;
 	seg.resize(len);
-	std::copy(begin() + pos, begin() + pos + len, seg.begin());
+	std::copy_n(begin() + pos, len, seg.begin());
 	return seg;
 }
 
-DNAseq::dna_nt2 DNAseq::nt2Encode(const DNAseq& seq) {
-	dna_nt2 nt;
-	nt.reserve((seq.length() + 1) / 4);
-	size_t i = 0;
-	dna_nt2 n = 0;
-	while(i < seq.length()) {
-		if(seq[i] == 0) { // N
-			n = 0;
-			i++;
-		}
-		else {
-
-		}
-
-	}
+BAM::seq_str DNAseq::nt16Encode() const {
+	const size_t L = length(); // raw length
+	const size_t L16 = (L + 1) / 2; // ceil(L / 2)
+	BAM::seq_str seqNt16(L16, 0);
+	for(size_t i = 0; i < L; i += 2)
+		seqNt16[i / 2] = (*this)[i] << 4 | (*this)[i + 1]; // i+1 always valid since the added null at the end of *this
+	return seqNt16;
 }
 
-/**
- * decode a nt2_str into a DNAseq
- */
-DNAseq DNAseq::nt2Decode(const dna_nt2& nt2Seq) {
+DNAseq DNAseq::nt16Decode(size_t L, const BAM::seq_str& seqNt16) {
+	assert(seqNt16.length() == (L + 1) / 2);
+	DNAseq seq(L, 0); // 0 init a DNAseq
+	for(size_t i = 0; i < L; ++i)
+		seq[i] = BAM::getSeqBase(seqNt16, i);
+	return seq;
+}
 
+istream& DNAseq::nt16Load(istream& in) {
+	size_t L = 0; // uncompressed length
+	in.read((char*) &L, sizeof(size_t));
+	resize(L);
+	for(size_t i = 0; i < L; i += 2) {
+		value_type b = in.get();
+		(*this)[i] = (b & DNAalphabet::NT16_UPPER_MASK) >> 4;
+		(*this)[i + 1] = b & DNAalphabet::NT16_LOWER_MASK; // i+1 always valid
+	}
+	return in;
+}
+
+ostream& DNAseq::nt16Save(ostream& out) const {
+	const size_t L = length(); // raw length
+	out.write((const char*) &L, sizeof(size_t));
+	for(size_t i = 0; i < L; i += 2) { // (*this)[i+1] always valid
+		out.put((*this)[i] << 4 | (*this)[i + 1]); // value_type can be fit into char
+	}
+	return out;
 }
 
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */
-
-
