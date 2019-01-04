@@ -265,7 +265,8 @@ int main(int argc, char* argv[]) {
 		infoLog << "No new genomes found, database not modified, quit updating" << endl;
 		return EXIT_SUCCESS;
 	}
-	const uint64_t mtgSize = mtg.size();
+	const uint64_t NS = mtg.size();
+	const uint64_t NG = mtg.numGenomes();
 
 	/* save metagenome */
 	infoLog << "Saving MetaGenome ..." << endl;
@@ -290,7 +291,7 @@ int main(int argc, char* argv[]) {
 	while(mtg.numGenomes() > 0) {
 		if(!blockSeq.empty())
 			blockSeq.push_back(DNAalphabet::GAP_BASE);
-		blockSeq += mtg.top_back().getSeq(); // append seq of the last genome
+		blockSeq += mtg.top_back().getSeqRevOrder(); // append reversed-seq of the last genome
 		mtg.pop_back(); // remove last genome
 		bool isLast = mtg.empty();
 
@@ -306,7 +307,7 @@ int main(int argc, char* argv[]) {
 			infoLog << "Currrent # of bases in FM-index: " << fmidx.length() << endl;
 		}
 	}
-	assert(mtgSize == fmidx.length());
+	assert(NS == fmidx.length());
 
 	infoLog << "Saving FM-index ..." << endl;
 	fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
@@ -326,6 +327,6 @@ int main(int argc, char* argv[]) {
 
 
 	if(!oldDBName.empty())
-		infoLog << "Database updated. Newly added # of genomes: " << nProcessed << " new size: " << mtg.size() << endl;
-	infoLog << "Database built. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
+		infoLog << "Database updated. Newly added # of genomes: " << nProcessed << " new size: " << NS << endl;
+	infoLog << "Database built. Total # of genomes: " << NG << " size: " << NS << endl;
 }

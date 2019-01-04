@@ -70,9 +70,11 @@ struct AlignmentSE {
 		 * @param shift  positions to shift, positive indicating shifting right
 		 */
 		SeedPair& shiftTarget(int32_t shift) {
+			std::cerr << "before shift start: " << start << " end: " << end << std::endl;
 			start -= shift;
 			end -= shift;
 			tShift += shift;
+			std::cerr << "after shift start: " << start << " end: " << end << std::endl;
 			return *this;
 		}
 

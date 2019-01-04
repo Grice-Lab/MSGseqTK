@@ -194,16 +194,19 @@ AlignmentSE::SeedMatchList AlignmentSE::getSeedMatchList(const MetaGenome& mtg, 
 		uint32_t maxIt) {
 	/* get a raw SeedMatchList to store all matches of each MEMS */
 	const size_t N = mems.size();
+	cerr << "N: " << N << endl;
 	SeedMatchList rawList, outputList;
 	rawList.resize(N);
 	for(size_t i = 0; i < N; ++i) {
 		const MEM& mem = mems[i];
 		for(const Loc& loc : mem.locs) {
-			int32_t tid = mtg.getChromIndex(loc.start);
-			int64_t shift = mtg.getChromStart(tid); // shift on the MetaGenome, not chrom
-			assert(loc.start - shift <= UINT32_MAX);
-			/* rawList SeedPair start/end is relative to the chromosome */
-			rawList[i].push_back(SeedPair(mem.from, loc.start - shift, mem.length(), tid));
+			cerr << "mems[" << i << "].loc: " << loc << endl;
+			int32_t tid = mtg.getChromIndex(loc.start); //
+			int32_t tlen = mtg.getChromLen(tid);
+			Loc tLoc = mtg.getChromLoc(tid);
+			assert(loc.start - tLoc.start <= UINT32_MAX);
+			/* rawList SeedPair start/end is relative to the fwd-chromosome */
+			rawList[i].push_back(SeedPair(mem.from, tLoc.end - loc.end, mem.length(), tid));
 		}
 	}
 
@@ -213,14 +216,13 @@ AlignmentSE::SeedMatchList AlignmentSE::getSeedMatchList(const MetaGenome& mtg, 
 		/* get current combination */
 		SeedMatch combination;
 		combination.reserve(N);
-		outputList.back().reserve(N);
 		for(size_t i = 0; i < N; ++i)
 			combination.push_back(rawList[i][idx[i]]);
 		if(combination.isCompatitable())
 			outputList.push_back(combination); // add this combination
 
 		/* find the rightmost SeedMatch that has more elemtns left after current element */
-		size_t next = N - 1;
+		int64_t next = N - 1;
 		while(next >= 0 && idx[next] + 1 >= rawList[next].size())
 			next--;
 		if(next < 0) // so such SeedMatch found, all combination explored

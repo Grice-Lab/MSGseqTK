@@ -128,6 +128,9 @@ public:
 	/** get concatenated seq of this genome, with a GAP_BASE after each chrom but not the last one */
 	DNAseq getSeq() const;
 
+	/** get concatenated seq of this genome in reversed order, with a GAP_BASE after each chrom but not the last one */
+	DNAseq getSeqRevOrder() const;
+
 	/** save this object to binary output */
 	ostream& save(ostream& out) const;
 

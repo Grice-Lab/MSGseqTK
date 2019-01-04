@@ -84,6 +84,19 @@ DNAseq Genome::getSeq() const {
 	return seq;
 }
 
+DNAseq Genome::getSeqRevOrder() const {
+	cerr << "getRevOrder for: " << id << endl;
+	DNAseq revSeq;
+	revSeq.reserve(size() - 1);
+	for(vector<Chrom>::const_reverse_iterator chr = chroms.rbegin(); chr != chroms.rend(); ++chr) {
+		cerr << "  addingChrom RevOrder for: " << chr->name << endl;
+		if(!revSeq.empty())
+			revSeq.push_back(DNAalphabet::GAP_BASE);
+		revSeq += chr->seq;
+	}
+	return revSeq;
+}
+
 string Genome::formatName(const string& name) {
 	return boost::replace_all_regex_copy(
 			boost::replace_all_regex_copy(name, INVALID_NAMEPREFIX_PATTERN, string("")),

@@ -28,12 +28,19 @@
 #include <fstream>
 #include <string>
 #include <cstdlib>
+#include <boost/iostreams/filtering_stream.hpp> /* basic boost streams */
+#include <boost/iostreams/device/file.hpp> /* file sink and source */
+#include <boost/iostreams/filter/zlib.hpp> /* for zlib support */
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filter/bzip2.hpp> /* for bzip2 support */
 #include "EGUtil.h"
 #include "MSGseqTK.h"
 
 using namespace std;
 using namespace EGriceLab;
 using namespace EGriceLab::MSGseqTK;
+
+static const string SEQ_FMT = "fasta";
 
 /**
  * Print introduction of this program
@@ -46,9 +53,15 @@ void printIntro(void) {
  * Print the usage information
  */
 void printUsage(const string& progName) {
+	string ZLIB_SUPPORT;
+	#ifdef HAVE_LIBZ
+	ZLIB_SUPPORT = ", support .gz or .bz2 compressed sequence files";
+	#endif
+
 	cerr << "Usage:    " << progName << "  <DB-NAME> [options]" << endl
 		 << "DB-NAME    STR                   : database name (prefix)" << endl
 		 << "Options:    -l  FILE             : write the genome names included in this database to FILE" << endl
+		 << "            -s  FILE             : write the genome sequences in this database to FILE" << ZLIB_SUPPORT << endl
 		 << "            -a|--anno  FLAG      : also inspect the database annotation GFF file, if exists" << endl
 		 << "            -g|--gff  FILE       : use FILE instead of the default filename for the annotation GFF file" << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
@@ -59,9 +72,10 @@ void printUsage(const string& progName) {
 int main(int argc, char* argv[]) {
 	/* variable declarations */
 	string dbName;
-	string listFn, mtgFn, fmidxFn, gffFn;
+	string listFn, seqFn, mtgFn, fmidxFn, gffFn;
 	ifstream mtgIn, fmidxIn, gffIn;
 	ofstream listOut;
+	boost::iostreams::filtering_ostream seqOut;
 
 	/* parse options */
 	CommandOptions cmdOpts(argc, argv);
@@ -85,6 +99,9 @@ int main(int argc, char* argv[]) {
 
 	if(cmdOpts.hasOpt("-l"))
 		listFn = cmdOpts.getOpt("-l");
+
+	if(cmdOpts.hasOpt("-s"))
+		seqFn = cmdOpts.getOpt("-s");
 
 	if(cmdOpts.hasOpt("-a") || cmdOpts.hasOpt("--anno"))
 		gffFn = MetaGenomeAnno::getDBAnnoFn(dbName);
@@ -130,6 +147,17 @@ int main(int argc, char* argv[]) {
 			cerr << "Unable to write to '" << listFn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
+	}
+
+	if(!seqFn.empty()) {
+#ifdef HAVE_LIBZ
+		if(StringUtils::endsWith(seqFn, GZIP_FILE_SUFFIX))
+			seqOut.push(boost::iostreams::gzip_compressor());
+		else if(StringUtils::endsWith(seqFn, BZIP2_FILE_SUFFIX))
+			seqOut.push(boost::iostreams::bzip2_compressor());
+		else { }
+#endif
+		seqOut.push(boost::iostreams::file_sink(seqFn));
 	}
 
 	/* load data */
@@ -187,8 +215,21 @@ int main(int argc, char* argv[]) {
 				"# of total annotations: " << mta.numAnnotations() << endl;
 	}
 
+	/* if -l requested */
 	if(listOut.is_open()) {
+		infoLog << "Writing genome name list" << endl;
 		for(const Genome& genome : mtg.getGenomes())
 			listOut << genome.getId() << "\t" << genome.getName() << endl;
+	}
+
+	/* if -s requested */
+	if(seqOut.is_complete()) {
+		infoLog << "Writing genome sequences" << endl;
+		SeqIO seqO(&seqOut, SEQ_FMT);
+		for(const Genome& genome : mtg.getGenomes())
+			for(const Genome::Chrom& chr : genome.getChroms())
+				seqO.writeSeq(PrimarySeq(chr.seq, MetaGenome::getChromId(genome.getId(), chr.name),
+						"genomeId=" + genome.getId() + ";genomeName=" + genome.getName() +
+						";chromName=" + chr.name));
 	}
 }
