@@ -16,13 +16,17 @@ using namespace EGriceLab::MSGseqTK;
 
 int main() {
 	/* part 1, Genome test */
+	DNAseq chr1_1("ATCGNatcgnTCGANtcgan");
+	DNAseq chr1_2("TCGANtcganATCGNatcgn");
 	Genome g1("g1", "Staphylococcus aureus");
-	g1.addChrom(Genome::Chrom("chr1", DNAseq("ATCGNatcgnTCGANtcgan")));
-	g1.addChrom(Genome::Chrom("chr2", DNAseq("TCGANtcganATCGNatcgn")));
+	g1.addChrom(Genome::Chrom("chr1", chr1_1.length()));
+	g1.addChrom(Genome::Chrom("chr2", chr1_2.length()));
 
+	DNAseq chr2_1("AAAAANgggggNCCCCCNtttttn");
+	DNAseq chr2_2("TTTTTNcccccNGGGGGNaaaaan");
 	Genome g2("g2", "Homo sapiens");
-	g2.addChrom(Genome::Chrom("chr1", DNAseq("AAAAANgggggNCCCCCNtttttn")));
-	g2.addChrom(Genome::Chrom("chr2", DNAseq("TTTTTNcccccNGGGGGNaaaaan")));
+	g2.addChrom(Genome::Chrom("chr1", chr2_1.length()));
+	g2.addChrom(Genome::Chrom("chr2", chr2_2.length()));
 
 	ostringstream out;
 	g1.save(out);
@@ -58,8 +62,6 @@ int main() {
 		cerr << "g1.chr1 == g1N.chr1: " << (g1.getChrom(0) == g1N.getChrom(0)) << endl;
 		cerr << "g1.chr1.name: " << g1.getChrom(0).name << endl;
 		cerr << "g1N.chr1.name: " << g1N.getChrom(0).name << endl;
-		cerr << "g1.chr1.seq: " << g1.getChrom(0).seq << endl;
-		cerr << "g1N.chr1.seq:" << g1N.getChrom(0).seq << endl;
 		cerr << "g1.chr1.name: " << g1.getChrom(0).name << endl;
 		cerr << "g1.chr2 == g1N.chr2: " << (g1.getChrom(1) == g1N.getChrom(1)) << endl;
 
@@ -75,10 +77,10 @@ int main() {
 	/* part 2, MetaGenome test */
 	out.str("");
 	MetaGenome mtg1, mtg2;
-	mtg1.push_back(g2);
-	mtg1.push_back(g1);
-	mtg2.push_back(g2N);
-	mtg2.push_back(g1N);
+	mtg1.addGenome(g2, chr2_1 + DNAseq::DNAgap + chr2_2 + DNAseq::DNAgap);
+	mtg1.addGenome(g1, chr1_1 + DNAseq::DNAgap + chr1_2 + DNAseq::DNAgap);
+	mtg2.addGenome(g2N, chr2_1 + DNAseq::DNAgap + chr2_2 + DNAseq::DNAgap);
+	mtg2.addGenome(g1N, chr1_1 + DNAseq::DNAgap + chr1_2 + DNAseq::DNAgap);
 	mtg1.updateIndex();
 	mtg2.updateIndex();
 

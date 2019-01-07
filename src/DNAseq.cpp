@@ -63,15 +63,6 @@ DNAseq& DNAseq::removeGaps() {
 	return *this;
 }
 
-DNAseq DNAseq::substr(size_t pos, size_t len) const {
-	DNAseq seg;
-	if(pos + len >= length())
-		len = length() - pos;
-	seg.resize(len);
-	std::copy_n(begin() + pos, len, seg.begin());
-	return seg;
-}
-
 BAM::seq_str DNAseq::nt16Encode() const {
 	const size_t L = length(); // raw length
 	const size_t L16 = (L + 1) / 2; // ceil(L / 2)

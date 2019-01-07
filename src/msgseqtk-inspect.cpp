@@ -226,10 +226,13 @@ int main(int argc, char* argv[]) {
 	if(seqOut.is_complete()) {
 		infoLog << "Writing genome sequences" << endl;
 		SeqIO seqO(&seqOut, SEQ_FMT);
-		for(const Genome& genome : mtg.getGenomes())
-			for(const Genome::Chrom& chr : genome.getChroms())
-				seqO.writeSeq(PrimarySeq(chr.seq, MetaGenome::getChromId(genome.getId(), chr.name),
-						"genomeId=" + genome.getId() + ";genomeName=" + genome.getName() +
-						";chromName=" + chr.name));
+		for(size_t cid = 0; cid < mtg.numChroms(); ++cid) {
+			size_t gid = mtg.getGenomeIndexByChromIdx(cid);
+			const string& genomeId = mtg.getGenomeId(gid);
+			const string& genomeName = mtg.getGenomeName(gid);
+			const string& chrName = mtg.getChromName(cid);
+			seqO.writeSeq(PrimarySeq(mtg.getChromSeq(cid, false), MetaGenome::getChromId(genomeName, chrName),
+					"genomeId=" + genomeId + ";genomeName=" + genomeName + ";chromName=" + chrName));
+		}
 	}
 }

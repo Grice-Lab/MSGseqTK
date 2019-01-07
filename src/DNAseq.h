@@ -34,6 +34,11 @@ public:
 	/* nested types and enums */
 	enum TRIM_MODE { FIVE_PRIME = 1, THREE_PRIME, BOTH_PRIME };
 
+	/**
+	 * Re-introduce base class methods
+	 */
+	using basic_string<nt16_t>::append;
+
 	/* constructors */
 	/** default constructor */
 	DNAseq() = default;
@@ -48,6 +53,14 @@ public:
 	explicit DNAseq(const string& str) {
 		assign(str);
 	}
+
+	/** construting/converting from a basic_string<nt16_t> */
+	DNAseq(const basic_string<nt16_t>& seq) : basic_string<nt16_t>(seq)
+	{  }
+
+	/** moving from a basic_string<nt16_t> */
+	DNAseq(std::basic_string<nt16_t>&& seq) : basic_string<nt16_t>(seq)
+	{  }
 
 	/* member methods */
 	/** copy assignment a DNAseq from a symbol string */
@@ -104,7 +117,9 @@ public:
 	}
 
 	/** get a substr copy of this object */
-	DNAseq substr(size_t pos = 0, size_t len = npos) const;
+	DNAseq substr(size_t pos = 0, size_t len = npos) const {
+		return basic_string<nt16_t>::substr(pos, len);
+	}
 
 	/**
 	 * Get the decoded character at given position
@@ -133,10 +148,6 @@ public:
 	/** Assign a string as a DNAseq */
 	DNAseq& assign(const string& str);
 
-	/**
-	 * Re-introduce all base class append methods
-	 */
-	using basic_string<nt16_t>::append;
 
 	/**
 	 * Append a seq string (symbols) to this DNAseq

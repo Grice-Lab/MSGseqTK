@@ -10,6 +10,7 @@
 
 #include <string>
 #include <limits>
+#include <cfloat>
 #include <cassert>
 
 using std::string;
@@ -30,6 +31,8 @@ const string BAM_SUFFIX = ".bam";
 
 const int MAX_NAME_LENGTH = 4096;
 const double PHRED_LOG_BASE = 10;
+
+const double MIN_LOGLIK_EXP = DBL_MIN_EXP; // min loglik exp allowed to avoid numeric under-flow
 
 }
 }

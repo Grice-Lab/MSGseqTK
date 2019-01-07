@@ -70,7 +70,7 @@ struct MEM {
 
 	/**
 	 * fill the locs information of this MEM
-	 * locs are lazy-filled to save computation time
+	 * locs are based on the forward direction of the original seq
 	 */
 	MEM& findLocs();
 

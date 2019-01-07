@@ -130,11 +130,11 @@ public:
 
 	/* static methods */
 	static double phredQ2P(double q) {
-		return ::pow(10.0, q / -PHRED_SCALE);
+		return ::pow(10.0, q / PHRED_SCALE);
 	}
 
-	static double phreadP2Q(double p) {
-		return -PHRED_SCALE * ::log10(p);
+	static double phredP2Q(double p) {
+		return PHRED_SCALE * ::log10(p);
 	}
 };
 

@@ -274,10 +274,6 @@ vector<Loc> FMIndex::locateAll(const DNAseq& pattern) const {
     return locs;
 }
 
-Loc FMIndex::reverseLoc(const Loc& loc) const {
-	return Loc(reverseLoc(loc.end - 1) - 1, reverseLoc(loc.start));
-}
-
 FMIndex::FMIndex(const BCarray_t& B, const BCarray_t& C, const DNAseq& bwtSeq, bool keepSA)
 : B(B), C(C), bwt(WaveletTreeRRR(bwtSeq, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE)), keepSA(keepSA)
 {

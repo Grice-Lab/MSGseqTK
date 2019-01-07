@@ -33,12 +33,23 @@ size_t MetaGenome::numChroms() const {
 	return N;
 }
 
+void MetaGenome::addGenome(const Genome& genome, const DNAseq& genomeSeq) {
+	if(genome.size() != genomeSeq.length()) {
+		warningLog << "genome size and seq length are different, ignore" << endl;
+		return;
+	}
+	genomes.push_back(genome);
+	seq += genomeSeq;
+}
+
 ostream& MetaGenome::save(ostream& out) const {
 	/* save basic info */
 	const size_t NG = numGenomes();
 	out.write((const char*) &NG, sizeof(size_t));
 	for(const Genome& genome : genomes)
 		genome.save(out);
+	/* save seq */
+	seq.save(out);
 	return out;
 }
 
@@ -49,6 +60,9 @@ istream& MetaGenome::load(istream& in) {
 	genomes.resize(NG);
 	for(size_t i = 0; i < NG; ++i)
 		genomes[i].load(in);
+	/* load seq */
+	seq.load(in);
+	/* update index */
 	updateIndex();
 	return in;
 }
@@ -107,19 +121,15 @@ void MetaGenome::updateIndex() {
 			chromName2Idx[chr.name] = cid;
 			chromIdx2GenomeIdx.push_back(gid);
 			chromIdx2Nbefore.push_back(nid);
-			chromIdx2Loc.push_back(Loc(gStart + cStart, gStart + cStart + chr.size() + 1)); // include the null terminal
+			chromIdx2Loc.push_back(Loc(gStart + cStart, gStart + cStart + chr.size + 1)); // include the null terminal
 			cid++;
 			nid++;
-			cStart += chr.size() + 1;
+			cStart += chr.size + 1;
 		}
 		assert(cStart == genome.size());
 		genomeIdx2Loc.push_back(Loc(gStart, gStart + cStart));
 		gid++;
 		gStart += cStart;
-	}
-	cerr << "chromIdx2Loc.size(): " << chromIdx2Loc.size() << endl;
-	for(size_t i = 0; i < chromIdx2Loc.size(); ++i) {
-		cerr << "chrom[" << i << "]: " << chromNames[i] << " " << chromIdx2Loc[i] << endl;
 	}
 }
 

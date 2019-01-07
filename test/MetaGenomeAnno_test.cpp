@@ -18,12 +18,16 @@ using namespace EGriceLab::MSGseqTK;
 int main() {
 	/* part 1, Genome test */
 	Genome g1("Staphylococcus aureus");
-	g1.addChrom(Genome::Chrom("chr1", DNAseq("ATCGNatcgnTCGANtcgan")));
-	g1.addChrom(Genome::Chrom("chr2", DNAseq("TCGANtcganATCGNatcgn")));
+	DNAseq chr1_1("ATCGNatcgnTCGANtcgan");
+	DNAseq chr1_2("TCGANtcganATCGNatcgn");
+	g1.addChrom(Genome::Chrom("chr1", chr1_1.length()));
+	g1.addChrom(Genome::Chrom("chr2", chr1_2.length()));
 
 	Genome g2("Homo sapiens");
-	g2.addChrom(Genome::Chrom("chr1", DNAseq("AAAAANgggggNCCCCCNtttttn")));
-	g2.addChrom(Genome::Chrom("chr2", DNAseq("TTTTTNcccccNGGGGGNaaaaan")));
+	DNAseq chr2_1("AAAAANgggggNCCCCCNtttttn");
+	DNAseq chr2_2("TTTTTNcccccNGGGGGNaaaaan");
+	g2.addChrom(Genome::Chrom("chr1", chr2_1.length()));
+	g2.addChrom(Genome::Chrom("chr2", chr2_2.length()));
 
 	MetaGenomeAnno mta1;
 	MetaGenomeAnno mta2;

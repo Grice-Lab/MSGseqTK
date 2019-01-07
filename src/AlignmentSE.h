@@ -70,11 +70,9 @@ struct AlignmentSE {
 		 * @param shift  positions to shift, positive indicating shifting right
 		 */
 		SeedPair& shiftTarget(int32_t shift) {
-			std::cerr << "before shift start: " << start << " end: " << end << std::endl;
 			start -= shift;
 			end -= shift;
 			tShift += shift;
-			std::cerr << "after shift start: " << start << " end: " << end << std::endl;
 			return *this;
 		}
 
@@ -259,7 +257,7 @@ struct AlignmentSE {
 	}
 
 	/** evaluate this alignment log-liklihood using seq, align-path and quality */
-	void evaluate();
+	AlignmentSE& evaluate();
 
 	/** get log10-liklihood of this alignment */
 	double log10lik() const {

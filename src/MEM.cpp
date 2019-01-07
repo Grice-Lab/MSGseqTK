@@ -104,7 +104,8 @@ MEM MEM::findMEM(const PrimarySeq* seq, const FMIndex* fmidx, uint64_t from, STR
 MEM& MEM::findLocs() {
 	for(uint64_t i = SAstart; i < SAend; ++i) {
 		uint64_t start = fmidx->accessSA(i);
-		locs.push_back(Loc(start, start + length()));
+		locs.push_back(fmidx->reverseLoc(Loc(start, start + length())));
+//		locs.push_back(Loc(start, start + length()));
 	}
 	return *this;
 }

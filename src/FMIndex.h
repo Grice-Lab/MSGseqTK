@@ -184,14 +184,16 @@ public:
 	/**
 	 * reverse a loc on this FM-index
 	 * @param i  0-based loc
-	 * @return  1-based loc on the reversed direction of the original seq
+	 * @return  1-based loc on the reversed direction
 	 */
 	saidx_t reverseLoc(saidx_t i) const {
-		return length() - i - 1;
+		return length() - 1 - i;
 	}
 
 	/** reverse the coordinates of a Loc on this FM-index */
-	Loc reverseLoc(const Loc& loc) const;
+	Loc reverseLoc(const Loc& loc) const {
+		return Loc(length() - 1 - loc.end, length() - 1 - loc.start); // FM-index length is 1 more than the original seq length
+	}
 
 	/* non-member functions */
 	friend FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs);
@@ -217,6 +219,7 @@ private:
 	BitSeqRRR SAbit; /* BitSeq index telling whether a SA was sampled */
 	SArray_t SAsampled; /* sampled SA vector */
 
+	/* static member fields */
 public:
 	static const saidx_t MAX_LENGTH = std::numeric_limits<saidx_t>::max();
 };

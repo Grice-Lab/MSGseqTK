@@ -100,6 +100,11 @@ public:
 		return genomeIds[i];
 	}
 
+	/** get genomeName of given pos */
+	const string& getGenomeName(size_t i) const {
+		return getGenome(i).getName();
+	}
+
 	/** get chromName of given pos */
 	const string& getChromName(size_t i) const {
 		return chromNames[i];
@@ -180,10 +185,15 @@ public:
 	}
 
 	/**
-	 * get the end of the i-th genome
+	 * get the end of the i-th genome, including GAP_BASE-terminal
 	 */
 	int64_t getGenomeEnd(size_t i) const {
 		return getGenomeLoc(i).end;
+	}
+
+	/** get the length of the i-th genome, including GAP_BASE-terminal */
+	uint64_t getGenomeLen(size_t i) const {
+		return getGenomeLoc(i).length();
 	}
 
 	/**
@@ -201,14 +211,14 @@ public:
 	}
 
 	/**
-	 * get the end of the i-th chrom
+	 * get the end of the i-th chrom, including GAP_BASE-terminal
 	 */
 	int64_t getChromEnd(size_t i) const {
 		return getChromLoc(i).end;
 	}
 
 	/**
-	 * get the length of the i-th chrom
+	 * get the length of the i-th chrom, including GAP_BASE-terminal
 	 */
 	uint64_t getChromLen(size_t i) const {
 		return getChromLoc(i).length();
@@ -244,35 +254,23 @@ public:
 	/**
 	 * add a genome at the end of this MetaGenome
 	 */
-	void push_back(const Genome& genome) {
-		genomes.push_back(genome);
+	void addGenome(const Genome& genome, const DNAseq& genomeSeq);
+
+	/** get chrom seq by genome index and chrom index, including GAP_BASE terminal */
+	DNAseq getChromSeq(size_t chrIdx, bool terminalGap = true) const {
+		return terminalGap ? seq.substr(getChromStart(chrIdx), getChromLen(chrIdx)) :
+				seq.substr(getChromStart(chrIdx), getChromLen(chrIdx) - 1);
 	}
 
-	/** get the last genome in this MetaGenome */
-	const Genome& top_back() const {
-		return genomes.back();
+	/** get genome seq by genome index, including GAP_BASE terminal */
+	DNAseq getGenomeSeq(size_t genomeIdx, bool terminalGap = true) const {
+		return terminalGap ? seq.substr(getGenomeStart(genomeIdx), getGenomeLen(genomeIdx)) :
+				seq.substr(getGenomeStart(genomeIdx), getGenomeLen(genomeIdx) - 1);
 	}
 
-	/** erase the last genome, if any */
-	void pop_back() {
-		if(genomes.empty())
-			return;
-		genomes.erase(genomes.end() - 1);
-	}
-
-	/** get chrom seq by genome index and chrom index */
-	const DNAseq& getChromSeq(size_t genomeIdx, size_t chrIdx) const {
-		return genomes[genomeIdx].chroms[getChromNbefore(chrIdx)].seq;
-	}
-
-	/** get chrom seq by chrom index only */
-	const DNAseq& getChromSeq(size_t chrIdx) const {
-		return getChromSeq(getGenomeIndexByChromIdx(chrIdx), chrIdx);
-	}
-
-	/** get genome seq by genome index */
-	DNAseq getGenomeSeq(size_t genomeIdx) const {
-		return genomes[genomeIdx].getSeq();
+	/** get a segment/subseq of this metagenome */
+	DNAseq subseq(size_t pos = 0, size_t len = DNAseq::npos) const {
+		return seq.substr(pos, len);
 	}
 
 	/** save this object to binary output */
@@ -302,6 +300,7 @@ public:
 	/* member fields */
 private:
 	vector<Genome> genomes;
+	DNAseq seq; // GAP_BASE seperated contatenated sequence of this metagenome
 	NAME_INDEX genomeIds;
 	NAME_INDEX chromNames;
 	GENOME_INDEX genomeId2Idx;
@@ -320,7 +319,7 @@ public:
 };
 
 inline bool operator==(const MetaGenome& lhs, const MetaGenome& rhs) {
-	return lhs.genomes == rhs.genomes; /* equal genomes guarantees equal index */
+	return lhs.genomes == rhs.genomes && lhs.seq == rhs.seq; /* equal genomes guarantees equal index */
 }
 
 inline bool operator!=(const MetaGenome& lhs, const MetaGenome& rhs) {

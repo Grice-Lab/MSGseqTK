@@ -21,13 +21,13 @@ const string Genome::REPLACEMENT_STR = ".";
 
 ostream& Genome::Chrom::save(ostream& out) const {
 	StringUtils::saveString(name, out);
-	seq.nt16Save(out); /* use compressed saving */
+	out.write((const char*) &size, sizeof(uint64_t));
 	return out;
 }
 
 istream& Genome::Chrom::load(istream& in) {
 	StringUtils::loadString(name, in);
-	seq.nt16Load(in);
+	in.read((char*) &size, sizeof(uint64_t));
 	return in;
 }
 
@@ -41,15 +41,25 @@ bool Genome::hasChrom(const string& chrName) const {
 uint64_t Genome::getChromSize(const string& chrName) const {
 	for(const Chrom& chr : chroms)
 		if(chr.name == chrName)
-			return chr.size();
+			return chr.size;
 	return 0;
+}
+
+size_t Genome::getChromIndex(uint64_t loc) const {
+	uint64_t start = 0;
+	for(vector<Chrom>::const_iterator chr = chroms.begin(); chr != chroms.end(); ++chr) {
+		if(start <= loc && loc <= start + chr->size) /* include null terminal */
+			return chr - chroms.begin();
+		start += chr->size + 1; /* with null terminal */
+	}
+	return -1;
 }
 
 ostream& Genome::save(ostream& out) const {
 	StringUtils::saveString(id, out);
 	StringUtils::saveString(name, out);
-	size_t NC = numChroms();
-	out.write((const char*) &NC, sizeof(size_t));
+	size_t NChrom = numChroms();
+	out.write((const char*) &NChrom, sizeof(size_t));
 	for(const Chrom& chr : chroms)
 		chr.save(out);
 	return out;
@@ -69,32 +79,8 @@ istream& Genome::load(istream& in) {
 uint64_t Genome::size() const {
 	uint64_t size = 0;
 	for(const Chrom& chr : chroms)
-		size += chr.size();
+		size += chr.size;
 	return size + numChroms(); /* add one null gap after each chromosome */
-}
-
-DNAseq Genome::getSeq() const {
-	DNAseq seq;
-	seq.reserve(size() - 1);
-	for(const Chrom& chr : chroms) {
-		if(!seq.empty())
-			seq.push_back(DNAalphabet::GAP_BASE);
-		seq += chr.seq;
-	}
-	return seq;
-}
-
-DNAseq Genome::getSeqRevOrder() const {
-	cerr << "getRevOrder for: " << id << endl;
-	DNAseq revSeq;
-	revSeq.reserve(size() - 1);
-	for(vector<Chrom>::const_reverse_iterator chr = chroms.rbegin(); chr != chroms.rend(); ++chr) {
-		cerr << "  addingChrom RevOrder for: " << chr->name << endl;
-		if(!revSeq.empty())
-			revSeq.push_back(DNAalphabet::GAP_BASE);
-		revSeq += chr->seq;
-	}
-	return revSeq;
 }
 
 string Genome::formatName(const string& name) {

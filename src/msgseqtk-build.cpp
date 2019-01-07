@@ -173,6 +173,22 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
+	/* open output */
+	mtgFn = dbName + METAGENOME_FILE_SUFFIX;
+	fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
+
+	mtgOut.open(mtgFn.c_str(), ios_base::out | ios_base::binary);
+	if(!mtgOut.is_open()) {
+		cerr << "Unable to write to '" << mtgFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+
+	fmidxOut.open(fmidxFn.c_str(), ios_base::out | ios_base::binary);
+	if(!fmidxOut.is_open()) {
+		cerr << "Unable to write to '" << fmidxFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+
 	MetaGenome mtg;
 	FMIndex fmidx;
 
@@ -226,6 +242,7 @@ int main(int argc, char* argv[]) {
 			warningLog << "Genome " << Genome::displayId(genomeId, genomeName) << " already exists in the database, ignore" << endl;
 			continue;
 		}
+
 		/* open genome file */
 		boost::iostreams::filtering_istream genomeIn;
 #ifdef HAVE_LIBZ
@@ -244,20 +261,24 @@ int main(int argc, char* argv[]) {
 
 		/* read in genome sequences */
 		Genome genome(genomeId, genomeName);
+		DNAseq genomeSeq;
 		infoLog << "Reading genome " << genome.displayId() << endl;
 		SeqIO seqI(&genomeIn, fmt);
 		while(seqI.hasNext()) {
 			const PrimarySeq& chr = seqI.nextSeq();
-			string chrName = chr.getName();
+			const string& chrName = chr.getName();
 			const DNAseq& chrSeq = chr.getSeq();
 			debugLog << "  adding " << chrName << " with length " << chrSeq.length() << endl;
-			genome.addChrom(Genome::Chrom(chrName, chrSeq));
+			genome.addChrom(Genome::Chrom(chrName, chrSeq.length()));
+			genomeSeq += chrSeq;
+			genomeSeq.push_back(DNAalphabet::GAP_BASE);
 		}
 
 		/* add this genome */
 		infoLog << "  genome " << genome.displayId() << " added into database" << endl;
-		mtg.push_back(genome);
+		mtg.addGenome(genome, genomeSeq);
 	}
+
 	/* update final index */
 	infoLog << "Updating MetaGenome indices" << endl;
 	mtg.updateIndex();
@@ -265,18 +286,34 @@ int main(int argc, char* argv[]) {
 		infoLog << "No new genomes found, database not modified, quit updating" << endl;
 		return EXIT_SUCCESS;
 	}
-	const uint64_t NS = mtg.size();
-	const uint64_t NG = mtg.numGenomes();
 
-	/* save metagenome */
-	infoLog << "Saving MetaGenome ..." << endl;
-	mtgFn = dbName + METAGENOME_FILE_SUFFIX;
-	/* open output */
-	mtgOut.open(mtgFn.c_str(), ios_base::out | ios_base::binary);
-	if(!mtgOut.is_open()) {
-		cerr << "Unable to write to '" << mtgFn << "': " << ::strerror(errno) << endl;
-		return EXIT_FAILURE;
+	infoLog << "Building FM-index with backward-incremental method" << endl;
+	DNAseq blockSeq;
+	blockSeq.reserve(blockSize * MBP_UNIT);
+	size_t k = 0;
+	size_t nBlock = 0;
+	for(size_t i = 0; i < mtg.numGenomes(); ++i) {
+		blockSeq += mtg.getGenomeSeq(i);
+		nBlock++;
+		bool isLast = i == mtg.numGenomes() - 1;
+
+		/* process block, if large enough */
+		if(blockSeq.length() >= blockSize * MBP_UNIT || isLast) { /* last genome or full block */
+			if(!isLast)
+				infoLog << "Adding " << nBlock << " of genomes in block " << ++k << " into FM-index" << endl;
+			else
+				infoLog << "Adding " << nBlock << " of genomes in block " << ++k << " into FM-index and building final sampled Suffix-Array" << endl;
+			blockSeq.erase(blockSeq.length() - 1); // remove GAP_BASE terminal
+			blockSeq.reverse(); // reverse genome sequences
+			fmidx = FMIndex(blockSeq, isLast) + fmidx; /* always use freshly built FMIndex as lhs */
+			blockSeq.clear();
+			nBlock = 0;
+			infoLog << "Currrent # of bases in FM-index: " << fmidx.length() << endl;
+		}
 	}
+	assert(mtg.size() == fmidx.length());
+
+	/* save output */
 	saveProgInfo(mtgOut);
 	mtg.save(mtgOut);
 	if(mtgOut.bad()) {
@@ -285,38 +322,6 @@ int main(int argc, char* argv[]) {
 	}
 	infoLog << "MetaGenome info saved to '" << mtgFn << "'" << endl;
 
-	infoLog << "Building FM-index with backward-incremental method" << endl;
-	DNAseq blockSeq;
-	size_t k = 0;
-	while(mtg.numGenomes() > 0) {
-		if(!blockSeq.empty())
-			blockSeq.push_back(DNAalphabet::GAP_BASE);
-		blockSeq += mtg.top_back().getSeqRevOrder(); // append reversed-seq of the last genome
-		mtg.pop_back(); // remove last genome
-		bool isLast = mtg.empty();
-
-		/* process block, if large enough */
-		if(blockSeq.length() >= blockSize * MBP_UNIT || isLast) { /* last genome or full block */
-			if(!isLast)
-				infoLog << "Adding block " << ++k << " into FM-index" << endl;
-			else
-				infoLog << "Adding block " << ++k << " into FM-index and building final sampled Suffix-Array" << endl;
-			blockSeq.reverse(); // reverse genome sequences
-			fmidx = FMIndex(blockSeq, isLast) + fmidx; /* always use freshly built FMIndex as lhs */
-			blockSeq.clear();
-			infoLog << "Currrent # of bases in FM-index: " << fmidx.length() << endl;
-		}
-	}
-	assert(NS == fmidx.length());
-
-	infoLog << "Saving FM-index ..." << endl;
-	fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
-	/* open output */
-	fmidxOut.open(fmidxFn.c_str(), ios_base::out | ios_base::binary);
-	if(!fmidxOut.is_open()) {
-		cerr << "Unable to write to '" << fmidxFn << "': " << ::strerror(errno) << endl;
-		return EXIT_FAILURE;
-	}
 	saveProgInfo(fmidxOut);
 	fmidx.save(fmidxOut);
 	if(fmidxOut.bad()) {
@@ -325,8 +330,7 @@ int main(int argc, char* argv[]) {
 	}
 	infoLog << "FM-index saved to '" << fmidxFn << "'" << endl;
 
-
 	if(!oldDBName.empty())
-		infoLog << "Database updated. Newly added # of genomes: " << nProcessed << " new size: " << NS << endl;
-	infoLog << "Database built. Total # of genomes: " << NG << " size: " << NS << endl;
+		infoLog << "Database updated. Newly added # of genomes: " << nProcessed << " new size: " << mtg.size() << endl;
+	infoLog << "Database built. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
 }

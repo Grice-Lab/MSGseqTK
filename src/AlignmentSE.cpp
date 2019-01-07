@@ -28,12 +28,11 @@ const boost::regex AlignmentSE::MDTAG_MAIN_PATTERN = boost::regex("([A-Z]|\\^[A-
 
 AlignmentSE& AlignmentSE::initScores() {
 //	assert(isInitiated());
+	M.setConstant(infV);
+	I.setConstant(infV);
+	D.setConstant(infV);
 	M.row(0).setZero();
 	M.col(0).setZero();
-	D.row(0).setConstant(infV);
-	D.col(0).setConstant(infV);
-	I.row(0).setConstant(infV);
-	I.col(0).setConstant(infV);
 	return *this;
 }
 
@@ -128,7 +127,7 @@ string AlignmentSE::getAlnMDTag() const {
 	uint32_t prev_op = -1;
 	uint32_t len = 0;
 	for(uint32_t k = 0, i = alnFrom, j = alnStart; k < alnPath.length(); ++k) { // i on query, j on target, k on alnPath
-		uint32_t op = alnPath[k] != BAM_CMATCH ? alnPath[k] : query[i] == target[j] ? BAM_CEQUAL : BAM_CDIFF; // differentiate = and X in MD tag
+		uint32_t op = alnPath[k] != BAM_CMATCH ? alnPath[k] : query[i] & target[j] ? BAM_CEQUAL : BAM_CDIFF; // differentiate = and X in MD tag
 		switch(op) {
 		case BAM_CEQUAL:
 			i++;
@@ -194,19 +193,17 @@ AlignmentSE::SeedMatchList AlignmentSE::getSeedMatchList(const MetaGenome& mtg, 
 		uint32_t maxIt) {
 	/* get a raw SeedMatchList to store all matches of each MEMS */
 	const size_t N = mems.size();
-	cerr << "N: " << N << endl;
 	SeedMatchList rawList, outputList;
 	rawList.resize(N);
 	for(size_t i = 0; i < N; ++i) {
 		const MEM& mem = mems[i];
 		for(const Loc& loc : mem.locs) {
-			cerr << "mems[" << i << "].loc: " << loc << endl;
 			int32_t tid = mtg.getChromIndex(loc.start); //
 			int32_t tlen = mtg.getChromLen(tid);
 			Loc tLoc = mtg.getChromLoc(tid);
-			assert(loc.start - tLoc.start <= UINT32_MAX);
-			/* rawList SeedPair start/end is relative to the fwd-chromosome */
-			rawList[i].push_back(SeedPair(mem.from, tLoc.end - loc.end, mem.length(), tid));
+			assert(loc.start - tLoc.start <= UINT32_MAX); // BAM file only support up-to UINT32_MAX chrom size
+			/* rawList SeedPair start/end is relative to the chromosome */
+			rawList[i].push_back(SeedPair(mem.from, loc.start - tLoc.start, mem.length(), tid));
 		}
 	}
 
@@ -310,9 +307,9 @@ uint32_t AlignmentSE::getAlnLen() const {
 	return alnLen;
 }
 
-void AlignmentSE::evaluate() {
+AlignmentSE& AlignmentSE::evaluate() {
 	if(alnPath.empty())
-		return;
+		*this;
 	log10P = 0;
 	/* process 5' soft-clips, if any */
 	for(uint32_t i = 0; i < getClip5Len(); ++i)
@@ -322,7 +319,7 @@ void AlignmentSE::evaluate() {
 		state_str::value_type s = alnPath[k];
 		switch(s) {
 		case BAM_CMATCH:
-			if(query[i] == target[j]) // BAM_CEQUAL
+			if(query[i] & target[j]) // IUPAC match (BAM_CEQUAL)
 				log10P += ::log10(1 - QualStr::phredQ2P(qual[i]));
 			else
 				log10P += qual[i] / QualStr::PHRED_SCALE;
@@ -348,6 +345,8 @@ void AlignmentSE::evaluate() {
 	for(uint32_t i = alnTo; i < query.length(); ++i) {
 		log10P += qual[i] / QualStr::PHRED_SCALE - (ss->clipPenalty - ss->mismatchPenalty); // use additional penalty as the difference between mismatch and clip
 	}
+
+	return *this;
 }
 
 vector<AlignmentSE>& AlignmentSE::calcMapQ(vector<AlignmentSE>& alnList) {
@@ -357,15 +356,17 @@ vector<AlignmentSE>& AlignmentSE::calcMapQ(vector<AlignmentSE>& alnList) {
 //	VectorXd prior = VectorXd::Ones(N); // use a uniform prior
 	VectorXd pr(N);    // alignment probability
 	for(size_t i = 0; i < N; ++i)
-		pr(N) = alnList[i].loglik();
-	pr = pr.array().exp();
+		pr(i) = alnList[i].loglik();
+	double maxV = pr.maxCoeff();
+	double scale = maxV < MIN_LOGLIK_EXP ? maxV : 0;
+	pr = (pr.array()-scale).exp();
 	/* get postP */
 //	VectorXd postP = prior.cwiseProduct(pr);
 	VectorXd postP = pr / pr.sum(); // uniform prior ignored
 	/* assign postP and mapQ */
 	for(size_t i = 0; i < N; ++i) {
 		alnList[i].postP = postP(i);
-		double mapQ = QualStr::phreadP2Q(1 - postP(i));
+		double mapQ = QualStr::phredP2Q(1 - postP(i));
 		assert(!::isnan(mapQ));
 		alnList[i].mapQ = std::min(static_cast<uint8_t>(::round(mapQ)), QualStr::MAX_Q_SCORE);
 	}
