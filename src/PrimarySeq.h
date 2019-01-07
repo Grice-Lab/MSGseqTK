@@ -11,6 +11,8 @@
 #include <string>
 #include <iostream>
 #include <cstdint>
+#include <algorithm>
+#include <cctype>
 #include "DNAseq.h"
 #include "MSGseqTKConst.h"
 #include "QualStr.h"
@@ -166,6 +168,20 @@ private:
 	string name;
 	string desc;
 	QualStr qual;
+
+	/* static fields */
+public:
+	static const char FILL_CHAR = '.';
+
+	/* static methods */
+public:
+	/** format a given seq name for display to remove white space characters */
+	static string formatName(string name) {
+		std::replace_if(name.begin(), name.end(),
+				[] (char c) { return ::isspace(c); },
+				FILL_CHAR);
+		return name;
+	}
 };
 
 inline bool operator==(const PrimarySeq& lhs, const PrimarySeq& rhs) {

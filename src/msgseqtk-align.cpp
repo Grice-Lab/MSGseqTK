@@ -336,14 +336,14 @@ int main(int argc, char* argv[]) {
 	/* initiate RNG */
 	RNG rng(seed);
 
-	/* construct a BAMheader */
 	map<string, uint32_t> targetLen;
 	for(size_t i = 0; i < mtg.getChromNames().size(); ++i)
 		targetLen[mtg.getChromName(i)] = mtg.getChromLen(i);
 
-	BAMheader header(targetLen);
-	/* add additional tags */
-	header.addTag("@HD", "SO:unsorted");
+	BAMheader header(mtg.getChromNames(), targetLen);
+
+	/* add header and additional tags */
+	header.setHDTag("SQ", "unsorted");
 	header.addTag("@PG", "ID:" + progName + " VN:" + progVer.toString() + " PN:" + cmdOpts.getProg() + " CL:" + cmdOpts.getCmdStr());
 	out.setHeader(header);
 	out.writeHeader();

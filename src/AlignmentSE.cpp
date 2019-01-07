@@ -202,6 +202,7 @@ AlignmentSE::SeedMatchList AlignmentSE::getSeedMatchList(const MetaGenome& mtg, 
 			int32_t tlen = mtg.getChromLen(tid);
 			Loc tLoc = mtg.getChromLoc(tid);
 			assert(loc.start - tLoc.start <= UINT32_MAX); // BAM file only support up-to UINT32_MAX chrom size
+			cerr << "i: " << i << " loc: " << loc << " tid: " << tid << " tLoc: " << tLoc << endl;
 			/* rawList SeedPair start/end is relative to the chromosome */
 			rawList[i].push_back(SeedPair(mem.from, loc.start - tLoc.start, mem.length(), tid));
 		}
