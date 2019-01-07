@@ -21,8 +21,10 @@ int main(int argc, char *argv[]) {
 		{ "chr1", 1000000 },
 		{ "chr2", 500000  }
 	};
+
 	BAMheader header(chrMap);
 	cerr << "BAMheader constructed" << endl;
+	header.setHDTag("SQ", "unsorted");
 
 	header.addTag("@PG", argv[0]);
 	cerr << "BAMheader tag added" << endl;
