@@ -15,7 +15,7 @@
 namespace EGriceLab {
 namespace SAMtools {
 const boost::regex BAM::CIGAR_PATTERN = boost::regex("([0-9]+)([MIDNSHPX=])");
-const double BAM::DEFAULT_AUX_DATA_FACTOR = 1.5;
+const double BAM::DEFAULT_AUX_DATA_FACTOR = 4;
 
 BAM::BAM(const string& qname, uint16_t flag, int32_t tid, int32_t pos, uint8_t mapQ,
 		const cigar_str& cigar, uint32_t l_seq, const seq_str& seq, const qual_str& qual,
@@ -39,8 +39,8 @@ BAM::BAM(const string& qname, uint16_t flag, int32_t tid, int32_t pos, uint8_t m
 #endif
 	/* set variable length data and other fields */
 	bamAln->l_data = bamAln->core.l_qname + bamAln->core.n_cigar * sizeof(uint32_t) + (bamAln->core.l_qseq + 1) / 2 + bamAln->core.l_qseq;
-	bamAln->m_data = static_cast<int> (bamAln->l_data * DEFAULT_AUX_DATA_FACTOR);
-	bamAln->data = new uint8_t[bamAln->m_data](); // allocate more data
+	bamAln->m_data = bamAln->l_data * DEFAULT_AUX_DATA_FACTOR;
+	bamAln->data = new uint8_t[bamAln->m_data](); // allocate data according m_data
 	uint8_t* ptr = bamAln->data;
 	std::copy(qname.begin(), qname.end(), ptr); // copy qname
 	ptr += bamAln->core.l_qname; // jump over qname and nulls
