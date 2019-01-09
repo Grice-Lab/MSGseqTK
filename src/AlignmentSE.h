@@ -157,39 +157,55 @@ struct AlignmentSE {
 	AlignmentSE() = default;
 
 	/** construct an AlignmentSE with all fields */
-	AlignmentSE(const DNAseq& query, const DNAseq& target,
-			const string& qname, int32_t tid, const ScoreScheme* ss,
-			const QualStr& qual, int32_t qShift, int32_t tShift,
+	AlignmentSE(const DNAseq* query, const DNAseq* target,
+			const string* qname, int32_t tid, const ScoreScheme* ss,
+			const QualStr* qual, int32_t qShift, int32_t tShift,
 			uint16_t flag, uint8_t mapQ, int32_t mtid, int32_t mpos, int32_t isize, uint32_t id)
 	: query(query), target(target), qname(qname), tid(tid), ss(ss), qual(qual), qShift(qShift), tShift(tShift),
 	  flag(flag), mapQ(mapQ), mtid(mtid), mpos(mpos), isize(isize), id(id),
-	  qLen(query.length()), tLen(target.length()),
+	  qLen(query->length()), tLen(target->length()),
 	  M(qLen + 1, tLen + 1), I(qLen + 1, tLen + 1), D(qLen + 1, tLen + 1) {
-		if(this->qual.length() != query.length())
-			this->qual.resize(qLen, QualStr::INVALID_Q_SCORE);
+		assert(this->qual->length() == this->query->length());
 		initScores();
 	}
 
 	/** construct an AlignmentSE with required fields */
-	AlignmentSE(const DNAseq& query, const DNAseq& target,
-			const string& qname, int32_t tid, const ScoreScheme* ss,
-			int32_t tShift = 0, const QualStr& qual = QualStr(), uint16_t flag = 0)
+	AlignmentSE(const DNAseq* query, const DNAseq* target,
+			const string* qname, int32_t tid, const ScoreScheme* ss,
+			const QualStr* qual, int32_t tShift = 0, uint16_t flag = 0)
 	: query(query), target(target), qname(qname), tid(tid), ss(ss), tShift(tShift), qual(qual), flag(flag),
-	  qLen(query.length()), tLen(target.length()),
+	  qLen(query->length()), tLen(target->length()),
 	  M(qLen + 1, tLen + 1), I(qLen + 1, tLen + 1), D(qLen + 1, tLen + 1) {
-		if(this->qual.length() != query.length())
-			this->qual.resize(qLen, QualStr::INVALID_Q_SCORE);
+		assert(this->qual->length() == this->query->length());
 		initScores();
 	}
 
 	/* member methods */
 	/** test whether this alignment is initiated */
 	bool isInitiated() const {
-		return !query.empty() && !target.empty() && !qual.empty() && ss != nullptr;
+		return query != nullptr && target != nullptr && qual != nullptr && ss != nullptr;
 	}
 
 	/** initiate all score matrices */
 	AlignmentSE& initScores();
+
+	/** clear all scores to save storage (for copying/moving) */
+	AlignmentSE& clearScores();
+
+	/**
+	 * calculate all scores in a given region using Dynamic-Programming
+	 * @param from, start  0-based
+	 * @param to, end  1-based
+	 */
+	void calculateScores(uint32_t from, uint32_t to, uint32_t start, uint32_t end);
+
+	/**
+	 * calculate scores in a SeedPair region, where only M scores on the diagnal are calculated
+	 * @param from, start  0-based
+	 * @param to, end  1-based
+	 * @param pair  SeedPair region
+	 */
+	void calculateScores(const SeedPair& pair);
 
 	/** calculate all scores in the entire region using Dynamic-Programming, return the alnScore as the maximum score found */
 	AlignmentSE& calculateScores() {
@@ -211,7 +227,7 @@ struct AlignmentSE {
 
 	/** get 3' soft-clip size */
 	uint32_t getClip3Len() const {
-		return query.length() - alnTo;
+		return query->length() - alnTo;
 	}
 
 	/** get pos of */
@@ -278,17 +294,17 @@ struct AlignmentSE {
 	 * export core info of this alignment to a BAM record, with no aux data
 	 */
 	BAM exportBAM() const {
-		return BAM(qname, flag, tid, tShift + alnStart, mapQ,
-				getAlnCigar(), qLen, nt16Encode(query), qual,
+		return BAM(*qname, flag, tid, tShift + alnStart, mapQ,
+				getAlnCigar(), qLen, nt16Encode(*query), *qual,
 				mtid, mpos, isize, id);
 	}
 
 	/* member fields */
 	/* htslib required fields */
-	DNAseq query;  // query
-	DNAseq target; // target
-	QualStr qual; // query qual
-	string qname; // query name
+	const DNAseq* query = nullptr;  // query
+	const DNAseq* target = nullptr; // target
+	const QualStr* qual = nullptr; // query qual
+	const string* qname = nullptr; // query name
 
 	int32_t qShift = 0; // query shift relative to original read
 	int32_t tShift = 0; // target shift relative to the target (chromo)
@@ -315,7 +331,7 @@ struct AlignmentSE {
 	double alnScore = infV; // alignment score
 	state_str alnPath; // backtrace alignment path using cigar ops defined htslib/sam.h
 //	BAM::cigar_str alnCigar; // cigar_str compressed from alnPath
-	double score = infV; // overall score of alignment, including 5'/3' clips
+
 	double log10P = NAN;  // log10-liklihood of this alignment, given the alignment and quality
 	double postP = NAN;   // posterior probability of this alignment, given all candidate alignments
 
@@ -358,13 +374,6 @@ struct AlignmentSE {
 	 */
 	static vector<AlignmentSE>& calcMapQ(vector<AlignmentSE>& alnList);
 
-	/* utility methods */
-	/**
-	 * calculate all scores in a given region using Dynamic-Programming
-	 * @param from, start  0-based
-	 * @param to, end  1-based
-	 */
-	void calculateScores(uint32_t from, uint32_t to, uint32_t start, uint32_t end);
 };
 
 inline AlignmentSE::CIGAR_OP_TYPE AlignmentSE::matchMax(double match, double ins, double del) {
@@ -389,13 +398,31 @@ inline AlignmentSE::CIGAR_OP_TYPE AlignmentSE::delMax(double match, double del) 
 	return match > del ? BAM_CMATCH : BAM_CDEL;
 }
 
+inline AlignmentSE& AlignmentSE::initScores() {
+//	assert(isInitiated());
+	M.row(0).setZero();
+	M.col(0).setZero();
+	I.row(0).setConstant(infV);
+	I.col(0).setConstant(infV);
+	D.row(0).setConstant(infV);
+	D.col(0).setConstant(infV);
+	return *this;
+}
+
+inline AlignmentSE& AlignmentSE::clearScores() {
+	M = MatrixXd();
+	I = MatrixXd();
+	D = MatrixXd();
+	return *this;
+}
+
 inline void AlignmentSE::calculateScores(uint32_t from, uint32_t to, uint32_t start, uint32_t end) {
 	assert(isInitiated());
 	for(uint32_t i = from + 1; i <= to; ++i) {
-		DNAseq::value_type br = query[i-1];
+		DNAseq::value_type q = (*query)[i-1];
 		for(uint32_t j = start + 1; j <= end; ++j) {
-			DNAseq::value_type bt = target[j-1];
-			double s = ss->getScore(br, bt);
+			DNAseq::value_type t = (*target)[j-1];
+			double s = ss->getScore(q, t);
 			double o = -ss->openGapPenalty();
 			double e = -ss->extGapPenalty();
 			M(i,j) = std::max({
@@ -412,6 +439,17 @@ inline void AlignmentSE::calculateScores(uint32_t from, uint32_t to, uint32_t st
 				M(i,j-1) + o,
 				D(i,j-1) + e
 			});
+		}
+	}
+}
+
+inline void AlignmentSE::calculateScores(const SeedPair& pair) {
+	assert(isInitiated());
+	for(uint32_t i = pair.from + 1; i <= pair.to; ++i) {
+		for(uint32_t j = pair.start + 1; j <= pair.end; ++j) {
+			M(i,j) = M(i-1,j-1) + ss->getScore((*query)[i-1], (*target)[j-1]);
+			I(i,j) = infV;
+			D(i,j) = infV;
 		}
 	}
 }

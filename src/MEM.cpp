@@ -10,6 +10,7 @@
 #include <cassert>
 #include <limits>
 #include <unordered_set>
+#include <algorithm>
 #include "MEM.h"
 #include "Stats.h"
 
@@ -18,6 +19,8 @@ namespace MSGseqTK {
 
 using namespace EGriceLab::Math;
 using std::unordered_set;
+using std::endl;
+using std::cerr;
 
 MEM& MEM::evaluate() {
 	if(empty())
@@ -101,8 +104,9 @@ MEM MEM::findMEM(const PrimarySeq* seq, const FMIndex* fmidx, uint64_t from, STR
 	return MEM(seq, fmidx, strand, from, to, start, end);
 }
 
-MEM& MEM::findLocs() {
-	for(uint64_t i = SAstart; i < SAend; ++i) {
+MEM& MEM::findLocs(size_t maxNLocs) {
+	locs.reserve(SAend - SAstart);
+	for(uint64_t i = SAstart; i < SAstart + maxNLocs && i < SAend; ++i) {
 		uint64_t start = fmidx->accessSA(i);
 		locs.push_back(fmidx->reverseLoc(Loc(start, start + length())));
 //		locs.push_back(Loc(start, start + length()));

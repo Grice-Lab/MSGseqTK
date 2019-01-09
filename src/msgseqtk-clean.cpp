@@ -80,7 +80,7 @@ void printUsage(const string& progName) {
 		 << "            -o  FILE             : output of cleaned single-end/forward reads" << ZLIB_SUPPORT << endl
 		 << "            -p  FILE             : output of cleaned mate/reverse reads" << ZLIB_SUPPORT << endl
 		 << "            -a  FILE             : write an additional TSV file with the detailed assignment information for each read" << endl
-		 << "            --detail  FLAG       : write detailed information of MEMS in the assignment output, ignored if -a is not specified; this may lead to slower processing" << endl
+		 << "            --detail  FLAG       : write detailed information of MEMS in the assignment output, ignored if -a is not specified; this may lead to much slower processing" << endl
 		 << "            -L|--lod  DBL        : minimum log-odd required to determine a read/pair as reference vs. background [" << DEFAULT_MIN_LOD << "]" << endl
 //		 << "            -e  DBL              : maximum e-value allowed to consider an MEM between datbase and a read as significance [" << MAX_EVAL << "]" << endl
 		 << "            -s|--strand  INT     : read/pair strand to search, 1 for sense, 2 for anti-sense, 3 for both [" << DEFAULT_STRAND << "]" << endl
@@ -410,12 +410,12 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& re
 		{
 			while(seqI.hasNext()) {
 				PrimarySeq read = seqI.nextSeq();
-				const string& id = read.getName();
-				const string& desc = read.getDesc();
-#pragma omp task
+#pragma omp task firstprivate(read)
 				{
-					MEMS refMems = MEMS::sampleMEMS(&read, &refFmidx, rng, strand, withDetail);
-					MEMS bgMems = MEMS::sampleMEMS(&read, &bgFmidx, rng, strand, withDetail);
+					const string& id = read.getName();
+					const string& desc = read.getDesc();
+					MEMS refMems = MEMS::getBestMEMS(&read, &refFmidx, rng, strand);
+					MEMS bgMems = MEMS::getBestMEMS(&read, &bgFmidx, rng, strand);
 					double refLoglik = refMems.loglik();
 					double bgLoglik = bgMems.loglik();
 					double lod = - refLoglik + bgLoglik;
@@ -426,8 +426,8 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& re
 #pragma omp critical(writeAssign)
 						{
 							assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod;
-							if(withDetail)
-								assignOut << "\t" << refMems << "\t" << bgMems;
+							if(withDetail) // only findLocs when detail requested
+								assignOut << "\t" << refMems.findLocs() << "\t" << bgMems.findLocs();
 							assignOut << endl;
 						}
 					}
@@ -454,12 +454,12 @@ int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& re
 				assert(fwdRead.getName() == revRead.getName());
 				const string& id = fwdRead.getName();
 				const string& desc = fwdRead.getDesc();
-#pragma omp task
+#pragma omp task firstprivate(fwdRead, revRead)
 				{
-					MEMS_PE refMems_pe = MEMS::sampleMEMS(&fwdRead, &revRead, &refFmidx, rng, strand, withDetail);
-					MEMS_PE bgMems_pe = MEMS::sampleMEMS(&fwdRead, &revRead, &bgFmidx, rng, strand, withDetail);
-					double refLoglik = MEMS::loglik(refMems_pe);
-					double bgLoglik = MEMS::loglik(bgMems_pe);
+					MEMS_PE refMemsPE = MEMS::getBestMEMS(&fwdRead, &revRead, &refFmidx, rng, strand);
+					MEMS_PE bgMemsPE = MEMS::getBestMEMS(&fwdRead, &revRead, &bgFmidx, rng, strand);
+					double refLoglik = MEMS::loglik(refMemsPE);
+					double bgLoglik = MEMS::loglik(bgMemsPE);
 					double lod = - refLoglik + bgLoglik;
 					if(lod >= minLod) {
 #pragma omp critical(writeSeq)
@@ -472,9 +472,12 @@ int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& re
 #pragma omp critical(writeAssign)
 						{
 							assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod;
-							if(withDetail)
-								assignOut << refMems_pe.first << "\t" << refMems_pe.second << "\t"
-								<< bgMems_pe.first << "\t" << bgMems_pe.second;
+							if(withDetail) {
+								MEMS::findLocs(refMemsPE);
+								MEMS::findLocs(bgMemsPE);
+								assignOut << refMemsPE.first << "\t" << refMemsPE.second << "\t"
+								<< bgMemsPE.first << "\t" << bgMemsPE.second;
+							}
 							assignOut << endl;
 						}
 					}

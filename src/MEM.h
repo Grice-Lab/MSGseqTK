@@ -72,7 +72,7 @@ struct MEM {
 	 * fill the locs information of this MEM
 	 * locs are based on the forward direction of the original seq
 	 */
-	MEM& findLocs();
+	MEM& findLocs(size_t maxNLocs = MAX_NLOCS);
 
 	/**
 	 * evaluate the log-probality of this MEM
@@ -157,6 +157,9 @@ struct MEM {
 	int64_t SAend = 0;   /* 1-based end position on SA */
 	double logP = NAN; /* log-probability (loglik) of observing this MEM by chance */
 	vector<Loc> locs; /* all Loc this MEM matches to w/ reversed coordinates */
+
+	/* static fields */
+	static const size_t MAX_NLOCS = 3;
 
 	/* static methods */
 	/**

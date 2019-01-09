@@ -78,6 +78,7 @@ void printUsage(const string& progName) {
 		 << "            --max-report  INT    : maximum loci to consider for a read/pair, set to 0 to report all candidate alignments [" << DEFAULT_MAX_REPORT << "]" << endl
 		 << "            -f--best-frac        : minimum score as a fraction of the best alignment to consider as a candidate for full evaluation [" << DEFAULT_BEST_FRAC << "]" << endl
 		 << "            -s|--strand  INT     : read/pair strand to search, 1 for sense, 2 for anti-sense, 3 for both [" << DEFAULT_STRAND << "]" << endl
+		 << "            -N  INT              : max # of different random seed to try for searching best MEMS [" << MEMS::DEFAULT_NSEED << "]" << endl
 		 << "            -S|--seed  INT       : random seed used for determing MEMS, for debug only" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus used for parallel processing" << endl
@@ -92,7 +93,7 @@ void printUsage(const string& progName) {
  * @return 0 if success, return non-zero otherwise
  */
 int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
-		SeqIO& seqI, SAMfile& out, RNG& rng, int strand,
+		SeqIO& seqI, SAMfile& out, RNG& rng, int strand, int nSeed,
 		uint32_t maxMems, double bestFrac, uint32_t maxReport);
 
 /**
@@ -100,7 +101,7 @@ int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
  * @return 0 if success, return non-zero otherwise
  */
 int main_PE(const MetaGenome& mtg, const FMIndex& fmidx,
-		SeqIO& fwdI, SeqIO& revI, SAMfile& out, RNG& rng, int strand,
+		SeqIO& fwdI, SeqIO& revI, SAMfile& out, RNG& rng, int strand, int nSeed,
 		uint32_t maxMems, double bestFrac, uint32_t maxReport);
 
 int main(int argc, char* argv[]) {
@@ -110,6 +111,7 @@ int main(int argc, char* argv[]) {
 	boost::iostreams::filtering_istream fwdIn, revIn;
 
 	int strand = DEFAULT_STRAND;
+	int nSeed = MEMS::DEFAULT_NSEED;
 	unsigned seed = time(NULL); // using time as default seed
 //	double maxIndelRate = DEFAULT_INDEL_RATE;
 	int nThreads = DEFAULT_NUM_THREADS;
@@ -194,6 +196,9 @@ int main(int argc, char* argv[]) {
 		strand = ::atoi(cmdOpts.getOptStr("-s"));
 	if(cmdOpts.hasOpt("--strand"))
 		strand = ::atoi(cmdOpts.getOptStr("--strand"));
+
+	if(cmdOpts.hasOpt("-N"))
+		nSeed = ::atoi(cmdOpts.getOptStr("-N"));
 
 	if(cmdOpts.hasOpt("-S"))
 		seed = ::atoi(cmdOpts.getOptStr("-S"));
@@ -350,13 +355,13 @@ int main(int argc, char* argv[]) {
 
 	/* main processing */
 	if(!isPaired)
-		return main_SE(mtg, fmidx, fwdI, out, rng, strand, maxMems, bestFrac, maxReport);
+		return main_SE(mtg, fmidx, fwdI, out, rng, strand, nSeed, maxMems, bestFrac, maxReport);
 	else
-		return main_PE(mtg, fmidx, fwdI, revI, out, rng, strand, maxMems, bestFrac, maxReport);
+		return main_PE(mtg, fmidx, fwdI, revI, out, rng, strand, nSeed, maxMems, bestFrac, maxReport);
 }
 
 int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
-		SeqIO& seqI, SAMfile& out, RNG& rng, int strand,
+		SeqIO& seqI, SAMfile& out, RNG& rng, int strand, int nSeed,
 		uint32_t maxMems, double bestFrac, uint32_t maxReport) {
 	infoLog << "Aligning input reads" << endl;
 	/* search MEMS for each read */
@@ -366,55 +371,58 @@ int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
 		{
 			while(seqI.hasNext()) {
 				PrimarySeq read = seqI.nextSeq();
-				const string& id = read.getName();
-				const string& desc = read.getDesc();
-				const uint32_t qLen = read.length();
-#pragma omp task
+#pragma omp task firstprivate(read)
 				{
-					MEMS mems = MEMS::sampleMEMS(&read, &fmidx, rng, strand, true);
+					MEMS mems = MEMS::getBestMEMS(&read, &fmidx, rng, strand, nSeed);
+					mems.findLocs(); // only find locs for best MEMS
 					const MEM::STRAND readStrand = mems.getStrand();
+					if(readStrand == MEM::REV)
+						read.revcom();
+					const string& id = read.getName();
+					const string& desc = read.getDesc();
+					const uint32_t qLen = read.length();
 					/* get all candidate MatchPairs */
+					const DNAseq& query = read.getSeq();
+					QualStr qual = read.getQual();
 					AlignmentSE::SeedMatchList seedMatches = AlignmentSE::getSeedMatchList(mtg, mems, maxMems);
 					if(seedMatches.empty()) {
-#pragma omp critical(LOG)
 						infoLog << "Unable to find any valid SeedMatches for '" << id << "', ignore" << endl;
 					}
 					else {
+//						cerr << "searching " << seedMatches.size() << " candidate alignments for " << id << endl;
 						vector<AlignmentSE> alnList;
 						alnList.reserve(seedMatches.size());
 						for(AlignmentSE::SeedMatch& seedMatch : seedMatches) {
 							/* get candidate region of this seedMatch */
 							int32_t tid = seedMatch.getTId();
-							string chrName = mtg.getChromName(tid);
+							const string& chrName = mtg.getChromName(tid);
 							uint64_t chromShift = mtg.getChromStart(tid);
 							uint32_t regionStart = seedMatch.getStart(AlignmentSE::MAX_INDEL_RATE); // 0-based on chrom
 							uint32_t regionEnd = seedMatch.getEnd(qLen, AlignmentSE::MAX_INDEL_RATE); // 1-based on chrom
+							DNAseq target = mtg.subseq(chromShift + regionStart, regionEnd - regionStart);
+
 							if(static_cast<int64_t> (regionStart) < 0) // searhStart too far
 								regionStart = 0;
 							if(regionEnd > mtg.getChromLen(tid)) // searhEnd too far
 								regionEnd = mtg.getChromLen(tid);
-							/* get subseq of target */
-							DNAseq query = read.getSeq();
-							DNAseq target = mtg.subseq(chromShift + regionStart, regionEnd - regionStart);
-							QualStr qual = read.getQual();
-							if(readStrand == MEM::REV) {
-								query.revcom();
-								qual.reverse();
-							}
 							/* add a new alignment */
 							seedMatch.shiftTarget(regionStart); // seedMatch coordiates are now relative to search region
-							alnList.push_back(AlignmentSE(query, target, id, tid, &ss,
-									0, qual, (readStrand == MEM::FWD ? 0 : BAM_FREVERSE)
-							).calculateScores(seedMatch).backTrace());
+								alnList.push_back(AlignmentSE(&query, &target,
+										&id, tid, &ss,
+										&qual, regionStart, (readStrand == MEM::FWD ? 0 : BAM_FREVERSE)
+								).calculateScores(seedMatch).backTrace().clearScores());
 						}
+//						cerr << "scores calculated for " << alnList.size() << " best alignments" << endl;
 						/* find best alignment by score */
-						vector<AlignmentSE>::const_iterator bestAln = std::max_element(alnList.begin(), alnList.end(), [] (const AlignmentSE& lhs, const AlignmentSE& rhs) { return lhs.score > rhs.score; });
+						vector<AlignmentSE>::const_iterator bestAln = std::max_element(alnList.cbegin(), alnList.cend(), [] (const AlignmentSE& lhs, const AlignmentSE& rhs) { return lhs.getScore() > rhs.getScore(); });
 						/* first-pass filter alignment by score */
-						alnList.erase(std::remove_if(alnList.begin(), alnList.end(), [&] (const AlignmentSE& aln) { return aln.score < bestAln->score * bestFrac; }), alnList.end());
+						alnList.erase(std::remove_if(alnList.begin(), alnList.end(), [&] (const AlignmentSE& aln) { return aln.getScore() < bestAln->getScore() * bestFrac; }), alnList.end());
+//						cerr << "evaluating " << alnList.size() << " best alignments" << endl;
 						/* evaluate candidate "best-spectrum" alignments */
 						for(AlignmentSE& aln : alnList)
 							aln.evaluate();
 						/* calculate postP/mapQ for candidates */
+//						cerr << "calculating mapQ for " << alnList.size() << " best alignments" << endl;
 						AlignmentSE::calcMapQ(alnList);
 						/* sort candidates by their log10-liklihood descreasingly (same order as postP with uniform prior */
 						std::sort(alnList.begin(), alnList.end(), [] (const AlignmentSE& lhs, const AlignmentSE& rhs) { return lhs.log10P > rhs.log10P; });
@@ -445,7 +453,7 @@ int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
 }
 
 int main_PE(const MetaGenome& mtg, const FMIndex& fmidx,
-		SeqIO& fwdI, SeqIO& revI, SAMfile& out, RNG& rng, int strand,
+		SeqIO& fwdI, SeqIO& revI, SAMfile& out, RNG& rng, int strand, int nSeed,
 		uint32_t maxMems, double bestFrac, uint32_t maxReport) {
 	return EXIT_SUCCESS;
 }

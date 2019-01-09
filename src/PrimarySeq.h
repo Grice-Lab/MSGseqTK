@@ -42,6 +42,7 @@ public:
 	: seq(seq), name(name), desc(desc), qual(qual)
 	{
 		this->qual.setQShift(qShift);
+		fixQual();
 	}
 
 	/** delegating construct a PrimarySeq with given seq, qual, name and optional desc and encoded quality string */
@@ -85,7 +86,9 @@ public:
 		return qual.length() == seq.length();
 	}
 
-	QualStr getQual() const;
+	QualStr getQual() const {
+		return hasQual() ? qual : QualStr(seq.length(), QualStr::DEFAULT_Q_SCORE);
+	}
 
 	void setQual(const QualStr& qual) {
 		this->qual = qual;
@@ -97,6 +100,12 @@ public:
 
 	bool empty() const {
 		return seq.empty();
+	}
+
+	/** check and fix QualStr */
+	void fixQual() {
+		if(qual.length() != seq.length())
+			qual.resize(seq.length(), QualStr::DEFAULT_Q_SCORE);
 	}
 
 	DNAseq::value_type getBase(DNAseq::size_type i) const {

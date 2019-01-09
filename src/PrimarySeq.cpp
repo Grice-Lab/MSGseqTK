@@ -11,14 +11,6 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 
-QualStr PrimarySeq::getQual() const {
-	if(hasQual())
-		return qual;
-	else {
-		return QualStr(seq.length(), QualStr::DEFAULT_Q_SCORE);
-	}
-}
-
 istream& PrimarySeq::load(istream& in) {
 	seq.load(in);
 	StringUtils::loadString(name, in);

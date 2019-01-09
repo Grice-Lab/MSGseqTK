@@ -21,12 +21,15 @@ int main(int argc, char* argv[]) {
 	/* perfect match test */
 	DNAseq query1("ATCG");
 	DNAseq target1("AAAATCGCCC");
+	QualStr qual1(query1.length());
+	string name1 = "r1";
+
 	cout << "querys and targets constructed" << endl;
 
 	cout << "query1:  " << query1 << endl;
 	cout << "target1: " << target1 << endl;
 	/* build an alignment */
-	AlignmentSE aln1(query1, target1, "r1", 0, &ss);
+	AlignmentSE aln1(&query1, &target1, &name1, 0, &ss, &qual1);
 	cout << "AlignmentSE constructed" << endl;
 	aln1.calculateScores();
 	cout << "aln1 score calculated, score: " << aln1.score << endl;
@@ -50,12 +53,15 @@ int main(int argc, char* argv[]) {
 	/* perfect match in middle test */
 	DNAseq query2("TTTATCGAAA");
 	DNAseq target2("AAAATCGCCC");
+	QualStr qual2(query2.length());
+	string name2 = "r2";
+
 	cout << "querys and targets constructed" << endl;
 
 	cout << "query2:  " << query2 << endl;
 	cout << "target2: " << target2 << endl;
 	/* build an alignment */
-	AlignmentSE aln2(query2, target2, "r2", 0, &ss);
+	AlignmentSE aln2(&query2, &target2, &name2, 0, &ss, &qual2);
 	cout << "AlignmentSE constructed" << endl;
 	aln2.calculateScores();
 	cout << "aln2 score calculated, score: " << aln2.score << endl;
@@ -79,12 +85,14 @@ int main(int argc, char* argv[]) {
 	/* mis-match test */
 	DNAseq query3("AAAATCGATCGATCGATCGTTT");
 	DNAseq target3("GGGATCGATCAATCGATCGCCC");
+	QualStr qual3(query3.length());
+	string name3 = "r3";
 	cout << "querys and targets constructed" << endl;
 
 	cout << "query3:  " << query3 << endl;
 	cout << "target3: " << target3 << endl;
 	/* build an alignment */
-	AlignmentSE aln3(query3, target3, "r3", 0, &ss);
+	AlignmentSE aln3(&query3, &target3, &name3, 0, &ss, &qual3);
 	cout << "AlignmentSE constructed" << endl;
 	aln3.calculateScores();
 	cout << "aln3 score calculated, score: " << aln3.score << endl;
@@ -108,12 +116,14 @@ int main(int argc, char* argv[]) {
 	/* insertion match test */
 	DNAseq  query4("AAAATCGATCAATCGATCGTTT");
 	DNAseq target4("AAAATCGATCATCGATCGTTT");
+	QualStr qual4(query4.length());
+	string name4 = "r4";
 	cout << "querys and targets constructed" << endl;
 
 	cout << "query4:  " << query4 << endl;
 	cout << "target4: " << target4 << endl;
 	/* build an alignment */
-	AlignmentSE aln4(query4, target4, "r4", 0, &ss);
+	AlignmentSE aln4(&query4, &target4, &name4, 0, &ss, &qual4);
 	cout << "AlignmentSE constructed" << endl;
 	aln4.calculateScores();
 	cout << "aln4 score calculated, score: " << aln4.score << endl;
@@ -137,12 +147,14 @@ int main(int argc, char* argv[]) {
 	/* deletion match test */
 	DNAseq  query5("AAAATCGATCGTCGATCGTTT");
 	DNAseq target5("AAAATCGATCGATCGATCGTTT");
+	QualStr qual5(query5.length());
+	string name5 = "r5";
 	cout << "querys and targets constructed" << endl;
 
 	cout << "query5:  " << query5 << endl;
 	cout << "target5: " << target5 << endl;
 	/* build an alignment */
-	AlignmentSE aln5(query5, target5, "r5", 0, &ss);
+	AlignmentSE aln5(&query5, &target5, &name5, 0, &ss, &qual5);
 	cout << "AlignmentSE constructed" << endl;
 	aln5.calculateScores();
 	cout << "aln5 score calculated, score: " << aln5.score << endl;
