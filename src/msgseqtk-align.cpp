@@ -383,13 +383,13 @@ int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
 					const uint32_t qLen = read.length();
 					/* get all candidate MatchPairs */
 					const DNAseq& query = read.getSeq();
-					QualStr qual = read.getQual();
+					const QualStr& qual = read.getQual();
+					DNAseq target; // declare here to prevent being destroyed before output
 					AlignmentSE::SeedMatchList seedMatches = AlignmentSE::getSeedMatchList(mtg, mems, maxMems);
 					if(seedMatches.empty()) {
 						infoLog << "Unable to find any valid SeedMatches for '" << id << "', ignore" << endl;
 					}
 					else {
-//						cerr << "searching " << seedMatches.size() << " candidate alignments for " << id << endl;
 						vector<AlignmentSE> alnList;
 						alnList.reserve(seedMatches.size());
 						for(AlignmentSE::SeedMatch& seedMatch : seedMatches) {
@@ -399,8 +399,8 @@ int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
 							uint64_t chromShift = mtg.getChromStart(tid);
 							uint32_t regionStart = seedMatch.getStart(AlignmentSE::MAX_INDEL_RATE); // 0-based on chrom
 							uint32_t regionEnd = seedMatch.getEnd(qLen, AlignmentSE::MAX_INDEL_RATE); // 1-based on chrom
-							DNAseq target = mtg.subseq(chromShift + regionStart, regionEnd - regionStart);
-
+							target = mtg.subseq(chromShift + regionStart, regionEnd - regionStart);
+							cerr << "id: " << id << " tid: " << tid << endl << "query:  " << query << endl << "target: " << target << endl << "qual:   " << qual << endl;
 							if(static_cast<int64_t> (regionStart) < 0) // searhStart too far
 								regionStart = 0;
 							if(regionEnd > mtg.getChromLen(tid)) // searhEnd too far
@@ -412,17 +412,14 @@ int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
 										&qual, regionStart, (readStrand == MEM::FWD ? 0 : BAM_FREVERSE)
 								).calculateScores(seedMatch).backTrace().clearScores());
 						}
-//						cerr << "scores calculated for " << alnList.size() << " best alignments" << endl;
 						/* find best alignment by score */
 						vector<AlignmentSE>::const_iterator bestAln = std::max_element(alnList.cbegin(), alnList.cend(), [] (const AlignmentSE& lhs, const AlignmentSE& rhs) { return lhs.getScore() > rhs.getScore(); });
 						/* first-pass filter alignment by score */
 						alnList.erase(std::remove_if(alnList.begin(), alnList.end(), [&] (const AlignmentSE& aln) { return aln.getScore() < bestAln->getScore() * bestFrac; }), alnList.end());
-//						cerr << "evaluating " << alnList.size() << " best alignments" << endl;
 						/* evaluate candidate "best-spectrum" alignments */
 						for(AlignmentSE& aln : alnList)
 							aln.evaluate();
 						/* calculate postP/mapQ for candidates */
-//						cerr << "calculating mapQ for " << alnList.size() << " best alignments" << endl;
 						AlignmentSE::calcMapQ(alnList);
 						/* sort candidates by their log10-liklihood descreasingly (same order as postP with uniform prior */
 						std::sort(alnList.begin(), alnList.end(), [] (const AlignmentSE& lhs, const AlignmentSE& rhs) { return lhs.log10P > rhs.log10P; });
@@ -447,7 +444,7 @@ int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
 				} /* end task */
 			} /* end each read */
 		} /* end single */
-#pragma omp taskwait
+//#pragma omp taskwait
 	} /* end parallel */
 	return out.close();
 }

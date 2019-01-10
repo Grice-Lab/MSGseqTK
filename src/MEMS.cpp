@@ -12,6 +12,10 @@
 #include "MEMS.h"
 #include "MSGseqTKConst.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace EGriceLab {
 namespace MSGseqTK {
 

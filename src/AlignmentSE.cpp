@@ -18,7 +18,7 @@ namespace MSGseqTK {
 using namespace Eigen;
 
 const double AlignmentSE::DEFAULT_INDEL_RATE = 0.02;
-const double AlignmentSE::MAX_INDEL_RATE = 0.15;
+const double AlignmentSE::MAX_INDEL_RATE = 0.2;
 const string AlignmentSE::STATES = BAM_CIGAR_STR;
 const double AlignmentSE::DEFAULT_SCORE_REL_EPSILON = 0.85;
 const boost::regex AlignmentSE::MDTAG_LEADING_PATTERN = boost::regex("^\\d+");
@@ -27,8 +27,8 @@ const boost::regex AlignmentSE::MDTAG_MAIN_PATTERN = boost::regex("([A-Z]|\\^[A-
 AlignmentSE& AlignmentSE::calculateScores(const SeedMatch& seeds) {
 	assert(!seeds.empty());
 //	assert(seeds.isCompatitable());
-	/* DP at 5' */
-	calculateScores(0, seeds.front().from, 0, seeds.front().start); /* could be empty loop */
+	/* DP at 5', if any */
+	calculateScores(0, seeds.front().from, 0, seeds.front().start);
 
 	for(SeedMatch::const_iterator seed = seeds.begin(); seed < seeds.end(); ++seed) {
 		/* DP within this seed */
@@ -37,7 +37,7 @@ AlignmentSE& AlignmentSE::calculateScores(const SeedMatch& seeds) {
 		if(seed != seeds.end() - 1)
 			calculateScores(seed->to, (seed + 1)->from, seed->end, (seed + 1)->start);
 	}
-	/* DP at 3' */
+	/* DP at 3', if any */
 	calculateScores(seeds.back().to, qLen, seeds.back().end, tLen); /* could be empty loop */
 
 	alnScore = M.maxCoeff(&alnTo, &alnEnd); // determine aign 3' and score simultaneously
@@ -79,9 +79,14 @@ AlignmentSE& AlignmentSE::backTrace() {
 	}
 	alnFrom = i;
 	alnStart = j;
-	/* reverse alnPath */
-	std::reverse(alnPath.begin(), alnPath.end());
 	assert(alnPath.front() == BAM_CMATCH && alnPath.back() == BAM_CMATCH);
+	std::reverse(alnPath.begin(), alnPath.end()); // reverse alnPath
+//	if(!(alnPath.front() == BAM_CMATCH && alnPath.back() == BAM_CMATCH)) {
+//		fprintf(stderr, "alnFrom: %d alnTo: %d alnStart: %d alnEnd: %d alnScore %g alnCigar: %s\nquery:  %s\ntarget: %s\n",
+//				alnFrom, alnTo, alnStart, alnEnd, alnScore, BAM::decodeCigar(getAlnCigar()).c_str(),
+//				query->toString().c_str(), target->toString().c_str());
+//		std::cerr << "M: " << std::endl << M << std::endl;
+//	}
 	return *this;
 }
 
@@ -120,7 +125,11 @@ string AlignmentSE::getAlnMDTag() const {
 	for(uint32_t k = 0, i = alnFrom, j = alnStart; k < alnPath.length(); ++k) { // i on query, j on target, k on alnPath
 		DNAseq::value_type q = (*query)[i];
 		DNAseq::value_type t = (*target)[j];
-		uint32_t op = alnPath[k] != BAM_CMATCH ? alnPath[k] : q & t ? BAM_CEQUAL : BAM_CDIFF; // differentiate = and X in MD tag
+		uint32_t op = alnPath[k];
+		if(op == BAM_CMATCH) { // need distinguish EQUAL AND DIFF
+			op = (q & t) ? BAM_CEQUAL : BAM_CDIFF; // differentiate = and X in MD tag
+		}
+		fprintf(stderr, "k: %d i: %d j: %d q: %c t: %c op: %d len: %d\nquery:  %s\ntarget: %s\n", k, i, j, DNAalphabet::decode(q), DNAalphabet::decode(t), op, len, query->toString().c_str(), target->toString().c_str());
 		switch(op) {
 		case BAM_CEQUAL:
 			i++;
@@ -258,13 +267,14 @@ string AlignmentSE::getAlnTSeq() const {
 	for(state_str::value_type c : alnPath) {
 		switch(c) {
 		case BAM_CMATCH:
-			seq.push_back(DNAalphabet::decode((*target)[i++]));
+			seq.push_back(target->decode(i++));
+			i++;
 			break;
 		case BAM_CINS:
 			seq.push_back(ALIGN_GAP);
 			break;
 		case BAM_CDEL:
-			seq.push_back(DNAalphabet::decode((*target)[i++]));
+			seq.push_back(target->decode(i++));
 			break;
 		default:
 			break;
@@ -310,6 +320,7 @@ AlignmentSE& AlignmentSE::evaluate() {
 
 	for(uint32_t k = 0, i = alnFrom, j = alnStart; k < alnPath.length(); ++k) { /* k on alnPath, i on query, j on target */
 		state_str::value_type s = alnPath[k];
+//		fprintf(stderr, "k: %d i: %d j: %d s: %d q: %c t: %c log10P: %g\n", k, i, j, s, query->decode(i), target->decode(j), log10P);
 		switch(s) {
 		case BAM_CMATCH:
 			if((*query)[i] & (*target)[j]) // IUPAC match (BAM_CEQUAL)
@@ -330,6 +341,8 @@ AlignmentSE& AlignmentSE::evaluate() {
 				log10P += -ss->gapOPenalty;
 			log10P += -ss->gapEPenalty;
 			j++;
+			break;
+		default:
 			break;
 		}
 	}
@@ -360,6 +373,9 @@ vector<AlignmentSE>& AlignmentSE::calcMapQ(vector<AlignmentSE>& alnList) {
 	for(size_t i = 0; i < N; ++i) {
 		alnList[i].postP = postP(i);
 		double mapQ = QualStr::phredP2Q(1 - postP(i));
+		if(::isnan(mapQ)) {
+			std::cerr << "pr: " << pr.transpose() << std::endl << " postP: " << postP.transpose() << std::endl;
+		}
 		assert(!::isnan(mapQ));
 		alnList[i].mapQ = std::min(::round(mapQ), static_cast<double> (QualStr::MAX_Q_SCORE));
 	}

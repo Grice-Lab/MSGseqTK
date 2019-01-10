@@ -14,17 +14,16 @@ namespace MSGseqTK {
 const double QualStr::PHRED_SCALE = -10;
 
 QualStr& QualStr::assign(const string& str) {
-	clear();
-	for(char q : str)
-		push_back(std::max<uint8_t>(q - qShift, MIN_Q_SCORE));
+	resize(str.length());
+	std::transform(str.begin(), str.end(), begin(),
+			[=](string::value_type q) { return std::max<uint8_t>(q - qShift, MIN_Q_SCORE); });
 	return *this;
 }
 
 string QualStr::decode() const {
-	string qStr;
-	qStr.reserve(length());
-	for(QualStr::value_type q : *this)
-		qStr.push_back(q + qShift);
+	string qStr(length(), '\0');
+	std::transform(begin(), end(), qStr.begin(),
+			[=](value_type q) { return q + qShift; });
 	return qStr;
 }
 

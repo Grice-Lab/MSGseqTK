@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
 	AlignmentSE aln1(&query1, &target1, &name1, 0, &ss, &qual1);
 	cout << "AlignmentSE constructed" << endl;
 	aln1.calculateScores();
-	cout << "aln1 score calculated, score: " << aln1.score << endl;
+	cout << "aln1 score calculated, score: " << aln1.getScore() << endl;
 	aln1.backTrace();
 	cout << "aln1 back-traced " << endl;
 	cout << "alnFrom: " << aln1.alnFrom << " alnTo: " << aln1.alnTo << " alnQLen: " << aln1.getAlnQLen() << endl;
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
 	AlignmentSE aln2(&query2, &target2, &name2, 0, &ss, &qual2);
 	cout << "AlignmentSE constructed" << endl;
 	aln2.calculateScores();
-	cout << "aln2 score calculated, score: " << aln2.score << endl;
+	cout << "aln2 score calculated, score: " << aln2.getScore() << endl;
 	aln2.backTrace();
 	cout << "aln2 back-traced " << endl;
 	cout << "alnFrom: " << aln2.alnFrom << " alnTo: " << aln2.alnTo << " alnQLen: " << aln2.getAlnQLen() << endl;
@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
 	AlignmentSE aln3(&query3, &target3, &name3, 0, &ss, &qual3);
 	cout << "AlignmentSE constructed" << endl;
 	aln3.calculateScores();
-	cout << "aln3 score calculated, score: " << aln3.score << endl;
+	cout << "aln3 score calculated, score: " << aln3.getScore() << endl;
 	aln3.backTrace();
 	cout << "aln3 back-traced " << endl;
 	cout << "alnFrom: " << aln3.alnFrom << " alnTo: " << aln3.alnTo << " alnQLen: " << aln3.getAlnQLen() << endl;
@@ -126,7 +126,7 @@ int main(int argc, char* argv[]) {
 	AlignmentSE aln4(&query4, &target4, &name4, 0, &ss, &qual4);
 	cout << "AlignmentSE constructed" << endl;
 	aln4.calculateScores();
-	cout << "aln4 score calculated, score: " << aln4.score << endl;
+	cout << "aln4 score calculated, score: " << aln4.getScore() << endl;
 	aln4.backTrace();
 	cout << "aln4 back-traced " << endl;
 	cout << "alnFrom: " << aln4.alnFrom << " alnTo: " << aln4.alnTo << " alnQLen: " << aln4.getAlnQLen() << endl;
@@ -157,7 +157,7 @@ int main(int argc, char* argv[]) {
 	AlignmentSE aln5(&query5, &target5, &name5, 0, &ss, &qual5);
 	cout << "AlignmentSE constructed" << endl;
 	aln5.calculateScores();
-	cout << "aln5 score calculated, score: " << aln5.score << endl;
+	cout << "aln5 score calculated, score: " << aln5.getScore() << endl;
 	aln5.backTrace();
 	cout << "aln5 back-traced " << endl;
 	cout << "alnFrom: " << aln5.alnFrom << " alnTo: " << aln5.alnTo << " alnQLen: " << aln5.getAlnQLen() << endl;

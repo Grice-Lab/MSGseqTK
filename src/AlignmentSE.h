@@ -126,12 +126,12 @@ struct AlignmentSE {
 
 		/** get start position of this SeedPair given max indel-rate */
 		uint32_t getStart(double maxIndelRate) const {
-			return getStart() - front().from * maxIndelRate;
+			return getStart() - front().from * (1 + maxIndelRate);
 		}
 
 		/** get end position of this SeedPair given max indel-rate */
 		uint32_t getEnd(uint32_t qLen, double maxIndelRate) const {
-			return getEnd() + (qLen - back().to) * maxIndelRate;
+			return getEnd() + (qLen - back().to) * (1 + maxIndelRate);
 		}
 
 		/** shift SeedMatch on target */
@@ -150,8 +150,8 @@ struct AlignmentSE {
 	};
 
 	typedef vector<SeedMatch> SeedMatchList;
-
 	typedef basic_string<uint32_t> state_str;
+
 	/* constructors */
 	/** default constructor */
 	AlignmentSE() = default;
@@ -164,7 +164,9 @@ struct AlignmentSE {
 	: query(query), target(target), qname(qname), tid(tid), ss(ss), qual(qual), qShift(qShift), tShift(tShift),
 	  flag(flag), mapQ(mapQ), mtid(mtid), mpos(mpos), isize(isize), id(id),
 	  qLen(query->length()), tLen(target->length()),
-	  M(qLen + 1, tLen + 1), I(qLen + 1, tLen + 1), D(qLen + 1, tLen + 1) {
+	  M(MatrixXd::Constant(qLen + 1, tLen + 1, infV)),
+	  I(MatrixXd::Constant(qLen + 1, tLen + 1, infV)),
+	  D(MatrixXd::Constant(qLen + 1, tLen + 1, infV)) {
 		assert(this->qual->length() == this->query->length());
 		initScores();
 	}
@@ -175,7 +177,10 @@ struct AlignmentSE {
 			const QualStr* qual, int32_t tShift = 0, uint16_t flag = 0)
 	: query(query), target(target), qname(qname), tid(tid), ss(ss), tShift(tShift), qual(qual), flag(flag),
 	  qLen(query->length()), tLen(target->length()),
-	  M(qLen + 1, tLen + 1), I(qLen + 1, tLen + 1), D(qLen + 1, tLen + 1) {
+	  M(MatrixXd::Constant(qLen + 1, tLen + 1, infV)),
+	  I(MatrixXd::Constant(qLen + 1, tLen + 1, infV)),
+	  D(MatrixXd::Constant(qLen + 1, tLen + 1, infV))
+	{
 		assert(this->qual->length() == this->query->length());
 		initScores();
 	}
@@ -230,7 +235,10 @@ struct AlignmentSE {
 		return query->length() - alnTo;
 	}
 
-	/** get pos of */
+	/** get all soft-clip size */
+	uint32_t getClipLen() const {
+		return getClip5Len() + getClip3Len();
+	}
 
 	/** get align query length */
 	uint32_t getAlnQLen() const {
@@ -269,7 +277,7 @@ struct AlignmentSE {
 
 	/** get overall score of this alignment, including soft-clips */
 	double getScore() const {
-		return alnScore - ss->clipPenalty * (getClip5Len() + getClip3Len());
+		return alnScore - ss->clipPenalty * getClipLen();
 	}
 
 	/** evaluate this alignment log-liklihood using seq, align-path and quality */
@@ -301,8 +309,8 @@ struct AlignmentSE {
 
 	/* member fields */
 	/* htslib required fields */
-	const DNAseq* query = nullptr;  // query
-	const DNAseq* target = nullptr; // target
+	const DNAseq* query = nullptr;  // query is shared between multiple possible alignments of the same read
+	const DNAseq* target = nullptr; // target is different between multiple possible alignments of the same read
 	const QualStr* qual = nullptr; // query qual
 	const string* qname = nullptr; // query name
 
@@ -402,10 +410,6 @@ inline AlignmentSE& AlignmentSE::initScores() {
 //	assert(isInitiated());
 	M.row(0).setZero();
 	M.col(0).setZero();
-	I.row(0).setConstant(infV);
-	I.col(0).setConstant(infV);
-	D.row(0).setConstant(infV);
-	D.col(0).setConstant(infV);
 	return *this;
 }
 
@@ -445,12 +449,8 @@ inline void AlignmentSE::calculateScores(uint32_t from, uint32_t to, uint32_t st
 
 inline void AlignmentSE::calculateScores(const SeedPair& pair) {
 	assert(isInitiated());
-	for(uint32_t i = pair.from + 1; i <= pair.to; ++i) {
-		for(uint32_t j = pair.start + 1; j <= pair.end; ++j) {
-			M(i,j) = M(i-1,j-1) + ss->getScore((*query)[i-1], (*target)[j-1]);
-			I(i,j) = infV;
-			D(i,j) = infV;
-		}
+	for(uint32_t i = pair.from + 1, j = pair.start + 1; i <= pair.to && j <= pair.end; ++i, ++j) {
+		M(i,j) = M(i-1,j-1) + ss->getScore((*query)[i-1], (*target)[j-1]);
 	}
 }
 
