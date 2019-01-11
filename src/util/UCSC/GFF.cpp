@@ -92,7 +92,7 @@ istream& GFF::read(istream& in, GFF::Version ver) {
 ostream& GFF::write(ostream& out, GFF::Version ver) const {
 	out << seqname << GFF::SEP << source << GFF::SEP << type << GFF::SEP
 		<< start << GFF::SEP << end << GFF::SEP;
-	if(std::isnan(score))
+	if(::isnan(score))
 		out << GFF::INVALID_FLAG;
 	else
 		out << score;
