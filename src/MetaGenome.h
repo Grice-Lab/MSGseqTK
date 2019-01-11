@@ -268,6 +268,11 @@ public:
 				seq.substr(getGenomeStart(genomeIdx), getGenomeLen(genomeIdx) - 1);
 	}
 
+	/** get the entire metagenome seq */
+	const DNAseq& getSeq() const {
+		return seq;
+	}
+
 	/** get a segment/subseq of this metagenome */
 	DNAseq subseq(size_t pos = 0, size_t len = DNAseq::npos) const {
 		return seq.substr(pos, len);

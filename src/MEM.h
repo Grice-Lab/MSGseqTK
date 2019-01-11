@@ -159,7 +159,7 @@ struct MEM {
 	vector<Loc> locs; /* all Loc this MEM matches to w/ reversed coordinates */
 
 	/* static fields */
-	static const size_t MAX_NLOCS = 3;
+	static const size_t MAX_NLOCS = 5;
 
 	/* static methods */
 	/**

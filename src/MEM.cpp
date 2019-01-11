@@ -85,7 +85,7 @@ MEM MEM::findMEM(const PrimarySeq* seq, const FMIndex* fmidx, uint64_t from, STR
 
 	for(to = from; to < ds.length(); ++to, start = nextStart, end = nextEnd) {
 		sauchar_t b = ds[to];
-		if(b == DNAalphabet::N) /* null gap */
+		if(b == DNAalphabet::GAP_BASE) /* null gap */
 			break;
 		if(start == 0) {
 			nextStart = fmidx->getCumCount(b);

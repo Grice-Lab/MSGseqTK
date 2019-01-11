@@ -37,6 +37,16 @@ public:
 	MEMS() = default;
 
 	/* member methods */
+	/** get seq */
+	const PrimarySeq* getSeq() const {
+		return front().seq;
+	}
+
+	/** get FM-index */
+	const FMIndex* getFMIndex() const {
+		return front().fmidx;
+	}
+
 	/** evaluate each MEM in this MEMS */
 	MEMS& evaluate();
 

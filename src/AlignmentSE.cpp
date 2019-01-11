@@ -18,7 +18,7 @@ namespace MSGseqTK {
 using namespace Eigen;
 
 const double AlignmentSE::DEFAULT_INDEL_RATE = 0.02;
-const double AlignmentSE::MAX_INDEL_RATE = 0.2;
+const double AlignmentSE::MAX_INDEL_RATE = 0.15;
 const string AlignmentSE::STATES = BAM_CIGAR_STR;
 const double AlignmentSE::DEFAULT_SCORE_REL_EPSILON = 0.85;
 const boost::regex AlignmentSE::MDTAG_LEADING_PATTERN = boost::regex("^\\d+");
@@ -28,7 +28,7 @@ AlignmentSE& AlignmentSE::calculateScores(const SeedMatch& seeds) {
 	assert(!seeds.empty());
 //	assert(seeds.isCompatitable());
 	/* DP at 5', if any */
-	calculateScores(0, seeds.front().from, 0, seeds.front().start);
+	calculateScores(qFrom, seeds.front().from, tStart, seeds.front().start);
 
 	for(SeedMatch::const_iterator seed = seeds.begin(); seed < seeds.end(); ++seed) {
 		/* DP within this seed */
@@ -38,21 +38,22 @@ AlignmentSE& AlignmentSE::calculateScores(const SeedMatch& seeds) {
 			calculateScores(seed->to, (seed + 1)->from, seed->end, (seed + 1)->start);
 	}
 	/* DP at 3', if any */
-	calculateScores(seeds.back().to, qLen, seeds.back().end, tLen); /* could be empty loop */
-
+	calculateScores(seeds.back().to, qTo, seeds.back().end, tEnd); /* could be empty loop */
 	alnScore = M.maxCoeff(&alnTo, &alnEnd); // determine aign 3' and score simultaneously
+	alnTo += qFrom;
+	alnEnd += tStart;
 
 	return *this;
 }
 
 AlignmentSE& AlignmentSE::backTrace() {
-	assert(alnScore > INT_MIN);
+	assert(alnScore != infV);
 //	cerr << "qname: " << qname << " tid: " << tid << " alnFrom: " << alnFrom << " alnTo: " << alnTo << " alnStart: " << alnStart << " alnEnd: " << alnEnd << endl;
 	assert(alnTo > 0 && alnEnd > 0);
 	alnPath.clear();
 	alnPath.reserve(qLen + tLen); /* most time enough for back-trace */
-	int32_t i = alnTo;
-	int32_t j = alnEnd;
+	int64_t i = alnTo - qFrom; // 1-based
+	int64_t j = alnEnd - tStart; // 1-based
 	uint32_t s = BAM_CMATCH; // local alignment of affine DP always end and start at Match states
 
 	while(i >= 0 && j >= 0) {
@@ -77,8 +78,8 @@ AlignmentSE& AlignmentSE::backTrace() {
 			break;
 		}
 	}
-	alnFrom = i;
-	alnStart = j;
+	alnFrom = qFrom + i;
+	alnStart = tStart + j;
 	assert(alnPath.front() == BAM_CMATCH && alnPath.back() == BAM_CMATCH);
 	std::reverse(alnPath.begin(), alnPath.end()); // reverse alnPath
 //	if(!(alnPath.front() == BAM_CMATCH && alnPath.back() == BAM_CMATCH)) {
@@ -94,9 +95,10 @@ BAM::cigar_str AlignmentSE::getAlnCigar() const {
 	assert(!alnPath.empty());
 	BAM::cigar_str alnCigar;
 	alnCigar.reserve(alnPath.length());
-	/* add 5' clip, if any */
-	if(alnFrom > 0)
-		alnCigar.push_back(bam_cigar_gen(alnFrom, BAM_CSOFT_CLIP));
+
+	/* add 5' soft-clip, if any */
+	if(getClip5Len() > 0)
+		alnCigar.push_back(bam_cigar_gen(getClip5Len(), BAM_CSOFT_CLIP));
 
 	uint32_t op = alnPath.front();
 	uint32_t len = 1;
@@ -110,9 +112,9 @@ BAM::cigar_str AlignmentSE::getAlnCigar() const {
 		op = alnPath[i]; // update op
 	}
 	alnCigar.push_back(bam_cigar_gen(len, op)); // add last cigar op
-	/* add 3' clip, if any */
-	if(alnTo < query->length())
-			alnCigar.push_back(bam_cigar_gen(query->length() - alnTo, BAM_CSOFT_CLIP));
+	/* add 3' soft-clip, if any */
+	if(getClip3Len() > 0)
+			alnCigar.push_back(bam_cigar_gen(getClip3Len(), BAM_CSOFT_CLIP));
 	return alnCigar;
 }
 
@@ -122,14 +124,14 @@ string AlignmentSE::getAlnMDTag() const {
 	mdTag.reserve(alnPath.length());
 	uint32_t prev_op = -1;
 	uint32_t len = 0;
-	for(uint32_t k = 0, i = alnFrom, j = alnStart; k < alnPath.length(); ++k) { // i on query, j on target, k on alnPath
-		DNAseq::value_type q = (*query)[i];
-		DNAseq::value_type t = (*target)[j];
+	for(uint64_t k = 0, i = alnFrom, j = alnStart; k < alnPath.length(); ++k) { // i on query, j on target, k on alnPath
+		nt16_t qb = (*query)[i];
+		nt16_t tb = (*target)[j];
 		uint32_t op = alnPath[k];
 		if(op == BAM_CMATCH) { // need distinguish EQUAL AND DIFF
-			op = (q & t) ? BAM_CEQUAL : BAM_CDIFF; // differentiate = and X in MD tag
+			op = (qb & tb) ? BAM_CEQUAL : BAM_CDIFF; // differentiate = and X in MD tag
 		}
-		fprintf(stderr, "k: %d i: %d j: %d q: %c t: %c op: %d len: %d\nquery:  %s\ntarget: %s\n", k, i, j, DNAalphabet::decode(q), DNAalphabet::decode(t), op, len, query->toString().c_str(), target->toString().c_str());
+//		fprintf(stderr, "k: %d i: %d j: %d q: %c t: %c op: %d len: %d\nquery:  %s\ntarget: %s\n", k, i, j, DNAalphabet::decode(qb), DNAalphabet::decode(tb), op, len, query->toString().c_str(), target->substr(tStart, tLen).toString().c_str());
 		switch(op) {
 		case BAM_CEQUAL:
 			i++;
@@ -139,7 +141,7 @@ string AlignmentSE::getAlnMDTag() const {
 		case BAM_CDIFF:
 			mdTag.append(boost::lexical_cast<string>(len));
 			len = 0;
-			mdTag.push_back(DNAalphabet::decode(t));
+			mdTag.push_back(DNAalphabet::decode(tb));
 			i++;
 			j++;
 			break;
@@ -148,7 +150,7 @@ string AlignmentSE::getAlnMDTag() const {
 			len = 0;
 			if(op != prev_op) /* open insertion */
 				mdTag.push_back(ALIGN_MD_INS);
-			mdTag.push_back(DNAalphabet::decode(q));
+			mdTag.push_back(DNAalphabet::decode(qb));
 			i++;
 			break;
 		case BAM_CDEL:
@@ -157,7 +159,6 @@ string AlignmentSE::getAlnMDTag() const {
 		default:
 			break;
 		}
-
 		prev_op = op;
 	}
 	/* add last length */
@@ -177,9 +178,23 @@ BAM::seq_str AlignmentSE::nt16Encode(const DNAseq& seq) {
 bool AlignmentSE::SeedMatch::isCompatitable() const {
 	if(size() <= 1) // less than 1 SeedPair
 		return true;
+
 	for(SeedMatch::const_iterator seed = begin(); seed < end() - 1; ++seed)
-		if(!(seed->tid == (seed + 1)->tid &&
-			 (seed->to < (seed + 1)->from && seed->end < (seed + 1)->start)))
+		if(!SeedPair::isCompatitable(*seed, *(seed + 1)))
+			return false;
+	return true;
+}
+
+bool AlignmentSE::SeedMatch::isCompatitable(uint64_t maxIndel) const {
+	std::cerr << "testing seedmatch of size " << size() << std::endl;
+	for(const SeedPair& seed : *this) {
+		fprintf(stderr, "from: %d to: %d start: %d end: %d tid: %d\n", seed.from, seed.to, seed.start, seed.end, seed.tid);
+	}
+	if(size() <= 1) // less than 1 SeedPair
+		return true;
+
+	for(SeedMatch::const_iterator seed = begin(); seed < end() - 1; ++seed)
+		if(!SeedPair::isCompatitable(*seed, *(seed + 1), maxIndel))
 			return false;
 	return true;
 }
@@ -200,12 +215,10 @@ AlignmentSE::SeedMatchList AlignmentSE::getSeedMatchList(const MetaGenome& mtg, 
 	for(size_t i = 0; i < N; ++i) {
 		const MEM& mem = mems[i];
 		for(const Loc& loc : mem.locs) {
-			int32_t tid = mtg.getChromIndex(loc.start); //
-			int32_t tlen = mtg.getChromLen(tid);
-			Loc tLoc = mtg.getChromLoc(tid);
-			assert(loc.start - tLoc.start <= UINT32_MAX); // BAM file only support up-to UINT32_MAX chrom size
+			int32_t tid = mtg.getChromIndex(loc.start); // use chrom index as tid
+			assert(loc.start - mtg.getChromStart(tid) <= UINT32_MAX); // BAM file only support up-to UINT32_MAX chrom size
 			/* rawList SeedPair start/end is relative to the chromosome */
-			rawList[i].push_back(SeedPair(mem.from, loc.start - tLoc.start, mem.length(), tid));
+			rawList[i].push_back(SeedPair(mem.from, loc.start, mem.length(), tid));
 		}
 	}
 
@@ -217,7 +230,7 @@ AlignmentSE::SeedMatchList AlignmentSE::getSeedMatchList(const MetaGenome& mtg, 
 		combination.reserve(N);
 		for(size_t i = 0; i < N; ++i)
 			combination.push_back(rawList[i][idx[i]]);
-		if(combination.isCompatitable())
+		if(combination.isCompatitable(mems.getSeq()->length() * MAX_INDEL_RATE))
 			outputList.push_back(combination); // add this combination
 
 		/* find the rightmost SeedMatch that has more elemtns left after current element */
@@ -240,14 +253,14 @@ AlignmentSE::SeedMatchList AlignmentSE::getSeedMatchList(const MetaGenome& mtg, 
 string AlignmentSE::getAlnQSeq() const {
 	string seq;
 	seq.reserve(getAlnQLen());
-	DNAseq::size_type i = alnFrom; // index on query
+	uint64_t i = alnFrom; // index on query
 	for(state_str::value_type c : alnPath) {
 		switch(c) {
 		case BAM_CMATCH:
-			seq.push_back(DNAalphabet::decode((*query)[i++]));
+			seq.push_back(query->decode(i++));
 			break;
 		case BAM_CINS:
-			seq.push_back(DNAalphabet::decode((*query)[i++]));
+			seq.push_back(query->decode(i++));
 			break;
 		case BAM_CDEL:
 			seq.push_back(ALIGN_GAP);
@@ -263,18 +276,17 @@ string AlignmentSE::getAlnQSeq() const {
 string AlignmentSE::getAlnTSeq() const {
 	string seq;
 	seq.reserve(getAlnTLen());
-	DNAseq::size_type i = alnStart; // index on target
+	uint64_t j = alnStart; // index on target
 	for(state_str::value_type c : alnPath) {
 		switch(c) {
 		case BAM_CMATCH:
-			seq.push_back(target->decode(i++));
-			i++;
+			seq.push_back(target->decode(j++));
 			break;
 		case BAM_CINS:
 			seq.push_back(ALIGN_GAP);
 			break;
 		case BAM_CDEL:
-			seq.push_back(target->decode(i++));
+			seq.push_back(target->decode(j++));
 			break;
 		default:
 			break;
@@ -315,10 +327,10 @@ AlignmentSE& AlignmentSE::evaluate() {
 		*this;
 	log10P = 0;
 	/* process 5' soft-clips, if any */
-	for(uint32_t i = 0; i < getClip5Len(); ++i)
+	for(uint64_t i = qFrom; i < alnFrom; ++i)
 		log10P += (*qual)[i] / QualStr::PHRED_SCALE - (ss->clipPenalty - ss->mismatchPenalty); // use additional penalty as the difference between mismatch and clip
 
-	for(uint32_t k = 0, i = alnFrom, j = alnStart; k < alnPath.length(); ++k) { /* k on alnPath, i on query, j on target */
+	for(uint64_t k = 0, i = alnFrom, j = alnStart; k < alnPath.length(); ++k) { /* k on alnPath, i on query, j on target */
 		state_str::value_type s = alnPath[k];
 //		fprintf(stderr, "k: %d i: %d j: %d s: %d q: %c t: %c log10P: %g\n", k, i, j, s, query->decode(i), target->decode(j), log10P);
 		switch(s) {
@@ -348,7 +360,7 @@ AlignmentSE& AlignmentSE::evaluate() {
 	}
 
 	/* process 3' soft-clips, if any */
-	for(uint32_t i = alnTo; i < query->length(); ++i) {
+	for(uint64_t i = alnTo; i < qTo; ++i) {
 		log10P += (*qual)[i] / QualStr::PHRED_SCALE - (ss->clipPenalty - ss->mismatchPenalty); // use additional penalty as the difference between mismatch and clip
 	}
 

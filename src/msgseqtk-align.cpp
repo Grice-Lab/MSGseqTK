@@ -38,6 +38,7 @@ static const int DEFAULT_STRAND = 3;
 static const int DEFAULT_NUM_THREADS = 1;
 static const int DEFAULT_MAX_REPORT = 1;
 static const double DEFAULT_BEST_FRAC = 0.85;
+static const int MAX_NSEED = 5;
 static const string NUM_REPORTED_ALIGNMENT_TAG = "NH";
 static const string MISMATCH_POSITION_TAG = "MD";
 static const string NUM_TOTAL_ALIGNMENT_TAG = "XN";
@@ -364,6 +365,8 @@ int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
 		SeqIO& seqI, SAMfile& out, RNG& rng, int strand, int nSeed,
 		uint32_t maxMems, double bestFrac, uint32_t maxReport) {
 	infoLog << "Aligning input reads" << endl;
+	const DNAseq& target = mtg.getSeq(); // target is always the entire metagenome
+
 	/* search MEMS for each read */
 #pragma omp parallel
 	{
@@ -378,13 +381,11 @@ int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
 					const MEM::STRAND readStrand = mems.getStrand();
 					if(readStrand == MEM::REV)
 						read.revcom();
-					const string& id = read.getName();
-					const string& desc = read.getDesc();
-					const uint32_t qLen = read.length();
+
 					/* get all candidate MatchPairs */
+					const string& id = read.getName();
 					const DNAseq& query = read.getSeq();
 					const QualStr& qual = read.getQual();
-					DNAseq target; // declare here to prevent being destroyed before output
 					AlignmentSE::SeedMatchList seedMatches = AlignmentSE::getSeedMatchList(mtg, mems, maxMems);
 					if(seedMatches.empty()) {
 						infoLog << "Unable to find any valid SeedMatches for '" << id << "', ignore" << endl;
@@ -396,21 +397,19 @@ int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
 							/* get candidate region of this seedMatch */
 							int32_t tid = seedMatch.getTId();
 							const string& chrName = mtg.getChromName(tid);
-							uint64_t chromShift = mtg.getChromStart(tid);
-							uint32_t regionStart = seedMatch.getStart(AlignmentSE::MAX_INDEL_RATE); // 0-based on chrom
-							uint32_t regionEnd = seedMatch.getEnd(qLen, AlignmentSE::MAX_INDEL_RATE); // 1-based on chrom
-							target = mtg.subseq(chromShift + regionStart, regionEnd - regionStart);
-							cerr << "id: " << id << " tid: " << tid << endl << "query:  " << query << endl << "target: " << target << endl << "qual:   " << qual << endl;
-							if(static_cast<int64_t> (regionStart) < 0) // searhStart too far
-								regionStart = 0;
-							if(regionEnd > mtg.getChromLen(tid)) // searhEnd too far
-								regionEnd = mtg.getChromLen(tid);
+
+							uint64_t tStart = seedMatch.getStart() - seedMatch.getFrom() * (1 + AlignmentSE::MAX_INDEL_RATE);
+							uint64_t tEnd = seedMatch.getEnd() + (query.length() - seedMatch.getTo()) * (1 + AlignmentSE::MAX_INDEL_RATE);
+							if(tStart < mtg.getChromStart(tid)) // searhStart too far
+								tStart = mtg.getChromStart(tid);
+							if(tEnd > mtg.getChromEnd(tid)) // searhEnd too far
+								tEnd = mtg.getChromEnd(tid);
+//							cerr << "id: " << id << " tid: " << tid << " tStart: " << tStart << " tEnd: " << tEnd << endl;
+//							cerr << "query:  " << query << endl << "target: " << target.substr(tStart, tEnd - tStart) << endl;
 							/* add a new alignment */
-							seedMatch.shiftTarget(regionStart); // seedMatch coordiates are now relative to search region
-								alnList.push_back(AlignmentSE(&query, &target,
-										&id, tid, &ss,
-										&qual, regionStart, (readStrand == MEM::FWD ? 0 : BAM_FREVERSE)
-								).calculateScores(seedMatch).backTrace().clearScores());
+							alnList.push_back(AlignmentSE(&query, &target, &qual, &id, tid,
+									0, query.length(), tStart, tEnd, &ss, (readStrand == MEM::FWD ? 0 : BAM_FREVERSE)
+							).calculateScores(seedMatch).backTrace().clearScores());
 						}
 						/* find best alignment by score */
 						vector<AlignmentSE>::const_iterator bestAln = std::max_element(alnList.cbegin(), alnList.cend(), [] (const AlignmentSE& lhs, const AlignmentSE& rhs) { return lhs.getScore() > rhs.getScore(); });
