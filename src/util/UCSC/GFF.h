@@ -280,7 +280,7 @@ inline ostream& operator<<(ostream& out, const GFF& record) {
 inline bool operator==(const GFF& lhs, const GFF& rhs) {
 	return lhs.seqname == rhs.seqname && lhs.source == rhs.source && lhs.type == rhs.type &&
 			lhs.start == rhs.start && lhs.end == rhs.end &&
-			(::isnan(lhs.score) && ::isnan(rhs.score) || lhs.score == rhs.score) &&
+			(std::isnan(lhs.score) && std::isnan(rhs.score) || lhs.score == rhs.score) &&
 			lhs.strand == rhs.strand && lhs.frame == rhs.frame;
 }
 
