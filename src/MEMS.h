@@ -98,35 +98,19 @@ public:
 	/**
 	 * get best MEMS by trying different strands and multiple random seeds
 	 * @param strand  different strands, 1 for FWD, 2 for REV, 3 for both
-	 * @param nSeed  # of different seeds
 	 */
-	static MEMS getBestMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
-			RNG& rng, int strand, int nSeed = DEFAULT_NSEED);
+	static MEMS sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
+			RNG& rng, int strand);
 
 	/**
 	 * get best MEMS_PE by trying different strands and multiple random seeds
 	 * @param strand  different strands, 1 for FWD, 2 for REV, 3 for both
-	 * @param nSeed  # of different seeds
 	 */
-	static MEMS_PE getBestMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
-			RNG& rng, int strand, int nSeed = DEFAULT_NSEED);
+	static MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
+			RNG& rng, int strand);
 
 	/** find locs for MEMS_PE */
 	static MEMS_PE& findLocs(MEMS_PE& mems_pe, size_t maxNLocs = MEM::MAX_NLOCS);
-
-//	/** filter MEMs by removing MEM with exceeding number of locs */
-//	MEMS& filterLocs(size_t maxNLocs = MAX_MEM_NLOCS) {
-//		erase(std::remove_if(begin(), end(), [=] (const MEM& mem) { return mem.locs.size() > maxNLocs; }));
-//		return *this;
-//	}
-
-	/**
-	 * filter MEMS by removing incompatitable MEM's locs that is not on the same genome, or same chromosome and with not too much indels
-	 * this algorithm starts from the best MEM (lowest loglik), then sweep to both ends
-	 * @param mtg  MetaGenome data
-	 * @param maxIndel  max indel-rate allowed
-	 */
-	MEMS& filterLocs(const MetaGenome& mtg, double maxIndel);
 
 	/**
 	 * get the loglik of a paired-end MEMS
@@ -143,7 +127,6 @@ public:
 	/* static fields */
 	static boost::random::uniform_01<> mem_dist; /* random01 distribution for accepting MEMs */
 	static const size_t MAX_MEM_NLOCS = 4;
-	static const int DEFAULT_NSEED = 1;
 
 	/* non-member methods */
 	friend ostream& operator<<(ostream& out, const MEMS& mems);

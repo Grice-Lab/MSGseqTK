@@ -9,6 +9,7 @@
 #include <climits>
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 #include <boost/lexical_cast.hpp>
 #include <Eigen/Dense>
 #include "AlignmentSE.h"
@@ -48,6 +49,7 @@ AlignmentSE& AlignmentSE::calculateScores(const SeedMatch& seeds) {
 
 AlignmentSE& AlignmentSE::backTrace() {
 	assert(alnScore != infV);
+
 //	cerr << "qname: " << qname << " tid: " << tid << " alnFrom: " << alnFrom << " alnTo: " << alnTo << " alnStart: " << alnStart << " alnEnd: " << alnEnd << endl;
 	assert(alnTo > 0 && alnEnd > 0);
 	alnPath.clear();
@@ -186,10 +188,6 @@ bool AlignmentSE::SeedMatch::isCompatitable() const {
 }
 
 bool AlignmentSE::SeedMatch::isCompatitable(uint64_t maxIndel) const {
-	std::cerr << "testing seedmatch of size " << size() << std::endl;
-	for(const SeedPair& seed : *this) {
-		fprintf(stderr, "from: %d to: %d start: %d end: %d tid: %d\n", seed.from, seed.to, seed.start, seed.end, seed.tid);
-	}
 	if(size() <= 1) // less than 1 SeedPair
 		return true;
 
@@ -206,6 +204,25 @@ uint32_t AlignmentSE::SeedMatch::length() const {
 	return len;
 }
 
+AlignmentSE::SeedMatch& AlignmentSE::SeedMatch::filter(uint64_t maxIndel) {
+	if(size() <= 1) // no filter for single seed
+		return *this;
+
+	/* order this SeedMatch by logP increasingly, so bad seed is at end */
+	std::sort(begin(), end(),
+			[] (const SeedPair& lhs, const SeedPair& rhs) { return lhs.logP < rhs.logP; });
+
+	while(!isCompatitable(maxIndel)) // till compatitable
+		pop_back();
+
+	/* re-order this SeedMatch by location */
+	std::sort(begin(), end(),
+			[] (const SeedPair& lhs, const SeedPair& rhs) { return lhs.from < rhs.from; });
+
+	assert(!empty()); // wont be empty after filter
+	return *this;
+}
+
 AlignmentSE::SeedMatchList AlignmentSE::getSeedMatchList(const MetaGenome& mtg, const MEMS& mems,
 		uint32_t maxIt) {
 	/* get a raw SeedMatchList to store all matches of each MEMS */
@@ -218,7 +235,7 @@ AlignmentSE::SeedMatchList AlignmentSE::getSeedMatchList(const MetaGenome& mtg, 
 			int32_t tid = mtg.getChromIndex(loc.start); // use chrom index as tid
 			assert(loc.start - mtg.getChromStart(tid) <= UINT32_MAX); // BAM file only support up-to UINT32_MAX chrom size
 			/* rawList SeedPair start/end is relative to the chromosome */
-			rawList[i].push_back(SeedPair(mem.from, loc.start, mem.length(), tid));
+			rawList[i].push_back(SeedPair(mem.from, loc.start, mem.length(), tid, mem.loglik()));
 		}
 	}
 
@@ -230,8 +247,7 @@ AlignmentSE::SeedMatchList AlignmentSE::getSeedMatchList(const MetaGenome& mtg, 
 		combination.reserve(N);
 		for(size_t i = 0; i < N; ++i)
 			combination.push_back(rawList[i][idx[i]]);
-		if(combination.isCompatitable(mems.getSeq()->length() * MAX_INDEL_RATE))
-			outputList.push_back(combination); // add this combination
+		outputList.push_back(combination.filter(mems.getSeq()->length() * MAX_INDEL_RATE)); // add filtered combination, which guaranteed to be comptatitable
 
 		/* find the rightmost SeedMatch that has more elemtns left after current element */
 		int64_t next = N - 1;
@@ -385,10 +401,7 @@ vector<AlignmentSE>& AlignmentSE::calcMapQ(vector<AlignmentSE>& alnList) {
 	for(size_t i = 0; i < N; ++i) {
 		alnList[i].postP = postP(i);
 		double mapQ = QualStr::phredP2Q(1 - postP(i));
-		if(::isnan(mapQ)) {
-			std::cerr << "pr: " << pr.transpose() << std::endl << " postP: " << postP.transpose() << std::endl;
-		}
-		assert(!::isnan(mapQ));
+		assert(!std::isnan(mapQ));
 		alnList[i].mapQ = std::min(::round(mapQ), static_cast<double> (QualStr::MAX_Q_SCORE));
 	}
 	return alnList;

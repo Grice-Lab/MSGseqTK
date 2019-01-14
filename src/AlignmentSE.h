@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <cassert>
 #include <cmath>
+#include <algorithm>
 #include <boost/algorithm/string/regex.hpp>
 #include "DNAseq.h"
 #include "ScoreScheme.h"
@@ -47,13 +48,18 @@ struct AlignmentSE {
 		SeedPair() = default;
 
 		/** construct from given values */
-		SeedPair(uint64_t from, uint64_t start, uint32_t len, int32_t tid)
-		: from(from), to(from + len), start(start), end(start + len), tid(tid)
+		SeedPair(uint64_t from, uint64_t start, uint32_t len, int32_t tid, double logP)
+		: from(from), to(from + len), start(start), end(start + len), tid(tid), logP(logP)
 		{ 	}
 
 		/* member methods */
 		uint32_t length() const {
 			return end - start;
+		}
+
+		/** test whether this SeedPair is valid */
+		bool isValid() const {
+			return tid >= 0 && !std::isnan(logP);
 		}
 
 		/* member fields */
@@ -62,6 +68,7 @@ struct AlignmentSE {
 		uint64_t start = 0; /* 0-based target position */
 		uint64_t end = 0; /* 1-based target position */
 		int32_t tid = -1; /* tid as chromId/locId determined by database */
+		double logP = NAN; /* log-probability (loglik) of observing this SeedPair by chance */
 
 		/** test whether two SeedPairs overlap (on target) */
 		static bool isOverlap(const SeedPair& lhs, const SeedPair& rhs) {
@@ -99,11 +106,6 @@ struct AlignmentSE {
 		/** get total length of SeedPairs within */
 		uint32_t length() const;
 
-		/** get tid of this SeedMatch */
-		int32_t getTId() const {
-			return front().tid;
-		}
-
 		/** get the from position as the first from */
 		uint64_t getFrom() const {
 			return front().from;
@@ -123,6 +125,26 @@ struct AlignmentSE {
 		uint64_t getEnd() const {
 			return back().end;
 		}
+
+		/** get tid of this SeedMatch */
+		int32_t getTId() const {
+			return front().tid;
+		}
+
+		/** get loglik of this SeedMatch */
+		double loglik() const {
+			double logP = 0;
+			for(const SeedPair& seed : *this)
+				logP += seed.logP;
+			return logP;
+		}
+
+		/** filter this SeedMatch by removing invalid seeds */
+		SeedMatch& filter();
+
+		/** filter this SeedMatch using greedy algorithm,
+		 * by progressively remove bad SeedPair from it */
+		SeedMatch& filter(uint64_t maxIndel);
 	};
 
 	typedef vector<SeedMatch> SeedMatchList;
@@ -362,6 +384,11 @@ struct AlignmentSE {
 	static vector<AlignmentSE>& calcMapQ(vector<AlignmentSE>& alnList);
 
 };
+
+inline AlignmentSE::SeedMatch& AlignmentSE::SeedMatch::filter() {
+	erase(std::remove_if(begin(), end(), [] (const SeedPair& seed) { return !seed.isValid(); }), end());
+	return *this;
+}
 
 inline AlignmentSE::CIGAR_OP_TYPE AlignmentSE::matchMax(double match, double ins, double del) {
 	double max = match;

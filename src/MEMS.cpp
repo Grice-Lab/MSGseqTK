@@ -48,37 +48,18 @@ MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
 	return mems;
 }
 
-MEMS MEMS::getBestMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
-		RNG& rng, int strand, int nSeed) {
+MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
+		RNG& rng, int strand) {
 	assert(strand != 0);
-	MEMS fwdMems, revMems; // best fwd/rev MEMS
-	if(strand & MEM::FWD) { // FWD strand need search
-		double bestLogP = infV;
-		for(int k = 0; k < nSeed; ++k) {
-			MEMS mems = sampleMEMS(seq, fmidx, rng, MEM::FWD);
-			if(mems.loglik() > bestLogP) {
-				fwdMems = mems;
-				bestLogP = mems.loglik();
-			}
-		}
-	}
-	if(strand & MEM::REV) { // FWD strand need search
-		double bestLogP = infV;
-		for(int k = 0; k < nSeed; ++k) {
-			MEMS mems = sampleMEMS(seq, fmidx, rng, MEM::REV);
-			if(mems.loglik() > bestLogP) {
-				revMems = mems;
-				bestLogP = mems.loglik();
-			}
-		}
-	}
-
 	if(strand & MEM::FWD != 0 && strand & MEM::REV == 0) /* fwd only */
-		return fwdMems;
-	else if(strand & MEM::FWD == 0 && strand & MEM::REV != 0)
-		return revMems;
-	else
+		return sampleMEMS(seq, fmidx, rng, MEM::FWD);
+	else if(strand & MEM::FWD == 0 && strand & MEM::REV != 0) /* rev only */
+		return sampleMEMS(seq, fmidx, rng, MEM::REV);
+	else {
+		MEMS fwdMems = sampleMEMS(seq, fmidx, rng, MEM::FWD);
+		MEMS revMems = sampleMEMS(seq, fmidx, rng, MEM::REV);
 		return fwdMems.loglik() < revMems.loglik() ? fwdMems : revMems; /* return the most significant result */
+	}
 }
 
 size_t MEMS::bestMEMIndex() const {
@@ -98,41 +79,22 @@ ostream& MEMS::write(ostream& out) const {
 	return out;
 }
 
-MEMS_PE MEMS::getBestMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
-		RNG& rng, int strand, int nSeed) {
+MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
+		RNG& rng, int strand) {
 	assert(strand != 0);
-	MEMS_PE senseMemsPE, antiMemsPE; // sense and anti-sense MEMS_PE
-	/* scan FWD strand */
-	if(strand & MEM::FWD) {
-		double bestLogP = infV;
-		for(int k = 0; k < nSeed; ++k) {
-			MEMS_PE memsPE = std::make_pair(sampleMEMS(fwdSeq, fmidx, rng, MEM::FWD),
-					sampleMEMS(revSeq, fmidx, rng, MEM::REV)); // use FWD-REV orientation
-			if(loglik(memsPE) > bestLogP) {
-				senseMemsPE = memsPE;
-				bestLogP = loglik(memsPE);
-			}
-		}
-	}
-	/* scan REV strand */
-	if(strand & MEM::REV) {
-		double bestLogP = infV;
-		for(int k = 0; k < nSeed; ++k) {
-			MEMS_PE memsPE = std::make_pair(sampleMEMS(fwdSeq, fmidx, rng, MEM::REV),
-					sampleMEMS(revSeq, fmidx, rng, MEM::FWD)); // use REV-FWD orientation
-			if(loglik(memsPE) > bestLogP) {
-				antiMemsPE = memsPE;
-				bestLogP = loglik(memsPE);
-			}
-		}
-	}
-
 	if(strand & MEM::FWD != 0 && strand & MEM::REV == 0) /* fwd only */
-		return senseMemsPE;
+		return std::make_pair(sampleMEMS(fwdSeq, fmidx, rng, MEM::FWD),
+				sampleMEMS(revSeq, fmidx, rng, MEM::REV)); // use FWD-REV orientation
 	else if(strand & MEM::FWD == 0 && strand & MEM::REV != 0)
-		return antiMemsPE;
-	else
+		return std::make_pair(sampleMEMS(fwdSeq, fmidx, rng, MEM::REV),
+				sampleMEMS(revSeq, fmidx, rng, MEM::FWD)); // use REV-FWD orientation
+	else {
+		MEMS_PE senseMemsPE = std::make_pair(sampleMEMS(fwdSeq, fmidx, rng, MEM::FWD),
+				sampleMEMS(revSeq, fmidx, rng, MEM::REV)); // use FWD-REV orientation
+		MEMS_PE antiMemsPE = std::make_pair(sampleMEMS(fwdSeq, fmidx, rng, MEM::REV),
+				sampleMEMS(revSeq, fmidx, rng, MEM::FWD)); // use REV-FWD orientation
 		return loglik(senseMemsPE) < loglik(antiMemsPE) ? senseMemsPE : antiMemsPE; /* return the most significant result */
+	}
 }
 
 } /* namespace UCSC */

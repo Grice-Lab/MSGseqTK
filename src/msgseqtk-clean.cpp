@@ -414,8 +414,8 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& re
 				{
 					const string& id = read.getName();
 					const string& desc = read.getDesc();
-					MEMS refMems = MEMS::getBestMEMS(&read, &refFmidx, rng, strand);
-					MEMS bgMems = MEMS::getBestMEMS(&read, &bgFmidx, rng, strand);
+					MEMS refMems = MEMS::sampleMEMS(&read, &refFmidx, rng, strand);
+					MEMS bgMems = MEMS::sampleMEMS(&read, &bgFmidx, rng, strand);
 					double refLoglik = refMems.loglik();
 					double bgLoglik = bgMems.loglik();
 					double lod = - refLoglik + bgLoglik;
@@ -433,8 +433,7 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& re
 					}
 				} /* end task */
 			} /* end each read */
-		} /* end single */
-#pragma omp taskwait
+		} /* end single, implicit barrier */
 	} /* end parallel */
 	return EXIT_SUCCESS;
 }
@@ -452,12 +451,12 @@ int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& re
 				PrimarySeq fwdRead = fwdI.nextSeq();
 				PrimarySeq revRead = revI.nextSeq();
 				assert(fwdRead.getName() == revRead.getName());
-				const string& id = fwdRead.getName();
-				const string& desc = fwdRead.getDesc();
 #pragma omp task firstprivate(fwdRead, revRead)
 				{
-					MEMS_PE refMemsPE = MEMS::getBestMEMS(&fwdRead, &revRead, &refFmidx, rng, strand);
-					MEMS_PE bgMemsPE = MEMS::getBestMEMS(&fwdRead, &revRead, &bgFmidx, rng, strand);
+					const string& id = fwdRead.getName();
+					const string& desc = fwdRead.getDesc();
+					MEMS_PE refMemsPE = MEMS::sampleMEMS(&fwdRead, &revRead, &refFmidx, rng, strand);
+					MEMS_PE bgMemsPE = MEMS::sampleMEMS(&fwdRead, &revRead, &bgFmidx, rng, strand);
 					double refLoglik = MEMS::loglik(refMemsPE);
 					double bgLoglik = MEMS::loglik(bgMemsPE);
 					double lod = - refLoglik + bgLoglik;
@@ -483,8 +482,7 @@ int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& re
 					}
 				} /* end task */
 			} /* end each pair */
-		} /* end single */
-#pragma omp taskwait
+		} /* end single, implicit barrier */
 	} /* end parallel */
 	return EXIT_SUCCESS;
 }

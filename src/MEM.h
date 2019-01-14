@@ -139,14 +139,6 @@ struct MEM {
 		return static_cast<double> (nIndel(mtg, mem1, mem2)) / mem1.seq->length();
 	}
 
-	/**
-	 * filter a pair of MEM by removing locs not within required indel rate
-	 * @param mtg  MetaGenome
-	 * @param mem1  primary MEM
-	 * @param mem2  target MEM
-	 */
-	static void filterLocsByIndel(const MetaGenome* mtg, MEM& mem1, MEM& mem2, double maxIndelRate);
-
 	/* member fields */
 	const PrimarySeq* seq = nullptr;
 	const FMIndex* fmidx = nullptr;
