@@ -455,10 +455,10 @@ int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& re
 				{
 					const string& id = fwdRead.getName();
 					const string& desc = fwdRead.getDesc();
-					MEMS_PE refMemsPE = MEMS::sampleMEMS(&fwdRead, &revRead, &refFmidx, rng, strand);
-					MEMS_PE bgMemsPE = MEMS::sampleMEMS(&fwdRead, &revRead, &bgFmidx, rng, strand);
-					double refLoglik = MEMS::loglik(refMemsPE);
-					double bgLoglik = MEMS::loglik(bgMemsPE);
+					MEMS_PE refMemsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &refFmidx, rng, strand);
+					MEMS_PE bgMemsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &bgFmidx, rng, strand);
+					double refLoglik = refMemsPE.loglik();
+					double bgLoglik = bgMemsPE.loglik();
 					double lod = - refLoglik + bgLoglik;
 					if(lod >= minLod) {
 #pragma omp critical(writeSeq)
@@ -472,10 +472,10 @@ int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& re
 						{
 							assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod;
 							if(withDetail) {
-								MEMS::findLocs(refMemsPE);
-								MEMS::findLocs(bgMemsPE);
-								assignOut << refMemsPE.first << "\t" << refMemsPE.second << "\t"
-								<< bgMemsPE.first << "\t" << bgMemsPE.second;
+								refMemsPE.findLocs();
+								bgMemsPE.findLocs();
+								assignOut << refMemsPE.fwdMems << "\t" << refMemsPE.revMems << "\t"
+								<< bgMemsPE.fwdMems << "\t" << bgMemsPE.revMems;
 							}
 							assignOut << endl;
 						}

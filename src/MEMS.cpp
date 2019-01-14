@@ -79,21 +79,21 @@ ostream& MEMS::write(ostream& out) const {
 	return out;
 }
 
-MEMS_PE MEMS::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
+MEMS_PE MEMS_PE::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
 		RNG& rng, int strand) {
 	assert(strand != 0);
 	if(strand & MEM::FWD != 0 && strand & MEM::REV == 0) /* fwd only */
-		return std::make_pair(sampleMEMS(fwdSeq, fmidx, rng, MEM::FWD),
-				sampleMEMS(revSeq, fmidx, rng, MEM::REV)); // use FWD-REV orientation
+		return MEMS_PE(MEMS::sampleMEMS(fwdSeq, fmidx, rng, MEM::FWD),
+				MEMS::sampleMEMS(revSeq, fmidx, rng, MEM::REV)); // use FWD-REV orientation
 	else if(strand & MEM::FWD == 0 && strand & MEM::REV != 0)
-		return std::make_pair(sampleMEMS(fwdSeq, fmidx, rng, MEM::REV),
-				sampleMEMS(revSeq, fmidx, rng, MEM::FWD)); // use REV-FWD orientation
+		return MEMS_PE(MEMS::sampleMEMS(fwdSeq, fmidx, rng, MEM::REV),
+				MEMS::sampleMEMS(revSeq, fmidx, rng, MEM::FWD)); // use REV-FWD orientation
 	else {
-		MEMS_PE senseMemsPE = std::make_pair(sampleMEMS(fwdSeq, fmidx, rng, MEM::FWD),
-				sampleMEMS(revSeq, fmidx, rng, MEM::REV)); // use FWD-REV orientation
-		MEMS_PE antiMemsPE = std::make_pair(sampleMEMS(fwdSeq, fmidx, rng, MEM::REV),
-				sampleMEMS(revSeq, fmidx, rng, MEM::FWD)); // use REV-FWD orientation
-		return loglik(senseMemsPE) < loglik(antiMemsPE) ? senseMemsPE : antiMemsPE; /* return the most significant result */
+		MEMS_PE senseMemsPE = MEMS_PE(MEMS::sampleMEMS(fwdSeq, fmidx, rng, MEM::FWD),
+				MEMS::sampleMEMS(revSeq, fmidx, rng, MEM::REV)); // use FWD-REV orientation
+		MEMS_PE antiMemsPE = MEMS_PE(MEMS::sampleMEMS(fwdSeq, fmidx, rng, MEM::REV),
+				MEMS::sampleMEMS(revSeq, fmidx, rng, MEM::FWD)); // use REV-FWD orientation
+		return senseMemsPE.loglik() < antiMemsPE.loglik() ? senseMemsPE : antiMemsPE; /* return the most significant result */
 	}
 }
 

@@ -27,9 +27,6 @@ using std::vector;
 using std::pair;
 typedef boost::random::mt11213b RNG;
 
-struct MEMS;
-typedef pair<MEMS, MEMS> MEMS_PE;
-
 struct MEMS : public vector<MEM> {
 public:
 	/* constructors */
@@ -102,27 +99,6 @@ public:
 	static MEMS sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
 			RNG& rng, int strand);
 
-	/**
-	 * get best MEMS_PE by trying different strands and multiple random seeds
-	 * @param strand  different strands, 1 for FWD, 2 for REV, 3 for both
-	 */
-	static MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
-			RNG& rng, int strand);
-
-	/** find locs for MEMS_PE */
-	static MEMS_PE& findLocs(MEMS_PE& mems_pe, size_t maxNLocs = MEM::MAX_NLOCS);
-
-	/**
-	 * get the loglik of a paired-end MEMS
-	 */
-	static double loglik(const MEMS_PE& mems_pe) {
-		return mems_pe.first.loglik() + mems_pe.second.loglik();
-	}
-
-	/** get strand of a MEMS_PE */
-	static MEM::STRAND getStrand(const MEMS_PE& mems_pe) {
-		return mems_pe.first.getStrand();
-	}
 
 	/* static fields */
 	static boost::random::uniform_01<> mem_dist; /* random01 distribution for accepting MEMs */
@@ -130,6 +106,43 @@ public:
 
 	/* non-member methods */
 	friend ostream& operator<<(ostream& out, const MEMS& mems);
+};
+
+/** convenient wrapper class for MEMS paired-end (PE) */
+struct MEMS_PE {
+	/* constructors */
+	/** default constructor */
+	MEMS_PE() = default;
+
+	/** construct MEMS_PE given both pair MEMS */
+	MEMS_PE(const MEMS& fwdMems, const MEMS& revMems) : fwdMems(fwdMems), revMems(revMems)
+	{  }
+
+	/* member methods */
+	/** find locs for both fwd and rev MEMS */
+	MEMS_PE& findLocs(size_t maxNLocs = MEM::MAX_NLOCS);
+
+	/** get the loglik of this MEMS_PE */
+	double loglik() const {
+		return fwdMems.loglik() + revMems.loglik();
+	}
+
+	/** get strand of this MEMS_PE */
+	MEM::STRAND getStrand() const {
+		return fwdMems.getStrand();
+	}
+
+	/* static methods */
+	/**
+	 * get best MEMS_PE by trying different strands and multiple random seeds
+	 * @param strand  different strands, 1 for FWD, 2 for REV, 3 for both
+	 */
+	static MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
+			RNG& rng, int strand);
+
+	/* member fields */
+	MEMS fwdMems;
+	MEMS revMems;
 };
 
 inline MEMS& MEMS::evaluate() {
@@ -155,10 +168,10 @@ inline MEMS& MEMS::findLocs(size_t maxNLocs) {
 	return *this;
 }
 
-inline MEMS_PE& MEMS::findLocs(MEMS_PE& mems_pe, size_t maxNLocs) {
-	mems_pe.first.findLocs(maxNLocs);
-	mems_pe.second.findLocs(maxNLocs);
-	return mems_pe;
+inline MEMS_PE& MEMS_PE::findLocs(size_t maxNLocs) {
+	fwdMems.findLocs(maxNLocs);
+	revMems.findLocs(maxNLocs);
+	return *this;
 }
 
 } /* namespace UCSC */
