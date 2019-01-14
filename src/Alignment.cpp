@@ -1,9 +1,11 @@
 /*
- * AlignmentSE.cpp
+ * Alignment.cpp
  *
  *  Created on: Nov 28, 2018
  *      Author: zhengqi
  */
+
+#include "Alignment.h"
 
 #include <cassert>
 #include <climits>
@@ -12,20 +14,19 @@
 #include <numeric>
 #include <boost/lexical_cast.hpp>
 #include <Eigen/Dense>
-#include "AlignmentSE.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
 using namespace Eigen;
 
-const double AlignmentSE::DEFAULT_INDEL_RATE = 0.02;
-const double AlignmentSE::MAX_INDEL_RATE = 0.15;
-const string AlignmentSE::STATES = BAM_CIGAR_STR;
-const double AlignmentSE::DEFAULT_SCORE_REL_EPSILON = 0.85;
-const boost::regex AlignmentSE::MDTAG_LEADING_PATTERN = boost::regex("^\\d+");
-const boost::regex AlignmentSE::MDTAG_MAIN_PATTERN = boost::regex("([A-Z]|\\^[A-Z]+)(\\d+)");
+const double Alignment::DEFAULT_INDEL_RATE = 0.02;
+const double Alignment::MAX_INDEL_RATE = 0.15;
+const string Alignment::STATES = BAM_CIGAR_STR;
+const double Alignment::DEFAULT_SCORE_REL_EPSILON = 0.85;
+const boost::regex Alignment::MDTAG_LEADING_PATTERN = boost::regex("^\\d+");
+const boost::regex Alignment::MDTAG_MAIN_PATTERN = boost::regex("([A-Z]|\\^[A-Z]+)(\\d+)");
 
-AlignmentSE& AlignmentSE::calculateScores(const SeedMatch& seeds) {
+Alignment& Alignment::calculateScores(const SeedMatch& seeds) {
 	assert(!seeds.empty());
 //	assert(seeds.isCompatitable());
 	/* DP at 5', if any */
@@ -47,7 +48,7 @@ AlignmentSE& AlignmentSE::calculateScores(const SeedMatch& seeds) {
 	return *this;
 }
 
-AlignmentSE& AlignmentSE::backTrace() {
+Alignment& Alignment::backTrace() {
 	assert(alnScore != infV);
 
 //	cerr << "qname: " << qname << " tid: " << tid << " alnFrom: " << alnFrom << " alnTo: " << alnTo << " alnStart: " << alnStart << " alnEnd: " << alnEnd << endl;
@@ -93,7 +94,7 @@ AlignmentSE& AlignmentSE::backTrace() {
 	return *this;
 }
 
-BAM::cigar_str AlignmentSE::getAlnCigar() const {
+BAM::cigar_str Alignment::getAlnCigar() const {
 	assert(!alnPath.empty());
 	BAM::cigar_str alnCigar;
 	alnCigar.reserve(alnPath.length());
@@ -120,7 +121,7 @@ BAM::cigar_str AlignmentSE::getAlnCigar() const {
 	return alnCigar;
 }
 
-string AlignmentSE::getAlnMDTag() const {
+string Alignment::getAlnMDTag() const {
 	assert(!alnPath.empty());
 	string mdTag;
 	mdTag.reserve(alnPath.length());
@@ -169,7 +170,7 @@ string AlignmentSE::getAlnMDTag() const {
 	return mdTag;
 }
 
-BAM::seq_str AlignmentSE::nt16Encode(const DNAseq& seq) {
+BAM::seq_str Alignment::nt16Encode(const DNAseq& seq) {
 	const uint32_t L = seq.length();
 	BAM::seq_str seq16((L + 1) / 2, 0); // ceil(L / 2)
 	for(uint32_t i = 0; i < L; i += 2)
@@ -177,7 +178,7 @@ BAM::seq_str AlignmentSE::nt16Encode(const DNAseq& seq) {
 	return seq16;
 }
 
-bool AlignmentSE::SeedMatch::isCompatitable() const {
+bool Alignment::SeedMatch::isCompatitable() const {
 	if(size() <= 1) // less than 1 SeedPair
 		return true;
 
@@ -187,7 +188,7 @@ bool AlignmentSE::SeedMatch::isCompatitable() const {
 	return true;
 }
 
-bool AlignmentSE::SeedMatch::isCompatitable(uint64_t maxIndel) const {
+bool Alignment::SeedMatch::isCompatitable(uint64_t maxIndel) const {
 	if(size() <= 1) // less than 1 SeedPair
 		return true;
 
@@ -197,14 +198,14 @@ bool AlignmentSE::SeedMatch::isCompatitable(uint64_t maxIndel) const {
 	return true;
 }
 
-uint32_t AlignmentSE::SeedMatch::length() const {
+uint32_t Alignment::SeedMatch::length() const {
 	uint32_t len = 0;
 	for(const SeedMatch::value_type& seed : *this)
 		len += seed.length();
 	return len;
 }
 
-AlignmentSE::SeedMatch& AlignmentSE::SeedMatch::filter(uint64_t maxIndel) {
+Alignment::SeedMatch& Alignment::SeedMatch::filter(uint64_t maxIndel) {
 	if(size() <= 1) // no filter for single seed
 		return *this;
 
@@ -223,7 +224,7 @@ AlignmentSE::SeedMatch& AlignmentSE::SeedMatch::filter(uint64_t maxIndel) {
 	return *this;
 }
 
-AlignmentSE::SeedMatchList AlignmentSE::getSeedMatchList(const MetaGenome& mtg, const MEMS& mems,
+Alignment::SeedMatchList Alignment::getSeedMatchList(const MetaGenome& mtg, const MEMS& mems,
 		uint32_t maxIt) {
 	/* get a raw SeedMatchList to store all matches of each MEMS */
 	const size_t N = mems.size();
@@ -266,7 +267,7 @@ AlignmentSE::SeedMatchList AlignmentSE::getSeedMatchList(const MetaGenome& mtg, 
 }
 
 /** get decoded aligned query seq */
-string AlignmentSE::getAlnQSeq() const {
+string Alignment::getAlnQSeq() const {
 	string seq;
 	seq.reserve(getAlnQLen());
 	uint64_t i = alnFrom; // index on query
@@ -289,7 +290,7 @@ string AlignmentSE::getAlnQSeq() const {
 }
 
 /** get decoded aligned target seq */
-string AlignmentSE::getAlnTSeq() const {
+string Alignment::getAlnTSeq() const {
 	string seq;
 	seq.reserve(getAlnTLen());
 	uint64_t j = alnStart; // index on target
@@ -311,7 +312,7 @@ string AlignmentSE::getAlnTSeq() const {
 	return seq;
 }
 
-uint32_t AlignmentSE::mdTag2alnQLen(const string& mdTag) {
+uint32_t Alignment::mdTag2alnQLen(const string& mdTag) {
 	uint32_t len = 0;
 	boost::smatch match;
 	string::const_iterator searchStart = mdTag.cbegin();
@@ -329,7 +330,7 @@ uint32_t AlignmentSE::mdTag2alnQLen(const string& mdTag) {
 	return len;
 }
 
-uint32_t AlignmentSE::getAlnLen() const {
+uint32_t Alignment::getAlnLen() const {
 	uint32_t alnLen = 0;
 	for(state_str::value_type s : alnPath) {
 		if(bam_cigar_type(s))
@@ -338,7 +339,7 @@ uint32_t AlignmentSE::getAlnLen() const {
 	return alnLen;
 }
 
-AlignmentSE& AlignmentSE::evaluate() {
+Alignment& Alignment::evaluate() {
 	if(alnPath.empty())
 		*this;
 	log10P = 0;
@@ -383,7 +384,7 @@ AlignmentSE& AlignmentSE::evaluate() {
 	return *this;
 }
 
-vector<AlignmentSE>& AlignmentSE::calcMapQ(vector<AlignmentSE>& alnList) {
+vector<Alignment>& Alignment::calcMapQ(vector<Alignment>& alnList) {
 	if(alnList.empty())
 		return alnList;
 	const size_t N = alnList.size();

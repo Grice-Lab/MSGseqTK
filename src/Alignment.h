@@ -1,12 +1,12 @@
 /*
- * AlignmentSE.h
+ * Alignment.h
  *
  *  Created on: Nov 28, 2018
  *      Author: zhengqi
  */
 
-#ifndef SRC_ALIGNMENTSE_H_
-#define SRC_ALIGNMENTSE_H_
+#ifndef SRC_ALIGNMENT_H_
+#define SRC_ALIGNMENT_H_
 
 #define _USE_MATH_DEFINES
 
@@ -38,7 +38,7 @@ using std::vector;
 /**
  * an alignment region of between a single-end read/query and a database/target
  */
-struct AlignmentSE {
+struct Alignment {
 	typedef uint32_t CIGAR_OP_TYPE;
 	/* nested types and enums */
 	/** A SeedPair is a pair of exact matched seed region between query and target */
@@ -152,10 +152,10 @@ struct AlignmentSE {
 
 	/* constructors */
 	/** default constructor */
-	AlignmentSE() = default;
+	Alignment() = default;
 
 	/** construct an AlignmentSE with all fields */
-	AlignmentSE(const DNAseq* query, const DNAseq* target, const QualStr* qual, const string* qname, int32_t tid,
+	Alignment(const DNAseq* query, const DNAseq* target, const QualStr* qual, const string* qname, int32_t tid,
 			uint64_t qFrom, uint64_t qTo, uint64_t tStart, uint64_t tEnd,
 			const ScoreScheme* ss, uint16_t flag, uint8_t mapQ, int32_t mtid, int32_t mpos, int32_t isize, uint32_t id)
 	: query(query), target(target), qual(qual), qname(qname), tid(tid),
@@ -169,7 +169,7 @@ struct AlignmentSE {
 	}
 
 	/** construct an AlignmentSE with required fields */
-	AlignmentSE(const DNAseq* query, const DNAseq* target, const QualStr* qual, const string* qname, int32_t tid,
+	Alignment(const DNAseq* query, const DNAseq* target, const QualStr* qual, const string* qname, int32_t tid,
 			uint64_t qFrom, uint64_t qTo, uint64_t tStart, uint64_t tEnd,
 			const ScoreScheme* ss, uint16_t flag)
 	: query(query), target(target), qual(qual), qname(qname), tid(tid),
@@ -190,10 +190,10 @@ struct AlignmentSE {
 	}
 
 	/** initiate all score matrices */
-	AlignmentSE& initScores();
+	Alignment& initScores();
 
 	/** clear all scores to save storage (for copying/moving) */
-	AlignmentSE& clearScores();
+	Alignment& clearScores();
 
 	/**
 	 * calculate all scores in a given region using Dynamic-Programming
@@ -208,7 +208,7 @@ struct AlignmentSE {
 	void calculateScores(const SeedPair& pair);
 
 	/** calculate all scores in the entire region using Dynamic-Programming, return the alnScore as the maximum score found */
-	AlignmentSE& calculateScores() {
+	Alignment& calculateScores() {
 		calculateScores(0, qLen, 0, tLen);
 		alnScore = M.maxCoeff(&alnTo, &alnEnd); // determine aign 3' and score simultaneously
 		alnTo += qFrom;
@@ -217,10 +217,10 @@ struct AlignmentSE {
 	}
 
 	/** calculate all scores in the restricted "SeedMatch" regions using Dynamic-Programming, return the alnScore as the maximum score found */
-	AlignmentSE& calculateScores(const SeedMatch& seeds);
+	Alignment& calculateScores(const SeedMatch& seeds);
 
 	/** backtrace alnPath */
-	AlignmentSE& backTrace();
+	Alignment& backTrace();
 
 	/** get 5' soft-clip size */
 	uint32_t getClip5Len() const {
@@ -278,7 +278,7 @@ struct AlignmentSE {
 	}
 
 	/** evaluate this alignment log-liklihood using seq, align-path and quality */
-	AlignmentSE& evaluate();
+	Alignment& evaluate();
 
 	/** get log10-liklihood of this alignment */
 	double log10lik() const {
@@ -381,16 +381,16 @@ struct AlignmentSE {
 	 * calculate mapQ as posterior probability of candidate alignments using a uniform prior
 	 * set the mapQ value of all alignments
 	 */
-	static vector<AlignmentSE>& calcMapQ(vector<AlignmentSE>& alnList);
+	static vector<Alignment>& calcMapQ(vector<Alignment>& alnList);
 
 };
 
-inline AlignmentSE::SeedMatch& AlignmentSE::SeedMatch::filter() {
+inline Alignment::SeedMatch& Alignment::SeedMatch::filter() {
 	erase(std::remove_if(begin(), end(), [] (const SeedPair& seed) { return !seed.isValid(); }), end());
 	return *this;
 }
 
-inline AlignmentSE::CIGAR_OP_TYPE AlignmentSE::matchMax(double match, double ins, double del) {
+inline Alignment::CIGAR_OP_TYPE Alignment::matchMax(double match, double ins, double del) {
 	double max = match;
 	int s = BAM_CMATCH;
 	if(ins > max) {
@@ -404,29 +404,29 @@ inline AlignmentSE::CIGAR_OP_TYPE AlignmentSE::matchMax(double match, double ins
 	return s;
 }
 
-inline AlignmentSE::CIGAR_OP_TYPE AlignmentSE::insMax(double match, double ins) {
+inline Alignment::CIGAR_OP_TYPE Alignment::insMax(double match, double ins) {
 	return match > ins ? BAM_CMATCH : BAM_CINS;
 }
 
-inline AlignmentSE::CIGAR_OP_TYPE AlignmentSE::delMax(double match, double del) {
+inline Alignment::CIGAR_OP_TYPE Alignment::delMax(double match, double del) {
 	return match > del ? BAM_CMATCH : BAM_CDEL;
 }
 
-inline AlignmentSE& AlignmentSE::initScores() {
+inline Alignment& Alignment::initScores() {
 //	assert(isInitiated());
 	M.row(0).setZero();
 	M.col(0).setZero();
 	return *this;
 }
 
-inline AlignmentSE& AlignmentSE::clearScores() {
+inline Alignment& Alignment::clearScores() {
 	M = MatrixXd();
 	I = MatrixXd();
 	D = MatrixXd();
 	return *this;
 }
 
-inline void AlignmentSE::calculateScores(uint64_t from, uint64_t to, uint64_t start, uint64_t end) {
+inline void Alignment::calculateScores(uint64_t from, uint64_t to, uint64_t start, uint64_t end) {
 	assert(isInitiated());
 	for(uint64_t q = from; q < to; ++q) {
 		uint32_t i = q - qFrom + 1; // relative to score matrices
@@ -453,7 +453,7 @@ inline void AlignmentSE::calculateScores(uint64_t from, uint64_t to, uint64_t st
 	}
 }
 
-inline void AlignmentSE::calculateScores(const SeedPair& pair) {
+inline void Alignment::calculateScores(const SeedPair& pair) {
 	assert(isInitiated());
 	for(uint32_t k = 0; k < pair.length(); ++k) {
 		uint64_t q = pair.from + k;
@@ -467,4 +467,4 @@ inline void AlignmentSE::calculateScores(const SeedPair& pair) {
 } /* namespace MSGseqTK */
 } /* namespace EGriceLab */
 
-#endif /* SRC_ALIGNMENTSE_H_ */
+#endif /* SRC_ALIGNMENT_H_ */

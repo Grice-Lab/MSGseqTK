@@ -1,13 +1,14 @@
 /*
- * AlignmentSE_test.cpp
+ * Alignment_test.cpp
  *
  *  Created on: Nov 28, 2018
  *      Author: zhengqi
  */
 
+#include "../src/Alignment.h"
+
 #include <string>
 #include <iostream>
-#include "AlignmentSE.h"
 
 using namespace std;
 using namespace EGriceLab::MSGseqTK;
@@ -29,7 +30,7 @@ int main(int argc, char* argv[]) {
 	cout << "query1:  " << query1 << endl;
 	cout << "target1: " << target1 << endl;
 	/* build an alignment */
-	AlignmentSE aln1(&query1, &target1, &qual1, &name1, 0,
+	Alignment aln1(&query1, &target1, &qual1, &name1, 0,
 			0, query1.length(), 0, target1.length(), &ss, 0);
 	cout << "AlignmentSE constructed" << endl;
 	aln1.calculateScores();
@@ -46,7 +47,7 @@ int main(int argc, char* argv[]) {
 		cerr << "query1 length doesn't match cigar-str" << endl;
 		return EXIT_FAILURE;
 	}
-	if(aln1.getAlnQLen() != AlignmentSE::mdTag2alnQLen(aln1.getAlnMDTag())) {
+	if(aln1.getAlnQLen() != Alignment::mdTag2alnQLen(aln1.getAlnMDTag())) {
 		cerr << "query1 aligned length doesn't match MD:Z tag" << endl;
 		return EXIT_FAILURE;
 	}
@@ -62,7 +63,7 @@ int main(int argc, char* argv[]) {
 	cout << "query2:  " << query2 << endl;
 	cout << "target2: " << target2 << endl;
 	/* build an alignment */
-	AlignmentSE aln2(&query2, &target2, &qual2, &name2, 0,
+	Alignment aln2(&query2, &target2, &qual2, &name2, 0,
 			0, query2.length(), 0, target2.length(), &ss, 0);	cout << "AlignmentSE constructed" << endl;
 	aln2.calculateScores();
 	cout << "aln2 score calculated, score: " << aln2.getScore() << endl;
@@ -78,7 +79,7 @@ int main(int argc, char* argv[]) {
 		cerr << "query2 length doesn't match cigar-str" << endl;
 		return EXIT_FAILURE;
 	}
-	if(aln2.getAlnQLen() != AlignmentSE::mdTag2alnQLen(aln2.getAlnMDTag())) {
+	if(aln2.getAlnQLen() != Alignment::mdTag2alnQLen(aln2.getAlnMDTag())) {
 		cerr << "query2 aligned length doesn't match MD:Z tag" << endl;
 		return EXIT_FAILURE;
 	}
@@ -93,7 +94,7 @@ int main(int argc, char* argv[]) {
 	cout << "query3:  " << query3 << endl;
 	cout << "target3: " << target3 << endl;
 	/* build an alignment */
-	AlignmentSE aln3(&query3, &target3, &qual3, &name3, 0,
+	Alignment aln3(&query3, &target3, &qual3, &name3, 0,
 			0, query3.length(), 0, target3.length(), &ss, 0);
 	cout << "AlignmentSE constructed" << endl;
 	cout << "AlignmentSE constructed" << endl;
@@ -111,7 +112,7 @@ int main(int argc, char* argv[]) {
 		cerr << "query3 length doesn't match cigar-str" << endl;
 		return EXIT_FAILURE;
 	}
-	if(aln3.getAlnQLen() != AlignmentSE::mdTag2alnQLen(aln3.getAlnMDTag())) {
+	if(aln3.getAlnQLen() != Alignment::mdTag2alnQLen(aln3.getAlnMDTag())) {
 		cerr << "query3 aligned length doesn't match MD:Z tag" << endl;
 		return EXIT_FAILURE;
 	}
@@ -126,7 +127,7 @@ int main(int argc, char* argv[]) {
 	cout << "query4:  " << query4 << endl;
 	cout << "target4: " << target4 << endl;
 	/* build an alignment */
-	AlignmentSE aln4(&query4, &target4, &qual4, &name4, 0,
+	Alignment aln4(&query4, &target4, &qual4, &name4, 0,
 			0, query4.length(), 0, target4.length(), &ss, 0);
 	cout << "AlignmentSE constructed" << endl;
 	aln4.calculateScores();
@@ -143,7 +144,7 @@ int main(int argc, char* argv[]) {
 		cerr << "query4 length doesn't match cigar-str" << endl;
 		return EXIT_FAILURE;
 	}
-	if(aln4.getAlnQLen() != AlignmentSE::mdTag2alnQLen(aln4.getAlnMDTag())) {
+	if(aln4.getAlnQLen() != Alignment::mdTag2alnQLen(aln4.getAlnMDTag())) {
 		cerr << "query4 aligned length doesn't match MD:Z tag" << endl;
 		return EXIT_FAILURE;
 	}
@@ -158,7 +159,7 @@ int main(int argc, char* argv[]) {
 	cout << "query5:  " << query5 << endl;
 	cout << "target5: " << target5 << endl;
 	/* build an alignment */
-	AlignmentSE aln5(&query5, &target5, &qual5, &name5, 0,
+	Alignment aln5(&query5, &target5, &qual5, &name5, 0,
 			0, query5.length(), 0, target5.length(), &ss, 0);
 	cout << "AlignmentSE constructed" << endl;
 	aln5.calculateScores();
@@ -175,7 +176,7 @@ int main(int argc, char* argv[]) {
 		cerr << "query5 length doesn't match cigar-str" << endl;
 		return EXIT_FAILURE;
 	}
-	if(aln5.getAlnQLen() != AlignmentSE::mdTag2alnQLen(aln5.getAlnMDTag())) {
+	if(aln5.getAlnQLen() != Alignment::mdTag2alnQLen(aln5.getAlnMDTag())) {
 		cerr << "query5 aligned length doesn't match MD:Z tag" << endl;
 		return EXIT_FAILURE;
 	}

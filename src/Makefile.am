@@ -45,7 +45,7 @@ FMIndex.cpp \
 Genome.cpp \
 MetaGenome.cpp \
 MetaGenomeAnno.cpp \
-AlignmentSE.cpp
+Alignment.cpp
 
 # Build the executables
 bin_PROGRAMS = \

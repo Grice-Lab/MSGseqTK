@@ -124,7 +124,7 @@ am_libMSGseqTK_a_OBJECTS = DNAalphabet.$(OBJEXT) DNAseq.$(OBJEXT) \
 	Loc.$(OBJEXT) MEM.$(OBJEXT) MEMS.$(OBJEXT) \
 	ScoreScheme.$(OBJEXT) FMIndex.$(OBJEXT) Genome.$(OBJEXT) \
 	MetaGenome.$(OBJEXT) MetaGenomeAnno.$(OBJEXT) \
-	AlignmentSE.$(OBJEXT)
+	Alignment.$(OBJEXT)
 libMSGseqTK_a_OBJECTS = $(am_libMSGseqTK_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -464,7 +464,7 @@ FMIndex.cpp \
 Genome.cpp \
 MetaGenome.cpp \
 MetaGenomeAnno.cpp \
-AlignmentSE.cpp
+Alignment.cpp
 
 msgseqtk_build_SOURCES = msgseqtk-build.cpp MSGseqTKEnv.cpp
 msgseqtk_build_LDADD = \
@@ -650,7 +650,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AlignmentSE.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Alignment.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DNAalphabet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DNAseq.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FMIndex.Po@am__quote@

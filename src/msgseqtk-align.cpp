@@ -74,7 +74,7 @@ void printUsage(const string& progName) {
 		 << "            --mis-match  DBL     : penalty for mis-matches [" << ScoreScheme::DEFAULT_MISMATCH_PENALTY << "]" << endl
 		 << "            --gap-open  DBL      : penalty for (affine) gap opening [" << ScoreScheme::DEFAULT_GAP_OPEN_PENALTY << "]" << endl
 		 << "            --gap-ext  DBL       : penalty for (affine) gap extension [" << ScoreScheme::DEFAULT_GAP_EXT_PENALTY << "]" << endl
-		 << "            --max-mems  INT      : maximum # of different loc/MEMS to check for a read/pair [" << AlignmentSE::MAX_ITER << "]" << endl
+		 << "            --max-mems  INT      : maximum # of different loc/MEMS to check for a read/pair [" << Alignment::MAX_ITER << "]" << endl
 		 << "            --max-report  INT    : maximum loci to consider for a read/pair, set to 0 to report all candidate alignments [" << DEFAULT_MAX_REPORT << "]" << endl
 		 << "            -f--best-frac        : minimum score as a fraction of the best alignment to consider as a candidate for full evaluation [" << DEFAULT_BEST_FRAC << "]" << endl
 		 << "            -s|--strand  INT     : read/pair strand to search, 1 for sense, 2 for anti-sense, 3 for both [" << DEFAULT_STRAND << "]" << endl
@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
 
 	typedef boost::random::mt11213b RNG; /* random number generator type */
 
-	uint32_t maxMems = AlignmentSE::MAX_ITER;
+	uint32_t maxMems = Alignment::MAX_ITER;
 	uint32_t maxReport = DEFAULT_MAX_REPORT;
 	double bestFrac = DEFAULT_BEST_FRAC;
 
@@ -380,20 +380,20 @@ int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
 					const string& id = read.getName();
 					const DNAseq& query = read.getSeq();
 					const QualStr& qual = read.getQual();
-					AlignmentSE::SeedMatchList seedMatches = AlignmentSE::getSeedMatchList(mtg, mems, maxMems);
+					Alignment::SeedMatchList seedMatches = Alignment::getSeedMatchList(mtg, mems, maxMems);
 					if(seedMatches.empty()) {
 						infoLog << "Unable to find any valid SeedMatches for '" << id << "', ignore" << endl;
 					}
 					else {
-						vector<AlignmentSE> alnList;
+						vector<Alignment> alnList;
 						alnList.reserve(seedMatches.size());
-						for(AlignmentSE::SeedMatch& seedMatch : seedMatches) {
+						for(Alignment::SeedMatch& seedMatch : seedMatches) {
 							/* get candidate region of this seedMatch */
 							int32_t tid = seedMatch.getTId();
 							const string& chrName = mtg.getChromName(tid);
 
-							uint64_t tStart = seedMatch.getStart() - seedMatch.getFrom() * (1 + AlignmentSE::MAX_INDEL_RATE);
-							uint64_t tEnd = seedMatch.getEnd() + (query.length() - seedMatch.getTo()) * (1 + AlignmentSE::MAX_INDEL_RATE);
+							uint64_t tStart = seedMatch.getStart() - seedMatch.getFrom() * (1 + Alignment::MAX_INDEL_RATE);
+							uint64_t tEnd = seedMatch.getEnd() + (query.length() - seedMatch.getTo()) * (1 + Alignment::MAX_INDEL_RATE);
 							if(tStart < mtg.getChromStart(tid)) // searhStart too far
 								tStart = mtg.getChromStart(tid);
 							if(tEnd > mtg.getChromEnd(tid)) // searhEnd too far
@@ -401,25 +401,25 @@ int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
 //							cerr << "id: " << id << " tid: " << tid << " tStart: " << tStart << " tEnd: " << tEnd << endl;
 //							cerr << "query:  " << query << endl << "target: " << target.substr(tStart, tEnd - tStart) << endl;
 							/* add a new alignment */
-							alnList.push_back(AlignmentSE(&query, &target, &qual, &id, tid,
+							alnList.push_back(Alignment(&query, &target, &qual, &id, tid,
 									0, query.length(), tStart, tEnd, &ss, (readStrand == MEM::FWD ? 0 : BAM_FREVERSE)
 							).calculateScores(seedMatch).backTrace().clearScores());
 						}
 						/* find best alignment by alnScore */
-						vector<AlignmentSE>::const_iterator bestAln = std::max_element(alnList.cbegin(), alnList.cend(), [] (const AlignmentSE& lhs, const AlignmentSE& rhs) { return lhs.alnScore > rhs.alnScore; });
+						vector<Alignment>::const_iterator bestAln = std::max_element(alnList.cbegin(), alnList.cend(), [] (const Alignment& lhs, const Alignment& rhs) { return lhs.alnScore > rhs.alnScore; });
 						/* first-pass filter alignment by alnScore */
-						alnList.erase(std::remove_if(alnList.begin(), alnList.end(), [&] (const AlignmentSE& aln) { return aln.alnScore < bestAln->alnScore * bestFrac; }), alnList.end());
+						alnList.erase(std::remove_if(alnList.begin(), alnList.end(), [&] (const Alignment& aln) { return aln.alnScore < bestAln->alnScore * bestFrac; }), alnList.end());
 						/* evaluate candidate "best-spectrum" alignments */
-						for(AlignmentSE& aln : alnList)
+						for(Alignment& aln : alnList)
 							aln.evaluate();
 						/* calculate postP/mapQ for candidates */
-						AlignmentSE::calcMapQ(alnList);
+						Alignment::calcMapQ(alnList);
 						/* sort candidates by their log10-liklihood descreasingly (same order as postP with uniform prior */
-						std::sort(alnList.begin(), alnList.end(), [] (const AlignmentSE& lhs, const AlignmentSE& rhs) { return lhs.log10P > rhs.log10P; });
+						std::sort(alnList.begin(), alnList.end(), [] (const Alignment& lhs, const Alignment& rhs) { return lhs.log10P > rhs.log10P; });
 						/* export BAM records */
 						size_t numReport = maxReport == 0 ? alnList.size() : std::min((size_t) maxReport, alnList.size());
 						for(size_t i = 0; i < numReport; ++i) {
-							const AlignmentSE& aln = alnList[i];
+							const Alignment& aln = alnList[i];
 							/* construct BAM */
 							BAM bamAln = aln.exportBAM();
 							/* set standard aux tags */
