@@ -166,12 +166,10 @@ public:
 		bamAln->core.flag = flag;
 	}
 
-	/** get read paired flag */
 	bool getPairedFlag() const {
 		return bamAln->core.flag & BAM_FPAIRED != 0;
 	}
 
-	/** set read paired flag */
 	void setPairedFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FPAIRED;
@@ -179,12 +177,10 @@ public:
 			bamAln->core.flag &= ~BAM_FPAIRED;
 	}
 
-	/** get read paired flag */
 	bool getProperPairFlag() const {
 		return bamAln->core.flag & BAM_FPROPER_PAIR != 0;
 	}
 
-	/** set read paired flag */
 	void setProperPairFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FPAIRED;
@@ -192,12 +188,10 @@ public:
 			bamAln->core.flag &= ~BAM_FPAIRED;
 	}
 
-	/** get read paired flag */
 	bool getUnmapFlag() const {
 		return bamAln->core.flag & BAM_FUNMAP != 0;
 	}
 
-	/** set read paired flag */
 	void setUnmapFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FUNMAP;
@@ -205,12 +199,10 @@ public:
 			bamAln->core.flag &= ~BAM_FUNMAP;
 	}
 
-	/** get read paired flag */
 	bool getMateUnmapFlag() const {
 		return bamAln->core.flag & BAM_FMUNMAP != 0;
 	}
 
-	/** set read paired flag */
 	void setMateUnmapFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FMUNMAP;
@@ -218,37 +210,32 @@ public:
 			bamAln->core.flag &= ~BAM_FMUNMAP;
 	}
 
-	/** get read paired flag */
-	bool getReverseFlag() const {
+	bool getRevcomFlag() const {
 		return bamAln->core.flag & BAM_FREVERSE != 0;
 	}
 
-	/** set read paired flag */
-	void setReverseFlag(bool flag = true) {
+	void setRevcomFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FREVERSE;
 		else
 			bamAln->core.flag &= ~BAM_FREVERSE;
 	}
 
-	/** get read paired flag */
 	bool getMateReverseFlag() const {
 		return bamAln->core.flag & BAM_FMREVERSE != 0;
 	}
 
-	/** set read paired flag */
-	void setMateReverseFlag(bool flag = true) {
+	void setMateRevcomFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FMREVERSE;
 		else
 			bamAln->core.flag &= ~BAM_FMREVERSE;
 	}
 
-	/** get read paired flag */
 	bool getIsFwdFlag() const {
 		return bamAln->core.flag & BAM_FREAD1 != 0;
 	}
-	/** set read paired flag */
+
 	void setIsFwdFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FREAD1;
@@ -256,12 +243,10 @@ public:
 			bamAln->core.flag &= ~BAM_FREAD1;
 	}
 
-	/** get read paired flag */
 	bool getIsRevFlag() const {
 		return bamAln->core.flag & BAM_FREAD2 != 0;
 	}
 
-	/** set read paired flag */
 	void setIsRevFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FREAD2;
@@ -269,12 +254,10 @@ public:
 			bamAln->core.flag &= ~BAM_FREAD2;
 	}
 
-	/** get read paired flag */
 	bool getSecondaryFlag() const {
 		return bamAln->core.flag & BAM_FSECONDARY != 0;
 	}
 
-	/** set read paired flag */
 	void setSecondaryFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FSECONDARY;
@@ -282,12 +265,10 @@ public:
 			bamAln->core.flag &= ~BAM_FSECONDARY;
 	}
 
-	/** get read paired flag */
 	bool getQCFailFlag() const {
 		return bamAln->core.flag & BAM_FQCFAIL != 0;
 	}
 
-	/** set read paired flag */
 	void setQCFailFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FQCFAIL;
@@ -295,12 +276,10 @@ public:
 			bamAln->core.flag &= ~BAM_FQCFAIL;
 	}
 
-	/** get read paired flag */
 	bool getDupFlagFlag() const {
 		return bamAln->core.flag & BAM_FDUP != 0;
 	}
 
-	/** set read paired flag */
 	void setDupFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FDUP;
@@ -308,12 +287,10 @@ public:
 			bamAln->core.flag &= ~BAM_FDUP;
 	}
 
-	/** get read paired flag */
 	bool getSupplementaryFlag() const {
 		return bamAln->core.flag & BAM_FSUPPLEMENTARY != 0;
 	}
 
-	/** set read paired flag */
 	void setSupplementaryFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FSUPPLEMENTARY;
