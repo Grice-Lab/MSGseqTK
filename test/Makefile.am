@@ -101,4 +101,4 @@ FMIndex_test \
 Genome_test \
 MetaGenomeAnno_test \
 MEM_test \
-AlignmentSE_test
+Alignment_test

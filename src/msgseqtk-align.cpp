@@ -579,6 +579,7 @@ int main_PE(const MetaGenome& mtg, const FMIndex& fmidx,
 							/* sort pairs */
 							AlignmentPE::sort(pairList);
 							/* output pairs */
+#pragma omp critical(BAM_OUTPUT)
 							output(pairList, out, maxReport);
 						}
 						else if(!noMixed) { /* pair-end matching failed, try unpaired */

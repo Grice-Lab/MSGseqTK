@@ -95,7 +95,7 @@ check_PROGRAMS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
 TESTS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
 	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
 	MetaGenomeAnno_test$(EXEEXT) MEM_test$(EXEEXT) \
-	AlignmentSE_test
+	Alignment_test$(EXEEXT)
 subdir = test
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -1024,9 +1024,9 @@ MEM_test.log: MEM_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-AlignmentSE_test.log: AlignmentSE_test
-	@p='AlignmentSE_test'; \
-	b='AlignmentSE_test'; \
+Alignment_test.log: Alignment_test$(EXEEXT)
+	@p='Alignment_test$(EXEEXT)'; \
+	b='Alignment_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
