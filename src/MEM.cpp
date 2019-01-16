@@ -79,7 +79,7 @@ MEM MEM::findMEM(const PrimarySeq* seq, const FMIndex* fmidx, uint64_t from, STR
 	uint64_t nextEnd = end;
 	uint64_t to;
 	/* search left-to-right */
-	DNAseq ds = seq->getSeq();
+	DNAseq ds = seq->getSeq(); // get a copy
 	if(strand == REV)
 		ds.revcom();
 

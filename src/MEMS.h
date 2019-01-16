@@ -127,9 +127,19 @@ struct MEMS_PE {
 		return fwdMems.loglik() + revMems.loglik();
 	}
 
-	/** get strand of this MEMS_PE */
-	MEM::STRAND getStrand() const {
+	/** get forward strand of this MEMS_PE */
+	MEM::STRAND getFwdStrand() const {
 		return fwdMems.getStrand();
+	}
+
+	/** get reverse strand of this MEMS_PE */
+	MEM::STRAND getRevStrand() const {
+		return revMems.getStrand();
+	}
+
+	/** get strand of this MEMS_PE, alias to getFwdStrand */
+	MEM::STRAND getStrand() const {
+		return getFwdStrand();
 	}
 
 	/* static methods */

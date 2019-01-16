@@ -86,8 +86,8 @@ public:
 		return qual.length() == seq.length();
 	}
 
-	QualStr getQual() const {
-		return hasQual() ? qual : QualStr(seq.length(), QualStr::DEFAULT_Q_SCORE);
+	const QualStr& getQual() const {
+		return qual;
 	}
 
 	void setQual(const QualStr& qual) {
@@ -103,9 +103,10 @@ public:
 	}
 
 	/** check and fix QualStr */
-	void fixQual() {
+	PrimarySeq& fixQual() {
 		if(qual.length() != seq.length())
 			qual.resize(seq.length(), QualStr::DEFAULT_Q_SCORE);
+		return *this;
 	}
 
 	DNAseq::value_type getBase(DNAseq::size_type i) const {

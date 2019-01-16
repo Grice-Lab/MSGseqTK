@@ -38,6 +38,8 @@ static const int DEFAULT_STRAND = 3;
 static const int DEFAULT_NUM_THREADS = 1;
 static const int DEFAULT_MAX_REPORT = 1;
 static const double DEFAULT_BEST_FRAC = 0.85;
+static const int DEFAULT_MIN_INSERT = 0;
+static const int DEFAULT_MAX_INSERT = 750;
 static const string NUM_REPORTED_ALIGNMENT_TAG = "NH";
 static const string MISMATCH_POSITION_TAG = "MD";
 static const string NUM_TOTAL_ALIGNMENT_TAG = "XN";
@@ -75,9 +77,18 @@ void printUsage(const string& progName) {
 		 << "            --gap-open  DBL      : penalty for (affine) gap opening [" << ScoreScheme::DEFAULT_GAP_OPEN_PENALTY << "]" << endl
 		 << "            --gap-ext  DBL       : penalty for (affine) gap extension [" << ScoreScheme::DEFAULT_GAP_EXT_PENALTY << "]" << endl
 		 << "            --max-mems  INT      : maximum # of different loc/MEMS to check for a read/pair [" << Alignment::MAX_ITER << "]" << endl
-		 << "            --max-report  INT    : maximum loci to consider for a read/pair, set to 0 to report all candidate alignments [" << DEFAULT_MAX_REPORT << "]" << endl
-		 << "            -f--best-frac        : minimum score as a fraction of the best alignment to consider as a candidate for full evaluation [" << DEFAULT_BEST_FRAC << "]" << endl
+		 << "            -k/--max-report  INT : maximum loci to consider for a read/pair, set to 0 to report all candidate alignments [" << DEFAULT_MAX_REPORT << "]" << endl
+		 << "            -f--best-frac        : minimum score as a fraction of the highest alignment score of all candidates to consider for full evaluation [" << DEFAULT_BEST_FRAC << "]" << endl
 		 << "            -s|--strand  INT     : read/pair strand to search, 1 for sense, 2 for anti-sense, 3 for both [" << DEFAULT_STRAND << "]" << endl
+		 << "Paired-end:" << endl
+		 << "            -I/--min-ins  INT    : minumum insert size [" << DEFAULT_MIN_INSERT << "]" << endl
+		 << "            -X/--max-ins  INT    : maximum insert size, 0 for no limit [" << DEFAULT_MAX_INSERT << "]" << endl
+		 << "            --no-mixed  FLAG     : suppress unpaired alignments for paired reads" << endl
+		 << "            --no-discordant FLAG : suppress discordant alignments for paired reads" << endl
+		 << "            --no-tail-over FLAG  : not concordant when mates extend (tail) past each other" << endl
+		 << "            --no-contain  FLAG   : not concordant when one mate alignment contains other" << endl
+		 << "            --no-overlap  FLAG   : not concordant when mates overlap" << endl
+		 << "Other:" << endl
 		 << "            -S|--seed  INT       : random seed used for determing MEMS, for debug only" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus used for parallel processing" << endl
@@ -101,7 +112,21 @@ int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
  */
 int main_PE(const MetaGenome& mtg, const FMIndex& fmidx,
 		SeqIO& fwdI, SeqIO& revI, SAMfile& out, RNG& rng, int strand,
-		uint32_t maxMems, double bestFrac, uint32_t maxReport);
+		uint32_t maxMems, double bestFrac, uint32_t maxReport,
+		int32_t minIns, int32_t maxIns,
+		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap);
+
+/**
+ * report and output evaluated Alignments
+ * @return # of alignments written
+ */
+int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport);
+
+/**
+ * report and output evaluated Alignment pairs
+ * @return # of pairs written
+ */
+int output(const PAIR_LIST& pairList, SAMfile& out, uint32_t maxReport);
 
 int main(int argc, char* argv[]) {
 	/* variable declarations */
@@ -120,7 +145,17 @@ int main(int argc, char* argv[]) {
 	uint32_t maxReport = DEFAULT_MAX_REPORT;
 	double bestFrac = DEFAULT_BEST_FRAC;
 
+	/* mate options */
+	int32_t minIns = DEFAULT_MIN_INSERT;
+	int32_t maxIns = DEFAULT_MAX_INSERT;
+	bool noMixed = false;
+	bool noDiscordant = false;
+	bool noTailOver = false;
+	bool noContain = false;
+	bool noOverlap = false;
+
 	/* parse options */
+	/* main options */
 	CommandOptions cmdOpts(argc, argv);
 	if(cmdOpts.empty() || cmdOpts.hasOpt("-h") || cmdOpts.hasOpt("--help")) {
 		printIntro();
@@ -184,6 +219,8 @@ int main(int argc, char* argv[]) {
 	if(cmdOpts.hasOpt("--max-mems"))
 		maxMems = ::atoi(cmdOpts.getOptStr("--max-mems"));
 
+	if(cmdOpts.hasOpt("-k"))
+		maxReport = ::atoi(cmdOpts.getOptStr("-k"));
 	if(cmdOpts.hasOpt("--max-report"))
 		maxReport = ::atoi(cmdOpts.getOptStr("--max-report"));
 
@@ -195,6 +232,29 @@ int main(int argc, char* argv[]) {
 	if(cmdOpts.hasOpt("--strand"))
 		strand = ::atoi(cmdOpts.getOptStr("--strand"));
 
+	/* paired-end options */
+	if(cmdOpts.hasOpt("-I"))
+		minIns = ::atoi(cmdOpts.getOptStr("-I"));
+	if(cmdOpts.hasOpt("--min-ins"))
+		minIns = ::atoi(cmdOpts.getOptStr("--min-ins"));
+
+	if(cmdOpts.hasOpt("-X"))
+		maxIns = ::atoi(cmdOpts.getOptStr("-X"));
+	if(cmdOpts.hasOpt("--max-ins"))
+		maxIns = ::atoi(cmdOpts.getOptStr("--max-ins"));
+
+	if(cmdOpts.hasOpt("--no-mixed"))
+		noMixed = true;
+	if(cmdOpts.hasOpt("--no-discordant"))
+		noDiscordant = true;
+	if(cmdOpts.hasOpt("--no-tail-over"))
+		noTailOver = true;
+	if(cmdOpts.hasOpt("--no-contain"))
+		noContain = true;
+	if(cmdOpts.hasOpt("--no-overlap"))
+		noOverlap = true;
+
+	/* other options */
 	if(cmdOpts.hasOpt("-S"))
 		seed = ::atoi(cmdOpts.getOptStr("-S"));
 	if(cmdOpts.hasOpt("--seed"))
@@ -229,6 +289,15 @@ int main(int argc, char* argv[]) {
 
 	if(!(0 <= bestFrac && bestFrac <= 1)) {
 		cerr << "--best-frac must between 0 and 1" << endl;
+		return EXIT_FAILURE;
+	}
+
+	if(!(minIns >= 0)) {
+		cerr << "-I/--min-ins must be non-negative" << endl;
+		return EXIT_FAILURE;
+	}
+	if(!(maxIns >= minIns)) {
+		cerr << "-X/--max-ins must be not smaller than -I/--min-ins" << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -352,15 +421,72 @@ int main(int argc, char* argv[]) {
 	if(!isPaired)
 		return main_SE(mtg, fmidx, fwdI, out, rng, strand, maxMems, bestFrac, maxReport);
 	else
-		return main_PE(mtg, fmidx, fwdI, revI, out, rng, strand, maxMems, bestFrac, maxReport);
+		return main_PE(mtg, fmidx, fwdI, revI, out, rng, strand, maxMems, bestFrac, maxReport,
+				minIns, maxIns, noMixed, noDiscordant, noTailOver, noContain, noOverlap);
+}
+
+int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport) {
+	/* export BAM records */
+	size_t numReport = maxReport == 0 ? alnList.size() : std::min((size_t) maxReport, alnList.size());
+	for(size_t i = 0; i < numReport; ++i) {
+		const Alignment& aln = alnList[i];
+		/* construct BAM */
+		BAM bamAln = alnList[i].exportBAM();
+		/* set flags */
+		bamAln.setSecondaryFlag(i > 0);
+		/* set standard aux tags */
+		bamAln.setAux(NUM_REPORTED_ALIGNMENT_TAG, numReport);
+		bamAln.setAux(NUM_TOTAL_ALIGNMENT_TAG, alnList.size());
+		bamAln.setAux(MISMATCH_POSITION_TAG, aln.getAlnMDTag());
+		/* set customized aux tags */
+		bamAln.setAux(ALIGNMENT_LOG10LIK_TAG, aln.log10P);
+		bamAln.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, aln.postP);
+		/* write BAM */
+		out.write(bamAln);
+	}
+	return numReport;
+}
+
+int output(const PAIR_LIST& pairList, SAMfile& out, uint32_t maxReport) {
+	/* export BAM records */
+	size_t numReport = maxReport == 0 ? pairList.size() : std::min((size_t) maxReport, pairList.size());
+	for(size_t i = 0; i < numReport; ++i) {
+		const AlignmentPE& pair = pairList[i];
+		/* construct BAM */
+		BAM bamFwd = pair.fwdAln->exportBAM();
+		BAM bamRev = pair.revAln->exportBAM();
+		/* set flags */
+		bamFwd.setFlag(BAM_FPAIRED | BAM_FPROPER_PAIR | BAM_FREAD1);
+		bamRev.setFlag(BAM_FPAIRED | BAM_FPROPER_PAIR | BAM_FREAD2);
+		bamFwd.setSecondaryFlag(i > 0);
+		bamRev.setSecondaryFlag(i > 0);
+		/* set insert size */
+		bamFwd.setISize(pair.getInsertSize());
+		bamRev.setISize(pair.getInsertSize());
+		/* set standard aux tags */
+		bamFwd.setAux(NUM_REPORTED_ALIGNMENT_TAG, numReport);
+		bamFwd.setAux(NUM_TOTAL_ALIGNMENT_TAG, pairList.size());
+		bamFwd.setAux(MISMATCH_POSITION_TAG, pair.fwdAln->getAlnMDTag());
+
+		bamRev.setAux(NUM_REPORTED_ALIGNMENT_TAG, numReport);
+		bamRev.setAux(NUM_TOTAL_ALIGNMENT_TAG, pairList.size());
+		bamRev.setAux(MISMATCH_POSITION_TAG, pair.revAln->getAlnMDTag());
+		/* set customized aux tags */
+		bamFwd.setAux(ALIGNMENT_LOG10LIK_TAG, pair.log10lik());
+		bamFwd.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, pair.fwdAln->postP);
+		bamRev.setAux(ALIGNMENT_LOG10LIK_TAG, pair.log10lik());
+		bamRev.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, pair.revAln->postP);
+		/* write BAM */
+		out.write(bamFwd);
+		out.write(bamRev);
+	}
+	return numReport;
 }
 
 int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
 		SeqIO& seqI, SAMfile& out, RNG& rng, int strand,
 		uint32_t maxMems, double bestFrac, uint32_t maxReport) {
 	infoLog << "Aligning input reads" << endl;
-	const DNAseq& target = mtg.getSeq(); // target is always the entire metagenome
-
 	/* search MEMS for each read */
 #pragma omp parallel
 	{
@@ -375,74 +501,112 @@ int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
 					const MEM::STRAND readStrand = mems.getStrand();
 					if(readStrand == MEM::REV)
 						read.revcom();
-
-					/* get all candidate MatchPairs */
-					const string& id = read.getName();
-					const DNAseq& query = read.getSeq();
-					const QualStr& qual = read.getQual();
-					Alignment::SeedMatchList seedMatches = Alignment::getSeedMatchList(mtg, mems, maxMems);
+					/* get SeedMatchList */
+					const Alignment::SeedMatchList& seedMatches = Alignment::getSeedMatchList(mtg, mems, maxMems);
 					if(seedMatches.empty()) {
-						infoLog << "Unable to find any valid SeedMatches for '" << id << "', ignore" << endl;
+#pragma omp critical(LOG)
+						infoLog << "Unable to find any valid SeedMatches for '" << read.getName() << "', ignore" << endl;
 					}
 					else {
-						vector<Alignment> alnList;
-						alnList.reserve(seedMatches.size());
-						for(Alignment::SeedMatch& seedMatch : seedMatches) {
-							/* get candidate region of this seedMatch */
-							int32_t tid = seedMatch.getTId();
-							const string& chrName = mtg.getChromName(tid);
-
-							uint64_t tStart = seedMatch.getStart() - seedMatch.getFrom() * (1 + Alignment::MAX_INDEL_RATE);
-							uint64_t tEnd = seedMatch.getEnd() + (query.length() - seedMatch.getTo()) * (1 + Alignment::MAX_INDEL_RATE);
-							if(tStart < mtg.getChromStart(tid)) // searhStart too far
-								tStart = mtg.getChromStart(tid);
-							if(tEnd > mtg.getChromEnd(tid)) // searhEnd too far
-								tEnd = mtg.getChromEnd(tid);
-//							cerr << "id: " << id << " tid: " << tid << " tStart: " << tStart << " tEnd: " << tEnd << endl;
-//							cerr << "query:  " << query << endl << "target: " << target.substr(tStart, tEnd - tStart) << endl;
-							/* add a new alignment */
-							alnList.push_back(Alignment(&query, &target, &qual, &id, tid,
-									0, query.length(), tStart, tEnd, &ss, (readStrand == MEM::FWD ? 0 : BAM_FREVERSE)
-							).calculateScores(seedMatch).backTrace().clearScores());
-						}
-						/* find best alignment by alnScore */
-						vector<Alignment>::const_iterator bestAln = std::max_element(alnList.cbegin(), alnList.cend(), [] (const Alignment& lhs, const Alignment& rhs) { return lhs.alnScore > rhs.alnScore; });
-						/* first-pass filter alignment by alnScore */
-						alnList.erase(std::remove_if(alnList.begin(), alnList.end(), [&] (const Alignment& aln) { return aln.alnScore < bestAln->alnScore * bestFrac; }), alnList.end());
-						/* evaluate candidate "best-spectrum" alignments */
-						for(Alignment& aln : alnList)
-							aln.evaluate();
-						/* calculate postP/mapQ for candidates */
+						/* get alignments from SeedMatchList */
+						ALIGN_LIST alnList = Alignment::getAlignments(ss, mtg, read, seedMatches, readStrand);
+						/* filter alignments */
+						Alignment::filter(alnList, bestFrac);
+						/* evaluate alignments */
+						Alignment::evaluate(alnList);
+						/* calculate mapQ for alignments */
 						Alignment::calcMapQ(alnList);
-						/* sort candidates by their log10-liklihood descreasingly (same order as postP with uniform prior */
-						std::sort(alnList.begin(), alnList.end(), [] (const Alignment& lhs, const Alignment& rhs) { return lhs.log10P > rhs.log10P; });
-						/* export BAM records */
-						size_t numReport = maxReport == 0 ? alnList.size() : std::min((size_t) maxReport, alnList.size());
-						for(size_t i = 0; i < numReport; ++i) {
-							const Alignment& aln = alnList[i];
-							/* construct BAM */
-							BAM bamAln = aln.exportBAM();
-							/* set standard aux tags */
-							bamAln.setAux(NUM_REPORTED_ALIGNMENT_TAG, numReport);
-							bamAln.setAux(NUM_TOTAL_ALIGNMENT_TAG, alnList.size());
-							bamAln.setAux(MISMATCH_POSITION_TAG, aln.getAlnMDTag());
-							/* set customized aux tags */
-							bamAln.setAux(ALIGNMENT_LOG10LIK_TAG, aln.log10P);
-							bamAln.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, aln.postP);
-							/* write BAM */
-#pragma omp critical(WRITE_BAM)
-							out.write(bamAln);
-						}
-					}
-				} /* end task */
-			} /* end each read */
-		} /* end single, implicit barrier */
-	} /* end parallel */
+						/* sort alignments */
+						Alignment::sort(alnList);
+						/* output alignments */
+#pragma omp critical(BAM_OUTPUT)
+						output(alnList, out, maxReport);
+					} /* end task */
+				} /* end each read */
+			} /* end single, implicit barrier */
+		} /* end parallel */
+	}
 	return out.close();
 }
 
 int main_PE(const MetaGenome& mtg, const FMIndex& fmidx,
 		SeqIO& fwdI, SeqIO& revI, SAMfile& out, RNG& rng, int strand,
-		uint32_t maxMems, double bestFrac, uint32_t maxReport) {
-	return EXIT_SUCCESS;
+		uint32_t maxMems, double bestFrac, uint32_t maxReport,
+		int32_t minIns, int32_t maxIns,
+		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap) {
+	infoLog << "Aligning paired-end reads" << endl;
+	/* search MEMS for each read */
+#pragma omp parallel
+	{
+#pragma omp single
+		{
+			while(fwdI.hasNext() && revI.hasNext()) {
+				PrimarySeq fwdRead = fwdI.nextSeq();
+				PrimarySeq revRead = revI.nextSeq();
+#pragma omp task firstprivate(fwdRead) firstprivate(revRead)
+				{
+					MEMS_PE memsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &fmidx, rng, strand);
+					assert((memsPE.fwdMems.getStrand() & memsPE.revMems.getStrand()) == 0);
+					memsPE.findLocs();
+					if(memsPE.getStrand() == MEM::FWD)
+						revRead.revcom();
+					else
+						fwdRead.revcom();
+
+					/* get SeedMatchLists */
+					Alignment::SeedMatchList fwdSeedMatches = Alignment::getSeedMatchList(mtg, memsPE.fwdMems, maxMems);
+					Alignment::SeedMatchList revSeedMatches = Alignment::getSeedMatchList(mtg, memsPE.revMems, maxMems);
+					if(fwdSeedMatches.empty() && revSeedMatches.empty()) {
+#pragma omp critical(LOG)
+						infoLog << "Unable to find any valid SeedMatches for read pair '" << fwdRead.getName() << "', ignore" << endl;
+					}
+					else {
+						ALIGN_LIST fwdAlnList = Alignment::getAlignments(ss, mtg, fwdRead, fwdSeedMatches, memsPE.getFwdStrand());
+						ALIGN_LIST revAlnList = Alignment::getAlignments(ss, mtg, revRead, revSeedMatches, memsPE.getRevStrand());
+						/* filter alignments */
+						Alignment::filter(fwdAlnList, bestFrac);
+						Alignment::filter(revAlnList, bestFrac);
+						/* evaluate alignments */
+						Alignment::evaluate(fwdAlnList);
+						Alignment::evaluate(revAlnList);
+						/* get pairs */
+						PAIR_LIST pairList = AlignmentPE::getPairs(fwdAlnList, revAlnList);
+						/* filter pairs */
+						AlignmentPE::filter(pairList, minIns, maxIns, noMixed, noDiscordant, noTailOver, noContain, noOverlap);
+						if(!pairList.empty()) {
+							/* calculate mapQ for pairs */
+							AlignmentPE::calcMapQ(pairList);
+							/* sort pairs */
+							AlignmentPE::sort(pairList);
+							/* output pairs */
+							output(pairList, out, maxReport);
+						}
+						else if(!noMixed) { /* pair-end matching failed, try unpaired */
+							if(!fwdAlnList.empty()) {
+//								debugLog << "Alignment pairing failed, reporting unpaired alignment for forward read " << fwdRead.getName() << endl;
+								/* calculate mapQ */
+								Alignment::calcMapQ(fwdAlnList);
+								/* sort alignments */
+								Alignment::sort(fwdAlnList);
+								/* output alignments */
+#pragma omp critical(BAM_OUTPUT)
+								output(fwdAlnList, out, maxReport);
+							}
+							if(!revAlnList.empty()) {
+//								debugLog << "Alignment pairing failed, reporting unpaired alignment for reverse read " << revRead.getName() << endl;
+								/* calculate mapQ */
+								Alignment::calcMapQ(revAlnList);
+								/* sort alignments */
+								Alignment::sort(revAlnList);
+								/* output alignments */
+#pragma omp critical(BAM_OUTPUT)
+								output(revAlnList, out, maxReport);
+							}
+						}
+					} /* end SeedMatch tests */
+				} /* end task */
+			} /* end each read */
+		} /* end single, implicit barrier */
+	} /* end parallel */
+	return out.close();
 }

@@ -83,7 +83,7 @@ Alignment& Alignment::backTrace() {
 	}
 	alnFrom = qFrom + i;
 	alnStart = tStart + j;
-	assert(alnPath.front() == BAM_CMATCH && alnPath.back() == BAM_CMATCH);
+	assert(!alnPath.empty() && alnPath.front() == BAM_CMATCH && alnPath.back() == BAM_CMATCH);
 	std::reverse(alnPath.begin(), alnPath.end()); // reverse alnPath
 //	if(!(alnPath.front() == BAM_CMATCH && alnPath.back() == BAM_CMATCH)) {
 //		fprintf(stderr, "alnFrom: %d alnTo: %d alnStart: %d alnEnd: %d alnScore %g alnCigar: %s\nquery:  %s\ntarget: %s\n",
@@ -349,7 +349,7 @@ Alignment& Alignment::evaluate() {
 
 	for(uint64_t k = 0, i = alnFrom, j = alnStart; k < alnPath.length(); ++k) { /* k on alnPath, i on query, j on target */
 		state_str::value_type s = alnPath[k];
-//		fprintf(stderr, "k: %d i: %d j: %d s: %d q: %c t: %c log10P: %g\n", k, i, j, s, query->decode(i), target->decode(j), log10P);
+//		fprintf(stderr, "k: %d i: %d j: %d s: %d q: %c t: %c qual: %d log10P: %g\n", k, i, j, s, query->decode(i), target->decode(j), (*qual)[i], log10P);
 		switch(s) {
 		case BAM_CMATCH:
 			if((*query)[i] & (*target)[j]) // IUPAC match (BAM_CEQUAL)
@@ -380,15 +380,13 @@ Alignment& Alignment::evaluate() {
 	for(uint64_t i = alnTo; i < qTo; ++i) {
 		log10P += (*qual)[i] / QualStr::PHRED_SCALE - (ss->clipPenalty - ss->mismatchPenalty); // use additional penalty as the difference between mismatch and clip
 	}
-
 	return *this;
 }
 
-vector<Alignment>& Alignment::calcMapQ(vector<Alignment>& alnList) {
+ALIGN_LIST& Alignment::calcMapQ(ALIGN_LIST& alnList) {
 	if(alnList.empty())
 		return alnList;
 	const size_t N = alnList.size();
-//	VectorXd prior = VectorXd::Ones(N); // use a uniform prior
 	VectorXd pr(N);    // alignment probability
 	for(size_t i = 0; i < N; ++i)
 		pr(i) = alnList[i].loglik();
@@ -396,8 +394,8 @@ vector<Alignment>& Alignment::calcMapQ(vector<Alignment>& alnList) {
 	double scale = maxV < MIN_LOGLIK_EXP ? maxV : 0;
 	pr = (pr.array()-scale).exp();
 	/* get postP */
-//	VectorXd postP = prior.cwiseProduct(pr);
 	VectorXd postP = pr / pr.sum(); // uniform prior ignored
+//	std::cerr << "pr: " << pr.transpose() << " postP: " << postP.transpose() << std::endl;
 	/* assign postP and mapQ */
 	for(size_t i = 0; i < N; ++i) {
 		alnList[i].postP = postP(i);
@@ -406,6 +404,101 @@ vector<Alignment>& Alignment::calcMapQ(vector<Alignment>& alnList) {
 		alnList[i].mapQ = std::min(::round(mapQ), static_cast<double> (QualStr::MAX_Q_SCORE));
 	}
 	return alnList;
+}
+
+PAIR_LIST& AlignmentPE::calcMapQ(PAIR_LIST& pairList) {
+	if(pairList.empty())
+		return pairList;
+	const size_t N = pairList.size();
+//	VectorXd prior = VectorXd::Ones(N); // use a uniform prior
+	VectorXd pr(N);    // alignment probability
+	for(size_t i = 0; i < N; ++i)
+		pr(i) = pairList[i].loglik();
+	double maxV = pr.maxCoeff();
+	double scale = maxV < MIN_LOGLIK_EXP ? maxV : 0;
+	pr = (pr.array()-scale).exp();
+	/* get postP */
+//	VectorXd postP = prior.cwiseProduct(pr);
+	VectorXd postP = pr / pr.sum(); // uniform prior ignored
+	/* assign postP and mapQ */
+	for(size_t i = 0; i < N; ++i) {
+		pairList[i].postP = postP(i);
+		double mapQ = QualStr::phredP2Q(1 - postP(i));
+		assert(!std::isnan(mapQ));
+		pairList[i].mapQ = std::min(::round(mapQ), static_cast<double> (QualStr::MAX_Q_SCORE));
+	}
+	return pairList;
+}
+
+int32_t AlignmentPE::getInsertSize(const Alignment& lhs, const Alignment& rhs) {
+	if(lhs.tid != rhs.tid)
+		return -1;
+	else if(lhs.alnStart < rhs.alnEnd && lhs.alnEnd > rhs.alnStart) // overlap
+		return 0;
+	else
+		return lhs.alnStart < rhs.alnStart ? rhs.alnEnd - lhs.alnStart : lhs.alnEnd - rhs.alnStart;
+}
+
+ALIGN_LIST& Alignment::filter(ALIGN_LIST& alnList, double bestFrac) {
+	if(alnList.size() <= 1)
+		return alnList;
+	/* find best alignment by alnScore */
+	ALIGN_LIST::const_iterator bestAln = std::max_element(alnList.cbegin(), alnList.cend(), [] (const Alignment& lhs, const Alignment& rhs) { return lhs.alnScore > rhs.alnScore; });
+	/* filter alignment by alnScore */
+	alnList.erase(std::remove_if(alnList.begin(), alnList.end(), [&] (const Alignment& aln) { return aln.alnScore < bestAln->alnScore * bestFrac; }), alnList.end());
+	return alnList;
+}
+
+PAIR_LIST& AlignmentPE::filter(PAIR_LIST& pairList,
+		int32_t minIns, int32_t maxIns,
+		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap) {
+	if(!(minIns == 0 && maxIns == 0)) // filter by insert size
+		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [=] (const AlignmentPE& pair) { return minIns <= pair.getInsertSize() && pair.getInsertSize() <= maxIns; }));
+	if(noDiscordant) // filter discordant pairs
+		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [=] (const AlignmentPE& pair) { return !pair.isConcordant(); }));
+	if(noTailOver) // filter tail-overlap pairs
+		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [] (const AlignmentPE& pair) { return pair.isTailOver(); }));
+	if(noContain) // filter containing pairs
+		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [] (const AlignmentPE& pair) { return pair.isContained(); }));
+	if(noOverlap) // filter overlap pairs
+		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [] (const AlignmentPE& pair) { return pair.isOverlap(); }));
+	return pairList;
+}
+
+ALIGN_LIST Alignment::getAlignments(const ScoreScheme& ss, const MetaGenome& mtg, const PrimarySeq& read,
+		const SeedMatchList& seedMatches, MEM::STRAND strand) {
+	const string& id = read.getName();
+	const DNAseq& query = read.getSeq();
+	const QualStr& qual = read.getQual();
+	const DNAseq& target = mtg.getSeq(); // target is always the entire metagenome
+	ALIGN_LIST alnList;
+	alnList.reserve(seedMatches.size());
+	for(const SeedMatch& seedMatch : seedMatches) {
+		/* get candidate region of this seedMatch */
+		int32_t tid = seedMatch.getTId();
+
+		uint64_t tStart = seedMatch.getStart() - seedMatch.getFrom() * (1 + Alignment::MAX_INDEL_RATE);
+		uint64_t tEnd = seedMatch.getEnd() + (query.length() - seedMatch.getTo()) * (1 + Alignment::MAX_INDEL_RATE);
+		if(tStart < mtg.getChromStart(tid)) // searhStart too far
+			tStart = mtg.getChromStart(tid);
+		if(tEnd > mtg.getChromEnd(tid)) // searhEnd too far
+			tEnd = mtg.getChromEnd(tid);
+		uint16_t flag = strand == MEM::FWD ? 0 : BAM_FREVERSE;
+		/* add a new alignment */
+		alnList.push_back(Alignment(&query, &target, &qual, &id, tid,
+				0, query.length(), tStart, tEnd, &ss, flag
+		).calculateScores(seedMatch).backTrace().clearScores());
+	}
+	return alnList;
+}
+
+PAIR_LIST AlignmentPE::getPairs(ALIGN_LIST& fwdAlnList, ALIGN_LIST& revAlnList) {
+	PAIR_LIST pairList;
+	pairList.reserve(fwdAlnList.size() * revAlnList.size());
+	for(Alignment& fwdAln : fwdAlnList)
+		for(Alignment& revAln : revAlnList)
+			pairList.push_back(AlignmentPE(&fwdAln, &revAln));
+	return pairList;
 }
 
 } /* namespace MSGseqTK */

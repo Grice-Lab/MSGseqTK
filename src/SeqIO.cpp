@@ -94,7 +94,7 @@ PrimarySeq SeqIO::nextFastqSeq() {
 	getline(*in, seq);  // read seq line
 	getline(*in, line); // ignore sep line
 	getline(*in, qual); // read qual line
-	return PrimarySeq(seq, name, desc, qual);
+	return PrimarySeq(seq, name, desc, qual).fixQual();
 }
 
 void SeqIO::writeFastaSeq(const PrimarySeq& seq) {

@@ -51,9 +51,9 @@ MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
 MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
 		RNG& rng, int strand) {
 	assert(strand != 0);
-	if(strand & MEM::FWD != 0 && strand & MEM::REV == 0) /* fwd only */
+	if((strand & MEM::FWD) && !(strand & MEM::REV)) /* fwd only */
 		return sampleMEMS(seq, fmidx, rng, MEM::FWD);
-	else if(strand & MEM::FWD == 0 && strand & MEM::REV != 0) /* rev only */
+	else if((strand & MEM::FWD) && !(strand & MEM::REV)) /* rev only */
 		return sampleMEMS(seq, fmidx, rng, MEM::REV);
 	else {
 		MEMS fwdMems = sampleMEMS(seq, fmidx, rng, MEM::FWD);
@@ -82,10 +82,10 @@ ostream& MEMS::write(ostream& out) const {
 MEMS_PE MEMS_PE::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
 		RNG& rng, int strand) {
 	assert(strand != 0);
-	if(strand & MEM::FWD != 0 && strand & MEM::REV == 0) /* fwd only */
+	if((strand & MEM::FWD) && !(strand & MEM::REV)) /* fwd only */
 		return MEMS_PE(MEMS::sampleMEMS(fwdSeq, fmidx, rng, MEM::FWD),
 				MEMS::sampleMEMS(revSeq, fmidx, rng, MEM::REV)); // use FWD-REV orientation
-	else if(strand & MEM::FWD == 0 && strand & MEM::REV != 0)
+	else if(!(strand & MEM::FWD) && (strand & MEM::REV)) /* rev only */
 		return MEMS_PE(MEMS::sampleMEMS(fwdSeq, fmidx, rng, MEM::REV),
 				MEMS::sampleMEMS(revSeq, fmidx, rng, MEM::FWD)); // use REV-FWD orientation
 	else {

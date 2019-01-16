@@ -35,6 +35,11 @@ using std::ostream;
 using EGriceLab::SAMtools::BAM;
 using std::vector;
 
+struct Alignment; // forward declaration
+struct AlignmentPE; // forward declaration
+typedef vector<Alignment> ALIGN_LIST;
+typedef vector<AlignmentPE> PAIR_LIST;
+
 /**
  * an alignment region of between a single-end read/query and a database/target
  */
@@ -222,6 +227,11 @@ struct Alignment {
 	/** backtrace alnPath */
 	Alignment& backTrace();
 
+	/** get strand of this Alignment */
+	MEM::STRAND getStrand() const {
+		return flag & BAM_FREVERSE == 0 ? MEM::FWD : MEM::REV;
+	}
+
 	/** get 5' soft-clip size */
 	uint32_t getClip5Len() const {
 		return alnFrom - qFrom;
@@ -267,11 +277,6 @@ struct Alignment {
 	/** get MD:Z tag for this Alignment */
 	string getAlnMDTag() const;
 
-	/** get alignment score of this alignment, ignore soft-clips */
-	double getAlnScore() const {
-		return alnScore;
-	}
-
 	/** get overall score of this alignment, including soft-clips */
 	double getScore() const {
 		return alnScore - ss->clipPenalty * getClipLen();
@@ -293,6 +298,12 @@ struct Alignment {
 	/** get the p-value of this alignment */
 	double pvalue() const {
 		return ::pow(10.0, log10lik());
+	}
+
+	/** set flag */
+	Alignment& setFlag(uint16_t flag) {
+		this->flag |= flag;
+		return *this;
 	}
 
 	/**
@@ -328,7 +339,6 @@ struct Alignment {
 	int32_t isize = 0;
 	uint64_t id = 0;
 
-
 	MatrixXd M; // (qLen + 1) * (tLen + 1) DP-matrix to store scores that x[i] is aligned to y[j]
 	MatrixXd D; // (qLen + 1) * (tLen + 1) DP-matrix to store scores that x[i] is aligned to a gap (deletion for query)
 	MatrixXd I; // (qLen + 1) * (tLen + 1) DP-matrix to store scores that y[j] is aligned to a gap (insertion for query)
@@ -337,12 +347,12 @@ struct Alignment {
 	uint64_t alnTo = 0; // 1-based alignment to
 	uint64_t alnStart = 0; // 0-based alignment start
 	uint64_t alnEnd = 0; // 1-based alignment end
-	double alnScore = infV; // alignment score
+	double alnScore = NAN; // alignment score
 	state_str alnPath; // backtrace alignment path using cigar ops defined htslib/sam.h
 //	BAM::cigar_str alnCigar; // cigar_str compressed from alnPath
 
-	double log10P = NAN;  // log10-liklihood of this alignment, given the alignment and quality
-	double postP = NAN;   // posterior probability of this alignment, given all candidate alignments
+	double log10P = 0;  // log10-liklihood of this alignment, given the alignment and quality
+	double postP = 0;   // posterior probability of this alignment, given all candidate alignments
 
 	/* static fileds */
 	static const uint8_t INVALID_MAP_Q = 0xff;
@@ -361,7 +371,6 @@ struct Alignment {
 	static CIGAR_OP_TYPE insMax(double match, double ins);
 	static CIGAR_OP_TYPE delMax(double match, double del);
 
-	/* static methods */
 	/**
 	 * convert our DNAseq to BAM::seq_str encoding from htslib
 	 */
@@ -377,12 +386,124 @@ struct Alignment {
 	static SeedMatchList getSeedMatchList(const MetaGenome& mtg, const MEMS& mems,
 			uint32_t maxIt = MAX_ITER);
 
+	/** get candidate Alignments from SeedMatch list */
+	static ALIGN_LIST getAlignments(const ScoreScheme& ss, const MetaGenome& mtg, const PrimarySeq& read,
+			const SeedMatchList& seedMatches, MEM::STRAND strand);
+
+	/** filter candidate list of Alignments using alnScore */
+	static ALIGN_LIST& filter(ALIGN_LIST& alnList, double bestFrac);
+
+	static ALIGN_LIST& evaluate(ALIGN_LIST& alnList);
+
 	/**
 	 * calculate mapQ as posterior probability of candidate alignments using a uniform prior
 	 * set the mapQ value of all alignments
 	 */
-	static vector<Alignment>& calcMapQ(vector<Alignment>& alnList);
+	static ALIGN_LIST& calcMapQ(ALIGN_LIST& alnList);
 
+	/** sort Alignment by mapQ/loglik decreasingly */
+	static ALIGN_LIST& sort(ALIGN_LIST& alnList);
+};
+
+/**
+ * wrapper class for Alignment paired-end (PE)
+ * it stores mate Alignments in pointers for performance
+ * it never alter the original Alignment objects by using const pointers and keeping its own additional fields
+ */
+struct AlignmentPE {
+	/* constructors */
+	/** default constructor */
+	AlignmentPE() = default;
+
+	/** construct AlignmentPE given both mates */
+	AlignmentPE(const Alignment* fwdAln, const Alignment* revAln) : fwdAln(fwdAln), revAln(revAln)
+	{
+		setInsertSize(getInsertSize(*fwdAln, *revAln));
+	}
+
+	/* member methods */
+	/** test whether this AlignmentPE is concordance */
+	bool isConcordant() const {
+		return fwdAln->tid == revAln->tid && fwdAln->getStrand() != revAln->getStrand();
+	}
+
+	/** test whethther two mates is tail-overlap through each other */
+	bool isTailOver() const {
+		return fwdAln->alnStart <= revAln->alnStart && fwdAln->alnEnd > revAln->alnStart || /* fwd-rev */
+			   revAln->alnStart <= fwdAln->alnStart && revAln->alnEnd > fwdAln->alnStart; /* rev-fwd */
+	}
+
+	/** test whether one mate is contained in the other */
+	bool isContained() const {
+		return fwdAln->alnStart <= revAln->alnStart && fwdAln->alnEnd >= revAln->alnEnd || /* fwd contains rev */
+			   revAln->alnStart <= fwdAln->alnStart && revAln->alnEnd >= fwdAln->alnEnd;
+	}
+
+	/** test whether two mates are overlapping to each other */
+	bool isOverlap() const {
+		return fwdAln->alnStart < revAln->alnEnd && fwdAln->alnEnd > revAln->alnStart;
+	}
+
+	/** get alnScore of this pair */
+	double getAlnScore() const {
+		return fwdAln->alnScore + revAln->alnScore;
+	}
+
+	/** get overal score of this pair */
+	double getScore() const {
+		return fwdAln->getScore() + revAln->getScore();
+	}
+
+	double log10lik() const {
+		return fwdAln->log10lik() + revAln->log10lik();
+	}
+
+	/** get loglik of this pair */
+	double loglik() const {
+		return fwdAln->loglik() + revAln->loglik();
+	}
+
+	/** get insert size */
+	int32_t getInsertSize() const {
+		return isize;
+	}
+
+	/** set insert size */
+	void setInsertSize(int32_t isize) {
+		this->isize = isize;
+	}
+
+	/* member fields */
+	const Alignment* fwdAln = nullptr;
+	const Alignment* revAln = nullptr;
+	int32_t isize = -1;
+
+	uint8_t mapQ = Alignment::INVALID_MAP_Q;
+	double postP = 0;   // posterior probability of this pair, given all candidate pairs
+
+	/* static methods */
+	/** init candidate list of Alignment pairs from fwd and rev ALIGN_LIST */
+	static PAIR_LIST getPairs(ALIGN_LIST& fwdAlnList, ALIGN_LIST& revAlnList);
+
+	/** filter candidate pairs using pairing criteria */
+	static PAIR_LIST& filter(PAIR_LIST& pairList,
+			int32_t minIns, int32_t maxIns,
+			bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap);
+
+	/**
+	 * calculate mapQ as posterior probability of candidate alignment pairs using a uniform prior
+	 * set the mapQ value of all alignment pairs
+	 */
+	static PAIR_LIST& calcMapQ(PAIR_LIST& pairList);
+
+	/** sort mapQ/loglik decreasingly for pairs */
+	static PAIR_LIST& sort(PAIR_LIST& pairList);
+
+	/** calculate insert size of two Alignment
+	 * @return  zero if overlap,
+	 * or -1 if not on the same chromosome/target
+	  */
+	static int32_t getInsertSize(const Alignment& lhs, const Alignment& rhs);
 };
 
 inline Alignment::SeedMatch& Alignment::SeedMatch::filter() {
@@ -462,6 +583,25 @@ inline void Alignment::calculateScores(const SeedPair& pair) {
 		uint32_t j = t - tStart + 1;
 		M(i,j) = M(i-1,j-1) + ss->getScore((*query)[q], (*target)[t]);
 	}
+}
+
+inline ALIGN_LIST& Alignment::evaluate(ALIGN_LIST& alnList) {
+	/* evaluate filtered alignments */
+	for(Alignment& aln : alnList)
+		aln.evaluate();
+	return alnList;
+}
+
+inline ALIGN_LIST& Alignment::sort(ALIGN_LIST& alnList) {
+	/* sort candidates by their log10-liklihood descreasingly (same order as postP with uniform prior */
+	std::sort(alnList.begin(), alnList.end(), [] (const Alignment& lhs, const Alignment& rhs) { return lhs.log10lik() > rhs.log10lik(); });
+	return alnList;
+}
+
+inline PAIR_LIST& AlignmentPE::sort(PAIR_LIST& pairList) {
+	/* sort candidates by their log10-liklihood descreasingly (same order as postP with uniform prior */
+	std::sort(pairList.begin(), pairList.end(), [] (const AlignmentPE& lhs, const AlignmentPE& rhs) { return lhs.log10lik() > rhs.log10lik(); });
+	return pairList;
 }
 
 } /* namespace MSGseqTK */
