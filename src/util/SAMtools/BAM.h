@@ -72,12 +72,12 @@ public:
 	/* member methods */
 	/** getters and setters for bam1_core_t member fields */
 	/** get target/reference ID */
-	int32_t getRId() const {
+	int32_t getTId() const {
 		return bamAln->core.tid;
 	}
 
 	/** set target/reference ID */
-	void setRId(int32_t tid) {
+	void setTId(int32_t tid) {
 		bamAln->core.tid = tid;
 	}
 
@@ -166,6 +166,37 @@ public:
 		bamAln->core.flag = flag;
 	}
 
+	/** get mtid */
+	int32_t getMTId() const {
+		return bamAln->core.mtid;
+	}
+
+	/** set mtid */
+	void setMTId(int32_t mtid) {
+		bamAln->core.mtid = mtid;
+	}
+
+	/** get mpos */
+	int32_t getMPos() const {
+		return bamAln->core.mpos;
+	}
+
+	/** set mpos */
+	void setMPos(int32_t mpos) {
+		bamAln->core.mpos = mpos;
+	}
+
+	/** get isize */
+	int32_t getISize() const {
+		return bamAln->core.isize;
+	}
+
+	/** set mpos */
+	void setISize(int32_t isize) {
+		bamAln->core.isize = isize;
+	}
+
+	/* getter and setter for individual flags */
 	bool getPairedFlag() const {
 		return bamAln->core.flag & BAM_FPAIRED != 0;
 	}
