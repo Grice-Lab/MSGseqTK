@@ -109,17 +109,15 @@ size_t BitSeqRRR::rank1(size_t i) const {
 	}
 	size_t mask = 0x0F;
 	const uint8_t* arr = reinterpret_cast<const uint8_t*>(C.getData().c_str());
-	arr += k/2;
-	while(k < pos - 1 && pos > 0) {
+	while(k + 1 < pos) {
 //		size_t lower = C.getValue(k, wC) & mask;
 //		size_t upper = C.getValue(k + 1, wC);
-		size_t lower = *arr & mask;
-		size_t upper = *arr / 16;
+		size_t lower = arr[k / 2] & mask;
+		size_t upper = arr[k / 2] / 16;
 //		assert(lower == C.getValue(k, wC) & mask);
 //		assert(upper == C.getValue(k + 1, wC));
 		sum += lower + upper;
 		posO += OFFSET.get_log2binomial(BLOCK_SIZE, lower) + OFFSET.get_log2binomial(BLOCK_SIZE, upper);
-		arr++;
 		k += 2;
 	}
 	if(k < pos) { /* process last field */
@@ -205,7 +203,7 @@ size_t BitSeqRRR::select0(size_t r) const {
 	size_t start = 0;
 	size_t end = nCsampled - 1;
 	size_t med, acc = 0, pos;
-	while(start < end - 1) {
+	while(start + 1 < end) {
 		med = (start + end) / 2;
 		acc = med * sample_rate * BLOCK_SIZE - Csampled.getValue(med, wCsampled);
 		if(acc < r) {
@@ -220,7 +218,7 @@ size_t BitSeqRRR::select0(size_t r) const {
 		}
 	}
 	acc = Csampled.getValue(start, wCsampled);
-	while(start < nC -1 && acc + sample_rate * BLOCK_SIZE == Csampled.getValue(start + 1, wCsampled)) {
+	while(start + 1 < nC && acc + sample_rate * BLOCK_SIZE == Csampled.getValue(start + 1, wCsampled)) {
 		start++;
 		acc += sample_rate * BLOCK_SIZE;
 	}
@@ -287,15 +285,13 @@ bool BitSeqRRR::access(size_t i, size_t& r) const {
 	}
 	size_t mask = 0x0F;
 	const uint8_t* arr = reinterpret_cast<const uint8_t*>(C.getData().c_str());
-	arr += k / 2;
-	while(k < pos - 1 && pos > 0) {
+	while(k + 1 < pos) {
 //		size_t lower = C.getValue(k, wC) & mask;
 //		size_t upper = C.getValue(k + 1, wC);
-		size_t lower = *arr & mask;
-		size_t upper = *arr / 16;
+		size_t lower = arr[k / 2] & mask;
+		size_t upper = arr[k / 2] / 16;
 		sum += lower + upper;
 		posO += OFFSET.get_log2binomial(BLOCK_SIZE, lower) + OFFSET.get_log2binomial(BLOCK_SIZE, upper);
-		arr++;
 		k += 2;
 	}
 	if(k < pos) {
