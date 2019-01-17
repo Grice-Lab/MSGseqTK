@@ -101,19 +101,25 @@ CONFIG_CLEAN_VPATH_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
 am_bwt_OBJECTS = bwt.$(OBJEXT)
 bwt_OBJECTS = $(am_bwt_OBJECTS)
-bwt_DEPENDENCIES = $(top_srcdir)/lib/${PKG_NAME}.a
+am__DEPENDENCIES_1 =
+bwt_DEPENDENCIES = $(top_srcdir)/lib/${PKG_NAME}.a \
+	$(am__DEPENDENCIES_1)
 am_mksary_OBJECTS = mksary.$(OBJEXT)
 mksary_OBJECTS = $(am_mksary_OBJECTS)
-mksary_DEPENDENCIES = $(top_srcdir)/lib/${PKG_NAME}.a
+mksary_DEPENDENCIES = $(top_srcdir)/lib/${PKG_NAME}.a \
+	$(am__DEPENDENCIES_1)
 am_sasearch_OBJECTS = sasearch.$(OBJEXT)
 sasearch_OBJECTS = $(am_sasearch_OBJECTS)
-sasearch_DEPENDENCIES = $(top_srcdir)/lib/${PKG_NAME}.a
+sasearch_DEPENDENCIES = $(top_srcdir)/lib/${PKG_NAME}.a \
+	$(am__DEPENDENCIES_1)
 am_suftest_OBJECTS = suftest.$(OBJEXT)
 suftest_OBJECTS = $(am_suftest_OBJECTS)
-suftest_DEPENDENCIES = $(top_srcdir)/lib/${PKG_NAME}.a
+suftest_DEPENDENCIES = $(top_srcdir)/lib/${PKG_NAME}.a \
+	$(am__DEPENDENCIES_1)
 am_unbwt_OBJECTS = unbwt.$(OBJEXT)
 unbwt_OBJECTS = $(am_unbwt_OBJECTS)
-unbwt_DEPENDENCIES = $(top_srcdir)/lib/${PKG_NAME}.a
+unbwt_DEPENDENCIES = $(top_srcdir)/lib/${PKG_NAME}.a \
+	$(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -205,6 +211,7 @@ LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
 OBJEXT = @OBJEXT@
+OPENMP_CFLAGS = @OPENMP_CFLAGS@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
@@ -261,19 +268,24 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
-AM_CFLAGS = -I$(top_srcdir)/include
+AM_CFLAGS = -I$(top_srcdir)/include \
+$(OPENMP_CFLAGS)
+
+AM_CPPFLAGS = \
+$(OPENMP_CFLAGS)
+
 @BUILD64_FALSE@PKG_NAME = libdivsufsort
 @BUILD64_TRUE@PKG_NAME = libdivsufsort64
 bwt_SOURCES = bwt.c
-bwt_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
+bwt_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a $(OPENMP_CFLAGS)
 mksary_SOURCES = mksary.c
-mksary_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
+mksary_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a $(OPENMP_CFLAGS)
 sasearch_SOURCES = sasearch.c
-sasearch_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
+sasearch_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a $(OPENMP_CFLAGS)
 suftest_SOURCES = suftest.c
-suftest_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
+suftest_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a $(OPENMP_CFLAGS)
 unbwt_SOURCES = unbwt.c
-unbwt_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
+unbwt_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a $(OPENMP_CFLAGS)
 all: all-am
 
 .SUFFIXES:

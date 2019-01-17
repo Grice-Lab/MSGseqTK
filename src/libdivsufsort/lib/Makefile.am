@@ -1,7 +1,10 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
-AM_CFLAGS = -I$(top_srcdir)/include
-AM_CPPFLAGS = -I$(top_srcdir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include \
+$(OPENMP_CFLAGS)
+
+AM_CFLAGS = -I$(top_srcdir)/include \
+$(OPENMP_CFLAGS)
 
 if BUILD64
 lib_LIBRARIES = libdivsufsort64.a

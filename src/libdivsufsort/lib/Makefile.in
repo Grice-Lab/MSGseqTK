@@ -237,6 +237,7 @@ LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
 OBJEXT = @OBJEXT@
+OPENMP_CFLAGS = @OPENMP_CFLAGS@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
@@ -293,8 +294,12 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
-AM_CFLAGS = -I$(top_srcdir)/include
-AM_CPPFLAGS = -I$(top_srcdir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include \
+$(OPENMP_CFLAGS)
+
+AM_CFLAGS = -I$(top_srcdir)/include \
+$(OPENMP_CFLAGS)
+
 @BUILD64_FALSE@lib_LIBRARIES = libdivsufsort.a
 @BUILD64_TRUE@lib_LIBRARIES = libdivsufsort64.a
 @BUILD64_TRUE@libdivsufsort64_a_SOURCES = divsufsort.c sssort.c trsort.c utils.c

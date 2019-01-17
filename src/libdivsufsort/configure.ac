@@ -33,4 +33,7 @@ AC_ARG_ENABLE([build64],
 AM_CONDITIONAL([BUILD64], [test "x$enable_build64" = "xyes"])
 
 AC_CONFIG_FILES([Makefile lib/Makefile examples/Makefile])
+
+AC_OPENMP
+
 AC_OUTPUT
