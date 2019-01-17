@@ -205,7 +205,8 @@ void FMIndex::buildSA() {
 	/* build a BitStr in the 1st pass */
 	BitStr32 bstr(N);
 	for(saidx_t i = 0; i < N; ++i)
-		bstr.set(i, i % SA_SAMPLE_RATE == 0 || bwt.access(i) == 0);
+		if(i % SA_SAMPLE_RATE == 0 || bwt.access(i) == 0) /* sample at all null characters */
+			bstr.set(i);
 	SAbit = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
 
 	/* build SAsampled in the 2nd pass */
@@ -225,7 +226,8 @@ void FMIndex::buildSA(const DNAseq& bwtSeq) {
 	/* build the bitstr by sampling bwtSeq */
 	BitStr32 bstr(N);
 	for(size_t i = 0; i < N; ++i)
-		bstr.set(i, i % SA_SAMPLE_RATE == 0 || bwtSeq[i] == 0); /* sample at all null characters */
+		if(i % SA_SAMPLE_RATE == 0 || bwtSeq[i] == 0) /* sample at all null characters */
+			bstr.set(i);
 
 	SAbit = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
 
@@ -246,7 +248,8 @@ void FMIndex::buildSA(const saidx_t* SA, const DNAseq& bwtSeq) {
 	/* build the bitstr by sampling SA direction */
 	BitStr32 bstr(N);
 	for(size_t i = 0; i < N; ++i)
-		bstr.set(i, i % SA_SAMPLE_RATE == 0 || bwtSeq[i] == 0); /* sample at all null characters */
+		if(i % SA_SAMPLE_RATE == 0 || bwtSeq[i] == 0) /* sample at all null characters */
+			bstr.set(i);
 
 	SAbit = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
 

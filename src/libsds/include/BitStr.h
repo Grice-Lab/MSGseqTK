@@ -272,8 +272,15 @@ public:
 			return data[i] >> j | ((data[i+1] << (2 * wid - j - len)) >> (wid - len));
 	}
 
-	/** set the i-th bit of this BitStr */
-	BitStr<uIntType>& set(size_type i, bool bit = true) {
+	/** set/turn-on the i-th bit of this BitStr */
+	BitStr<uIntType>& set(size_type i) {
+		/* set bit */
+		data[i / wid] |= 1UL << (i % wid);
+		return *this;
+	}
+
+	/** set the i-th bit of this BitStr to given state */
+	BitStr<uIntType>& set(size_type i, bool bit) {
 		/* clear bits first */
 		data[i / wid] &= ~(1UL << (i % wid));
 		/* set bit */
