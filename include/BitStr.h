@@ -291,8 +291,7 @@ public:
 		assert(len <= wid);
 		if(len == 0)
 			return *this;
-		if(start + len > nB)
-			len = nB - start;
+		len = std::min(len, nB - start);
 		size_t i = start / wid;
 		size_t j = start - i * wid;
 		size_t mask = ((j + len) < wid ? ~0UL << j + len : 0UL)

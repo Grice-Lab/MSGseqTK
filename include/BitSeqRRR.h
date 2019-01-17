@@ -224,7 +224,7 @@ private:
 		wO = 1; /* Offset in 1 bit */
 		for(size_t i = 0; i < nC; ++i) {
 			uint32_t value = popcount32(bstr.get(i * BLOCK_SIZE, BLOCK_SIZE));
-			assert(value <= BLOCK_SIZE);
+//			assert(value <= BLOCK_SIZE);
 			C.setValue(i, wC, value);
 			ones += value;
 			nO += OFFSET.get_log2binomial(BLOCK_SIZE, value);

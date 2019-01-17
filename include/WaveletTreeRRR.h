@@ -55,8 +55,7 @@ public:
 	/* member methods */
 	/** test whether the i-th bit of val is set */
 	bool test(size_t val, size_t i) const {
-		assert (i < height);
-		return (val & (1UL << height - i - 1)) != 0;
+		return val & (1UL << height - i - 1);
 	}
 
 	/**
@@ -145,7 +144,29 @@ private:
 	 * @param offset  offset relative to the original symbol
 	 */
 	template<typename uIntType>
-	void build_level(vector<BitStr32>&, const basic_string<uIntType>& sym, size_t level, size_t offset = 0);
+	void build_level(vector<BitStr32>& bstrs, const basic_string<uIntType>& sym, size_t level, size_t offset = 0) {
+		if(level == height)
+			return;
+	//	fprintf(stderr, "buidling level %d offset: %d\n", level, offset);
+
+		basic_string<uIntType> left;
+		basic_string<uIntType> right;
+		BitStr32& bs = bstrs[level];
+		left.reserve(sym.length());
+		right.reserve(sym.length());
+
+		assert(bs.length() == n);
+
+		for (size_t i = 0; i < sym.length(); ++i) {
+			bool flag = test(sym[i], level);
+			bs.set(i + offset, flag);
+			!flag ? left.push_back(sym[i]) : right.push_back(sym[i]);
+		}
+
+		/* build level recursevely */
+		build_level(bstrs, left, level + 1, offset);
+		build_level(bstrs, right, level + 1, offset + left.length());
+	}
 
 	/* member fields */
 private:
@@ -169,7 +190,7 @@ public:
 };
 
 template<typename uIntType>
-void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
+inline void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
 	/* build basic fields */
 	n = src.length();
 	sigma = max - min + 1;
@@ -197,31 +218,6 @@ void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
 	/* build cumulative OCC */
 	for(size_t i = 1; i <= max + 1; ++i)
 		OCC[i] += OCC[i - 1];
-}
-
-template<typename uIntType>
-inline void WaveletTreeRRR::build_level(vector<BitStr32>& bstrs, const basic_string<uIntType>& sym, size_t level, size_t offset) {
-	if(level == height)
-		return;
-//	fprintf(stderr, "buidling level %d offset: %d\n", level, offset);
-
-	basic_string<uIntType> left;
-	basic_string<uIntType> right;
-	BitStr32& bs = bstrs[level];
-	left.reserve(sym.length());
-	right.reserve(sym.length());
-
-	assert(bs.length() == n);
-
-	for (size_t i = 0; i < sym.length(); ++i) {
-		bool flag = test(sym[i], level);
-		bs.set(i + offset, flag);
-		!flag ? left.push_back(sym[i]) : right.push_back(sym[i]);
-	}
-
-	/* build level recursevely */
-	build_level(bstrs, left, level + 1, offset);
-	build_level(bstrs, right, level + 1, offset + left.length());
 }
 
 inline bool operator==(const WaveletTreeRRR& lhs, const WaveletTreeRRR& rhs) {
