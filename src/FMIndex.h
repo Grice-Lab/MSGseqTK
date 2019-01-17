@@ -143,7 +143,10 @@ protected:
 	/** build SAbit and SAsampled from a given raw BWTseq, which is available during merge operations */
 	void buildSA(const DNAseq& bwtSeq);
 
-	/** build SAbit and SAsampled from given SA and raw BWTseq, which are available during direct construction */
+	/**
+	 * build SAbit and SAsampled from given SA and raw BWTseq, which are available during direct construction
+	 * this version of buildSA is parallelized by openMP
+	 */
 	void buildSA(const saidx_t* SA, const DNAseq& bwtSeq);
 
 public:

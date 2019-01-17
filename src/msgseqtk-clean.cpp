@@ -86,7 +86,7 @@ void printUsage(const string& progName) {
 		 << "            -s|--strand  INT     : read/pair strand to search, 1 for sense, 2 for anti-sense, 3 for both [" << DEFAULT_STRAND << "]" << endl
 		 << "            -S|--seed  INT       : random seed used for determing MEMS, for debug only" << endl
 #ifdef _OPENMP
-		 << "            -p|--process INT     : number of threads/cpus used for parallel processing" << endl
+		 << "            -p|--process INT     : number of threads/cpus used for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl

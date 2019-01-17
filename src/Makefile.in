@@ -136,7 +136,7 @@ msgseqtk_align_DEPENDENCIES = libMSGseqTK.a util/UCSC/libEGUCSC.a \
 	util/libEGUtil.a util/SAMtools/libEGSAMtools.a \
 	math/libEGMath.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	libsds/src/libsds.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -154,7 +154,7 @@ msgseqtk_build_OBJECTS = $(am_msgseqtk_build_OBJECTS)
 msgseqtk_build_DEPENDENCIES = libMSGseqTK.a util/UCSC/libEGUCSC.a \
 	util/libEGUtil.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	libsds/src/libsds.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_msgseqtk_clean_OBJECTS = msgseqtk-clean.$(OBJEXT) \
 	MSGseqTKEnv.$(OBJEXT)
 msgseqtk_clean_OBJECTS = $(am_msgseqtk_clean_OBJECTS)
@@ -162,7 +162,7 @@ msgseqtk_clean_DEPENDENCIES = libMSGseqTK.a util/UCSC/libEGUCSC.a \
 	util/libEGUtil.a math/libEGMath.a \
 	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	libsds/src/libsds.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_msgseqtk_inspect_OBJECTS = msgseqtk-inspect.$(OBJEXT) \
 	MSGseqTKEnv.$(OBJEXT)
 msgseqtk_inspect_OBJECTS = $(am_msgseqtk_inspect_OBJECTS)
@@ -442,11 +442,10 @@ AM_CXXFLAGS = \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
 $(BOOST_CPPFLAGS) \
-$(OPENMP_CFLAGS) \
 $(OPENMP_CXXFLAGS)
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENMP_CXXFLAGS)
-AM_LDFLAGS = $(BOOST_LDFLAGS) $(OPENMP_CXXFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENMP_CFLAGS) $(OPENMP_CXXFLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS)
 
 # Build convenient non-install libraries
 noinst_LIBRARIES = libMSGseqTK.a
@@ -474,7 +473,8 @@ util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB) \
-$(BOOST_REGEX_LIB)
+$(BOOST_REGEX_LIB) \
+$(OPENMP_CXXFLAGS)
 
 msgseqtk_anno_SOURCES = msgseqtk-anno.cpp MSGseqTKEnv.cpp
 msgseqtk_anno_LDADD = \
@@ -514,7 +514,8 @@ math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB) \
-$(BOOST_REGEX_LIB)
+$(BOOST_REGEX_LIB) \
+$(OPENMP_CXXFLAGS)
 
 msgseqtk_align_SOURCES = msgseqtk-align.cpp MSGseqTKEnv.cpp
 msgseqtk_align_LDADD = \
@@ -527,6 +528,7 @@ libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB) \
 $(BOOST_REGEX_LIB) \
+$(OPENMP_CXXFLAGS) \
 -lhts
 
 all: all-recursive

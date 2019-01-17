@@ -22,11 +22,10 @@ AM_CXXFLAGS = \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
 $(BOOST_CPPFLAGS) \
-$(OPENMP_CFLAGS) \
 $(OPENMP_CXXFLAGS)
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENMP_CXXFLAGS)
-AM_LDFLAGS = $(BOOST_LDFLAGS) $(OPENMP_CXXFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENMP_CFLAGS) $(OPENMP_CXXFLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS)
 
 # Build convenient non-install libraries
 noinst_LIBRARIES = libMSGseqTK.a
@@ -64,7 +63,8 @@ util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB) \
-$(BOOST_REGEX_LIB)
+$(BOOST_REGEX_LIB) \
+$(OPENMP_CXXFLAGS)
 
 msgseqtk_anno_SOURCES = msgseqtk-anno.cpp MSGseqTKEnv.cpp
 msgseqtk_anno_LDADD = \
@@ -105,7 +105,8 @@ math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB) \
-$(BOOST_REGEX_LIB)
+$(BOOST_REGEX_LIB) \
+$(OPENMP_CXXFLAGS)
 
 msgseqtk_align_SOURCES = msgseqtk-align.cpp MSGseqTKEnv.cpp
 msgseqtk_align_LDADD = \
@@ -118,4 +119,5 @@ libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB) \
 $(BOOST_REGEX_LIB) \
+$(OPENMP_CXXFLAGS) \
 -lhts

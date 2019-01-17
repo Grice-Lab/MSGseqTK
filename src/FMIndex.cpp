@@ -12,6 +12,10 @@
 #include <stdexcept>
 #include "FMIndex.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace EGriceLab {
 namespace MSGseqTK {
 using std::vector;
@@ -183,10 +187,9 @@ void FMIndex::buildBWT(const DNAseq& seq) {
 		throw std::runtime_error("Error: Cannot build suffix-array on DNAseq");
 
 	/* build bwt and sample bitstr */
-	DNAseq bwtSeq;
-	bwtSeq.reserve(N);
-    for(saidx_t i = 0; i < N; ++i)
-    	bwtSeq.push_back(SA[i] == 0 ? 0 : seq[SA[i] - 1]);
+	DNAseq bwtSeq(N, 0);
+	std::transform(SA, SA + N, bwtSeq.begin(),
+			[&] (saidx_t sa) { return sa == 0 ? 0 : seq[sa - 1]; });
 
 	/* construct BWTRRR */
     bwt = WaveletTreeRRR(bwtSeq, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
@@ -249,6 +252,7 @@ void FMIndex::buildSA(const saidx_t* SA, const DNAseq& bwtSeq) {
 
 	/* build SAsampled in the 2nd pass */
 	SAsampled.resize(SAbit.numOnes()); /* sample at on bits */
+#pragma omp parallel for
 	for(saidx_t i = 0; i < N; ++i) {
 		if(bstr.test(i))
 			SAsampled[SAbit.rank1(i) - 1] = SA[i];
