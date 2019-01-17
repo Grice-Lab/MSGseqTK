@@ -27,6 +27,7 @@ BAM::BAM(const string& qname, uint16_t flag, int32_t tid, int32_t pos, uint8_t m
 	bamAln->core.l_extranul = bamAln->core.l_qname % 4 != 0 ? 4 - bamAln->core.l_qname % 4 : 0;
 	bamAln->core.l_qname += bamAln->core.l_extranul;
 	bamAln->core.flag = flag;
+	bamAln->core.tid = tid;
 	bamAln->core.pos = pos;
 	bamAln->core.qual = mapQ;
 	bamAln->core.n_cigar = cigar.length();
