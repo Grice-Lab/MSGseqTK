@@ -310,7 +310,7 @@ int main(int argc, char* argv[]) {
 		return EXIT_SUCCESS;
 	}
 
-	infoLog << "Building FM-index with backward-incremental method" << endl;
+	infoLog << "Building FM-index incrementally" << endl;
 	DNAseq blockSeq;
 	blockSeq.reserve(blockSize * MBP_UNIT);
 	size_t k = 0;
