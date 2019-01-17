@@ -140,8 +140,11 @@ public:
 	void buildSA();
 
 protected:
-	/** build SAbit and SAsampled from a given raw BWTSeq, which is available during many operations */
+	/** build SAbit and SAsampled from a given raw BWTseq, which is available during merge operations */
 	void buildSA(const DNAseq& bwtSeq);
+
+	/** build SAbit and SAsampled from given SA and raw BWTseq, which are available during direct construction */
+	void buildSA(const saidx_t* SA, const DNAseq& bwtSeq);
 
 public:
 	/**

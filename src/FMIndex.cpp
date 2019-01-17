@@ -187,13 +187,13 @@ void FMIndex::buildBWT(const DNAseq& seq) {
 	bwtSeq.reserve(N);
     for(saidx_t i = 0; i < N; ++i)
     	bwtSeq.push_back(SA[i] == 0 ? 0 : seq[SA[i] - 1]);
-    delete[] SA;
 
 	/* construct BWTRRR */
     bwt = WaveletTreeRRR(bwtSeq, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
 
 	if(keepSA)
-		buildSA(bwtSeq);
+		buildSA(SA, bwtSeq);
+    delete[] SA;
 }
 
 void FMIndex::buildSA() {
@@ -219,7 +219,7 @@ void FMIndex::buildSA() {
 void FMIndex::buildSA(const DNAseq& bwtSeq) {
 	const saidx_t N = length();
 	assert(bwtSeq.length() == N);
-	/* build the bitstr from given seq */
+	/* build the bitstr by sampling bwtSeq */
 	BitStr32 bstr(N);
 	for(size_t i = 0; i < N; ++i)
 		bstr.set(i, i % SA_SAMPLE_RATE == 0 || bwtSeq[i] == 0); /* sample at all null characters */
@@ -234,6 +234,24 @@ void FMIndex::buildSA(const DNAseq& bwtSeq) {
 			SAsampled[SAbit.rank1(i) - 1] = j - 1;
 		/* LF-mapping */
 		i = b != 0 ? LF(b, i) - 1 : ++shift;
+	}
+}
+
+void FMIndex::buildSA(const saidx_t* SA, const DNAseq& bwtSeq) {
+	const saidx_t N = length();
+	assert(bwtSeq.length() == N);
+	/* build the bitstr by sampling SA direction */
+	BitStr32 bstr(N);
+	for(size_t i = 0; i < N; ++i)
+		bstr.set(i, i % SA_SAMPLE_RATE == 0 || bwtSeq[i] == 0); /* sample at all null characters */
+
+	SAbit = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
+
+	/* build SAsampled in the 2nd pass */
+	SAsampled.resize(SAbit.numOnes()); /* sample at on bits */
+	for(saidx_t i = 0; i < N; ++i) {
+		if(bstr.test(i))
+			SAsampled[SAbit.rank1(i) - 1] = SA[i];
 	}
 }
 
