@@ -158,9 +158,13 @@ private:
 		assert(bs.length() == n);
 
 		for (size_t i = 0; i < sym.length(); ++i) {
-			bool flag = test(sym[i], level);
-			bs.set(i + offset, flag);
-			!flag ? left.push_back(sym[i]) : right.push_back(sym[i]);
+			if(test(sym[i], level)) {
+				bs.set(i + offset);
+				right.push_back(sym[i]);
+			}
+			else {
+				left.push_back(sym[i]);
+			}
 		}
 
 		/* build level recursevely */
