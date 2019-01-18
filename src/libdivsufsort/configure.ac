@@ -10,7 +10,7 @@ AM_INIT_AUTOMAKE()
 # Checks for libraries.
 
 # Checks for header files.
-AC_CHECK_HEADERS([fcntl.h inttypes.h memory.h stddef.h stdint.h stdlib.h string.h strings.h])
+AC_CHECK_HEADERS
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
