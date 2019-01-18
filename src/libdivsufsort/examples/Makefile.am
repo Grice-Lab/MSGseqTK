@@ -15,17 +15,17 @@ PKG_NAME=libdivsufsort
 endif
 
 bwt_SOURCES = bwt.c
-bwt_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a $(OPENMP_CFLAGS)
+bwt_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
 
 mksary_SOURCES = mksary.c
-mksary_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a $(OPENMP_CFLAGS)
+mksary_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
 
 sasearch_SOURCES = sasearch.c
-sasearch_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a $(OPENMP_CFLAGS)
+sasearch_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
 
 suftest_SOURCES = suftest.c
-suftest_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a $(OPENMP_CFLAGS)
+suftest_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
 
 unbwt_SOURCES = unbwt.c
-unbwt_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a $(OPENMP_CFLAGS)
+unbwt_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
 
