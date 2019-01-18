@@ -78,7 +78,7 @@ void printUsage(const string& progName) {
 	     << "Options:    -r|--ref  STR        : name of reference/target database from which WGS reads need to be kept" << endl
 		 << "            -b|--bg  STR         : name of background/host database from which WGS reads need to be removed" << endl
 		 << "            -o  FILE             : output of cleaned single-end/forward reads" << ZLIB_SUPPORT << endl
-		 << "            -p  FILE             : output of cleaned mate/reverse reads" << ZLIB_SUPPORT << endl
+		 << "            -m  FILE             : output of cleaned mate/reverse reads" << ZLIB_SUPPORT << endl
 		 << "            -a  FILE             : write an additional TSV file with the detailed assignment information for each read" << endl
 		 << "            --detail  FLAG       : write detailed information of MEMS in the assignment output, ignored if -a is not specified; this may lead to much slower processing" << endl
 		 << "            -L|--lod  DBL        : minimum log-odd required to determine a read/pair as reference vs. background [" << DEFAULT_MIN_LOD << "]" << endl
@@ -164,8 +164,8 @@ int main(int argc, char* argv[]) {
 
 	if(cmdOpts.hasOpt("-o"))
 		fwdOutFn = cmdOpts.getOpt("-o");
-	if(cmdOpts.hasOpt("-p"))
-		revOutFn = cmdOpts.getOpt("-p");
+	if(cmdOpts.hasOpt("-m"))
+		revOutFn = cmdOpts.getOpt("-m");
 
 	if(cmdOpts.hasOpt("-a"))
 		assignFn = cmdOpts.getOpt("-a");

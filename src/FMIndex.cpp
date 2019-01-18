@@ -332,7 +332,6 @@ FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {
 			RA = rhs.LF(b, RA - 1);
 			i = lhs.LF(b, i) - 1;
 		}
-//		cerr << "i: " << i << " c: " << DNAalphabet::decode(b) << " RA: " << RA << endl;
 	}
 
 	/* build merbed BWT */
