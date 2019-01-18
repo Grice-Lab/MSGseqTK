@@ -40,8 +40,6 @@ using namespace std;
 using namespace EGriceLab;
 using namespace EGriceLab::MSGseqTK;
 
-static const string SEQ_FMT = "fasta";
-
 /**
  * Print introduction of this program
  */
@@ -225,7 +223,7 @@ int main(int argc, char* argv[]) {
 	/* if -s requested */
 	if(seqOut.is_complete()) {
 		infoLog << "Writing genome sequences" << endl;
-		SeqIO seqO(&seqOut, SEQ_FMT);
+		SeqIO seqO(&seqOut, SeqIO::FASTA);
 		for(size_t cid = 0; cid < mtg.numChroms(); ++cid) {
 			size_t gid = mtg.getGenomeIndexByChromIdx(cid);
 			const string& genomeId = mtg.getGenomeId(gid);

@@ -476,17 +476,19 @@ ALIGN_LIST Alignment::getAlignments(const ScoreScheme& ss, const MetaGenome& mtg
 	for(const SeedMatch& seedMatch : seedMatches) {
 		/* get candidate region of this seedMatch */
 		int32_t tid = seedMatch.getTId();
+		uint64_t chrStart = mtg.getChromStart(tid);
+		uint64_t chrEnd = mtg.getChromEnd(tid);
 
 		uint64_t tStart = seedMatch.getStart() - seedMatch.getFrom() * (1 + Alignment::MAX_INDEL_RATE);
 		uint64_t tEnd = seedMatch.getEnd() + (query.length() - seedMatch.getTo()) * (1 + Alignment::MAX_INDEL_RATE);
-		if(tStart < mtg.getChromStart(tid)) // searhStart too far
-			tStart = mtg.getChromStart(tid);
-		if(tEnd > mtg.getChromEnd(tid)) // searhEnd too far
-			tEnd = mtg.getChromEnd(tid);
+		if(tStart < chrStart) // searhStart too far
+			tStart = chrStart;
+		if(tEnd > chrEnd) // searhEnd too far
+			tEnd = chrEnd;
 		uint16_t flag = strand == MEM::FWD ? 0 : BAM_FREVERSE;
 		/* add a new alignment */
 		alnList.push_back(Alignment(&query, &target, &qual, &id, tid,
-				0, query.length(), tStart, tEnd, &ss, flag
+				0, query.length(), tStart, tEnd, &ss, flag, chrStart
 		).calculateScores(seedMatch).backTrace().clearScores());
 	}
 	return alnList;

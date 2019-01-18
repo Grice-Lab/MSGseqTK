@@ -310,12 +310,12 @@ int main(int argc, char* argv[]) {
 #endif
 
 	/* guess input seq format */
-	string fmt = SeqIO::guessFormat(fwdInFn);
-	if(!(fmt == "fasta" || fmt == "fastq")) {
+	SeqIO::FORMAT fmt = SeqIO::guessFormat(fwdInFn);
+	if(fmt == SeqIO::UNK) {
 		cerr << "Unrecognized sequence format for file '" << fwdInFn << "'" << endl;
 		return EXIT_FAILURE;
 	}
-
+	bool fixQual = fmt != SeqIO::FASTQ; // non-fastq format need quality fix
 	bool isPaired = !revInFn.empty();
 
 	/* open inputs */
@@ -348,8 +348,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	/* open SeqIO input */
-	SeqIO fwdI(dynamic_cast<istream*>(&fwdIn), fmt);
-	SeqIO revI(dynamic_cast<istream*>(&revIn), fmt);
+	SeqIO fwdI(dynamic_cast<istream*>(&fwdIn), fmt, fixQual);
+	SeqIO revI(dynamic_cast<istream*>(&revIn), fmt, fixQual);
 	string mtgFn = db + METAGENOME_FILE_SUFFIX;
 	string fmidxFn = db + FMINDEX_FILE_SUFFIX;
 

@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
 	ifstream listIn, mtgIn, fmidxIn;
 
 	ofstream mtgOut, fmidxOut;
-	const string fmt = "fasta";
+	const SeqIO::FORMAT fmt = SeqIO::FASTA; // always use fasta format
 
 	int blockSize = DEFAULT_BLOCK_SIZE;
 	int nThreads = DEFAULT_NUM_THREADS;

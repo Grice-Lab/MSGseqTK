@@ -27,6 +27,9 @@ using std::ofstream;
  */
 class SeqIO {
 public:
+	/* nested types and enums */
+	enum FORMAT { UNK, FASTA, FASTQ };
+
 	/* constructors */
 	/** disable default constructor */
 	SeqIO() = default;
@@ -38,17 +41,17 @@ public:
 	/**
 	 * Construct a SeqIO object in READ mode with given info
 	 */
-	SeqIO(istream* in, const string& format, int maxLine = DEFAULT_MAX_LINE);
+	SeqIO(istream* in, FORMAT fmt, bool fixQual = false, int maxLine = DEFAULT_MAX_LINE);
 
 	/**
 	 * Construct a SeqIO object in WRITE mode with given info
 	 */
-	SeqIO(ostream* out, const string& format, int maxLine = DEFAULT_MAX_LINE);
+	SeqIO(ostream* out, FORMAT fmt, bool fixQual = false, int maxLine = DEFAULT_MAX_LINE);
 
 public:
 	/* Getters and Setters */
-	const string& getFormat() const {
-		return format;
+	FORMAT getFormat() const {
+		return fmt;
 	}
 
 	int getMaxLine() const {
@@ -61,10 +64,10 @@ public:
 
 	/* member methods */
 	/** set the input to a given a new istream, will not close the old one */
-	void reset(istream* in, const string& format, int maxLine = DEFAULT_MAX_LINE);
+	void reset(istream* in, FORMAT fmt, bool fixQual = false, int maxLine = DEFAULT_MAX_LINE);
 
 	/** set the out to a given a new ostream, will not close the old one */
-	void reset(ostream* out, const string& format, int maxLine = DEFAULT_MAX_LINE);
+	void reset(ostream* out, FORMAT fmt, bool fixQual = false, int maxLine = DEFAULT_MAX_LINE);
 
 	/**
 	 * test whether this file has next PrimarySeq
@@ -132,8 +135,9 @@ private:
 
 private:
 	/** member fields */
-	string format;
+	FORMAT fmt;
 	int maxLine;
+	bool fixQual = false;
 
 	istream* in; /* input */
 	ostream* out; /* output */
@@ -146,33 +150,40 @@ public:
 	static const char fastqSep = '+';
 
 	/** guess sequence file format by its extension */
-	static string guessFormat(const string& name);
+	static FORMAT guessFormat(const string& name);
 };
 
 inline bool SeqIO::hasNext() {
-	if(format == "fasta")
+	switch(fmt) {
+	case FASTA:
 		return hasNextFasta();
-	else if(format == "fastq")
+	case FASTQ:
 		return hasNextFastq();
-	return false;
+	default:
+		return false;
+	}
 }
 
 inline PrimarySeq SeqIO::nextSeq() {
-	if(format == "fasta")
+	switch(fmt) {
+	case FASTA:
 		return nextFastaSeq();
-	else if(format == "fastq")
+	case FASTQ:
 		return nextFastqSeq();
-	else
-		throw std::ios_base::failure("Unsupported sequence format: " + format);
+	default:
+		throw std::ios_base::failure("Unsupported sequence format");
+	}
 }
 
 inline void SeqIO::writeSeq(const PrimarySeq& seq) {
-	if(format == "fasta")
-		writeFastaSeq(seq);
-	else if(format == "fastq")
-		writeFastqSeq(seq);
-	else
-		throw std::ios_base::failure("Unsupported sequence format: " + format);
+	switch(fmt) {
+	case FASTA:
+		return writeFastaSeq(seq);
+	case FASTQ:
+		return writeFastqSeq(seq);
+	default:
+		throw std::ios_base::failure("Unsupported sequence format");
+	}
 }
 
 } /* namespace HmmUFOtu */

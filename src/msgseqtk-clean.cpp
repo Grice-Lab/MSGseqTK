@@ -232,8 +232,8 @@ int main(int argc, char* argv[]) {
 #endif
 
 	/* guess input seq format */
-	string fmt = SeqIO::guessFormat(fwdInFn);
-	if(!(fmt == "fasta" || fmt == "fastq")) {
+	SeqIO::FORMAT fmt = SeqIO::guessFormat(fwdInFn);
+	if(fmt == SeqIO::UNK) {
 		cerr << "Unrecognized sequence format for file '" << fwdInFn << "'" << endl;
 		return EXIT_FAILURE;
 	}

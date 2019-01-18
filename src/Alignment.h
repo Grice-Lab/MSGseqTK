@@ -160,10 +160,10 @@ struct Alignment {
 	Alignment() = default;
 
 	/** construct an AlignmentSE with all fields */
-	Alignment(const DNAseq* query, const DNAseq* target, const QualStr* qual, const string* qname, int32_t tid,
+	Alignment(const DNAseq* query, const DNAseq* target, const QualStr* qual, const string* qname, int32_t tid, uint64_t tShift,
 			uint64_t qFrom, uint64_t qTo, uint64_t tStart, uint64_t tEnd,
 			const ScoreScheme* ss, uint16_t flag, uint8_t mapQ, int32_t mtid, int32_t mpos, int32_t isize, uint32_t id)
-	: query(query), target(target), qual(qual), qname(qname), tid(tid),
+	: query(query), target(target), qual(qual), qname(qname), tid(tid), tShift(tShift),
 	  qFrom(qFrom), qTo(qTo), tStart(tStart), tEnd(tEnd), qLen(qTo - qFrom), tLen(tEnd - tStart),
 	  ss(ss), flag(flag), mapQ(mapQ), mtid(mtid), mpos(mpos), isize(isize), id(id),
 	  M(MatrixXd::Constant(qLen + 1, tLen + 1, infV)),
@@ -176,8 +176,8 @@ struct Alignment {
 	/** construct an AlignmentSE with required fields */
 	Alignment(const DNAseq* query, const DNAseq* target, const QualStr* qual, const string* qname, int32_t tid,
 			uint64_t qFrom, uint64_t qTo, uint64_t tStart, uint64_t tEnd,
-			const ScoreScheme* ss, uint16_t flag)
-	: query(query), target(target), qual(qual), qname(qname), tid(tid),
+			const ScoreScheme* ss, uint16_t flag, uint64_t tShift = 0)
+	: query(query), target(target), qual(qual), qname(qname), tid(tid), tShift(tShift),
 	  qFrom(qFrom), qTo(qTo), tStart(tStart), tEnd(tEnd), qLen(qTo - qFrom), tLen(tEnd - tStart),
 	  ss(ss), flag(flag),
 	  M(MatrixXd::Constant(qLen + 1, tLen + 1, infV)),
@@ -310,7 +310,7 @@ struct Alignment {
 	 * export core info of this alignment to a BAM record, with no aux data
 	 */
 	BAM exportBAM() const {
-		return BAM(*qname, flag, tid, alnStart, mapQ,
+		return BAM(*qname, flag, tid, alnStart - tShift, mapQ,
 				getAlnCigar(), qLen, nt16Encode(*query), *qual,
 				mtid, mpos, isize, id);
 	}
@@ -322,6 +322,7 @@ struct Alignment {
 	const QualStr* qual = nullptr; // query qual
 	const string* qname = nullptr; // query name
 	int32_t tid = -1;  // target id, should be determined from the database
+	uint64_t tShift = 0; // target/chromsome shift relative to metagenome
 
 	uint64_t qFrom = 0; // 0-based
 	uint64_t qTo = 0; // 1-based
