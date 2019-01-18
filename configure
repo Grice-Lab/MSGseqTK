@@ -18259,12 +18259,13 @@ _ACEOF
 fi
 done
 
-for ac_func in strerror
+for ac_func in strerror pow
 do :
-  ac_fn_cxx_check_func "$LINENO" "strerror" "ac_cv_func_strerror"
-if test "x$ac_cv_func_strerror" = xyes; then :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_cxx_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_STRERROR 1
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
 
 fi
@@ -19256,6 +19257,7 @@ ac_abs_srcdir=$ac_abs_top_srcdir$ac_dir_suffix
       ax_args="--disable-option-checking $ax_args"
       # Options that must be added as they are provided.
       as_fn_append ax_args " '--enable-build64'"
+      as_fn_append ax_args " '--disable-openmp'"
 
       # New options that may need to be merged with existing options.
 

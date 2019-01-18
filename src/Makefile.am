@@ -63,8 +63,7 @@ util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB) \
-$(BOOST_REGEX_LIB) \
-$(OPENMP_CXXFLAGS)
+$(BOOST_REGEX_LIB)
 
 msgseqtk_anno_SOURCES = msgseqtk-anno.cpp MSGseqTKEnv.cpp
 msgseqtk_anno_LDADD = \

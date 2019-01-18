@@ -12,10 +12,6 @@
 #include <stdexcept>
 #include "FMIndex.h"
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
 namespace EGriceLab {
 namespace MSGseqTK {
 using std::vector;
@@ -255,7 +251,6 @@ void FMIndex::buildSA(const saidx_t* SA, const DNAseq& bwtSeq) {
 
 	/* build SAsampled in the 2nd pass */
 	SAsampled.resize(SAbit.numOnes()); /* sample at on bits */
-#pragma omp parallel for
 	for(saidx_t i = 0; i < N; ++i) {
 		if(bstr.test(i))
 			SAsampled[SAbit.rank1(i) - 1] = SA[i];

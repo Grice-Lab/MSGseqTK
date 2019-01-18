@@ -154,7 +154,7 @@ msgseqtk_build_OBJECTS = $(am_msgseqtk_build_OBJECTS)
 msgseqtk_build_DEPENDENCIES = libMSGseqTK.a util/UCSC/libEGUCSC.a \
 	util/libEGUtil.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	libsds/src/libsds.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1)
 am_msgseqtk_clean_OBJECTS = msgseqtk-clean.$(OBJEXT) \
 	MSGseqTKEnv.$(OBJEXT)
 msgseqtk_clean_OBJECTS = $(am_msgseqtk_clean_OBJECTS)
@@ -473,8 +473,7 @@ util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB) \
-$(BOOST_REGEX_LIB) \
-$(OPENMP_CXXFLAGS)
+$(BOOST_REGEX_LIB)
 
 msgseqtk_anno_SOURCES = msgseqtk-anno.cpp MSGseqTKEnv.cpp
 msgseqtk_anno_LDADD = \

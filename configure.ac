@@ -38,7 +38,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AX_CXX_COMPILE_STDCXX(11)
 
 AC_CHECK_FUNCS([sqrt isnan floor])
-AC_CHECK_FUNCS([strerror])
+AC_CHECK_FUNCS([strerror] [pow])
 
 AX_CHECK_ZLIB()
 AX_BOOST_BASE([1.50.0])
@@ -55,7 +55,7 @@ AC_CONFIG_SUBDIRS([src/util
                    src/libsds])
                    
 AX_SUBDIRS_CONFIGURE([src/libdivsufsort],
-[--enable-build64],
+[[--enable-build64], [--disable-openmp]],
 [],
 [],
 []

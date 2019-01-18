@@ -40,15 +40,11 @@
 #include "EGUtil.h"
 #include "MSGseqTK.h"
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
 using namespace std;
 using namespace EGriceLab;
 using namespace EGriceLab::MSGseqTK;
 
-static const int DEFAULT_NUM_THREADS = 1;
+//static const int DEFAULT_NUM_THREADS = 1;
 static const int DEFAULT_BLOCK_SIZE = 2000;
 static const size_t MBP_UNIT = 1000000;
 
@@ -74,9 +70,6 @@ void printUsage(const string& progName) {
 		 << "            -l  FILE             : tab-delimited genome list with 1st field unique genome IDs, 2nd filed genome names, 3nd field genomic sequence filenames; if provided, <SEQ-FILE> options are ignored" << ZLIB_SUPPORT << endl
 		 << "            -r|--update  STR     : update database based on this old DB, it can be the same name as -n, which will overwrite the old database" << endl
 		 << "            -b|--block  INT      : block size (in Mbp) for building FM-index, larget block size will lead to faster but more memory usage algorithm [" << DEFAULT_BLOCK_SIZE << "]" << endl
-#ifdef _OPENMP
-		 << "            -p|--process INT     : number of threads/cpus used for building, only used in SA and BWT building [" << DEFAULT_NUM_THREADS << "]" << endl
-#endif
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
 		 << "            -h|--help            : print this message and exit" << endl;
@@ -96,7 +89,6 @@ int main(int argc, char* argv[]) {
 	const SeqIO::FORMAT fmt = SeqIO::FASTA; // always use fasta format
 
 	int blockSize = DEFAULT_BLOCK_SIZE;
-	int nThreads = DEFAULT_NUM_THREADS;
 
 	/* parse options */
 	CommandOptions cmdOpts(argc, argv);
@@ -134,13 +126,6 @@ int main(int argc, char* argv[]) {
 	if(cmdOpts.hasOpt("--block"))
 		blockSize = ::atoi(cmdOpts.getOptStr("--block"));
 
-#ifdef _OPENMP
-	if(cmdOpts.hasOpt("-p"))
-		nThreads = ::atoi(cmdOpts.getOptStr("-p"));
-	if(cmdOpts.hasOpt("--process"))
-		nThreads = ::atoi(cmdOpts.getOptStr("--process"));
-#endif
-
 	if(cmdOpts.hasOpt("-v"))
 		INCREASE_LEVEL(cmdOpts.getOpt("-v").length());
 
@@ -151,14 +136,6 @@ int main(int argc, char* argv[]) {
 	}
 	if(dbName == oldDBName)
 		warningLog << "Warning: old database '" << oldDBName << "' will be overwritten!" << endl;
-
-#ifdef _OPENMP
-	if(!(nThreads > 0)) {
-		cerr << "-p|--process must be positive" << endl;
-		return EXIT_FAILURE;
-	}
-	omp_set_num_threads(nThreads);
-#endif
 
 	/* open inputs */
 	if(!listFn.empty()) {
