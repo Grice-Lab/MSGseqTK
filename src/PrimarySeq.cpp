@@ -45,6 +45,12 @@ PrimarySeq& PrimarySeq::trunc(size_t start, size_t len) {
 	return *this;
 }
 
+PrimarySeq& PrimarySeq::trimNameExt(size_t len) {
+	if(name.length() > len) // anything left-over
+		name.erase(name.length() - len);
+	return *this;
+}
+
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */
 

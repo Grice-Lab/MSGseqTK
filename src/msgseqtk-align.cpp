@@ -543,6 +543,14 @@ int main_PE(const MetaGenome& mtg, const FMIndex& fmidx,
 			while(fwdI.hasNext() && revI.hasNext()) {
 				PrimarySeq fwdRead = fwdI.nextSeq();
 				PrimarySeq revRead = revI.nextSeq();
+				if(fwdRead.getName() != revRead.getName()) {
+					fwdRead.trimNameExt();
+					revRead.trimNameExt();
+					if(fwdRead.getName() != revRead.getName()) { // error
+						cerr << "Error: unmatched read ID between " << fwdRead.getName() << " and " << revRead.getName() << endl;
+						abort();
+					}
+				}
 #pragma omp task firstprivate(fwdRead) firstprivate(revRead)
 				{
 					MEMS_PE memsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &fmidx, rng, strand);

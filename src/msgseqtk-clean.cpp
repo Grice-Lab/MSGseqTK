@@ -97,7 +97,7 @@ void printUsage(const string& progName) {
  * main function to process single-ended reads
  * @return 0 if success, return non-zero otherwise
  */
-int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& refFmidx, const FMIndex& bgFmidx,
+int main_SE(const FMIndex& refFmidx, const FMIndex& bgFmidx,
 		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut, RNG& rng,
 		bool withDetail, double minLod, int strand);
 
@@ -105,7 +105,7 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& re
  * main function to process paired-ended reads
  * @return 0 if success, return non-zero otherwise
  */
-int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& refFmidx, const FMIndex& bgFmidx,
+int main_PE(const FMIndex& refFmidx, const FMIndex& bgFmidx,
 		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut, RNG& rng,
 		bool withDetail, double minLod, int strand);
 
@@ -272,32 +272,32 @@ int main(int argc, char* argv[]) {
 	/* open SeqIO input */
 	SeqIO fwdI(dynamic_cast<istream*>(&fwdIn), fmt);
 	SeqIO revI(dynamic_cast<istream*>(&revIn), fmt);
-	string refMtgFn = refDB + METAGENOME_FILE_SUFFIX;
+//	string refMtgFn = refDB + METAGENOME_FILE_SUFFIX;
 	string refFmidxFn = refDB + FMINDEX_FILE_SUFFIX;
-	string bgMtgFn = bgDB + METAGENOME_FILE_SUFFIX;
+//	string bgMtgFn = bgDB + METAGENOME_FILE_SUFFIX;
 	string bgFmidxFn = bgDB + FMINDEX_FILE_SUFFIX;
 
-	ifstream refMtgIn, bgMtgIn;
+//	ifstream refMtgIn, bgMtgIn;
 	ifstream refFmidxIn, bgFmidxIn;
 
-	MetaGenome refMtg, bgMtg;
+//	MetaGenome refMtg, bgMtg;
 	FMIndex refFmidx, bgFmidx;
 
-	refMtgIn.open(refMtgFn.c_str(), ios_base::binary);
-	if(!refMtgIn.is_open()) {
-		cerr << "Unable to open '" << refMtgFn << "': " << ::strerror(errno) << endl;
-		return EXIT_FAILURE;
-	}
+//	refMtgIn.open(refMtgFn.c_str(), ios_base::binary);
+//	if(!refMtgIn.is_open()) {
+//		cerr << "Unable to open '" << refMtgFn << "': " << ::strerror(errno) << endl;
+//		return EXIT_FAILURE;
+//	}
 	refFmidxIn.open(refFmidxFn.c_str(), ios_base::binary);
 	if(!refFmidxIn.is_open()) {
 		cerr << "Unable to open '" << refFmidxFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	bgMtgIn.open(bgMtgFn.c_str(), ios_base::binary);
-	if(!bgMtgIn.is_open()) {
-		cerr << "Unable to open '" << bgMtgFn << "': " << ::strerror(errno) << endl;
-		return EXIT_FAILURE;
-	}
+//	bgMtgIn.open(bgMtgFn.c_str(), ios_base::binary);
+//	if(!bgMtgIn.is_open()) {
+//		cerr << "Unable to open '" << bgMtgFn << "': " << ::strerror(errno) << endl;
+//		return EXIT_FAILURE;
+//	}
 	bgFmidxIn.open(bgFmidxFn.c_str(), ios_base::binary);
 	if(!bgFmidxIn.is_open()) {
 		cerr << "Unable to open '" << bgFmidxFn << "': " << ::strerror(errno) << endl;
@@ -346,14 +346,14 @@ int main(int argc, char* argv[]) {
 	SeqIO revO(dynamic_cast<ostream*>(&revOut), fmt);
 
 	/* load data */
-	infoLog << "Loading reference MetaGenome info ..." << endl;
-	loadProgInfo(refMtgIn);
-	if(!refMtgIn.bad())
-		refMtg.load(refMtgIn);
-	if(refMtgIn.bad()) {
-		cerr << "Unable to load reference MetaGenome: " << ::strerror(errno) << endl;
-		return EXIT_FAILURE;
-	}
+//	infoLog << "Loading reference MetaGenome info ..." << endl;
+//	loadProgInfo(refMtgIn);
+//	if(!refMtgIn.bad())
+//		refMtg.load(refMtgIn);
+//	if(refMtgIn.bad()) {
+//		cerr << "Unable to load reference MetaGenome: " << ::strerror(errno) << endl;
+//		return EXIT_FAILURE;
+//	}
 	infoLog << "Loading refrence FM-index ..." << endl;
 	loadProgInfo(refFmidxIn);
 	if(!refFmidxIn.bad())
@@ -363,14 +363,14 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	infoLog << "Loading background MetaGenome info ..." << endl;
-	loadProgInfo(bgMtgIn);
-	if(!bgMtgIn.bad())
-		bgMtg.load(bgMtgIn);
-	if(bgMtgIn.bad()) {
-		cerr << "Unable to load background MetaGenome: " << ::strerror(errno) << endl;
-		return EXIT_FAILURE;
-	}
+//	infoLog << "Loading background MetaGenome info ..." << endl;
+//	loadProgInfo(bgMtgIn);
+//	if(!bgMtgIn.bad())
+//		bgMtg.load(bgMtgIn);
+//	if(bgMtgIn.bad()) {
+//		cerr << "Unable to load background MetaGenome: " << ::strerror(errno) << endl;
+//		return EXIT_FAILURE;
+//	}
 	infoLog << "Loading background FM-index ..." << endl;
 	loadProgInfo(bgFmidxIn);
 	if(!bgFmidxIn.bad())
@@ -394,12 +394,12 @@ int main(int argc, char* argv[]) {
 
 	/* main processing */
 	if(!isPaired)
-		return main_SE(refMtg, bgMtg, refFmidx, bgFmidx, fwdI, fwdO, assignOut, rng, withDetail, minLod, strand);
+		return main_SE(refFmidx, bgFmidx, fwdI, fwdO, assignOut, rng, withDetail, minLod, strand);
 	else
-		return main_PE(refMtg, bgMtg, refFmidx, bgFmidx, fwdI, revI, fwdO, revO, assignOut, rng, withDetail, minLod, strand);
+		return main_PE(refFmidx, bgFmidx, fwdI, revI, fwdO, revO, assignOut, rng, withDetail, minLod, strand);
 }
 
-int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& refFmidx, const FMIndex& bgFmidx,
+int main_SE(const FMIndex& refFmidx, const FMIndex& bgFmidx,
 		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut, RNG& rng,
 		bool withDetail, double minLod, int strand) {
 	infoLog << "Filtering input reads" << endl;
@@ -438,7 +438,7 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& re
 	return EXIT_SUCCESS;
 }
 
-int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& refFmidx, const FMIndex& bgFmidx,
+int main_PE(const FMIndex& refFmidx, const FMIndex& bgFmidx,
 		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut, RNG& rng,
 		bool withDetail, double minLod, int strand) {
 	infoLog << "Filtering input paired-end reads" << endl;
@@ -450,7 +450,6 @@ int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMIndex& re
 			while(fwdI.hasNext() && revI.hasNext()) {
 				PrimarySeq fwdRead = fwdI.nextSeq();
 				PrimarySeq revRead = revI.nextSeq();
-				assert(fwdRead.getName() == revRead.getName());
 #pragma omp task firstprivate(fwdRead, revRead)
 				{
 					const string& id = fwdRead.getName();

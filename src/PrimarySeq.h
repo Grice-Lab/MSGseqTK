@@ -168,6 +168,9 @@ public:
 				PrimarySeq(seq.substr(start, len), name, desc, qual.substr(start, len));
 	}
 
+	/** trim name extension */
+	PrimarySeq& trimNameExt(size_t len = ILLUMINA_PAIR_ID_EXT_LEN);
+
 	/* non-member functions */
 	/** check equivenent of two PrimarySeq based on all fields */
 	friend bool operator==(const PrimarySeq& lhs, const PrimarySeq& rhs);
@@ -182,6 +185,7 @@ private:
 	/* static fields */
 public:
 	static const char FILL_CHAR = '.';
+	static const size_t ILLUMINA_PAIR_ID_EXT_LEN = 2; // potential illumina paired-read ID ext length (/1/2 or .1.2)
 
 	/* static methods */
 public:
