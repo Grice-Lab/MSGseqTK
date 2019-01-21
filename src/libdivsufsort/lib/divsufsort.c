@@ -102,7 +102,7 @@ note:
 
     /* Sort the type B* substrings using sssort. */
 #ifdef _OPENMP
-    tmp = omp_get_max_threads();
+    tmp = omp_get_num_threads();
     buf = SA + m, bufsize = (n - (2 * m)) / tmp;
     c0 = ALPHABET_SIZE - 2, c1 = ALPHABET_SIZE - 1, j = m;
 #pragma omp parallel default(shared) private(curbuf, k, l, d0, d1, tmp)
