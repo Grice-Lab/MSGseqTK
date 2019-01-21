@@ -27,7 +27,7 @@ int main() {
 	/* series operator+= tests */
 	DNAseq seq1("CTAGCATAGAC");
 	cout << "seq1:" << endl << seq1 << endl;
-	seqM1 += seq1;
+	seqM1 += seq1 + DNAseq::DNAgap;
 	fmidx1 += FMIndex(seq1, true);
 	cout << "fmidx1.length(): " << fmidx1.length() << endl;
 	cout << "fmidx1.getBWT():" << endl << fmidx1.getBWT() << endl;
@@ -48,7 +48,7 @@ int main() {
 
 	DNAseq seq2("CTAGCATCGAC");
 	cout << "seq2:" << endl << seq2 << endl;
-	seqM1 += DNAseq::DNAgap + seq2;
+	seqM1 += seq2 + DNAseq::DNAgap;
 	fmidx1 += FMIndex(seq2);
 	cout << "fmidx1.length(): " << fmidx1.length() << endl;
 	cout << "fmidx1.getBWT():" << endl << fmidx1.getBWT() << endl;
@@ -69,7 +69,7 @@ int main() {
 
 	DNAseq seq3("CTAGCATGGAC");
 	cout << "seq3:" << endl << seq3 << endl;
-	seqM1 += DNAseq::DNAgap + seq3;
+	seqM1 += seq3 + DNAseq::DNAgap;
 	fmidx1 += FMIndex(seq3);
 	cout << "fmidx1.length(): " << fmidx1.length() << endl;
 	cout << "fmidx1.getBWT():" << endl << fmidx1.getBWT() << endl;
@@ -90,7 +90,7 @@ int main() {
 
 	DNAseq seq4("CTAGCATTGAC");
 	cout << "seq4:" << endl << seq4 << endl;
-	seqM1 += DNAseq::DNAgap + seq4;
+	seqM1 += seq4 + DNAseq::DNAgap;
 	fmidx1 += FMIndex(seq4);
 	cout << "fmidx1.length(): " << fmidx1.length() << endl;
 	cout << "fmidx1.getBWT():" << endl << fmidx1.getBWT() << endl;
@@ -112,7 +112,7 @@ int main() {
 	/* series operator+ tests */
 	DNAseq seq5("CTAGCAACTAG");
 	cout << "seq5:" << endl << seq5 << endl;
-	seqM2 = seq5 + seqM2;
+	seqM2 = seq5 + DNAseq::DNAgap + seqM2;
 	fmidx2 = FMIndex(seq5, true) + fmidx2;
 	cout << "fmidx2.length(): " << fmidx2.length() << endl;
 	cout << "fmidx2.getBWT():" << endl << fmidx2.getBWT() << endl;
@@ -195,7 +195,7 @@ int main() {
 		return EXIT_FAILURE;
 
 	/* hierarchical merge test */
-	DNAseq seqM = seqM1 + DNAseq::DNAgap + seqM2;
+	DNAseq seqM = seqM1 + seqM2 ;
 	cout << "seqM:" << endl << seqM << endl;
 	FMIndex fmidx = fmidx1 + fmidx2;
 	cout << "fmidx.length(): " << fmidx.length() << endl;

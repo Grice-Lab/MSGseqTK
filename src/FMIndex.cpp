@@ -115,19 +115,18 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
 
 	/* build RA and interleaving bitvector */
 	BitStr32 bstr(N);
-	for(saidx_t i = 0, j = 0, shift = 0, RA = other.C[0 + 1]; j < N1; ++j) {
-		bstr.set(i + RA);
-		/* LF mapping */
-		sauchar_t b = bwt.access(i);
-		if(b == 0) {
-			RA = other.C[0 + 1];
-			i = ++shift;
-		}
-		else {
+	for(saidx_t i = 0; i < C[0 + 1]; ++i) { // i-th pass of LF-mapping
+		saidx_t j = i;
+		saidx_t RA = other.C[0 + 1];
+		sauchar_t b;
+	  do {
+			bstr.set(j + RA);
+			b = bwt.access(j);
+			/* LF-mapping */
 			RA = other.LF(b, RA - 1);
-			i = LF(b, i) - 1;
+			j = LF(b, j) - 1;
 		}
-//		cerr << "i: " << i << " c: " << DNAalphabet::decode(b) << " RA: " << RA << endl;
+		while(b != 0);
 	}
 
 	/* build merbed BWT */
@@ -164,13 +163,15 @@ DNAseq FMIndex::getBWT() const {
 DNAseq FMIndex::getSeq() const {
 	/* get Seq by LF-mapping transverse */
 	DNAseq seq;
-	seq.reserve(length() - 1);
-	for(saidx_t i = 0, shift = 0; seq.length() < length() - 1;) {
-		sauchar_t b = bwt.access(i);
-		seq.push_back(b);
-		i = b != 0 ? LF(b, i) - 1 : ++shift;
+	seq.reserve(length());
+	for(saidx_t i = 0; i < C[0 + 1]; ++i) {
+		seq.push_back(0);
+		sauchar_t b;
+		for(saidx_t j = i; (b = bwt.access(j)) != 0; j = LF(b, j) - 1 /* LF-mapping */)
+			seq.push_back(b);
 	}
-	std::reverse(seq.begin(), seq.end()); // bwt is based on reversed seq
+	assert(seq.length() == length());
+	std::reverse(seq.begin(), seq.end()); // LF-transverse is on reverse (suffix) order
 	return seq;
 }
 
@@ -207,13 +208,20 @@ void FMIndex::buildSA() {
 
 	/* build SAsampled in the 2nd pass */
 	SAsampled.resize(SAbit.numOnes()); /* sample at on bits */
-	for(saidx_t i = 0, j = N, shift = 0; j > 0; --j) { /* i: 0-based on BWT; j: 1-based on seq */
-		sauchar_t b = bwt.access(i);
-		if(bstr.test(i))
-			SAsampled[SAbit.rank1(i) - 1] = j - 1;
-		/* LF-mapping */
-		i = b != 0 ? LF(b, i) - 1 : ++shift;
+	saidx_t k = N;
+	for(saidx_t i = 0; i < C[0 + 1]; ++i) { // i-th pass of LF-mapping loop
+		saidx_t j = i;
+		sauchar_t b;
+		do {
+			b = bwt.access(j);
+			if(bstr.test(j))
+				SAsampled[SAbit.rank1(j) - 1] = k - 1;
+			j = LF(b, j) - 1; // LF-mapping
+			k--;
+		}
+		while(b != 0);
 	}
+	assert(k == 0);
 }
 
 void FMIndex::buildSA(const DNAseq& bwtSeq) {
@@ -229,13 +237,20 @@ void FMIndex::buildSA(const DNAseq& bwtSeq) {
 
 	/* build SAsampled in the 2nd pass */
 	SAsampled.resize(SAbit.numOnes()); /* sample at on bits */
-	for(saidx_t i = 0, j = N, shift = 0; j > 0; --j) { /* i: 0-based on BWT; j: 1-based on seq */
-		sauchar_t b = bwtSeq[i]; /* use raw bwtSeq for speed */
-		if(bstr.test(i))
-			SAsampled[SAbit.rank1(i) - 1] = j - 1;
-		/* LF-mapping */
-		i = b != 0 ? LF(b, i) - 1 : ++shift;
+	saidx_t k = N; // position on seq, start from 1 after end
+	for(saidx_t i = 0; i < C[0 + 1]; ++i) { // the i-th null segment
+		saidx_t j = i;
+		sauchar_t b;
+		do {
+			b = bwtSeq[j];
+			if(bstr.test(j))
+				SAsampled[SAbit.rank1(j) - 1] = k - 1;
+			j = LF(b, j) - 1; // LF-mapping
+			k--;
+		}
+		while(b != 0);
 	}
+	assert(k == 0);
 }
 
 void FMIndex::buildSA(const saidx_t* SA, const DNAseq& bwtSeq) {
@@ -320,18 +335,18 @@ FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {
 	}
 	/* build interleaving bitstr */
 	BitStr32 bstrM(N);
-	for(saidx_t i = 0, j = 0, shift = 0, RA = rhs.C[0 + 1]; j < N1; ++j) {
-		bstrM.set(i + RA);
-		/* LF mapping */
-		sauchar_t b = lhs.bwt.access(i);
-		if(b == 0) {
-			RA = rhs.C[0 + 1];
-			i = ++shift;
-		}
-		else {
+	for(saidx_t i = 0; i < lhs.C[0 + 1]; ++i) { // i-th pass LF-mapping on lhs
+		saidx_t j = i;
+		saidx_t RA = rhs.C[0 + 1];
+		sauchar_t b;
+		do {
+			bstrM.set(j + RA);
+			b = lhs.bwt.access(j);
+			/* LF-mapping */
 			RA = rhs.LF(b, RA - 1);
-			i = lhs.LF(b, i) - 1;
+			j = lhs.LF(b, j) - 1;
 		}
+		while(b != 0);
 	}
 
 	/* build merbed BWT */
