@@ -19257,7 +19257,6 @@ ac_abs_srcdir=$ac_abs_top_srcdir$ac_dir_suffix
       ax_args="--disable-option-checking $ax_args"
       # Options that must be added as they are provided.
       as_fn_append ax_args " '--enable-build64'"
-      as_fn_append ax_args " '--disable-openmp'"
 
       # New options that may need to be merged with existing options.
 

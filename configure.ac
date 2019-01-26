@@ -55,7 +55,7 @@ AC_CONFIG_SUBDIRS([src/util
                    src/libsds])
                    
 AX_SUBDIRS_CONFIGURE([src/libdivsufsort],
-[[--enable-build64], [--disable-openmp]],
+[--enable-build64],
 [],
 [],
 []

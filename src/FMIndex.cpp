@@ -12,6 +12,10 @@
 #include <stdexcept>
 #include "FMIndex.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace EGriceLab {
 namespace MSGseqTK {
 using std::vector;
@@ -115,11 +119,13 @@ FMIndex& FMIndex::operator+=(const FMIndex& other) {
 
 	/* build RA and interleaving bitvector */
 	BitStr32 bstr(N);
+#pragma omp parallel for
 	for(saidx_t i = 0; i < C[0 + 1]; ++i) { // i-th pass of LF-mapping
 		saidx_t j = i;
 		saidx_t RA = other.C[0 + 1];
 		sauchar_t b;
 	  do {
+#pragma omp critical(WRITE_bstr)
 			bstr.set(j + RA);
 			b = bwt.access(j);
 			/* LF-mapping */
@@ -184,16 +190,17 @@ void FMIndex::buildBWT(const DNAseq& seq) {
 		throw std::runtime_error("Error: Cannot build suffix-array on DNAseq");
 
 	/* build bwt and sample bitstr */
-	DNAseq bwtSeq(N, 0);
-	std::transform(SA, SA + N, bwtSeq.begin(),
-			[&] (saidx_t sa) { return sa == 0 ? 0 : seq[sa - 1]; });
+	DNAseq bwtSeq;
+	bwtSeq.reserve(N);
+	for(saidx_t* sa = SA; sa < SA + N; ++sa)
+		bwtSeq.push_back(*sa == 0 ? 0 : seq[*sa - 1]);
 
 	/* construct BWTRRR */
     bwt = WaveletTreeRRR(bwtSeq, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
 
 	if(keepSA)
 		buildSA(SA, bwtSeq);
-    delete[] SA;
+	delete[] SA;
 }
 
 void FMIndex::buildSA() {
@@ -266,9 +273,13 @@ void FMIndex::buildSA(const saidx_t* SA, const DNAseq& bwtSeq) {
 
 	/* build SAsampled in the 2nd pass */
 	SAsampled.resize(SAbit.numOnes()); /* sample at on bits */
+#pragma omp parallel for
 	for(saidx_t i = 0; i < N; ++i) {
-		if(bstr.test(i))
-			SAsampled[SAbit.rank1(i) - 1] = SA[i];
+		if(bstr.test(i)) {
+			saidx_t j = SAbit.rank1(i) - 1;
+#pragma omp critical(WRITE_SAsampled)
+			SAsampled[j] = SA[i];
+		}
 	}
 }
 
@@ -335,11 +346,13 @@ FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {
 	}
 	/* build interleaving bitstr */
 	BitStr32 bstrM(N);
+#pragma omp parallel for
 	for(saidx_t i = 0; i < lhs.C[0 + 1]; ++i) { // i-th pass LF-mapping on lhs
 		saidx_t j = i;
 		saidx_t RA = rhs.C[0 + 1];
 		sauchar_t b;
 		do {
+#pragma omp critical(WRITE_bstrM)
 			bstrM.set(j + RA);
 			b = lhs.bwt.access(j);
 			/* LF-mapping */
@@ -350,10 +363,35 @@ FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {
 	}
 
 	/* build merbed BWT */
+//#ifndef _OPENMP
 	DNAseq bwtM;
 	bwtM.reserve(N);
 	for(saidx_t i = 0, j = 0, k = 0; k < N; ++k)
 		bwtM.push_back(bstrM.test(k) ? lhs.bwt.access(i++) : rhs.bwt.access(j++));
+//#else
+//	DNAseq bwtM(N, 0);
+//	saidx_t i = 0;
+//	saidx_t j = 0;
+//	saidx_t k = 0;
+//#pragma omp parallel
+//	{
+//#pragma omp single nowait
+//		{
+//			while(k < N) {
+//				bool flag = bstrM.test(k);
+//#pragma omp task firstprivate(flag, k, i, j)
+//				{
+//					sauchar_t b = flag ? lhs.bwt.access(i) : rhs.bwt.access(j);
+//#pragma omp critical(WRITE_bwtM)
+//					bwtM[k] = b;
+//				} /* end task */
+//				flag ? i++ : j++;
+//				k++;
+//			} /* end while */
+//		} /* end single, no wait */
+//#pragma omp taskwait
+//	} /* end parallele */
+//#endif
 	return FMIndex(BMerged, CMerged, bwtM, lhs.keepSA || rhs.keepSA /* keep SA if any of the two operands keepSA */);
 }
 
