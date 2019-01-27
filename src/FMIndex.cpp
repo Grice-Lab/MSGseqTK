@@ -208,9 +208,11 @@ void FMIndex::buildSA() {
 	const saidx_t N = length();
 	/* build a BitStr in the 1st pass */
 	BitStr32 bstr(N);
-	for(saidx_t i = 0; i < N; ++i)
+#pragma omp parallel for
+	for(saidx_t i = 0; i < N; ++i) {
 		if(i % SA_SAMPLE_RATE == 0 || bwt.access(i) == 0) /* sample at all null characters */
 			bstr.set(i);
+	}
 	SAbit = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
 
 	/* build SAsampled in the 2nd pass */
@@ -276,9 +278,7 @@ void FMIndex::buildSA(const saidx_t* SA, const DNAseq& bwtSeq) {
 #pragma omp parallel for
 	for(saidx_t i = 0; i < N; ++i) {
 		if(bstr.test(i)) {
-			saidx_t j = SAbit.rank1(i) - 1;
-#pragma omp critical(WRITE_SAsampled)
-			SAsampled[j] = SA[i];
+			SAsampled[SAbit.rank1(i) - 1] = SA[i];
 		}
 	}
 }
@@ -363,35 +363,10 @@ FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs) {
 	}
 
 	/* build merbed BWT */
-//#ifndef _OPENMP
 	DNAseq bwtM;
 	bwtM.reserve(N);
 	for(saidx_t i = 0, j = 0, k = 0; k < N; ++k)
 		bwtM.push_back(bstrM.test(k) ? lhs.bwt.access(i++) : rhs.bwt.access(j++));
-//#else
-//	DNAseq bwtM(N, 0);
-//	saidx_t i = 0;
-//	saidx_t j = 0;
-//	saidx_t k = 0;
-//#pragma omp parallel
-//	{
-//#pragma omp single nowait
-//		{
-//			while(k < N) {
-//				bool flag = bstrM.test(k);
-//#pragma omp task firstprivate(flag, k, i, j)
-//				{
-//					sauchar_t b = flag ? lhs.bwt.access(i) : rhs.bwt.access(j);
-//#pragma omp critical(WRITE_bwtM)
-//					bwtM[k] = b;
-//				} /* end task */
-//				flag ? i++ : j++;
-//				k++;
-//			} /* end while */
-//		} /* end single, no wait */
-//#pragma omp taskwait
-//	} /* end parallele */
-//#endif
 	return FMIndex(BMerged, CMerged, bwtM, lhs.keepSA || rhs.keepSA /* keep SA if any of the two operands keepSA */);
 }
 
