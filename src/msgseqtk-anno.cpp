@@ -145,7 +145,7 @@ int main(int argc, char* argv[]) {
 
 	loadProgInfo(mtgIn);
 	if(!mtgIn.bad())
-		mtg.load(mtgIn);
+		mtg.load(mtgIn, true); // no need to load the sequence for annotation
 	if(mtgIn.bad()) {
 		cerr << "Unable to load '" << mtgFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
