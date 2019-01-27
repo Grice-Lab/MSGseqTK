@@ -2,7 +2,7 @@
  * msgseqtk-anno.cpp
  *  Annotate a pre-built MSGseqTK database
  *  Created on: Dec 5, 2018
- *      Author: zhengqi
+ *  Author: zhengqi
  */
 
 #include <iostream>

@@ -278,11 +278,11 @@ public:
 		return seq.substr(pos, len);
 	}
 
-	/** save this object to binary output */
+	/** save this object to binary output, in compressed or raw mode */
 	ostream& save(ostream& out) const;
 
 	/** load an object from binary input */
-	istream& load(istream& in);
+	istream& load(istream& in, bool ignoreSeq = false);
 
 	/**
 	 * update all index, should be called if any containing Genome/Chrom changes

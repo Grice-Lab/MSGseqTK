@@ -298,8 +298,8 @@ int main(int argc, char* argv[]) {
 		}
 
 		/* add this genome */
-		infoLog << "  genome " << genome.displayId() << " added into database" << endl;
 		mtg.addGenome(genome, genomeSeq);
+		infoLog << "  genome " << genome.displayId() << " added" << endl;
 	}
 
 	/* update final index */

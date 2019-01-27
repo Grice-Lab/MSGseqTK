@@ -48,20 +48,20 @@ ostream& MetaGenome::save(ostream& out) const {
 	out.write((const char*) &NG, sizeof(size_t));
 	for(const Genome& genome : genomes)
 		genome.save(out);
-	/* save seq */
-	seq.save(out);
-	return out;
+	/* save nt16 compressed seq */
+	return seq.nt16Save(out);
 }
 
-istream& MetaGenome::load(istream& in) {
+istream& MetaGenome::load(istream& in, bool ignoreSeq) {
 	/* load basic info */
 	size_t NG = 0;
 	in.read((char*) &NG, sizeof(size_t));
 	genomes.resize(NG);
 	for(size_t i = 0; i < NG; ++i)
 		genomes[i].load(in);
-	/* load seq */
-	seq.load(in);
+	/* load seq in nt16 compressed */
+	if(!ignoreSeq)
+			seq.nt16Load(in);
 	/* update index */
 	updateIndex();
 	return in;
