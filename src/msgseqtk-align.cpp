@@ -91,7 +91,7 @@ void printUsage(const string& progName) {
 		 << "Other:" << endl
 		 << "            -S|--seed  INT       : random seed used for determing MEMS, for debug only" << endl
 #ifdef _OPENMP
-		 << "            -p|--process INT     : number of threads/cpus used for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
+		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl

@@ -75,7 +75,7 @@ void printUsage(const string& progName) {
 		 << "            -r|--update  STR     : update database based on this old DB, it can be the same name as -n, which will overwrite the old database" << endl
 		 << "            -b|--block  INT      : block size (in Mbp) for building FM-index, larget block size will lead to faster but more memory usage algorithm [" << DEFAULT_BLOCK_SIZE << "]" << endl
 #ifdef _OPENMP
-		 << "            -p|--process INT     : number of threads/cpus used for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
+		 << "            -p|--process INT     : number of threads/cpus for parallel processing, only used in building SA and merging BWTs [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl

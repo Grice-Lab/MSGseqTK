@@ -23,7 +23,7 @@ using EGriceLab::libSDS::BitStr32;
 
 const saidx_t FMIndex::totalBases() const {
 	saidx_t N = 0;
-	for(saidx_t i = 0; i <= DNAalphabet::NT16_MAX; ++i)
+	for(saidx_t i = 0; i < B.size(); ++i)
 		N += B[i];
 	return N;
 }
@@ -170,7 +170,7 @@ DNAseq FMIndex::getSeq() const {
 	/* get Seq by LF-mapping transverse */
 	DNAseq seq;
 	seq.reserve(length());
-	for(saidx_t i = 0; i < C[0 + 1]; ++i) {
+	for(saidx_t i = 0; i < C[0 + 1]; ++i) { // i-th pass of LF-mapping
 		seq.push_back(0);
 		sauchar_t b;
 		for(saidx_t j = i; (b = bwt.access(j)) != 0; j = LF(b, j) - 1 /* LF-mapping */)
