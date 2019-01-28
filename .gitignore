@@ -22,7 +22,6 @@ config.status
 # Ignore test temporaries
 **/*.trs
 **/*.swp
-test-driver
 
 # Ignore git files
 .cproject
