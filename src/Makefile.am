@@ -116,4 +116,5 @@ $(BOOST_IOSTREAMS_LIB) \
 $(OPENMP_CXXFLAGS) \
 -lhts
 msgseqtk_align_LDFLAGS = \
+$(AM_LDFLAGS) \
 $(HTSLIB_LDFLAGS)

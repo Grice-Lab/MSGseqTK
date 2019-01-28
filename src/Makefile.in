@@ -141,6 +141,10 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+msgseqtk_align_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(msgseqtk_align_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am_msgseqtk_anno_OBJECTS = msgseqtk-anno.$(OBJEXT) \
 	MSGseqTKEnv.$(OBJEXT)
 msgseqtk_anno_OBJECTS = $(am_msgseqtk_anno_OBJECTS)
@@ -525,6 +529,10 @@ $(BOOST_IOSTREAMS_LIB) \
 $(OPENMP_CXXFLAGS) \
 -lhts
 
+msgseqtk_align_LDFLAGS = \
+$(AM_LDFLAGS) \
+$(HTSLIB_LDFLAGS)
+
 all: all-recursive
 
 .SUFFIXES:
@@ -618,7 +626,7 @@ clean-binPROGRAMS:
 
 msgseqtk-align$(EXEEXT): $(msgseqtk_align_OBJECTS) $(msgseqtk_align_DEPENDENCIES) $(EXTRA_msgseqtk_align_DEPENDENCIES) 
 	@rm -f msgseqtk-align$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(msgseqtk_align_OBJECTS) $(msgseqtk_align_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(msgseqtk_align_LINK) $(msgseqtk_align_OBJECTS) $(msgseqtk_align_LDADD) $(LIBS)
 
 msgseqtk-anno$(EXEEXT): $(msgseqtk_anno_OBJECTS) $(msgseqtk_anno_DEPENDENCIES) $(EXTRA_msgseqtk_anno_DEPENDENCIES) 
 	@rm -f msgseqtk-anno$(EXEEXT)

@@ -89,6 +89,7 @@ $(top_srcdir)/src/util/UCSC/libEGUCSC.a \
 $(top_srcdir)/src/util/SAMtools/libEGSAMtools.a \
 -lhts
 Alignment_test_LDFLAGS = \
+$(AM_LDFLAGS) \
 $(HTSLIB_LDFLAGS)
 
 TESTS = \

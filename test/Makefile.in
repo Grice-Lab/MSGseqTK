@@ -126,6 +126,10 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+Alignment_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(Alignment_test_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am_DNAseq_test_OBJECTS = DNAseq_test.$(OBJEXT)
 DNAseq_test_OBJECTS = $(am_DNAseq_test_OBJECTS)
 DNAseq_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a
@@ -647,6 +651,10 @@ $(top_srcdir)/src/util/UCSC/libEGUCSC.a \
 $(top_srcdir)/src/util/SAMtools/libEGSAMtools.a \
 -lhts
 
+Alignment_test_LDFLAGS = \
+$(AM_LDFLAGS) \
+$(HTSLIB_LDFLAGS)
+
 all: all-am
 
 .SUFFIXES:
@@ -692,7 +700,7 @@ clean-checkPROGRAMS:
 
 Alignment_test$(EXEEXT): $(Alignment_test_OBJECTS) $(Alignment_test_DEPENDENCIES) $(EXTRA_Alignment_test_DEPENDENCIES) 
 	@rm -f Alignment_test$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(Alignment_test_OBJECTS) $(Alignment_test_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(Alignment_test_LINK) $(Alignment_test_OBJECTS) $(Alignment_test_LDADD) $(LIBS)
 
 DNAseq_test$(EXEEXT): $(DNAseq_test_OBJECTS) $(DNAseq_test_DEPENDENCIES) $(EXTRA_DNAseq_test_DEPENDENCIES) 
 	@rm -f DNAseq_test$(EXEEXT)
