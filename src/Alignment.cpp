@@ -391,11 +391,14 @@ ALIGN_LIST& Alignment::calcMapQ(ALIGN_LIST& alnList) {
 	for(size_t i = 0; i < N; ++i)
 		pr(i) = alnList[i].loglik();
 	double maxV = pr.maxCoeff();
-	double scale = maxV < MIN_LOGLIK_EXP ? maxV : 0;
-	pr = (pr.array()-scale).exp();
+	double scale = maxV != infV && maxV < MIN_LOGLIK_EXP ? MIN_LOGLIK_EXP - maxV : 0;
+	pr = (pr.array() + scale).exp();
 	/* get postP */
-	VectorXd postP = pr / pr.sum(); // uniform prior ignored
-//	std::cerr << "pr: " << pr.transpose() << " postP: " << postP.transpose() << std::endl;
+	VectorXd postP(pr.rows());
+	if(pr.sum() > 0)
+		postP = pr / pr.sum();
+	else
+		postP.fill(1.0 / pr.rows()); // all pr are identical and scaled to zero
 	/* assign postP and mapQ */
 	for(size_t i = 0; i < N; ++i) {
 		alnList[i].postP = postP(i);
