@@ -14,7 +14,7 @@
 
 namespace EGriceLab {
 namespace SAMtools {
-const boost::regex BAM::CIGAR_PATTERN = boost::regex("([0-9]+)([MIDNSHPX=])");
+const std::regex BAM::CIGAR_PATTERN = std::regex("([0-9]+)([MIDNSHPX=])");
 const double BAM::DEFAULT_AUX_DATA_FACTOR = 4;
 
 BAM::BAM(const string& qname, uint16_t flag, int32_t tid, int32_t pos, uint8_t mapQ,
@@ -150,8 +150,8 @@ string BAM::nt16Decode(const seq_str& seq) {
 
 BAM::cigar_str BAM::encodeCigar(const string& str) {
 	cigar_str cigar;
-	boost::smatch match;
-	for(string::const_iterator searchStart(str.cbegin()); boost::regex_search(searchStart, str.cend(), match, CIGAR_PATTERN); searchStart = match[0].second)
+	std::smatch match;
+	for(string::const_iterator searchStart(str.cbegin()); std::regex_search(searchStart, str.cend(), match, CIGAR_PATTERN); searchStart = match[0].second)
 		cigar.push_back(bam_cigar_gen(boost::lexical_cast<uint32_t>(match.str(1)), encodeCigar(match.str(2).front())));
 	return cigar;
 }

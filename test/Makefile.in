@@ -115,9 +115,8 @@ am__v_lt_0 = --silent
 am__v_lt_1 = 
 am_SAMtools_test_OBJECTS = SAMtools_test.$(OBJEXT)
 SAMtools_test_OBJECTS = $(am_SAMtools_test_OBJECTS)
-am__DEPENDENCIES_1 =
 SAMtools_test_DEPENDENCIES = $(top_srcdir)/libEGUtil.a \
-	$(top_srcdir)/SAMtools/libEGSAMtools.a $(am__DEPENDENCIES_1)
+	$(top_srcdir)/SAMtools/libEGSAMtools.a
 SAMtools_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(SAMtools_test_LDFLAGS) $(LDFLAGS) \
@@ -399,7 +398,6 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BOOST_CPPFLAGS = @BOOST_CPPFLAGS@
 BOOST_LDFLAGS = @BOOST_LDFLAGS@
-BOOST_REGEX_LIB = @BOOST_REGEX_LIB@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -540,7 +538,6 @@ $(HTSLIB_LDFLAGS)
 SAMtools_test_LDADD = \
 $(top_srcdir)/libEGUtil.a \
 $(top_srcdir)/SAMtools/libEGSAMtools.a \
-$(BOOST_REGEX_LIB) \
 -lhts
 
 all: all-am

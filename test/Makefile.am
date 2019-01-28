@@ -26,7 +26,6 @@ $(HTSLIB_LDFLAGS)
 SAMtools_test_LDADD = \
 $(top_srcdir)/libEGUtil.a \
 $(top_srcdir)/SAMtools/libEGSAMtools.a \
-$(BOOST_REGEX_LIB) \
 -lhts
 
 
