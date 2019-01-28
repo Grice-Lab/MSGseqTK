@@ -30,7 +30,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
-#include <boost/shared_ptr.hpp>
+#include <memory> // C++11
 #include <boost/algorithm/string.hpp>
 
 namespace EGriceLab {
@@ -108,7 +108,7 @@ public:
 
 	};
 
-	typedef boost::shared_ptr<TSVHeader> TSVHeaderPtr;
+	typedef std::shared_ptr<TSVHeader> TSVHeaderPtr;
 
 	/** constructors */
 	/** default constructor */
