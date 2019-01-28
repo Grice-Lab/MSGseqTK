@@ -115,3 +115,5 @@ libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB) \
 $(OPENMP_CXXFLAGS) \
 -lhts
+msgseqtk_align_LDFLAGS = \
+$(HTSLIB_LDFLAGS)

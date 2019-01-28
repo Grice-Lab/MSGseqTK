@@ -28,7 +28,6 @@ $(top_srcdir)/libEGUtil.a \
 $(top_srcdir)/SAMtools/libEGSAMtools.a \
 -lhts
 
-
 TESTS = \
 GFF_test \
 SAMtools_test
