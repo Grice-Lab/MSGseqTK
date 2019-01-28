@@ -418,11 +418,14 @@ PAIR_LIST& AlignmentPE::calcMapQ(PAIR_LIST& pairList) {
 	for(size_t i = 0; i < N; ++i)
 		pr(i) = pairList[i].loglik();
 	double maxV = pr.maxCoeff();
-	double scale = maxV < MIN_LOGLIK_EXP ? maxV : 0;
-	pr = (pr.array()-scale).exp();
+	double scale = maxV != infV && maxV < MIN_LOGLIK_EXP ? MIN_LOGLIK_EXP - maxV : 0;
+	pr = (pr.array() + scale).exp();
 	/* get postP */
-//	VectorXd postP = prior.cwiseProduct(pr);
-	VectorXd postP = pr / pr.sum(); // uniform prior ignored
+	VectorXd postP(pr.rows());
+	if(pr.sum() > 0)
+		postP = pr / pr.sum(); // uniform prior ignored
+	else
+		postP.fill(1.0 / pr.rows()); // all equal zeros after scale
 	/* assign postP and mapQ */
 	for(size_t i = 0; i < N; ++i) {
 		pairList[i].postP = postP(i);
