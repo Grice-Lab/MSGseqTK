@@ -104,7 +104,6 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_with_htslib.m4 \
 	$(top_srcdir)/m4/lt~obsolete.m4 \
 	$(top_srcdir)/m4/m4_ax_boost_base.m4 \
 	$(top_srcdir)/m4/m4_ax_boost_iostreams.m4 \
-	$(top_srcdir)/m4/m4_ax_boost_regex.m4 \
 	$(top_srcdir)/m4/m4_ax_check_zlib.m4 \
 	$(top_srcdir)/m4/m4_ax_cxx_compile_stdcxx.m4 \
 	$(top_srcdir)/m4/m4_ax_subdirs_configure.m4 \
@@ -117,14 +116,12 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am_Alignment_test_OBJECTS = Alignment_test.$(OBJEXT)
 Alignment_test_OBJECTS = $(am_Alignment_test_OBJECTS)
-am__DEPENDENCIES_1 =
 Alignment_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
 	$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	$(top_srcdir)/src/libsds/src/libsds.la \
 	$(top_srcdir)/src/util/libEGUtil.a \
 	$(top_srcdir)/src/util/UCSC/libEGUCSC.a \
-	$(top_srcdir)/src/util/SAMtools/libEGSAMtools.a \
-	$(am__DEPENDENCIES_1)
+	$(top_srcdir)/src/util/SAMtools/libEGSAMtools.a
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -144,20 +141,20 @@ am_Genome_test_OBJECTS = Genome_test.$(OBJEXT) \
 Genome_test_OBJECTS = $(am_Genome_test_OBJECTS)
 Genome_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
 	$(top_srcdir)/src/util/libEGUtil.a \
-	$(top_srcdir)/src/util/UCSC/libEGUCSC.a $(am__DEPENDENCIES_1)
+	$(top_srcdir)/src/util/UCSC/libEGUCSC.a
 am_MEM_test_OBJECTS = MEM_test.$(OBJEXT)
 MEM_test_OBJECTS = $(am_MEM_test_OBJECTS)
 MEM_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
 	$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	$(top_srcdir)/src/libsds/src/libsds.la \
 	$(top_srcdir)/src/util/libEGUtil.a \
-	$(top_srcdir)/src/util/UCSC/libEGUCSC.a $(am__DEPENDENCIES_1)
+	$(top_srcdir)/src/util/UCSC/libEGUCSC.a
 am_MetaGenomeAnno_test_OBJECTS = MetaGenomeAnno_test.$(OBJEXT) \
 	$(top_srcdir)/src/MSGseqTKEnv.$(OBJEXT)
 MetaGenomeAnno_test_OBJECTS = $(am_MetaGenomeAnno_test_OBJECTS)
 MetaGenomeAnno_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
 	$(top_srcdir)/src/util/libEGUtil.a \
-	$(top_srcdir)/src/util/UCSC/libEGUCSC.a $(am__DEPENDENCIES_1)
+	$(top_srcdir)/src/util/UCSC/libEGUCSC.a
 am_PrimarySeq_test_OBJECTS = PrimarySeq_test.$(OBJEXT)
 PrimarySeq_test_OBJECTS = $(am_PrimarySeq_test_OBJECTS)
 PrimarySeq_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a
@@ -449,7 +446,6 @@ AWK = @AWK@
 BOOST_CPPFLAGS = @BOOST_CPPFLAGS@
 BOOST_IOSTREAMS_LIB = @BOOST_IOSTREAMS_LIB@
 BOOST_LDFLAGS = @BOOST_LDFLAGS@
-BOOST_REGEX_LIB = @BOOST_REGEX_LIB@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -625,15 +621,13 @@ Genome_test_SOURCES = Genome_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
 Genome_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/util/libEGUtil.a \
-$(top_srcdir)/src/util/UCSC/libEGUCSC.a \
-$(BOOST_REGEX_LIB)
+$(top_srcdir)/src/util/UCSC/libEGUCSC.a
 
 MetaGenomeAnno_test_SOURCES = MetaGenomeAnno_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
 MetaGenomeAnno_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/util/libEGUtil.a \
-$(top_srcdir)/src/util/UCSC/libEGUCSC.a \
-$(BOOST_REGEX_LIB)
+$(top_srcdir)/src/util/UCSC/libEGUCSC.a
 
 MEM_test_SOURCES = MEM_test.cpp 
 MEM_test_LDADD = \
@@ -641,8 +635,7 @@ $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 $(top_srcdir)/src/libsds/src/libsds.la \
 $(top_srcdir)/src/util/libEGUtil.a \
-$(top_srcdir)/src/util/UCSC/libEGUCSC.a \
-$(BOOST_REGEX_LIB)
+$(top_srcdir)/src/util/UCSC/libEGUCSC.a
 
 Alignment_test_SOURCES = Alignment_test.cpp 
 Alignment_test_LDADD = \
@@ -652,7 +645,6 @@ $(top_srcdir)/src/libsds/src/libsds.la \
 $(top_srcdir)/src/util/libEGUtil.a \
 $(top_srcdir)/src/util/UCSC/libEGUCSC.a \
 $(top_srcdir)/src/util/SAMtools/libEGSAMtools.a \
-$(BOOST_REGEX_LIB) \
 -lhts
 
 all: all-am

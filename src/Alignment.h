@@ -17,7 +17,7 @@
 #include <cassert>
 #include <cmath>
 #include <algorithm>
-#include <boost/algorithm/string/regex.hpp>
+#include <regex> // C++11
 #include "DNAseq.h"
 #include "ScoreScheme.h"
 #include "MEM.h"
@@ -364,8 +364,8 @@ struct Alignment {
 	static const double DEFAULT_SCORE_REL_EPSILON; // default relative min score comparing to best score
 	static const char ALIGN_GAP = '-';
 	static const char ALIGN_MD_INS = '^'; // symbol use in MD:Z tag
-	static const boost::regex MDTAG_LEADING_PATTERN;
-	static const boost::regex MDTAG_MAIN_PATTERN;
+	static const std::regex MDTAG_LEADING_PATTERN;
+	static const std::regex MDTAG_MAIN_PATTERN;
 
 	/* static methods */
 	static CIGAR_OP_TYPE matchMax(double match, double ins, double del);

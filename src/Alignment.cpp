@@ -23,8 +23,8 @@ const double Alignment::DEFAULT_INDEL_RATE = 0.02;
 const double Alignment::MAX_INDEL_RATE = 0.15;
 const string Alignment::STATES = BAM_CIGAR_STR;
 const double Alignment::DEFAULT_SCORE_REL_EPSILON = 0.85;
-const boost::regex Alignment::MDTAG_LEADING_PATTERN = boost::regex("^\\d+");
-const boost::regex Alignment::MDTAG_MAIN_PATTERN = boost::regex("([A-Z]|\\^[A-Z]+)(\\d+)");
+const std::regex Alignment::MDTAG_LEADING_PATTERN = std::regex("^\\d+");
+const std::regex Alignment::MDTAG_MAIN_PATTERN = std::regex("([A-Z]|\\^[A-Z]+)(\\d+)");
 
 Alignment& Alignment::calculateScores(const SeedMatch& seeds) {
 	assert(!seeds.empty());
@@ -314,13 +314,13 @@ string Alignment::getAlnTSeq() const {
 
 uint32_t Alignment::mdTag2alnQLen(const string& mdTag) {
 	uint32_t len = 0;
-	boost::smatch match;
+	std::smatch match;
 	string::const_iterator searchStart = mdTag.cbegin();
-	if(!boost::regex_search(searchStart, mdTag.cend(), match, MDTAG_LEADING_PATTERN)) // bad formatted mdTag
+	if(!std::regex_search(searchStart, mdTag.cend(), match, MDTAG_LEADING_PATTERN)) // bad formatted mdTag
 		return 0;
 	else
 		len += boost::lexical_cast<uint32_t>(string(match[0]));
-	for(searchStart = match[0].second; boost::regex_search(searchStart, mdTag.cend(), match, MDTAG_MAIN_PATTERN); searchStart = match[0].second) {
+	for(searchStart = match[0].second; std::regex_search(searchStart, mdTag.cend(), match, MDTAG_MAIN_PATTERN); searchStart = match[0].second) {
 		if(match.length(1) == 1) // mismatch
 			len += match.length(1);
 		else

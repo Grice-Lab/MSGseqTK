@@ -13,7 +13,7 @@
 #include <map>
 #include <iostream>
 #include <cstdint> // C++11
-#include <boost/algorithm/string/regex.hpp>
+#include <regex>
 #include "DNAseq.h"
 
 namespace EGriceLab {
@@ -154,8 +154,8 @@ private:
 
 	/* class members */
 public:
-	static const boost::regex INVALID_NAMEPREFIX_PATTERN;
-	static const boost::regex INVALID_NAME_PATTERN;
+	static const std::regex INVALID_NAMEPREFIX_PATTERN;
+	static const std::regex INVALID_NAME_PATTERN;
 	static const string REPLACEMENT_STR;
 
 	/* static methods */

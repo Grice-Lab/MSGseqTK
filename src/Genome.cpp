@@ -6,7 +6,6 @@
  */
 
 #include <boost/algorithm/string.hpp>
-#include <boost/algorithm/string/regex.hpp>
 #include "MSGseqTKConst.h"
 #include "Genome.h"
 #include "ProgEnv.h"
@@ -15,8 +14,8 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 
-const boost::regex Genome::INVALID_NAMEPREFIX_PATTERN = boost::regex("^[^\\w.:^*$@!+?-|]+");
-const boost::regex Genome::INVALID_NAME_PATTERN = boost::regex("[^\\w.:^*$@!+?-|]+");
+const std::regex Genome::INVALID_NAMEPREFIX_PATTERN = std::regex("^[^\\w.:^*$@!+?-|]+");
+const std::regex Genome::INVALID_NAME_PATTERN = std::regex("[^\\w.:^*$@!+?-|]+");
 const string Genome::REPLACEMENT_STR = ".";
 
 ostream& Genome::Chrom::save(ostream& out) const {
@@ -84,8 +83,8 @@ uint64_t Genome::size() const {
 }
 
 string Genome::formatName(const string& name) {
-	return boost::replace_all_regex_copy(
-			boost::replace_all_regex_copy(name, INVALID_NAMEPREFIX_PATTERN, string("")),
+	return std::regex_replace(
+			std::regex_replace(name, INVALID_NAMEPREFIX_PATTERN, ""),
 			INVALID_NAME_PATTERN, REPLACEMENT_STR);
 }
 

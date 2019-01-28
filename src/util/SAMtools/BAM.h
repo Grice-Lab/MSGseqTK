@@ -10,7 +10,7 @@
 
 #include <string>
 #include <utility>
-#include <boost/algorithm/string/regex.hpp>
+#include <regex> // C++11
 #include <htslib/sam.h>
 
 namespace EGriceLab {
@@ -732,7 +732,7 @@ public:
 	}
 
 	/* static fields */
-	static const boost::regex CIGAR_PATTERN;
+	static const std::regex CIGAR_PATTERN;
 	static const double DEFAULT_AUX_DATA_FACTOR; // data factor between m_data and l_data, to avoid too much internal re-allocation by htslib
 };
 

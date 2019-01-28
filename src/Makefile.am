@@ -63,7 +63,6 @@ util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB) \
-$(BOOST_REGEX_LIB) \
 $(OPENMP_CXXFLAGS)
 
 msgseqtk_anno_SOURCES = msgseqtk-anno.cpp MSGseqTKEnv.cpp
@@ -73,8 +72,7 @@ util/UCSC/libEGUCSC.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
-$(BOOST_IOSTREAMS_LIB) \
-$(BOOST_REGEX_LIB)
+$(BOOST_IOSTREAMS_LIB)
 
 msgseqtk_inspect_SOURCES = msgseqtk-inspect.cpp MSGseqTKEnv.cpp
 msgseqtk_inspect_LDADD = \
@@ -83,8 +81,7 @@ util/UCSC/libEGUCSC.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
-$(BOOST_IOSTREAMS_LIB) \
-$(BOOST_REGEX_LIB)
+$(BOOST_IOSTREAMS_LIB)
 
 
 msgseqtk_mergedb_SOURCES = msgseqtk-mergedb.cpp MSGseqTKEnv.cpp
@@ -93,8 +90,7 @@ libMSGseqTK.a \
 util/UCSC/libEGUCSC.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libsds/src/libsds.la \
-$(BOOST_REGEX_LIB)
+libsds/src/libsds.la
 
 msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTKEnv.cpp
 msgseqtk_clean_LDADD = \
@@ -105,7 +101,6 @@ math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB) \
-$(BOOST_REGEX_LIB) \
 $(OPENMP_CXXFLAGS)
 
 msgseqtk_align_SOURCES = msgseqtk-align.cpp MSGseqTKEnv.cpp
@@ -118,6 +113,5 @@ math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB) \
-$(BOOST_REGEX_LIB) \
 $(OPENMP_CXXFLAGS) \
 -lhts
