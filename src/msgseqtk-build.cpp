@@ -275,12 +275,12 @@ int main(int argc, char* argv[]) {
 			genomeIn.push(boost::iostreams::bzip2_decompressor());
 		else { }
 #endif
-
-		genomeIn.push(boost::iostreams::file_source(genomeFn));
-		if(genomeIn.bad()) {
+		boost::iostreams::file_source genomeSrc(genomeFn);
+		if(!genomeSrc.is_open()) {
 			cerr << "Unable to open genome seq file '" << genomeFn << "' " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
+		genomeIn.push(genomeSrc);
 
 		/* read in genome sequences */
 		Genome genome(genomeId, genomeName);

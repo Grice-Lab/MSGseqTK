@@ -181,12 +181,12 @@ int main(int argc, char* argv[]) {
 			extVer = GFF::guessVersion(gffFn);
 		}
 #endif
-		gffIn.push(boost::iostreams::file_source(gffFn));
-
-		if(gffIn.bad()) {
+		boost::iostreams::file_source gffSrc(gffFn);
+		if(!gffSrc.is_open()) {
 			cerr << "Unable to open GFF file '" << gffFn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
+		gffIn.push(boost::iostreams::file_source(gffFn));
 
 		if(extVer == GFF::UNK)
 			warningLog << "Unable to guess GFF version from filename '" << gffFn << "', trying reading its content" << endl;

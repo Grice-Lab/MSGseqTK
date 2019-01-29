@@ -326,11 +326,12 @@ int main(int argc, char* argv[]) {
 		fwdIn.push(boost::iostreams::bzip2_decompressor());
 	else { }
 #endif
-	fwdIn.push(boost::iostreams::file_source(fwdInFn));
-	if(fwdIn.bad()) {
+	boost::iostreams::file_source fwdSrc(fwdInFn);
+	if(!fwdSrc.is_open()) {
 		cerr << "Unable to open '" << fwdInFn << "' " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
+	fwdIn.push(fwdSrc);
 
 	if(isPaired) {
 #ifdef HAVE_LIBZ
@@ -340,11 +341,12 @@ int main(int argc, char* argv[]) {
 			revIn.push(boost::iostreams::bzip2_decompressor());
 		else { }
 #endif
-		revIn.push(boost::iostreams::file_source(revInFn));
-		if(revIn.bad()) {
+		boost::iostreams::file_source revSrc(revInFn);
+		if(!revSrc.is_open()) {
 			cerr << "Unable to open '" << revInFn << "' " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
+		revIn.push(revSrc);
 	}
 
 	/* open SeqIO input */

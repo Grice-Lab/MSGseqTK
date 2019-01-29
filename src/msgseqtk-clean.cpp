@@ -248,11 +248,12 @@ int main(int argc, char* argv[]) {
 		fwdIn.push(boost::iostreams::bzip2_decompressor());
 	else { }
 #endif
-	fwdIn.push(boost::iostreams::file_source(fwdInFn));
-	if(fwdIn.bad()) {
+	boost::iostreams::file_source fwdSrc(fwdInFn);
+	if(!fwdSrc.is_open()) {
 		cerr << "Unable to open '" << fwdInFn << "' " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
+	fwdIn.push(fwdSrc);
 
 	if(isPaired) {
 #ifdef HAVE_LIBZ
@@ -262,11 +263,12 @@ int main(int argc, char* argv[]) {
 			revIn.push(boost::iostreams::bzip2_decompressor());
 		else { }
 #endif
-		revIn.push(boost::iostreams::file_source(revInFn));
-		if(revIn.bad()) {
+		boost::iostreams::file_source revSrc(revInFn);
+		if(!revSrc.is_open()) {
 			cerr << "Unable to open '" << revInFn << "' " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
+		revIn.push(revSrc);
 	}
 
 	/* open SeqIO input */
@@ -312,11 +314,12 @@ int main(int argc, char* argv[]) {
 		fwdOut.push(boost::iostreams::bzip2_compressor());
 	else { }
 #endif
-	fwdOut.push(boost::iostreams::file_sink(fwdOutFn));
-	if(fwdOut.bad()) {
+	boost::iostreams::file_sink fwdSink(fwdOutFn);
+	if(!fwdSink.is_open()) {
 		cerr << "Unable to write to '" << fwdOutFn << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
+	fwdOut.push(fwdSink);
 
 	if(isPaired) {
 #ifdef HAVE_LIBZ
@@ -326,11 +329,12 @@ int main(int argc, char* argv[]) {
 			revOut.push(boost::iostreams::bzip2_compressor());
 		else { }
 #endif
-		revOut.push(boost::iostreams::file_sink(revOutFn));
-		if(revOut.bad()) {
+		boost::iostreams::file_sink revSink(revOutFn);
+		if(!revSink.is_open()) {
 			cerr << "Unable to write to '" << revOutFn << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
+		revOut.push(revSink);
 	}
 
 	if(!assignFn.empty()) {
