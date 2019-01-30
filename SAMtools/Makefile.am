@@ -8,4 +8,5 @@ BAM.cpp \
 SAMfile.cpp
 
 libEGSAMtools_a_CXXFLAGS = \
-$(BOOST_CPPFLAGS)
+$(BOOST_CPPFLAGS) \
+$(HTSLIB_CPPFLAGS)
