@@ -106,7 +106,7 @@ MEM MEM::findMEM(const PrimarySeq* seq, const FMIndex* fmidx, uint64_t from, STR
 
 MEM& MEM::findLocs(size_t maxNLocs) {
 	locs.reserve(SAend - SAstart);
-	for(uint64_t i = SAstart; i < SAstart + maxNLocs && i < SAend; ++i) {
+	for(uint64_t i = SAstart; i < std::min<size_t>(SAstart + maxNLocs, SAend); ++i) {
 		uint64_t start = fmidx->accessSA(i);
 		locs.push_back(fmidx->reverseLoc(Loc(start, start + length())));
 //		locs.push_back(Loc(start, start + length()));
