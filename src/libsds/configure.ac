@@ -21,7 +21,7 @@ AC_TYPE_UINT64_T
 AC_CHECK_FUNCS([strerror])
 
 dnl Initialize automake
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE()
 
 dnl this allows us specify individual liking flags for each target
 AM_PROG_CC_C_O 
