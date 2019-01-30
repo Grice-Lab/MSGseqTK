@@ -6,3 +6,6 @@ BAMheader.cpp \
 HTSindex.cpp \
 BAM.cpp \
 SAMfile.cpp
+
+libEGSAMtools_a_CXXFLAGS = \
+$(BOOST_CPPFLAGS)
