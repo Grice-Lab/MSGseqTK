@@ -11,5 +11,6 @@ libEGSAMtools_a_CPPFLAGS = \
 $(BOOST_CPPFLAGS) \
 $(HTSLIB_CPPFLAGS)
 
-libEGSAMtools_a_LIBADD = \
--lhts
+libEGSAMtools_a_CXXFLAGS = \
+$(BOOST_CPPFLAGS) \
+$(HTSLIB_CPPFLAGS)
