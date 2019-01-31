@@ -10,3 +10,6 @@ SAMfile.cpp
 libEGSAMtools_a_CPPFLAGS = \
 $(BOOST_CPPFLAGS) \
 $(HTSLIB_CPPFLAGS)
+
+libEGSAMtools_a_LIBADD = \
+-lhts

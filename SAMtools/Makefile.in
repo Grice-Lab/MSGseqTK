@@ -139,7 +139,7 @@ am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
 am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libEGSAMtools_a_AR = $(AR) $(ARFLAGS)
-libEGSAMtools_a_LIBADD =
+libEGSAMtools_a_DEPENDENCIES =
 am_libEGSAMtools_a_OBJECTS = libEGSAMtools_a-BAMheader.$(OBJEXT) \
 	libEGSAMtools_a-HTSindex.$(OBJEXT) \
 	libEGSAMtools_a-BAM.$(OBJEXT) \
@@ -350,6 +350,9 @@ SAMfile.cpp
 libEGSAMtools_a_CPPFLAGS = \
 $(BOOST_CPPFLAGS) \
 $(HTSLIB_CPPFLAGS)
+
+libEGSAMtools_a_LIBADD = \
+-lhts
 
 all: all-am
 

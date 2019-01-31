@@ -29,7 +29,8 @@ $(HTSLIB_LDFLAGS)
 
 SAMtools_test_LDADD = \
 $(top_srcdir)/libEGUtil.a \
-$(top_srcdir)/SAMtools/libEGSAMtools.a
+$(top_srcdir)/SAMtools/libEGSAMtools.a \
+-lhts
 
 TESTS = \
 GFF_test \
