@@ -459,15 +459,15 @@ PAIR_LIST& AlignmentPE::filter(PAIR_LIST& pairList,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap) {
 	if(!(minIns == 0 && maxIns == 0)) // filter by insert size
-		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [=] (const AlignmentPE& pair) { return minIns <= pair.getInsertSize() && pair.getInsertSize() <= maxIns; }));
+		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [=] (const AlignmentPE& pair) { return minIns <= pair.getInsertSize() && pair.getInsertSize() <= maxIns; }), pairList.end());
 	if(noDiscordant) // filter discordant pairs
-		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [=] (const AlignmentPE& pair) { return !pair.isConcordant(); }));
+		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [] (const AlignmentPE& pair) { return !pair.isConcordant(); }), pairList.end());
 	if(noTailOver) // filter tail-overlap pairs
-		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [] (const AlignmentPE& pair) { return pair.isTailOver(); }));
+		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [] (const AlignmentPE& pair) { return pair.isTailOver(); }), pairList.end());
 	if(noContain) // filter containing pairs
-		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [] (const AlignmentPE& pair) { return pair.isContained(); }));
+		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [] (const AlignmentPE& pair) { return pair.isContained(); }), pairList.end());
 	if(noOverlap) // filter overlap pairs
-		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [] (const AlignmentPE& pair) { return pair.isOverlap(); }));
+		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [] (const AlignmentPE& pair) { return pair.isOverlap(); }), pairList.end());
 	return pairList;
 }
 
