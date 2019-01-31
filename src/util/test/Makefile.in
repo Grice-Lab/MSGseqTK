@@ -526,6 +526,10 @@ AM_CXXFLAGS = \
 -I$(top_srcdir)/UCSC \
 -I$(top_srcdir)/SAMtools
 
+AM_CPPFLAGS = \
+$(BOOST_CPPFLAGS) \
+$(HTSLIB_CPPFLAGS)
+
 GFF_test_SOURCES = GFF_test.cpp
 GFF_test_LDADD = \
 $(top_srcdir)/UCSC/libEGUCSC.a \

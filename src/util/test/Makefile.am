@@ -10,6 +10,10 @@ AM_CXXFLAGS = \
 -I$(top_srcdir)/UCSC \
 -I$(top_srcdir)/SAMtools
 
+AM_CPPFLAGS = \
+$(BOOST_CPPFLAGS) \
+$(HTSLIB_CPPFLAGS)
+
 check_PROGRAMS = \
 GFF_test \
 SAMtools_test
