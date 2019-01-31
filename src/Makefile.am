@@ -113,7 +113,8 @@ math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB) \
-$(OPENMP_CXXFLAGS)
+$(OPENMP_CXXFLAGS) \
+-lhts
 
 msgseqtk_align_LDFLAGS = \
 $(AM_LDFLAGS) \

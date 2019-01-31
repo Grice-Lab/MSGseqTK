@@ -86,7 +86,8 @@ $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 $(top_srcdir)/src/libsds/src/libsds.la \
 $(top_srcdir)/src/util/libEGUtil.a \
 $(top_srcdir)/src/util/UCSC/libEGUCSC.a \
-$(top_srcdir)/src/util/SAMtools/libEGSAMtools.a
+$(top_srcdir)/src/util/SAMtools/libEGSAMtools.a \
+-lhts
 
 Alignment_test_LDFLAGS = \
 $(AM_LDFLAGS) \
