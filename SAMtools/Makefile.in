@@ -347,7 +347,7 @@ HTSindex.cpp \
 BAM.cpp \
 SAMfile.cpp
 
-libEGSAMtools_a_CXXFLAGS = \
+libEGSAMtools_a_CPPFLAGS = \
 $(BOOST_CPPFLAGS) \
 $(HTSLIB_CPPFLAGS)
 
@@ -454,60 +454,60 @@ distclean-compile:
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
 
 libEGSAMtools_a-BAMheader.o: BAMheader.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libEGSAMtools_a_CXXFLAGS) $(CXXFLAGS) -MT libEGSAMtools_a-BAMheader.o -MD -MP -MF $(DEPDIR)/libEGSAMtools_a-BAMheader.Tpo -c -o libEGSAMtools_a-BAMheader.o `test -f 'BAMheader.cpp' || echo '$(srcdir)/'`BAMheader.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libEGSAMtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libEGSAMtools_a-BAMheader.o -MD -MP -MF $(DEPDIR)/libEGSAMtools_a-BAMheader.Tpo -c -o libEGSAMtools_a-BAMheader.o `test -f 'BAMheader.cpp' || echo '$(srcdir)/'`BAMheader.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libEGSAMtools_a-BAMheader.Tpo $(DEPDIR)/libEGSAMtools_a-BAMheader.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='BAMheader.cpp' object='libEGSAMtools_a-BAMheader.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libEGSAMtools_a_CXXFLAGS) $(CXXFLAGS) -c -o libEGSAMtools_a-BAMheader.o `test -f 'BAMheader.cpp' || echo '$(srcdir)/'`BAMheader.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libEGSAMtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libEGSAMtools_a-BAMheader.o `test -f 'BAMheader.cpp' || echo '$(srcdir)/'`BAMheader.cpp
 
 libEGSAMtools_a-BAMheader.obj: BAMheader.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libEGSAMtools_a_CXXFLAGS) $(CXXFLAGS) -MT libEGSAMtools_a-BAMheader.obj -MD -MP -MF $(DEPDIR)/libEGSAMtools_a-BAMheader.Tpo -c -o libEGSAMtools_a-BAMheader.obj `if test -f 'BAMheader.cpp'; then $(CYGPATH_W) 'BAMheader.cpp'; else $(CYGPATH_W) '$(srcdir)/BAMheader.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libEGSAMtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libEGSAMtools_a-BAMheader.obj -MD -MP -MF $(DEPDIR)/libEGSAMtools_a-BAMheader.Tpo -c -o libEGSAMtools_a-BAMheader.obj `if test -f 'BAMheader.cpp'; then $(CYGPATH_W) 'BAMheader.cpp'; else $(CYGPATH_W) '$(srcdir)/BAMheader.cpp'; fi`
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libEGSAMtools_a-BAMheader.Tpo $(DEPDIR)/libEGSAMtools_a-BAMheader.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='BAMheader.cpp' object='libEGSAMtools_a-BAMheader.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libEGSAMtools_a_CXXFLAGS) $(CXXFLAGS) -c -o libEGSAMtools_a-BAMheader.obj `if test -f 'BAMheader.cpp'; then $(CYGPATH_W) 'BAMheader.cpp'; else $(CYGPATH_W) '$(srcdir)/BAMheader.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libEGSAMtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libEGSAMtools_a-BAMheader.obj `if test -f 'BAMheader.cpp'; then $(CYGPATH_W) 'BAMheader.cpp'; else $(CYGPATH_W) '$(srcdir)/BAMheader.cpp'; fi`
 
 libEGSAMtools_a-HTSindex.o: HTSindex.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libEGSAMtools_a_CXXFLAGS) $(CXXFLAGS) -MT libEGSAMtools_a-HTSindex.o -MD -MP -MF $(DEPDIR)/libEGSAMtools_a-HTSindex.Tpo -c -o libEGSAMtools_a-HTSindex.o `test -f 'HTSindex.cpp' || echo '$(srcdir)/'`HTSindex.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libEGSAMtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libEGSAMtools_a-HTSindex.o -MD -MP -MF $(DEPDIR)/libEGSAMtools_a-HTSindex.Tpo -c -o libEGSAMtools_a-HTSindex.o `test -f 'HTSindex.cpp' || echo '$(srcdir)/'`HTSindex.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libEGSAMtools_a-HTSindex.Tpo $(DEPDIR)/libEGSAMtools_a-HTSindex.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='HTSindex.cpp' object='libEGSAMtools_a-HTSindex.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libEGSAMtools_a_CXXFLAGS) $(CXXFLAGS) -c -o libEGSAMtools_a-HTSindex.o `test -f 'HTSindex.cpp' || echo '$(srcdir)/'`HTSindex.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libEGSAMtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libEGSAMtools_a-HTSindex.o `test -f 'HTSindex.cpp' || echo '$(srcdir)/'`HTSindex.cpp
 
 libEGSAMtools_a-HTSindex.obj: HTSindex.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libEGSAMtools_a_CXXFLAGS) $(CXXFLAGS) -MT libEGSAMtools_a-HTSindex.obj -MD -MP -MF $(DEPDIR)/libEGSAMtools_a-HTSindex.Tpo -c -o libEGSAMtools_a-HTSindex.obj `if test -f 'HTSindex.cpp'; then $(CYGPATH_W) 'HTSindex.cpp'; else $(CYGPATH_W) '$(srcdir)/HTSindex.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libEGSAMtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libEGSAMtools_a-HTSindex.obj -MD -MP -MF $(DEPDIR)/libEGSAMtools_a-HTSindex.Tpo -c -o libEGSAMtools_a-HTSindex.obj `if test -f 'HTSindex.cpp'; then $(CYGPATH_W) 'HTSindex.cpp'; else $(CYGPATH_W) '$(srcdir)/HTSindex.cpp'; fi`
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libEGSAMtools_a-HTSindex.Tpo $(DEPDIR)/libEGSAMtools_a-HTSindex.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='HTSindex.cpp' object='libEGSAMtools_a-HTSindex.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libEGSAMtools_a_CXXFLAGS) $(CXXFLAGS) -c -o libEGSAMtools_a-HTSindex.obj `if test -f 'HTSindex.cpp'; then $(CYGPATH_W) 'HTSindex.cpp'; else $(CYGPATH_W) '$(srcdir)/HTSindex.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libEGSAMtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libEGSAMtools_a-HTSindex.obj `if test -f 'HTSindex.cpp'; then $(CYGPATH_W) 'HTSindex.cpp'; else $(CYGPATH_W) '$(srcdir)/HTSindex.cpp'; fi`
 
 libEGSAMtools_a-BAM.o: BAM.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libEGSAMtools_a_CXXFLAGS) $(CXXFLAGS) -MT libEGSAMtools_a-BAM.o -MD -MP -MF $(DEPDIR)/libEGSAMtools_a-BAM.Tpo -c -o libEGSAMtools_a-BAM.o `test -f 'BAM.cpp' || echo '$(srcdir)/'`BAM.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libEGSAMtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libEGSAMtools_a-BAM.o -MD -MP -MF $(DEPDIR)/libEGSAMtools_a-BAM.Tpo -c -o libEGSAMtools_a-BAM.o `test -f 'BAM.cpp' || echo '$(srcdir)/'`BAM.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libEGSAMtools_a-BAM.Tpo $(DEPDIR)/libEGSAMtools_a-BAM.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='BAM.cpp' object='libEGSAMtools_a-BAM.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libEGSAMtools_a_CXXFLAGS) $(CXXFLAGS) -c -o libEGSAMtools_a-BAM.o `test -f 'BAM.cpp' || echo '$(srcdir)/'`BAM.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libEGSAMtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libEGSAMtools_a-BAM.o `test -f 'BAM.cpp' || echo '$(srcdir)/'`BAM.cpp
 
 libEGSAMtools_a-BAM.obj: BAM.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libEGSAMtools_a_CXXFLAGS) $(CXXFLAGS) -MT libEGSAMtools_a-BAM.obj -MD -MP -MF $(DEPDIR)/libEGSAMtools_a-BAM.Tpo -c -o libEGSAMtools_a-BAM.obj `if test -f 'BAM.cpp'; then $(CYGPATH_W) 'BAM.cpp'; else $(CYGPATH_W) '$(srcdir)/BAM.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libEGSAMtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libEGSAMtools_a-BAM.obj -MD -MP -MF $(DEPDIR)/libEGSAMtools_a-BAM.Tpo -c -o libEGSAMtools_a-BAM.obj `if test -f 'BAM.cpp'; then $(CYGPATH_W) 'BAM.cpp'; else $(CYGPATH_W) '$(srcdir)/BAM.cpp'; fi`
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libEGSAMtools_a-BAM.Tpo $(DEPDIR)/libEGSAMtools_a-BAM.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='BAM.cpp' object='libEGSAMtools_a-BAM.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libEGSAMtools_a_CXXFLAGS) $(CXXFLAGS) -c -o libEGSAMtools_a-BAM.obj `if test -f 'BAM.cpp'; then $(CYGPATH_W) 'BAM.cpp'; else $(CYGPATH_W) '$(srcdir)/BAM.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libEGSAMtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libEGSAMtools_a-BAM.obj `if test -f 'BAM.cpp'; then $(CYGPATH_W) 'BAM.cpp'; else $(CYGPATH_W) '$(srcdir)/BAM.cpp'; fi`
 
 libEGSAMtools_a-SAMfile.o: SAMfile.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libEGSAMtools_a_CXXFLAGS) $(CXXFLAGS) -MT libEGSAMtools_a-SAMfile.o -MD -MP -MF $(DEPDIR)/libEGSAMtools_a-SAMfile.Tpo -c -o libEGSAMtools_a-SAMfile.o `test -f 'SAMfile.cpp' || echo '$(srcdir)/'`SAMfile.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libEGSAMtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libEGSAMtools_a-SAMfile.o -MD -MP -MF $(DEPDIR)/libEGSAMtools_a-SAMfile.Tpo -c -o libEGSAMtools_a-SAMfile.o `test -f 'SAMfile.cpp' || echo '$(srcdir)/'`SAMfile.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libEGSAMtools_a-SAMfile.Tpo $(DEPDIR)/libEGSAMtools_a-SAMfile.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='SAMfile.cpp' object='libEGSAMtools_a-SAMfile.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libEGSAMtools_a_CXXFLAGS) $(CXXFLAGS) -c -o libEGSAMtools_a-SAMfile.o `test -f 'SAMfile.cpp' || echo '$(srcdir)/'`SAMfile.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libEGSAMtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libEGSAMtools_a-SAMfile.o `test -f 'SAMfile.cpp' || echo '$(srcdir)/'`SAMfile.cpp
 
 libEGSAMtools_a-SAMfile.obj: SAMfile.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libEGSAMtools_a_CXXFLAGS) $(CXXFLAGS) -MT libEGSAMtools_a-SAMfile.obj -MD -MP -MF $(DEPDIR)/libEGSAMtools_a-SAMfile.Tpo -c -o libEGSAMtools_a-SAMfile.obj `if test -f 'SAMfile.cpp'; then $(CYGPATH_W) 'SAMfile.cpp'; else $(CYGPATH_W) '$(srcdir)/SAMfile.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libEGSAMtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libEGSAMtools_a-SAMfile.obj -MD -MP -MF $(DEPDIR)/libEGSAMtools_a-SAMfile.Tpo -c -o libEGSAMtools_a-SAMfile.obj `if test -f 'SAMfile.cpp'; then $(CYGPATH_W) 'SAMfile.cpp'; else $(CYGPATH_W) '$(srcdir)/SAMfile.cpp'; fi`
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libEGSAMtools_a-SAMfile.Tpo $(DEPDIR)/libEGSAMtools_a-SAMfile.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='SAMfile.cpp' object='libEGSAMtools_a-SAMfile.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libEGSAMtools_a_CXXFLAGS) $(CXXFLAGS) -c -o libEGSAMtools_a-SAMfile.obj `if test -f 'SAMfile.cpp'; then $(CYGPATH_W) 'SAMfile.cpp'; else $(CYGPATH_W) '$(srcdir)/SAMfile.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libEGSAMtools_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libEGSAMtools_a-SAMfile.obj `if test -f 'SAMfile.cpp'; then $(CYGPATH_W) 'SAMfile.cpp'; else $(CYGPATH_W) '$(srcdir)/SAMfile.cpp'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
