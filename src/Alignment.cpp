@@ -439,10 +439,8 @@ PAIR_LIST& AlignmentPE::calcMapQ(PAIR_LIST& pairList) {
 int32_t AlignmentPE::getInsertSize(const Alignment& lhs, const Alignment& rhs) {
 	if(lhs.tid != rhs.tid)
 		return -1;
-	else if(lhs.alnStart < rhs.alnEnd && lhs.alnEnd > rhs.alnStart) // overlap
-		return 0;
 	else
-		return lhs.alnStart < rhs.alnStart ? rhs.alnEnd - lhs.alnStart : lhs.alnEnd - rhs.alnStart;
+		return std::max(lhs.alnEnd, rhs.alnEnd) - std::min(lhs.alnStart, rhs.alnStart);
 }
 
 ALIGN_LIST& Alignment::filter(ALIGN_LIST& alnList, double bestFrac) {
@@ -457,9 +455,9 @@ ALIGN_LIST& Alignment::filter(ALIGN_LIST& alnList, double bestFrac) {
 
 PAIR_LIST& AlignmentPE::filter(PAIR_LIST& pairList,
 		int32_t minIns, int32_t maxIns,
-		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap) {
+		bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap) {
 	if(!(minIns == 0 && maxIns == 0)) // filter by insert size
-		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [=] (const AlignmentPE& pair) { return minIns <= pair.getInsertSize() && pair.getInsertSize() <= maxIns; }), pairList.end());
+		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [=] (const AlignmentPE& pair) { return !(minIns <= pair.getInsertSize() && pair.getInsertSize() <= maxIns); }), pairList.end());
 	if(noDiscordant) // filter discordant pairs
 		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [] (const AlignmentPE& pair) { return !pair.isConcordant(); }), pairList.end());
 	if(noTailOver) // filter tail-overlap pairs

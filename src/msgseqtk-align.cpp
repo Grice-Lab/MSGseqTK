@@ -582,7 +582,7 @@ int main_PE(const MetaGenome& mtg, const FMIndex& fmidx,
 						/* get pairs */
 						PAIR_LIST pairList = AlignmentPE::getPairs(fwdAlnList, revAlnList);
 						/* filter pairs */
-						AlignmentPE::filter(pairList, minIns, maxIns, noMixed, noDiscordant, noTailOver, noContain, noOverlap);
+						AlignmentPE::filter(pairList, minIns, maxIns, noDiscordant, noTailOver, noContain, noOverlap);
 						if(!pairList.empty()) {
 							/* calculate mapQ for pairs */
 							AlignmentPE::calcMapQ(pairList);

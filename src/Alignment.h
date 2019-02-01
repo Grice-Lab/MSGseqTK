@@ -227,9 +227,14 @@ struct Alignment {
 	/** backtrace alnPath */
 	Alignment& backTrace();
 
+	/** test whether is reverse-complemented */
+	bool isRevcom() const {
+		return flag & BAM_FREVERSE;
+	}
+
 	/** get strand of this Alignment */
 	MEM::STRAND getStrand() const {
-		return flag & BAM_FREVERSE == 0 ? MEM::FWD : MEM::REV;
+		return !isRevcom() ? MEM::FWD : MEM::REV;
 	}
 
 	/** get 5' soft-clip size */
@@ -489,7 +494,7 @@ struct AlignmentPE {
 	/** filter candidate pairs using pairing criteria */
 	static PAIR_LIST& filter(PAIR_LIST& pairList,
 			int32_t minIns, int32_t maxIns,
-			bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap);
+			bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap);
 
 	/**
 	 * calculate mapQ as posterior probability of candidate alignment pairs using a uniform prior
