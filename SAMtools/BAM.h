@@ -69,6 +69,16 @@ public:
 	: BAM(qname, flag, tid, pos, mapQ, cigar, seq.length(), nt16Encode(seq), qual, mtid, mpos, isize, id)
 	{  }
 
+	/** deligating construct a BAM from an (unmapped) seq only */
+	BAM(const string& qname, uint32_t l_seq, const seq_str& seq, const qual_str& qual)
+	: BAM(qname, 0, -1, 0, 0, cigar_str(), l_seq, seq, qual)
+	{  }
+
+	/** deligating construct a BAM from an (unmapped) raw-seq only */
+	BAM(const string& qname, const string& seq, const qual_str& qual)
+	: BAM(qname, seq.length(), nt16Encode(seq), qual)
+	{  }
+
 	/* member methods */
 	/** getters and setters for bam1_core_t member fields */
 	/** get target/reference ID */
