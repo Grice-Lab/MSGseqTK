@@ -458,8 +458,8 @@ int output(const PAIR_LIST& pairList, SAMfile& out, uint32_t maxReport) {
 		BAM bamFwd = pair.fwdAln->exportBAM();
 		BAM bamRev = pair.revAln->exportBAM();
 		/* set flags */
-		bamFwd.setFlag(BAM_FPAIRED | BAM_FPROPER_PAIR | BAM_FREAD1);
-		bamRev.setFlag(BAM_FPAIRED | BAM_FPROPER_PAIR | BAM_FREAD2);
+		bamFwd.setFlag(bamFwd.getFlag() | BAM_FPAIRED | BAM_FPROPER_PAIR | BAM_FREAD1);
+		bamRev.setFlag(bamRev.getFlag() | BAM_FPAIRED | BAM_FPROPER_PAIR | BAM_FREAD2);
 		bamFwd.setSecondaryFlag(i > 0);
 		bamRev.setSecondaryFlag(i > 0);
 		/* set insert size */
