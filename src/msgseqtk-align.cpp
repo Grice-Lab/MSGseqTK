@@ -128,6 +128,12 @@ int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport);
  */
 int output(const PAIR_LIST& pairList, SAMfile& out, uint32_t maxReport);
 
+/** report and output unmapped reads */
+int output(const PrimarySeq& read, SAMfile& out);
+
+/** report and output unmapped pairs */
+int output(const PrimarySeq& fwdRead, const PrimarySeq& revRead, SAMfile& out);
+
 int main(int argc, char* argv[]) {
 	/* variable declarations */
 	string fwdInFn, revInFn, outFn;
@@ -485,6 +491,16 @@ int output(const PAIR_LIST& pairList, SAMfile& out, uint32_t maxReport) {
 	return numReport;
 }
 
+int output(const PrimarySeq& read, SAMfile& out) {
+	return out.write(BAM(read.getName(), read.length(), read.getSeq().nt16Encode(), read.getQual()));
+}
+
+int output(const PrimarySeq& fwdRead, const PrimarySeq& revRead, SAMfile& out) {
+	out.write(BAM(fwdRead.getName(), fwdRead.length(), fwdRead.getSeq().nt16Encode(), fwdRead.getQual(), BAM_FREAD1));
+	out.write(BAM(revRead.getName(), revRead.length(), revRead.getSeq().nt16Encode(), revRead.getQual(), BAM_FREAD2));
+	return 2;
+}
+
 int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
 		SeqIO& seqI, SAMfile& out, RNG& rng, int strand,
 		uint32_t maxMems, double bestFrac, uint32_t maxReport) {
@@ -507,7 +523,9 @@ int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
 					const Alignment::SeedMatchList& seedMatches = Alignment::getSeedMatchList(mtg, mems, maxMems);
 					if(seedMatches.empty()) {
 #pragma omp critical(LOG)
-						infoLog << "Unable to find any valid SeedMatches for '" << read.getName() << "', ignore" << endl;
+						infoLog << "Unable to find any valid SeedMatches for '" << read.getName() << "'" << endl;
+#pragma omp critical(BAM_OUTPUT)
+						output(read, out);
 					}
 					else {
 						/* get alignments from SeedMatchList */
@@ -568,7 +586,9 @@ int main_PE(const MetaGenome& mtg, const FMIndex& fmidx,
 					Alignment::SeedMatchList revSeedMatches = Alignment::getSeedMatchList(mtg, memsPE.revMems, maxMems);
 					if(fwdSeedMatches.empty() && revSeedMatches.empty()) {
 #pragma omp critical(LOG)
-						infoLog << "Unable to find any valid SeedMatches for read pair '" << fwdRead.getName() << "', ignore" << endl;
+						infoLog << "Unable to find any valid SeedMatches for read pair '" << fwdRead.getName() << "'" << endl;
+#pragma omp critical(BAM_OUTPUT)
+						output(fwdRead, revRead, out);
 					}
 					else {
 						ALIGN_LIST fwdAlnList = Alignment::getAlignments(ss, mtg, fwdRead, fwdSeedMatches, memsPE.getFwdStrand());
