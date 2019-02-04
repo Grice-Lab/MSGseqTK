@@ -514,7 +514,7 @@ int main_SE(const MetaGenome& mtg, const FMIndex& fmidx,
 				PrimarySeq read = seqI.nextSeq();
 #pragma omp task firstprivate(read)
 				{
-					MEMS mems = MEMS::sampleMEMS(&read, &fmidx, rng, strand);
+					MEMS mems = MEMS::sampleMEMS(&read, &fmidx, rng, 0, read.length(), strand);
 					mems.findLocs(); // only find locs for best MEMS
 					const MEM::STRAND readStrand = mems.getStrand();
 					if(readStrand == MEM::REV)

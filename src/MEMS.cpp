@@ -29,11 +29,11 @@ uint64_t MEMS::length() const {
 	return L;
 }
 
-MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
-		RNG& rng, MEM::STRAND strand) {
+MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx, RNG& rng,
+		uint64_t from, uint64_t to, MEM::STRAND strand) {
 	MEMS mems;
-	for(int64_t i = 0; i < seq->length();) {
-		MEM mem = MEM::findMEM(seq, fmidx, i, strand).evaluate();
+	for(uint64_t i = from; i < std::min(to, seq->length());) {
+		MEM mem = MEM::findMEM(seq, fmidx, i, to, strand).evaluate();
 
 		/* calculate MEM evalue */
 		double eval = mem.evalue();
@@ -48,16 +48,16 @@ MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
 	return mems;
 }
 
-MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
-		RNG& rng, int strand) {
+MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx, RNG& rng,
+		uint64_t from, uint64_t to, int strand) {
 	assert(strand != 0);
 	if((strand & MEM::FWD) && !(strand & MEM::REV)) /* fwd only */
-		return sampleMEMS(seq, fmidx, rng, MEM::FWD);
+		return sampleMEMS(seq, fmidx, rng, from, to, MEM::FWD);
 	else if((strand & MEM::FWD) && !(strand & MEM::REV)) /* rev only */
-		return sampleMEMS(seq, fmidx, rng, MEM::REV);
+		return sampleMEMS(seq, fmidx, rng, from, to, MEM::REV);
 	else {
-		MEMS fwdMems = sampleMEMS(seq, fmidx, rng, MEM::FWD);
-		MEMS revMems = sampleMEMS(seq, fmidx, rng, MEM::REV);
+		MEMS fwdMems = sampleMEMS(seq, fmidx, rng, from, to, MEM::FWD);
+		MEMS revMems = sampleMEMS(seq, fmidx, rng, from, to, MEM::REV);
 		return fwdMems.loglik() < revMems.loglik() ? fwdMems : revMems; /* return the most significant result */
 	}
 }
@@ -79,20 +79,20 @@ ostream& MEMS::write(ostream& out) const {
 	return out;
 }
 
-MEMS_PE MEMS_PE::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
-		RNG& rng, int strand) {
+MEMS_PE MEMS_PE::sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx, RNG& rng,
+		uint64_t fwdFrom, uint64_t fwdTo, uint64_t revFrom, uint64_t revTo, int strand) {
 	assert(strand != 0);
 	if((strand & MEM::FWD) && !(strand & MEM::REV)) /* fwd only */
-		return MEMS_PE(MEMS::sampleMEMS(fwdSeq, fmidx, rng, MEM::FWD),
-				MEMS::sampleMEMS(revSeq, fmidx, rng, MEM::REV)); // use FWD-REV orientation
+		return MEMS_PE(MEMS::sampleMEMS(fwdSeq, fmidx, rng, fwdFrom, fwdTo, MEM::FWD),
+				MEMS::sampleMEMS(revSeq, fmidx, rng, revFrom, revTo, MEM::REV)); // use FWD-REV orientation
 	else if(!(strand & MEM::FWD) && (strand & MEM::REV)) /* rev only */
-		return MEMS_PE(MEMS::sampleMEMS(fwdSeq, fmidx, rng, MEM::REV),
-				MEMS::sampleMEMS(revSeq, fmidx, rng, MEM::FWD)); // use REV-FWD orientation
+		return MEMS_PE(MEMS::sampleMEMS(fwdSeq, fmidx, rng, fwdFrom, fwdTo, MEM::REV),
+				MEMS::sampleMEMS(revSeq, fmidx, rng, revFrom, revTo, MEM::FWD)); // use REV-FWD orientation
 	else {
-		MEMS_PE senseMemsPE = MEMS_PE(MEMS::sampleMEMS(fwdSeq, fmidx, rng, MEM::FWD),
-				MEMS::sampleMEMS(revSeq, fmidx, rng, MEM::REV)); // use FWD-REV orientation
-		MEMS_PE antiMemsPE = MEMS_PE(MEMS::sampleMEMS(fwdSeq, fmidx, rng, MEM::REV),
-				MEMS::sampleMEMS(revSeq, fmidx, rng, MEM::FWD)); // use REV-FWD orientation
+		MEMS_PE senseMemsPE = MEMS_PE(MEMS::sampleMEMS(fwdSeq, fmidx, rng, fwdFrom, fwdTo, MEM::FWD),
+				MEMS::sampleMEMS(revSeq, fmidx, rng, revFrom, revTo, MEM::REV)); // use FWD-REV orientation
+		MEMS_PE antiMemsPE = MEMS_PE(MEMS::sampleMEMS(fwdSeq, fmidx, rng, fwdFrom, fwdTo, MEM::REV),
+				MEMS::sampleMEMS(revSeq, fmidx, rng, revFrom, revTo, MEM::FWD)); // use REV-FWD orientation
 		return senseMemsPE.loglik() < antiMemsPE.loglik() ? senseMemsPE : antiMemsPE; /* return the most significant result */
 	}
 }

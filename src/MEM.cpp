@@ -71,17 +71,17 @@ ostream& MEM::write(ostream& out) const {
 	return out;
 }
 
-MEM MEM::findMEM(const PrimarySeq* seq, const FMIndex* fmidx, uint64_t from, STRAND strand) {
+MEM MEM::findMEM(const PrimarySeq* seq, const FMIndex* fmidx, uint64_t from, uint64_t to, STRAND strand) {
 	uint64_t start = 0; /* 0-based SAstart */
 	uint64_t end = 0;   /* 1-based SAend */
 	uint64_t nextStart = start;
 	uint64_t nextEnd = end;
-	uint64_t to;
+	uint64_t i;
 	/* search left-to-right */
 	const DNAseq& ds = strand == FWD ? seq->getSeq() : seq->getSeq().revcom();
 
-	for(to = from; to < ds.length(); ++to, start = nextStart, end = nextEnd) {
-		sauchar_t b = ds[to];
+	for(i = from; i < std::min(to, seq->length()); ++i, start = nextStart, end = nextEnd) {
+		sauchar_t b = ds[i];
 		if(b == DNAalphabet::GAP_BASE) /* null gap */
 			break;
 		if(start == 0) {
@@ -98,7 +98,7 @@ MEM MEM::findMEM(const PrimarySeq* seq, const FMIndex* fmidx, uint64_t from, STR
 	}
 
 	/* return MEM with basic info */
-	return MEM(seq, fmidx, strand, from, to, start, end);
+	return MEM(seq, fmidx, strand, from, i, start, end);
 }
 
 MEM& MEM::findLocs(size_t maxNLocs) {

@@ -418,8 +418,8 @@ int main_SE(const FMIndex& refFmidx, const FMIndex& bgFmidx,
 				{
 					const string& id = read.getName();
 					const string& desc = read.getDesc();
-					MEMS refMems = MEMS::sampleMEMS(&read, &refFmidx, rng, strand);
-					MEMS bgMems = MEMS::sampleMEMS(&read, &bgFmidx, rng, strand);
+					MEMS refMems = MEMS::sampleMEMS(&read, &refFmidx, rng, 0, read.length(), strand);
+					MEMS bgMems = MEMS::sampleMEMS(&read, &bgFmidx, rng, 0, read.length(), strand);
 					double refLoglik = refMems.logevalue();
 					double bgLoglik = bgMems.logevalue();
 					double lod = - refLoglik + bgLoglik;

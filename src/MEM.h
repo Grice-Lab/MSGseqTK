@@ -167,7 +167,7 @@ struct MEM {
 	 * @param strand  which strand to search
 	 */
 	static MEM findMEM(const PrimarySeq* seq, const FMIndex* fmidx,
-			uint64_t from = 0, STRAND strand = FWD);
+			uint64_t from = 0, uint64_t to = UINT64_MAX, STRAND strand = FWD);
 
 	/* non-member methods */
 	friend ostream& operator<<(ostream& out, const MEM& mem);

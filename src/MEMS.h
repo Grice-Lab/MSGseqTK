@@ -91,19 +91,19 @@ public:
 	 * @param seq  primary sequence to search
 	 * @param fmidx  FM-index
 	 * @param rng  random-number generator
+	 * @param from to  region to search
 	 * @param strand  searching strand
 	 * @return  a vector of ordered MEMs
 	 */
 	static MEMS sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
-			RNG& rng, MEM::STRAND strand);
+			RNG& rng, uint64_t from = 0, uint64_t to = UINT64_MAX, MEM::STRAND strand = MEM::FWD);
 
 	/**
 	 * get best MEMS by trying different strands and multiple random seeds
 	 * @param strand  different strands, 1 for FWD, 2 for REV, 3 for both
 	 */
 	static MEMS sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
-			RNG& rng, int strand);
-
+			RNG& rng, uint64_t from = 0, uint64_t to = UINT64_MAX, int strand = 3);
 
 	/* static fields */
 	static boost::random::uniform_01<> mem_dist; /* random01 distribution for accepting MEMs */
@@ -152,8 +152,8 @@ struct MEMS_PE {
 	 * get best MEMS_PE by trying different strands and multiple random seeds
 	 * @param strand  different strands, 1 for FWD, 2 for REV, 3 for both
 	 */
-	static MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx,
-			RNG& rng, int strand);
+	static MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx, RNG& rng,
+			uint64_t fwdFrom = 0, uint64_t fwdTo = UINT64_MAX, uint64_t revFrom = 0, uint64_t revTo = UINT64_MAX, int strand = 3);
 
 	/* member fields */
 	MEMS fwdMems;
