@@ -11,6 +11,7 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
+#include <array>
 #include "DNAalphabet.h"
 #include "StringUtils.h"
 #include "BAM.h"
@@ -31,6 +32,7 @@ using SAMtools::BAM;
 
 class DNAseq: public std::basic_string<nt16_t> {
 public:
+	typedef std::array<size_t, DNAalphabet::SIZE> BASE_COUNT;
 	/* nested types and enums */
 	enum TRIM_MODE { FIVE_PRIME = 1, THREE_PRIME, BOTH_PRIME };
 
@@ -148,7 +150,6 @@ public:
 	/** Assign a string as a DNAseq */
 	DNAseq& assign(const string& str);
 
-
 	/**
 	 * Append a seq string (symbols) to this DNAseq
 	 * return the modified object
@@ -183,6 +184,9 @@ public:
 
 	/** remove gap bases */
 	DNAseq& removeGaps();
+
+	/** get base count of a given region */
+	BASE_COUNT baseCount(size_type start = 0, size_type len = npos) const;
 
 	/* non-member functions */
 	/** read a DNAseq from text input */

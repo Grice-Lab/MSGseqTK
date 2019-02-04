@@ -26,14 +26,13 @@ MEM& MEM::evaluate() {
 	if(empty())
 		return *this;
 	logP = 0;
-	const uint64_t N = fmidx->totalBases();
 	for(int64_t i = from; i < to; ++i) {
 		DNAseq::value_type b = seq->getBase(i);
 		if(strand == REV)
 			b = DNAalphabet::complement(b);
-		logP += ::log(fmidx->getBaseCount(b));
+		logP += std::log(fmidx->getBaseCount(b));
 	}
-	logP -= length() * log(N); /* subtract denominator */
+	logP -= length() * log(fmidx->totalBases()); /* subtract denominator */
 	return *this;
 }
 
@@ -79,9 +78,7 @@ MEM MEM::findMEM(const PrimarySeq* seq, const FMIndex* fmidx, uint64_t from, STR
 	uint64_t nextEnd = end;
 	uint64_t to;
 	/* search left-to-right */
-	DNAseq ds = seq->getSeq(); // get a copy
-	if(strand == REV)
-		ds.revcom();
+	const DNAseq& ds = strand == FWD ? seq->getSeq() : seq->getSeq().revcom();
 
 	for(to = from; to < ds.length(); ++to, start = nextStart, end = nextEnd) {
 		sauchar_t b = ds[to];

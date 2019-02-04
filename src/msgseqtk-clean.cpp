@@ -420,8 +420,8 @@ int main_SE(const FMIndex& refFmidx, const FMIndex& bgFmidx,
 					const string& desc = read.getDesc();
 					MEMS refMems = MEMS::sampleMEMS(&read, &refFmidx, rng, strand);
 					MEMS bgMems = MEMS::sampleMEMS(&read, &bgFmidx, rng, strand);
-					double refLoglik = refMems.loglik();
-					double bgLoglik = bgMems.loglik();
+					double refLoglik = refMems.logevalue();
+					double bgLoglik = bgMems.logevalue();
 					double lod = - refLoglik + bgLoglik;
 					if(lod >= minLod)
 #pragma omp critical(writeSeq)

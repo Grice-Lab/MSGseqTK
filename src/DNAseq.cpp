@@ -101,5 +101,13 @@ ostream& DNAseq::nt16Save(ostream& out) const {
 	return out;
 }
 
+DNAseq::BASE_COUNT DNAseq::baseCount(size_type from, size_type len) const {
+	BASE_COUNT bc;
+	bc.fill(0);
+	for(size_type i = from; i < from + len; ++i)
+		bc[(*this)[i]]++;
+	return bc;
+}
+
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */

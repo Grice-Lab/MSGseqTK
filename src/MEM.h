@@ -90,12 +90,17 @@ struct MEM {
 
 	/** get the pvalue of observing this MEM by random */
 	double pvalue() const {
-		return ::exp(loglik());
+		return std::exp(loglik());
 	}
 
-	/** get the E-value of observing this MEM on a known size database */
+	/** get the evalue of observing this MEM by random */
 	double evalue() const {
 		return fmidx->length() * pvalue();
+	}
+
+	/** get log-evalue of observing this MEM by random */
+	double logevalue() const {
+		return std::log(fmidx->length()) + loglik();
 	}
 
 	/** write this MEM to text output */
@@ -151,7 +156,7 @@ struct MEM {
 	vector<Loc> locs; /* all Loc this MEM matches to w/ reversed coordinates */
 
 	/* static fields */
-	static const size_t MAX_NLOCS = 5;
+	static const size_t MAX_NLOCS = 256;
 
 	/* static methods */
 	/**

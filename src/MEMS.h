@@ -53,9 +53,14 @@ public:
 	/** get the loglik of the entire MEMS if it is from random matches */
 	double loglik() const;
 
-	/** get the probability of MEMS if it is a correct (non-random) match */
-	double Pr() const {
-		return 1 - ::exp(loglik());
+	/** get the evalue of observing this MEMS by random */
+	double evalue() const {
+		return getFMIndex()->length() * std::exp(loglik());
+	}
+
+	/** get the log-evalue of observing this MEMS by random */
+	double logevalue() const {
+		return std::log(getFMIndex()->length()) + loglik();
 	}
 
 	/** get the total length of this MEMS */
