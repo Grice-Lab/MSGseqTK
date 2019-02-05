@@ -95,19 +95,20 @@ public:
 	 * @param strand  searching strand
 	 * @return  a vector of ordered MEMs
 	 */
-	static MEMS sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
-			RNG& rng, uint64_t from = 0, uint64_t to = UINT64_MAX, MEM::STRAND strand = MEM::FWD);
+	static MEMS sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx, RNG& rng, double maxEvalue = DEFAULT_MAX_EVALUE,
+			uint64_t from = 0, uint64_t to = UINT64_MAX, MEM::STRAND strand = MEM::FWD);
 
 	/**
 	 * get best MEMS by trying different strands and multiple random seeds
 	 * @param strand  different strands, 1 for FWD, 2 for REV, 3 for both
 	 */
-	static MEMS sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx,
-			RNG& rng, uint64_t from = 0, uint64_t to = UINT64_MAX, int strand = 3);
+	static MEMS sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx, RNG& rng, double maxEvalue = DEFAULT_MAX_EVALUE,
+			uint64_t from = 0, uint64_t to = UINT64_MAX, int strand = 3);
 
 	/* static fields */
 	static boost::random::uniform_01<> mem_dist; /* random01 distribution for accepting MEMs */
-	static const size_t MAX_MEM_NLOCS = 4;
+	static const size_t MAX_MEM_NLOCS = 256;
+	static const double DEFAULT_MAX_EVALUE;
 
 	/* non-member methods */
 	friend ostream& operator<<(ostream& out, const MEMS& mems);
@@ -152,7 +153,7 @@ struct MEMS_PE {
 	 * get best MEMS_PE by trying different strands and multiple random seeds
 	 * @param strand  different strands, 1 for FWD, 2 for REV, 3 for both
 	 */
-	static MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx, RNG& rng,
+	static MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx, RNG& rng, double maxEvalue = MEMS::DEFAULT_MAX_EVALUE,
 			uint64_t fwdFrom = 0, uint64_t fwdTo = UINT64_MAX, uint64_t revFrom = 0, uint64_t revTo = UINT64_MAX, int strand = 3);
 
 	/* member fields */
