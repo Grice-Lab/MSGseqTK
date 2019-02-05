@@ -40,12 +40,10 @@ MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx, RNG& rng, dou
 		/* calculate MEM evalue */
 		double eval = mem.evalue();
 		/* accept by chance */
-		if(eval <= maxEvalue && eval <= mem_dist(rng)) {
+		if(eval <= maxEvalue) {
 			mems.push_back(mem);
-			i = mem.to + 1;
 		}
-		else
-			i = eval <= mem_dist(rng) ? mem.to + 1 : i + 1;
+		i = mem.to + 1;
 	}
 	return mems;
 }

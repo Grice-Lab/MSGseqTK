@@ -41,6 +41,7 @@ MEM.cpp \
 MEMS.cpp \
 ScoreScheme.cpp \
 FMIndex.cpp \
+FMDIndex.cpp \
 Genome.cpp \
 MetaGenome.cpp \
 MetaGenomeAnno.cpp \

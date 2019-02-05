@@ -32,6 +32,7 @@ DNAseq_test \
 PrimarySeq_test \
 SeqIO_test \
 FMIndex_test \
+FMDIndex_test \
 Genome_test \
 MetaGenomeAnno_test \
 MEM_test \
@@ -54,6 +55,13 @@ $(top_srcdir)/src/util/libEGUtil.a
 
 FMIndex_test_SOURCES = FMIndex_test.cpp
 FMIndex_test_LDADD = \
+$(top_srcdir)/src/libMSGseqTK.a \
+$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+$(top_srcdir)/src/libsds/src/libsds.la \
+$(top_srcdir)/src/util/libEGUtil.a
+
+FMDIndex_test_SOURCES = FMDIndex_test.cpp
+FMDIndex_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 $(top_srcdir)/src/libsds/src/libsds.la \
@@ -98,6 +106,7 @@ DNAseq_test \
 PrimarySeq_test \
 SeqIO_test \
 FMIndex_test \
+FMDIndex_test \
 Genome_test \
 MetaGenomeAnno_test \
 MEM_test \

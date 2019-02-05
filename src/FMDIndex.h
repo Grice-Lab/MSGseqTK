@@ -1,12 +1,13 @@
 /*
- * FMIndex.h
- *
+ * FMDIndex.h
+ *  A bidirectional FM-index for both the forward and reverse-complement of a DNAseq
+ *  proposed in Li Heng Bioinformatics 2012
  *  Created on: Apr 26, 2018
  *      Author: zhengqi
  */
 
-#ifndef SRC_FMINDEX_H_
-#define SRC_FMINDEX_H_
+#ifndef SRC_FMDINDEX_H_
+#define SRC_FMDINDEX_H_
 
 #include <vector>
 #include <array>
@@ -17,6 +18,7 @@
 #include <cstdint>
 #include <limits>
 #include <stdexcept>
+#include <utility>
 #include "DNAseq.h"
 #include "QualStr.h"
 #include "Loc.h"
@@ -34,25 +36,26 @@ using EGriceLab::libSDS::BitSeqRRR;
 using EGriceLab::libSDS::WaveletTreeRRR;
 
 /**
- * FM-index with merge support
+ * FMD-index with bi-directinal search/extend methods
  */
-class FMIndex {
+class FMDIndex {
+public:
+	/* typedefs */
 	typedef array<saidx_t, DNAalphabet::SIZE> BCarray_t; /* fixed array to store base counts */
 	typedef vector<saidx_t> SArray_t; /* store sampled Suffix-Array in std::vector */
 
-public:
 	/* constructors */
 	/** Default constructor */
-	FMIndex() = default;
+	FMDIndex() = default;
 
 	/** Construct an FMIndex from a given (large) DNAseq */
-	explicit FMIndex(const DNAseq& seq, bool keepSA = false)
+	explicit FMDIndex(const DNAseq& seq, bool keepSA = false)
 	: keepSA(keepSA) {
 		build(seq);
 	}
 
 	/** construct an FMIndex from pre-built values */
-	FMIndex(const BCarray_t& B, const BCarray_t& C, const DNAseq& bwtSeq, bool keepSA = false);
+	FMDIndex(const BCarray_t& B, const BCarray_t& C, const DNAseq& bwtSeq, bool keepSA = false);
 
 	/**
 	 * LF-mapping given position and character
@@ -88,7 +91,7 @@ public:
 		return B;
 	}
 
-	/** get baseCount of given base */
+	/** get baseCount of given base in fwd seq */
 	saidx_t getBaseCount(sauchar_t b) const {
 		return B[b];
 	}
@@ -112,12 +115,12 @@ public:
 	const saidx_t totalBases() const;
 
 	/**
-	 * Build an RRFMIndex from a MSA object, old data is removed
-	 * @param msa  pointer to an MSA object
-	 * @return a fresh allocated RRFMIndex
+	 * Build an FMDIndex from a combined seq, in which seq is always in the order of R0R0'R1R1', etc
+	 * @param seq pre-combined bidirectional seq
+	 * @return a fresh allocated FMDIndex
 	 * @throw std::length_error if seq length is too long
 	 */
-	FMIndex& build(const DNAseq& seq);
+	FMDIndex& build(const DNAseq& seq);
 
 	/**
 	 * save raw object data to output
@@ -150,6 +153,14 @@ protected:
 	void buildSA(const saidx_t* SA, const DNAseq& bwtSeq);
 
 public:
+	/** backward extension of a bi-interval [p, q, s] */
+	void backExt(saidx_t& p, saidx_t& q, saidx_t& s, sauchar_t b) const;
+
+	/** forward extension of a bi-interval [p, q, s] */
+	void fwdExt(saidx_t& p, saidx_t& q, saidx_t& s, sauchar_t b) const {
+		backExt(q, p, s, DNAalphabet::complement(b));
+	}
+
 	/**
 	 * count present times of a DNAseq pattern in forward version
 	 */
@@ -160,7 +171,7 @@ public:
 	 * Burrows-Wheeler transform for terabases, Jouni Sirén, 2016 Data Compression Conference
 	 * Note that the other will be used as seq 1, to improve the performance of the algorithm
 	 */
-	FMIndex& operator+=(const FMIndex& other);
+	FMDIndex& operator+=(const FMDIndex& other);
 
 	/** get the encoded BWT of the original seq */
 	DNAseq getBWT() const;
@@ -202,7 +213,7 @@ public:
 	}
 
 	/* non-member functions */
-	friend FMIndex operator+(const FMIndex& lhs, const FMIndex& rhs);
+	friend FMDIndex operator+(const FMDIndex& lhs, const FMDIndex& rhs);
 
 private:
 	/**
@@ -218,9 +229,9 @@ private:
 
 	/* member fields */
 private:
-	BCarray_t B = { }; /* base count of each alphabetbase */
-	BCarray_t C = { }; /* cumulative count of each alphabet base, C[i] = B(0) + B(1) + ... + B(i-1) */
-	WaveletTreeRRR bwt; /* Wavelet-Tree transformed BWT string for reversed DNAseq */
+	BCarray_t B = { };  // combined base count
+	BCarray_t C = { };  // combined cumulative count
+	WaveletTreeRRR bwt; /* Wavelet-Tree transformed BWT string for combined seq */
 	bool keepSA = false; /* whether to keep SAidx and SAsampled during building */
 	BitSeqRRR SAbit; /* BitSeq index telling whether a SA was sampled */
 	SArray_t SAsampled; /* sampled SA vector */
@@ -233,4 +244,4 @@ public:
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */
 
-#endif /* SRC_FMINDEX_H_ */
+#endif /* SRC_FMDINDEX_H_ */

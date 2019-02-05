@@ -89,11 +89,13 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 check_PROGRAMS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
-	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
+	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) \
+	FMDIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
 	MetaGenomeAnno_test$(EXEEXT) MEM_test$(EXEEXT) \
 	Alignment_test$(EXEEXT)
 TESTS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
-	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
+	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) \
+	FMDIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
 	MetaGenomeAnno_test$(EXEEXT) MEM_test$(EXEEXT) \
 	Alignment_test$(EXEEXT)
 subdir = test
@@ -133,6 +135,12 @@ Alignment_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 am_DNAseq_test_OBJECTS = DNAseq_test.$(OBJEXT)
 DNAseq_test_OBJECTS = $(am_DNAseq_test_OBJECTS)
 DNAseq_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a
+am_FMDIndex_test_OBJECTS = FMDIndex_test.$(OBJEXT)
+FMDIndex_test_OBJECTS = $(am_FMDIndex_test_OBJECTS)
+FMDIndex_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
+	$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+	$(top_srcdir)/src/libsds/src/libsds.la \
+	$(top_srcdir)/src/util/libEGUtil.a
 am_FMIndex_test_OBJECTS = FMIndex_test.$(OBJEXT)
 FMIndex_test_OBJECTS = $(am_FMIndex_test_OBJECTS)
 FMIndex_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
@@ -201,13 +209,15 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(Alignment_test_SOURCES) $(DNAseq_test_SOURCES) \
-	$(FMIndex_test_SOURCES) $(Genome_test_SOURCES) \
-	$(MEM_test_SOURCES) $(MetaGenomeAnno_test_SOURCES) \
-	$(PrimarySeq_test_SOURCES) $(SeqIO_test_SOURCES)
+	$(FMDIndex_test_SOURCES) $(FMIndex_test_SOURCES) \
+	$(Genome_test_SOURCES) $(MEM_test_SOURCES) \
+	$(MetaGenomeAnno_test_SOURCES) $(PrimarySeq_test_SOURCES) \
+	$(SeqIO_test_SOURCES)
 DIST_SOURCES = $(Alignment_test_SOURCES) $(DNAseq_test_SOURCES) \
-	$(FMIndex_test_SOURCES) $(Genome_test_SOURCES) \
-	$(MEM_test_SOURCES) $(MetaGenomeAnno_test_SOURCES) \
-	$(PrimarySeq_test_SOURCES) $(SeqIO_test_SOURCES)
+	$(FMDIndex_test_SOURCES) $(FMIndex_test_SOURCES) \
+	$(Genome_test_SOURCES) $(MEM_test_SOURCES) \
+	$(MetaGenomeAnno_test_SOURCES) $(PrimarySeq_test_SOURCES) \
+	$(SeqIO_test_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -621,6 +631,13 @@ $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 $(top_srcdir)/src/libsds/src/libsds.la \
 $(top_srcdir)/src/util/libEGUtil.a
 
+FMDIndex_test_SOURCES = FMDIndex_test.cpp
+FMDIndex_test_LDADD = \
+$(top_srcdir)/src/libMSGseqTK.a \
+$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+$(top_srcdir)/src/libsds/src/libsds.la \
+$(top_srcdir)/src/util/libEGUtil.a
+
 Genome_test_SOURCES = Genome_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
 Genome_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
@@ -706,6 +723,10 @@ DNAseq_test$(EXEEXT): $(DNAseq_test_OBJECTS) $(DNAseq_test_DEPENDENCIES) $(EXTRA
 	@rm -f DNAseq_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(DNAseq_test_OBJECTS) $(DNAseq_test_LDADD) $(LIBS)
 
+FMDIndex_test$(EXEEXT): $(FMDIndex_test_OBJECTS) $(FMDIndex_test_DEPENDENCIES) $(EXTRA_FMDIndex_test_DEPENDENCIES) 
+	@rm -f FMDIndex_test$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(FMDIndex_test_OBJECTS) $(FMDIndex_test_LDADD) $(LIBS)
+
 FMIndex_test$(EXEEXT): $(FMIndex_test_OBJECTS) $(FMIndex_test_DEPENDENCIES) $(EXTRA_FMIndex_test_DEPENDENCIES) 
 	@rm -f FMIndex_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(FMIndex_test_OBJECTS) $(FMIndex_test_LDADD) $(LIBS)
@@ -749,6 +770,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@$(top_srcdir)/src/$(DEPDIR)/MSGseqTKEnv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Alignment_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DNAseq_test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FMDIndex_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FMIndex_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Genome_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MEM_test.Po@am__quote@
@@ -1003,6 +1025,13 @@ SeqIO_test.log: SeqIO_test$(EXEEXT)
 FMIndex_test.log: FMIndex_test$(EXEEXT)
 	@p='FMIndex_test$(EXEEXT)'; \
 	b='FMIndex_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+FMDIndex_test.log: FMDIndex_test$(EXEEXT)
+	@p='FMDIndex_test$(EXEEXT)'; \
+	b='FMDIndex_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
