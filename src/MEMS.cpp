@@ -72,6 +72,8 @@ size_t MEMS::bestMEMIndex() const {
 }
 
 ostream& MEMS::write(ostream& out) const {
+	if(empty())
+		return out;
 	for(const MEM& mem : *this)
 		out << mem << ';';
 	out << "strand=" << getStrand() << ";loglik=" << loglik();
