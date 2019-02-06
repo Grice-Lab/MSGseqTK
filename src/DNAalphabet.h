@@ -115,6 +115,21 @@ public:
 		return s == GAP_SYM || s == GAP_ALT;
 	}
 
+	/** test whether a base is basic base */
+	static bool isBasic(nt16_t b) {
+		switch(b) {
+		case A: case C: case G: case T:
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	/** test whether a symbol is basic base */
+	static bool isBasic(char s) {
+		return isBasic(encode(s));
+	}
+
 	/** get a reverse-completed copy of a dna string */
 	static string revcom(const string& str);
 };
