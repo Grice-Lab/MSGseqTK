@@ -30,9 +30,10 @@ MEM& MEM::evaluate() {
 		DNAseq::value_type b = seq->getBase(i);
 		if(strand == REV)
 			b = DNAalphabet::complement(b);
-		logP += std::log(fmidx->getBaseCount(b));
+		if(DNAalphabet::isBasic(b))
+			logP += std::log(fmidx->getBaseCount(b));
 	}
-	logP -= length() * log(fmidx->totalBases()); /* subtract denominator */
+	logP -= length() * log(fmidx->getBasicBaseCount()); /* subtract denominator */
 	return *this;
 }
 

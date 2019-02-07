@@ -34,15 +34,15 @@ uint64_t MEMS::length() const {
 MEMS MEMS::sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx, RNG& rng, double maxEvalue,
 		uint64_t from, uint64_t to, MEM::STRAND strand) {
 	MEMS mems;
-	for(uint64_t i = from; i < std::min(to, seq->length());) {
+	uint64_t i = from;
+	while(i < std::min(to, seq->length())) {
 		MEM mem = MEM::findMEM(seq, fmidx, i, to, strand).evaluate();
 
 		/* calculate MEM evalue */
-		double eval = mem.evalue();
+		double alpha = maxEvalue / mem.evalue();
 		/* accept by chance */
-		if(eval <= maxEvalue) {
+		if(mem_dist(rng) <= alpha)
 			mems.push_back(mem);
-		}
 		i = mem.to + 1;
 	}
 	return mems;
@@ -72,6 +72,8 @@ size_t MEMS::bestMEMIndex() const {
 }
 
 ostream& MEMS::write(ostream& out) const {
+	if(empty())
+		return out;
 	for(const MEM& mem : *this)
 		out << mem << ';';
 	out << "strand=" << getStrand() << ";loglik=" << loglik();

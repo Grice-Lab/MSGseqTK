@@ -152,7 +152,7 @@ struct MEM {
 	int64_t to = 0;   /* 1-based relative end on seq */
 	int64_t SAstart = 0; /* 0-based start position on SA */
 	int64_t SAend = 0;   /* 1-based end position on SA */
-	double logP = NAN; /* log-probability (loglik) of observing this MEM by chance */
+	double logP = 0; /* log-probability (loglik) of observing this MEM by chance */
 	vector<Loc> locs; /* all Loc this MEM matches to w/ reversed coordinates */
 
 	/* static fields */
