@@ -18,10 +18,17 @@ using std::istream;
 using std::ostream;
 
 struct Loc {
+	/* enums */
+	enum STRAND { FWD = 1 /* forward */, REV /* reverse-complement */, UNK /* unknown */  };
+
 	/** default constructor */
 	Loc() = default;
 
-	/** constructor from given values */
+	/** constructor given all values */
+	Loc(int64_t start, int64_t end, STRAND strand) : start(start), end(end), strand(strand)
+	{  }
+
+	/** constructor given coordinates */
 	Loc(int64_t start, int64_t end) : start(start), end(end)
 	{  }
 
@@ -43,11 +50,20 @@ struct Loc {
 	istream& read(istream& in);
 
 	/** static member methods */
-	static bool isOverlap(const Loc& loc1, const Loc& loc2) {
-		return loc1.start < loc2.end && loc1.end > loc2.start;
+	static bool isOverlap(const Loc& lhs, const Loc& rhs, bool ignoreStrand = true) {
+		return lhs.start < rhs.end && lhs.end > rhs.start &&
+				(ignoreStrand || (lhs.strand & rhs.strand) != 0);
 	}
 
-	static int64_t dist(const Loc& loc1, const Loc& loc2);
+	static int64_t dist(const Loc& lhs, const Loc& rhs) {
+		return isOverlap(lhs, rhs) ? 0 : lhs.start < rhs.start ? rhs.start - lhs.end + 1: lhs.start - rhs.end + 1;
+	}
+
+	/** decode strand to char */
+	static char decodeStrand(STRAND strand);
+
+	/** encode strand from char */
+	static STRAND encodeStrand(char s);
 
 	/* non-member methods */
 	/** formatted output */
@@ -56,19 +72,12 @@ struct Loc {
 	friend istream& operator>>(istream& in, Loc& loc);
 
 	/* relational operators */
-	/**
-	 * return true if lhs' start is smaller
-	 * or they are equal and end is smaller
-	 */
-	friend bool operator<(const Loc& lhs, const Loc& rhs);
-	/**
-	 * return true if start and end are all equal
-	 */
 	friend bool operator==(const Loc& lhs, const Loc& rhs);
 
 	/* member fields */
 	int64_t start = 0; /* 0-based */
 	int64_t end = 0;   /* 1-based */
+	STRAND strand = UNK;
 };
 
 inline ostream& operator<<(ostream& out, const Loc& loc) {
@@ -79,31 +88,12 @@ inline istream& operator>>(istream& in, Loc& loc) {
 	return loc.read(in);
 }
 
-inline bool operator<(const Loc& lhs, const Loc& rhs) {
-	if(lhs.start != rhs.start)
-		return lhs.start < rhs.start;
-	else
-		return lhs.end < rhs.end;
-}
-
 inline bool operator==(const Loc& lhs, const Loc& rhs) {
 	return lhs.start == rhs.start && lhs.end == rhs.end;
 }
 
 inline bool operator!=(const Loc& lhs, const Loc& rhs) {
 	return !(lhs == rhs);
-}
-
-inline bool operator>(const Loc& lhs, const Loc& rhs) {
-	return rhs < lhs;
-}
-
-inline bool operator>=(const Loc& lhs, const Loc& rhs) {
-	return !(lhs < rhs);
-}
-
-inline bool operator<=(const Loc& lhs, const Loc& rhs) {
-	return lhs < rhs || lhs == rhs;
 }
 
 } /* namespace MSGseqTK */

@@ -202,7 +202,14 @@ public:
 	}
 
 	/** locate all matches to given pattern */
-	vector<Loc> locateAll(const DNAseq& pattern, STRAND strand = FWD) const;
+	vector<Loc> locateAll(const DNAseq& pattern, STRAND strand = FWD) const {
+		return strand == FWD ? locateAllFwd(pattern) : locateAllRev(pattern);
+	}
+
+	/** locate all matches in FWD direction */
+	vector<Loc> locateAllFwd(const DNAseq& pattern) const;
+
+	vector<Loc> locateAllRev(const DNAseq& pattern) const;
 
 	/**
 	 * reverse a loc on this FM-index

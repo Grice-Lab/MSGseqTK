@@ -297,7 +297,28 @@ saidx_t FMDIndex::accessSA(saidx_t i) const {
 	return SAsampled[SAbit.rank1(i) - 1] + dist;
 }
 
-vector<Loc> FMDIndex::locateAll(const DNAseq& pattern, STRAND strand) const {
+vector<Loc> FMDIndex::locateAllFwd(const DNAseq& pattern) const {
+	vector<Loc> locs;
+	if(pattern.empty())
+		return locs;
+
+	DNAseq::const_iterator b = pattern.begin();
+	saidx_t p = C[*b];
+	saidx_t q = C[DNAalphabet::complement(*b)];
+	saidx_t s = C[*b + 1] - C[*b];
+
+	/* backward search */
+    while(s >= 0 && ++b < pattern.end())
+    	fwdExt(p, q, s, *b);
+
+    for(saidx_t i = p; i < p + s; ++i) {
+    	saidx_t SAstart = accessSA(i);
+    	locs.push_back(Loc(SAstart, SAstart + pattern.length()));
+    }
+    return locs;
+}
+
+vector<Loc> FMDIndex::locateAllRev(const DNAseq& pattern) const {
 	vector<Loc> locs;
 	if(pattern.empty())
 		return locs;
@@ -311,8 +332,7 @@ vector<Loc> FMDIndex::locateAll(const DNAseq& pattern, STRAND strand) const {
     while(s >= 0 && ++b < pattern.rend())
     	backExt(p, q, s, *b);
 
-    saidx_t start = strand == FWD ? p : q;
-    for(saidx_t i = start; i < start + s; ++i) {
+    for(saidx_t i = q; i < q + s; ++i) {
     	saidx_t SAstart = accessSA(i);
     	locs.push_back(Loc(SAstart, SAstart + pattern.length()));
     }
