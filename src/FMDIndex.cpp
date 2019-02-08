@@ -33,7 +33,7 @@ FMDIndex& FMDIndex::build(const DNAseq& seq) {
 		throw std::length_error("DNAseq length exceeding the max allowed length");
 
 	buildCounts(seq);
-	buildBWT(seq + DNAseq::DNAgap + seq.revcom());
+	buildBWT(seq);
 
 	return *this;
 }
@@ -49,6 +49,17 @@ void FMDIndex::buildCounts(const DNAseq& seq) {
     	C[i] = S;
     	S += B[i];
     }
+    if(!isBiDirectional()) {
+    	std::cerr << "input seq is not bi-directional" << std::endl;
+    	abort();
+    }
+}
+
+bool FMDIndex::isBiDirectional() const {
+	for(nt16_t b = 0; b < DNAalphabet::SIZE; ++b)
+		if(getBaseCount(b) != getBaseCount(DNAalphabet::complement(b)))
+				return false;
+	return true;
 }
 
 ostream& FMDIndex::save(ostream& out) const {
@@ -92,10 +103,10 @@ saidx_t FMDIndex::count(const DNAseq& pattern) const {
 	saidx_t s = C[*b + 1] - C[*b];
 
 	/* backward search */
-    while(p <= q && ++b < pattern.rend()) {
+    while(s >= 0 && ++b < pattern.rend()) {
     	backExt(p, q, s, *b);
     }
-    return p <= q ? s : 0;
+    return s >= 0 ? s : 0;
 }
 
 FMDIndex& FMDIndex::operator+=(const FMDIndex& other) {
@@ -286,7 +297,7 @@ saidx_t FMDIndex::accessSA(saidx_t i) const {
 	return SAsampled[SAbit.rank1(i) - 1] + dist;
 }
 
-vector<Loc> FMDIndex::locateAll(const DNAseq& pattern) const {
+vector<Loc> FMDIndex::locateAll(const DNAseq& pattern, STRAND strand) const {
 	vector<Loc> locs;
 	if(pattern.empty())
 		return locs;
@@ -297,10 +308,11 @@ vector<Loc> FMDIndex::locateAll(const DNAseq& pattern) const {
 	saidx_t s = C[*b + 1] - C[*b];
 
 	/* backward search */
-    while(p <= q && ++b >= pattern.rend())
+    while(s >= 0 && ++b < pattern.rend())
     	backExt(p, q, s, *b);
 
-    for(saidx_t i = p; i <= q; ++i) {
+    saidx_t start = strand == FWD ? p : q;
+    for(saidx_t i = start; i < start + s; ++i) {
     	saidx_t SAstart = accessSA(i);
     	locs.push_back(Loc(SAstart, SAstart + pattern.length()));
     }
@@ -364,12 +376,14 @@ void FMDIndex::backExt(saidx_t& p, saidx_t& q, saidx_t& s, sauchar_t b) const {
 		pB[i] = C[i] + O;
 		sB[i] = bwt.rank(i, p + s - 1) - O;
 	}
+	/* new range of [q', q' + s' - 1] is a subrange of original [q, q + s] */
+	/* devide q + q + s */
 	qB[0] = q;
-	qB[DNAalphabet::NT16_MAX] = qB[0] + sB[0];
-	for(nt16_t i = DNAalphabet::NT16_MAX - 1; i >= DNAalphabet::NT16_MIN; --i)
-		qB[i] = qB[i + 1] + sB[i + 1];
-	qB[DNAalphabet::SIZE] = qB[1] + sB[1];
+	qB[DNAalphabet::NT16_MAX] = q + sB[0];
+	for(nt16_t i = DNAalphabet::NT16_MAX; i > DNAalphabet::NT16_MIN; --i)
+		qB[i - 1] = qB[i] + sB[i];
 
+	/* update bi-interval */
 	p = pB[b];
 	q = qB[b];
 	s = sB[b];

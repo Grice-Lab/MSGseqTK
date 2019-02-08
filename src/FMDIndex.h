@@ -44,11 +44,14 @@ public:
 	typedef array<saidx_t, DNAalphabet::SIZE> BCarray_t; /* fixed array to store base counts */
 	typedef vector<saidx_t> SArray_t; /* store sampled Suffix-Array in std::vector */
 
+	/* enums */
+	enum STRAND { FWD /* forward strand */, REV /* reverse-complement strand */ };
+
 	/* constructors */
 	/** Default constructor */
 	FMDIndex() = default;
 
-	/** Construct an FMIndex from a given (large) DNAseq */
+	/** Construct an FMIndex from a given DNAseq */
 	explicit FMDIndex(const DNAseq& seq, bool keepSA = false)
 	: keepSA(keepSA) {
 		build(seq);
@@ -80,6 +83,9 @@ public:
 	bool isInitiated() const {
 		return !bwt.empty();
 	}
+
+	/** check whether this FMDIndex is bi-directional by checking counts of complement bases */
+	bool isBiDirectional() const;
 
 	/** get the length of this index */
 	saidx_t length() const {
@@ -196,7 +202,7 @@ public:
 	}
 
 	/** locate all matches to given pattern */
-	vector<Loc> locateAll(const DNAseq& pattern) const;
+	vector<Loc> locateAll(const DNAseq& pattern, STRAND strand = FWD) const;
 
 	/**
 	 * reverse a loc on this FM-index
