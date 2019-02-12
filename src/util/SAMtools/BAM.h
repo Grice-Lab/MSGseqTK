@@ -59,7 +59,7 @@ public:
 
 	/** construct a BAM from all core data */
 	BAM(const string& qname, uint16_t flag, int32_t tid, int32_t pos, uint8_t mapQ,
-			const cigar_str& cigar, uint32_t l_seq, const seq_str& seq, const qual_str& qual,
+			const cigar_str& cigar, int32_t l_seq, const seq_str& seq, const qual_str& qual,
 			int32_t mtid = -1, int32_t mpos = -1, int32_t isize = 0, uint64_t id = 0);
 
 	/** deligating construt a BAM from all core data, using raw seq */
@@ -70,7 +70,7 @@ public:
 	{  }
 
 	/** deligating construct a BAM from an (unmapped) seq only */
-	BAM(const string& qname, uint32_t l_seq, const seq_str& seq, const qual_str& qual, uint16_t flag = 0)
+	BAM(const string& qname, int32_t l_seq, const seq_str& seq, const qual_str& qual, uint16_t flag = 0)
 	: BAM(qname, 0, -1, 0, 0, cigar_str(), l_seq, seq, qual)
 	{  }
 
