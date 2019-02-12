@@ -18,7 +18,7 @@ const std::regex BAM::CIGAR_PATTERN = std::regex("([0-9]+)([MIDNSHPX=])");
 const double BAM::DEFAULT_AUX_DATA_FACTOR = 4;
 
 BAM::BAM(const string& qname, uint16_t flag, int32_t tid, int32_t pos, uint8_t mapQ,
-		const cigar_str& cigar, uint32_t l_seq, const seq_str& seq, const qual_str& qual,
+		const cigar_str& cigar, int32_t l_seq, const seq_str& seq, const qual_str& qual,
 		int32_t mtid, int32_t mpos, int32_t isize, uint64_t id) : BAM() {
 	assert(seq.length() == (l_seq + 1) / 2);
 	assert(qual.length() == l_seq);
