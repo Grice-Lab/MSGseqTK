@@ -60,12 +60,12 @@ public:
 	/** construct a BAM from all core data */
 	BAM(const string& qname, uint16_t flag, int32_t tid, int32_t pos, uint8_t mapQ,
 			const cigar_str& cigar, int32_t l_seq, const seq_str& seq, const qual_str& qual,
-			int32_t mtid = -1, int32_t mpos = -1, int32_t isize = 0, uint64_t id = 0);
+			int32_t mtid = -1, int32_t mpos = 0, int32_t isize = 0, uint64_t id = 0);
 
 	/** deligating construt a BAM from all core data, using raw seq */
 	BAM(const string& qname, uint16_t flag, int32_t tid, int32_t pos, uint8_t mapQ,
 			const cigar_str& cigar, const string& seq, const qual_str& qual,
-			int32_t mtid = -1, int32_t mpos = -1, int32_t isize = 0, uint64_t id = 0)
+			int32_t mtid = -1, int32_t mpos = 0, int32_t isize = 0, uint64_t id = 0)
 	: BAM(qname, flag, tid, pos, mapQ, cigar, seq.length(), nt16Encode(seq), qual, mtid, mpos, isize, id)
 	{  }
 
