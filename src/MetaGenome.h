@@ -14,9 +14,10 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <cassert>
 #include "DNAseq.h"
 #include "Genome.h"
-#include "Loc.h"
+#include "GLoc.h"
 #include "StringUtils.h"
 
 namespace EGriceLab {
@@ -35,8 +36,8 @@ using std::deque;
 class MetaGenome {
 public:
 	typedef vector<string> NAME_INDEX;    /* id->name vector */
-	typedef map<string, size_t> GENOME_INDEX; /* genome name->id map */
-	typedef map<string, size_t> CHROM_INDEX;  /* chrom name->id map */
+	typedef map<string, size_t> GENOME_INDEX; /* genome id->idx map */
+	typedef map<string, size_t> CHROM_INDEX;  /* chrom name->idx map */
 	typedef vector<size_t> INDEX_MAP;  /* chrom idx->genome idx */
 	typedef vector<size_t> BEFORE_MAP; /* chrom idx-># chroms before */
 	typedef vector<Loc> GENOME_LOC; /* genome id->Loc map */
@@ -45,7 +46,7 @@ public:
 	/* constructors */
 
 	/** get total size of this MetaGenome */
-	uint64_t size() const;
+	size_t size() const;
 
 	/** test whether this MetaGnome is empty */
 	bool empty() const {
@@ -115,15 +116,13 @@ public:
 	 * @return  index of given genome id,
 	 * or -1 if not found
 	 */
-	size_t getGenomeIndex(const string& genomeId) const {
-		return genomeId2Idx.count(genomeId) > 0 ? genomeId2Idx.at(genomeId) : -1;
-	}
+	size_t getGenomeIndex(const string& genomeId) const;
 
 	/**
-	 * get the genome index at given location,
+	 * get the genome index at given position,
 	 * or -1 if not found
 	 */
-	size_t getGenomeIndex(uint64_t loc) const;
+	size_t getGenomeIndex(int64_t pos) const;
 
 	/** get genome index by chrom index */
 	size_t getGenomeIndexByChromIdx(size_t chrIdx) const {
@@ -135,22 +134,33 @@ public:
 	 * @return  index of given chrom,
 	 * or -1 if not found
 	 */
-	size_t getChromIndex(const string& chrName) const {
-		return chromName2Idx.count(chrName) > 0 ? chromName2Idx.at(chrName) : -1;
+	size_t getChromIndex(const string& chrName) const;
+
+	/**
+	 * get the chromosome index of given position,
+	 * or -1 if not found
+	 */
+	size_t getChromIndex(int64_t pos) const;
+
+	/**
+	 * get a general id for given position,
+	 * alias to getChromIndex
+	 */
+	size_t getLocId(int64_t pos) const {
+		return getChromIndex(pos);
+	}
+
+	/** get strand of given chrom index and position */
+	GLoc::STRAND getStrand(size_t tid, int64_t pos) const {
+		assert(getChromFwdStart(tid) <= pos && pos < getChromEnd(tid));
+		return pos < getChromFwdEnd(tid) ? GLoc::FWD : GLoc::REV;
 	}
 
 	/**
-	 * get the chromosome index of given location,
-	 * or -1 if not found
+	 * get the strand of given position
 	 */
-	size_t getChromIndex(uint64_t loc) const;
-
-	/**
-	 * get a general id for given loc,
-	 * alias to getChromIndex
-	 */
-	size_t getLocId(uint64_t loc) const {
-		return getChromIndex(loc);
+	GLoc::STRAND getStrand(int64_t pos) const {
+		return getStrand(getChromIndex(pos), pos);
 	}
 
 	/** get # chroms before given chrom index in its genome */
@@ -164,10 +174,10 @@ public:
 	}
 
 	/**
-	 * get the genome at given location
+	 * get the genome at given position
 	 */
-	const Genome& getGenomeAtLoc(uint64_t loc) const {
-		return genomes.at(getGenomeIndex(loc));
+	const Genome& getGenomeAtLoc(int64_t pos) const {
+		return genomes.at(getGenomeIndex(pos));
 	}
 
 	/**
@@ -185,14 +195,14 @@ public:
 	}
 
 	/**
-	 * get the end of the i-th genome, including GAP_BASE-terminal
+	 * get the end of the i-th genome
 	 */
 	int64_t getGenomeEnd(size_t i) const {
 		return getGenomeLoc(i).end;
 	}
 
-	/** get the length of the i-th genome, including GAP_BASE-terminal */
-	uint64_t getGenomeLen(size_t i) const {
+	/** get the length of the i-th genome, include fwd + rev */
+	int64_t getGenomeLen(size_t i) const {
 		return getGenomeLoc(i).length();
 	}
 
@@ -204,6 +214,20 @@ public:
 	}
 
 	/**
+	 * get the fwd Loc of i-th chrom
+	 */
+	Loc getChromFwdLoc(size_t i) const {
+		return Loc(getChromFwdStart(i), getChromFwdEnd(i));
+	}
+
+	/**
+	 * get the rev Loc of i-th chrom
+	 */
+	Loc getChromRevLoc(size_t i) const {
+		return Loc(getChromRevStart(i), getChromRevEnd(i));
+	}
+
+	/**
 	 * get the start of the i-th chrom
 	 */
 	int64_t getChromStart(size_t i) const {
@@ -211,16 +235,44 @@ public:
 	}
 
 	/**
-	 * get the end of the i-th chrom, including GAP_BASE-terminal
+	 * get the fwd start of the i-th chrom
+	 */
+	int64_t getChromFwdStart(size_t i) const {
+		return getChromStart(i);
+	}
+
+	/**
+	 * get the rev start of the i-th chrom
+	 */
+	int64_t getChromRevStart(size_t i) const {
+		return getChromStart(i) + getChromLen(i) / 2;
+	}
+
+	/**
+	 * get the end of the i-th chrom
 	 */
 	int64_t getChromEnd(size_t i) const {
 		return getChromLoc(i).end;
 	}
 
 	/**
-	 * get the length of the i-th chrom, including GAP_BASE-terminal
+	 * get the fwd end of the i-th chrom
 	 */
-	uint64_t getChromLen(size_t i) const {
+	int64_t getChromFwdEnd(size_t i) const {
+		return getChromStart(i) + getChromLen(i) / 2;
+	}
+
+	/**
+	 * get the rev end of the i-th chrom
+	 */
+	int64_t getChromRevEnd(size_t i) const {
+		return getChromEnd(i);
+	}
+
+	/**
+	 * get the length of the i-th chrom, including fwd + rev
+	 */
+	int64_t getChromLen(size_t i) const {
 		return getChromLoc(i).length();
 	}
 
@@ -252,30 +304,50 @@ public:
 	}
 
 	/**
-	 * add a genome at the end of this MetaGenome
+	 * add a genome and its bi-directional seq at the end of this MetaGenome
 	 */
-	void addGenome(const Genome& genome, const DNAseq& genomeSeq);
-
-	/** get chrom seq by genome index and chrom index, including GAP_BASE terminal */
-	DNAseq getChromSeq(size_t chrIdx, bool terminalGap = true) const {
-		return terminalGap ? seq.substr(getChromStart(chrIdx), getChromLen(chrIdx)) :
-				seq.substr(getChromStart(chrIdx), getChromLen(chrIdx) - 1);
+	void addGenome(const Genome& genome) {
+		genomes.push_back(genome);
 	}
 
-	/** get genome seq by genome index, including GAP_BASE terminal */
-	DNAseq getGenomeSeq(size_t genomeIdx, bool terminalGap = true) const {
-		return terminalGap ? seq.substr(getGenomeStart(genomeIdx), getGenomeLen(genomeIdx)) :
-				seq.substr(getGenomeStart(genomeIdx), getGenomeLen(genomeIdx) - 1);
+	/** get the last/back genome, const version */
+	const Genome& backGenome() const {
+		return genomes.back();
 	}
 
-	/** get the entire metagenome seq */
-	const DNAseq& getSeq() const {
-		return seq;
+	/** get the last/back genome */
+	Genome& backGenome() {
+		return genomes.back();
 	}
 
-	/** get a segment/subseq of this metagenome */
-	DNAseq subseq(size_t pos = 0, size_t len = DNAseq::npos) const {
-		return seq.substr(pos, len);
+	/** pop the last genome */
+	void popGenome() {
+		genomes.pop_back();
+	}
+
+	/** get chromosome given chrIdx */
+	const Genome::Chrom& getChrom(size_t chrIdx) const {
+		return getGenome(getGenomeIndexByChromIdx(chrIdx)).getChrom(getChromNbefore(chrIdx));
+	}
+
+	/** get chrom seq by chrom idx, with null-terminal */
+	DNAseq getChromSeq(size_t chrIdx) const {
+		return getChromFwdSeq(chrIdx) + getChromRevSeq(chrIdx);
+	}
+
+	/** get chrom fwd seq by chrom idx */
+	const DNAseq& getChromFwdSeq(size_t chrIdx) const {
+		return getChrom(chrIdx).seq;
+	}
+
+	/** get chrom rev seq by chrom idx */
+	DNAseq getChromRevSeq(size_t chrIdx) const {
+		return getChromFwdSeq(chrIdx).revcom();
+	}
+
+	/** get bi-directional genome seq by genome idx */
+	DNAseq getGenomeSeq(size_t genomeIdx) const {
+		return getGenome(genomeIdx).getSeq();
 	}
 
 	/** save this object to binary output, in compressed or raw mode */
@@ -305,15 +377,14 @@ public:
 	/* member fields */
 private:
 	vector<Genome> genomes;
-	DNAseq seq; // GAP_BASE seperated contatenated sequence of this metagenome
-	NAME_INDEX genomeIds;
-	NAME_INDEX chromNames;
-	GENOME_INDEX genomeId2Idx;
-	CHROM_INDEX chromName2Idx;
-	INDEX_MAP chromIdx2GenomeIdx;
-	BEFORE_MAP chromIdx2Nbefore;
-	GENOME_LOC genomeIdx2Loc; // index->0-based start
-	CHROM_LOC chromIdx2Loc; // index->0-based start
+	NAME_INDEX genomeIds; // all genome ids
+	NAME_INDEX chromNames; // all chrom names
+	GENOME_INDEX genomeId2Idx; // genome id -> idx
+	CHROM_INDEX chromName2Idx; // chrom name -> idx
+	INDEX_MAP chromIdx2GenomeIdx; // chrom idx -> genome idx
+	BEFORE_MAP chromIdx2Nbefore; // chrom idx -> # chroms before this chrom in this genome
+	GENOME_LOC genomeIdx2Loc; // genome idx -> Loc on MetaGenome (including fwd + rev)
+	CHROM_LOC chromIdx2Loc; // chrom idx -> Loc on MetaGenome (including fwd + rev)
 
 public:
 	/* static methods */
@@ -324,23 +395,33 @@ public:
 };
 
 inline bool operator==(const MetaGenome& lhs, const MetaGenome& rhs) {
-	return lhs.genomes == rhs.genomes && lhs.seq == rhs.seq; /* equal genomes guarantees equal index */
+	return lhs.genomes == rhs.genomes; /* equal genomes guarantees equal index */
 }
 
 inline bool operator!=(const MetaGenome& lhs, const MetaGenome& rhs) {
 	return !(lhs == rhs);
 }
 
-inline size_t MetaGenome::getGenomeIndex(uint64_t loc) const {
+inline size_t MetaGenome::getGenomeIndex(const string& genomeId) const {
+	GENOME_INDEX::const_iterator result = genomeId2Idx.find(genomeId);
+	return result != genomeId2Idx.end() ? result->second : -1;
+}
+
+inline size_t MetaGenome::getGenomeIndex(int64_t pos) const {
 	GENOME_LOC::const_iterator result = std::find_if(genomeIdx2Loc.begin(), genomeIdx2Loc.end(),
-			[=] (const GENOME_LOC::value_type& item) { return item.start <= loc && loc < item.end; }
+			[=] (const GENOME_LOC::value_type& item) { return item.start <= pos && pos < item.end; }
 	);
 	return result != genomeIdx2Loc.end() ? result - genomeIdx2Loc.begin() : -1;
 }
 
-inline size_t MetaGenome::getChromIndex(uint64_t loc) const {
+inline size_t MetaGenome::getChromIndex(const string& chrName) const {
+	CHROM_INDEX::const_iterator result = chromName2Idx.find(chrName);
+	return result != chromName2Idx.end() ? result->second : -1;
+}
+
+inline size_t MetaGenome::getChromIndex(int64_t pos) const {
 	CHROM_LOC::const_iterator result = std::find_if(chromIdx2Loc.begin(), chromIdx2Loc.end(),
-			[=] (const CHROM_LOC::value_type& item) { return item.start <= loc && loc < item.end; }
+			[=] (const CHROM_LOC::value_type& item) { return item.start <= pos && pos < item.end; }
 	);
 	return result != chromIdx2Loc.end() ? result - chromIdx2Loc.begin() : -1;
 }

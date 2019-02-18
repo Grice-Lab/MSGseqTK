@@ -229,8 +229,9 @@ int main(int argc, char* argv[]) {
 			const string& genomeId = mtg.getGenomeId(gid);
 			const string& genomeName = mtg.getGenomeName(gid);
 			const string& chrName = mtg.getChromName(cid);
-			seqO.writeSeq(PrimarySeq(mtg.getChromSeq(cid, false),
-					Genome::formatName(MetaGenome::getChromId(genomeName, chrName)),
+			DNAseq chrSeq = mtg.getChromFwdSeq(cid);
+			chrSeq.erase(chrSeq.length() - 1); // remove null-terminal
+			seqO.writeSeq(PrimarySeq(chrSeq, Genome::formatName(MetaGenome::getChromId(genomeName, chrName)),
 					"genomeId=" + genomeId + ";genomeName=" + genomeName + ";chromName=" + chrName));
 		}
 	}

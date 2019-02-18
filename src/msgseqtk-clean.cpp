@@ -1,7 +1,7 @@
 /*******************************************************************************
  * This file is part of MSGseqTK, a Metagenomics Shot-Gun sequencing ToolKit
  * for ultra-fast and accurate MSG-seq cleaning, mapping and more,
- * based on space-efficient FM-index on entire collection of meta-genomics sequences.
+ * based on space-efficient FMD-index on entire collection of meta-genomics sequences.
  * Copyright (C) 2018  Qi Zheng
  *
  * MSGseqTK is free software: you can redistribute it and/or modify
@@ -33,7 +33,7 @@
 #include <boost/iostreams/filter/zlib.hpp> /* for zlib support */
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filter/bzip2.hpp> /* for bzip2 support */
-//#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/mersenne_twister.hpp>
 #include "MSGseqTK.h"
 #include "EGUtil.h"
 
@@ -47,9 +47,6 @@ using namespace EGriceLab::MSGseqTK;
 
 /* program default values */
 static const double DEFAULT_MIN_LOD = 0;
-//static const double MAX_EVAL = 1;
-static const int DEFAULT_STRAND = 3;
-//static const double DEFAULT_INDEL_RATE = 0.01;
 static const string ASSIGNMENT_BASIC_HEADER = "id\tdescription\tref_loglik\tbg_loglik\tLOD";
 static const string ASSIGNMENT_SE_DETAIL = "ref_MEMS\tbg_MEMS";
 static const string ASSIGNMENT_PE_DETAIL = "ref_MEMS_fwd\tref_MEMS_rev\tbg_MEMS_fwd\tbg_MEMS_rev";
@@ -82,8 +79,7 @@ void printUsage(const string& progName) {
 		 << "            -a  FILE             : write an additional TSV file with the detailed assignment information for each read" << endl
 		 << "            --detail  FLAG       : write detailed information of MEMS in the assignment output, ignored if -a is not specified; this may lead to much slower processing" << endl
 		 << "            -L|--lod  DBL        : minimum log-odd required to determine a read/pair as reference vs. background [" << DEFAULT_MIN_LOD << "]" << endl
-//		 << "            -e  DBL              : maximum e-value allowed to consider an MEM between datbase and a read as significance [" << MAX_EVAL << "]" << endl
-		 << "            -s|--strand  INT     : read/pair strand to search, 1 for sense, 2 for anti-sense, 3 for both [" << DEFAULT_STRAND << "]" << endl
+		 << "            -e|--evalue  DBL     : maximum e-value to consider an MEM as significant [" << MEMS::DEFAULT_MAX_EVALUE << "]" << endl
 		 << "            -S|--seed  INT       : random seed used for determing MEMS, for debug only" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
@@ -97,17 +93,17 @@ void printUsage(const string& progName) {
  * main function to process single-ended reads
  * @return 0 if success, return non-zero otherwise
  */
-int main_SE(const FMIndex& refFmidx, const FMIndex& bgFmidx,
-		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut, RNG& rng,
-		bool withDetail, double minLod, int strand);
+int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
+		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut, RNG& rng, double maxEvalue,
+		bool withDetail, double minLod);
 
 /**
  * main function to process paired-ended reads
  * @return 0 if success, return non-zero otherwise
  */
-int main_PE(const FMIndex& refFmidx, const FMIndex& bgFmidx,
-		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut, RNG& rng,
-		bool withDetail, double minLod, int strand);
+int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
+		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut, RNG& rng, double maxEvalue,
+		bool withDetail, double minLod);
 
 int main(int argc, char* argv[]) {
 	/* variable declarations */
@@ -122,9 +118,8 @@ int main(int argc, char* argv[]) {
 	bool withDetail = false;
 
 	double minLod = DEFAULT_MIN_LOD;
-	int strand = DEFAULT_STRAND;
+	double maxEvalue = MEMS::DEFAULT_MAX_EVALUE;
 	unsigned seed = time(NULL); // using time as default seed
-//	double maxIndelRate = DEFAULT_INDEL_RATE;
 	int nThreads = DEFAULT_NUM_THREADS;
 
 	typedef boost::random::mt11213b RNG; /* random number generator type */
@@ -176,10 +171,10 @@ int main(int argc, char* argv[]) {
 	if(cmdOpts.hasOpt("-q"))
 		minLod = ::atof(cmdOpts.getOptStr("-q"));
 
-	if(cmdOpts.hasOpt("-s"))
-		strand = ::atoi(cmdOpts.getOptStr("-s"));
-	if(cmdOpts.hasOpt("--strand"))
-		strand = ::atoi(cmdOpts.getOptStr("--strand"));
+	if(cmdOpts.hasOpt("-e"))
+		maxEvalue = ::atof(cmdOpts.getOptStr("-e"));
+	if(cmdOpts.hasOpt("--evalue"))
+		maxEvalue = ::atoi(cmdOpts.getOptStr("--evalue"));
 
 	if(cmdOpts.hasOpt("-S"))
 		seed = ::atoi(cmdOpts.getOptStr("-S"));
@@ -274,35 +269,35 @@ int main(int argc, char* argv[]) {
 	/* open SeqIO input */
 	SeqIO fwdI(dynamic_cast<istream*>(&fwdIn), fmt);
 	SeqIO revI(dynamic_cast<istream*>(&revIn), fmt);
-//	string refMtgFn = refDB + METAGENOME_FILE_SUFFIX;
-	string refFmidxFn = refDB + FMINDEX_FILE_SUFFIX;
-//	string bgMtgFn = bgDB + METAGENOME_FILE_SUFFIX;
-	string bgFmidxFn = bgDB + FMINDEX_FILE_SUFFIX;
+	string refMtgFn = refDB + METAGENOME_FILE_SUFFIX;
+	string refFmdidxFn = refDB + FMDINDEX_FILE_SUFFIX;
+	string bgMtgFn = bgDB + METAGENOME_FILE_SUFFIX;
+	string bgFmdidxFn = bgDB + FMDINDEX_FILE_SUFFIX;
 
-//	ifstream refMtgIn, bgMtgIn;
-	ifstream refFmidxIn, bgFmidxIn;
+	ifstream refMtgIn, bgMtgIn;
+	ifstream refFmdidxIn, bgFmdidxIn;
 
-//	MetaGenome refMtg, bgMtg;
-	FMIndex refFmidx, bgFmidx;
+	MetaGenome refMtg, bgMtg;
+	FMDIndex refFmdidx, bgFmdidx;
 
-//	refMtgIn.open(refMtgFn.c_str(), ios_base::binary);
-//	if(!refMtgIn.is_open()) {
-//		cerr << "Unable to open '" << refMtgFn << "': " << ::strerror(errno) << endl;
-//		return EXIT_FAILURE;
-//	}
-	refFmidxIn.open(refFmidxFn.c_str(), ios_base::binary);
-	if(!refFmidxIn.is_open()) {
-		cerr << "Unable to open '" << refFmidxFn << "': " << ::strerror(errno) << endl;
+	refMtgIn.open(refMtgFn.c_str(), ios_base::binary);
+	if(!refMtgIn.is_open()) {
+		cerr << "Unable to open '" << refMtgFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-//	bgMtgIn.open(bgMtgFn.c_str(), ios_base::binary);
-//	if(!bgMtgIn.is_open()) {
-//		cerr << "Unable to open '" << bgMtgFn << "': " << ::strerror(errno) << endl;
-//		return EXIT_FAILURE;
-//	}
-	bgFmidxIn.open(bgFmidxFn.c_str(), ios_base::binary);
-	if(!bgFmidxIn.is_open()) {
-		cerr << "Unable to open '" << bgFmidxFn << "': " << ::strerror(errno) << endl;
+	refFmdidxIn.open(refFmdidxFn.c_str(), ios_base::binary);
+	if(!refFmdidxIn.is_open()) {
+		cerr << "Unable to open '" << refFmdidxFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	bgMtgIn.open(bgMtgFn.c_str(), ios_base::binary);
+	if(!bgMtgIn.is_open()) {
+		cerr << "Unable to open '" << bgMtgFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	bgFmdidxIn.open(bgFmdidxFn.c_str(), ios_base::binary);
+	if(!bgFmdidxIn.is_open()) {
+		cerr << "Unable to open '" << bgFmdidxFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -350,37 +345,37 @@ int main(int argc, char* argv[]) {
 	SeqIO revO(dynamic_cast<ostream*>(&revOut), fmt);
 
 	/* load data */
-//	infoLog << "Loading reference MetaGenome info ..." << endl;
-//	loadProgInfo(refMtgIn);
-//	if(!refMtgIn.bad())
-//		refMtg.load(refMtgIn);
-//	if(refMtgIn.bad()) {
-//		cerr << "Unable to load reference MetaGenome: " << ::strerror(errno) << endl;
-//		return EXIT_FAILURE;
-//	}
-	infoLog << "Loading refrence FM-index ..." << endl;
-	loadProgInfo(refFmidxIn);
-	if(!refFmidxIn.bad())
-		refFmidx.load(refFmidxIn);
-	if(refFmidxIn.bad()) {
-		cerr << "Unable to load reference FM-index: " << ::strerror(errno) << endl;
+	infoLog << "Loading reference MetaGenome info ..." << endl;
+	loadProgInfo(refMtgIn);
+	if(!refMtgIn.bad())
+		refMtg.load(refMtgIn, true);
+	if(refMtgIn.bad()) {
+		cerr << "Unable to load reference MetaGenome: " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	infoLog << "Loading refrence FMD-index ..." << endl;
+	loadProgInfo(refFmdidxIn);
+	if(!refFmdidxIn.bad())
+		refFmdidx.load(refFmdidxIn);
+	if(refFmdidxIn.bad()) {
+		cerr << "Unable to load reference FMD-index: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
-//	infoLog << "Loading background MetaGenome info ..." << endl;
-//	loadProgInfo(bgMtgIn);
-//	if(!bgMtgIn.bad())
-//		bgMtg.load(bgMtgIn);
-//	if(bgMtgIn.bad()) {
-//		cerr << "Unable to load background MetaGenome: " << ::strerror(errno) << endl;
-//		return EXIT_FAILURE;
-//	}
-	infoLog << "Loading background FM-index ..." << endl;
-	loadProgInfo(bgFmidxIn);
-	if(!bgFmidxIn.bad())
-		bgFmidx.load(bgFmidxIn);
-	if(bgFmidxIn.bad()) {
-		cerr << "Unable to load background FM-index: " << ::strerror(errno) << endl;
+	infoLog << "Loading background MetaGenome info ..." << endl;
+	loadProgInfo(bgMtgIn);
+	if(!bgMtgIn.bad())
+		bgMtg.load(bgMtgIn, true);
+	if(bgMtgIn.bad()) {
+		cerr << "Unable to load background MetaGenome: " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	infoLog << "Loading background FMD-index ..." << endl;
+	loadProgInfo(bgFmdidxIn);
+	if(!bgFmdidxIn.bad())
+		bgFmdidx.load(bgFmdidxIn);
+	if(bgFmdidxIn.bad()) {
+		cerr << "Unable to load background FMD-index: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -398,14 +393,14 @@ int main(int argc, char* argv[]) {
 
 	/* main processing */
 	if(!isPaired)
-		return main_SE(refFmidx, bgFmidx, fwdI, fwdO, assignOut, rng, withDetail, minLod, strand);
+		return main_SE(refMtg, bgMtg, refFmdidx, bgFmdidx, fwdI, fwdO, assignOut, rng, maxEvalue, withDetail, minLod);
 	else
-		return main_PE(refFmidx, bgFmidx, fwdI, revI, fwdO, revO, assignOut, rng, withDetail, minLod, strand);
+		return main_PE(refMtg, bgMtg, refFmdidx, bgFmdidx, fwdI, revI, fwdO, revO, assignOut, rng, maxEvalue, withDetail, minLod);
 }
 
-int main_SE(const FMIndex& refFmidx, const FMIndex& bgFmidx,
-		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut, RNG& rng,
-		bool withDetail, double minLod, int strand) {
+int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
+		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut, RNG& rng, double maxEvalue,
+		bool withDetail, double minLod) {
 	infoLog << "Filtering input reads" << endl;
 	/* search MEMS for each read */
 #pragma omp parallel
@@ -418,8 +413,8 @@ int main_SE(const FMIndex& refFmidx, const FMIndex& bgFmidx,
 				{
 					const string& id = read.getName();
 					const string& desc = read.getDesc();
-					MEMS refMems = MEMS::sampleMEMS(&read, &refFmidx, rng, MEMS::DEFAULT_MAX_EVALUE, 0, read.length(), strand);
-					MEMS bgMems = MEMS::sampleMEMS(&read, &bgFmidx, rng, MEMS::DEFAULT_MAX_EVALUE, 0, read.length(), strand);
+					MEMS refMems = MEMS::sampleMEMS(&read, &refMtg, &refFmdidx, rng, maxEvalue); // fwd sampling
+					MEMS bgMems = MEMS::sampleMEMS(&read, &bgMtg, &bgFmdidx, rng, maxEvalue); // fwd sampling
 					double refLoglik = refMems.loglik();
 					double bgLoglik = bgMems.loglik();
 					double lod = - refLoglik + bgLoglik;
@@ -442,9 +437,9 @@ int main_SE(const FMIndex& refFmidx, const FMIndex& bgFmidx,
 	return EXIT_SUCCESS;
 }
 
-int main_PE(const FMIndex& refFmidx, const FMIndex& bgFmidx,
-		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut, RNG& rng,
-		bool withDetail, double minLod, int strand) {
+int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
+		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut, RNG& rng, double maxEvalue,
+		bool withDetail, double minLod) {
 	infoLog << "Filtering input paired-end reads" << endl;
 	/* search MEMS for each pair */
 #pragma omp parallel
@@ -458,8 +453,8 @@ int main_PE(const FMIndex& refFmidx, const FMIndex& bgFmidx,
 				{
 					const string& id = fwdRead.getName();
 					const string& desc = fwdRead.getDesc();
-					MEMS_PE refMemsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &refFmidx, rng, strand);
-					MEMS_PE bgMemsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &bgFmidx, rng, strand);
+					MEMS_PE refMemsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &refMtg, &refFmdidx, rng, maxEvalue); // fwd PE sampling
+					MEMS_PE bgMemsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &bgMtg, &bgFmdidx, rng, maxEvalue);    // rev PE sampling
 					double refLoglik = refMemsPE.loglik();
 					double bgLoglik = bgMemsPE.loglik();
 					double lod = - refLoglik + bgLoglik;

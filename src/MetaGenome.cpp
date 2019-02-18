@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <sstream>
 #include <boost/lexical_cast.hpp>
-#include "Loc.h"
 #include "MetaGenome.h"
 #include "StringUtils.h"
 #include "ProgEnv.h"
@@ -19,10 +18,10 @@ namespace MSGseqTK {
 using std::istringstream;
 using std::pair;
 
-uint64_t MetaGenome::size() const {
-	uint64_t size = 0;
+size_t MetaGenome::size() const {
+	size_t size = 0;
 	for(const Genome& genome : genomes)
-		size += genome.size();
+		size += genome.size() * 2; /* metagenome is bi-directional (fwd + rev) */
 	return size;
 }
 
@@ -33,23 +32,13 @@ size_t MetaGenome::numChroms() const {
 	return N;
 }
 
-void MetaGenome::addGenome(const Genome& genome, const DNAseq& genomeSeq) {
-	if(genome.size() != genomeSeq.length()) {
-		warningLog << "genome size and seq length are different, ignore" << endl;
-		return;
-	}
-	genomes.push_back(genome);
-	seq += genomeSeq;
-}
-
 ostream& MetaGenome::save(ostream& out) const {
 	/* save basic info */
 	const size_t NG = numGenomes();
 	out.write((const char*) &NG, sizeof(size_t));
 	for(const Genome& genome : genomes)
 		genome.save(out);
-	/* save nt16 compressed seq */
-	return seq.nt16Save(out);
+	return out;
 }
 
 istream& MetaGenome::load(istream& in, bool ignoreSeq) {
@@ -59,9 +48,6 @@ istream& MetaGenome::load(istream& in, bool ignoreSeq) {
 	genomes.resize(NG);
 	for(size_t i = 0; i < NG; ++i)
 		genomes[i].load(in);
-	/* load seq in nt16 compressed */
-	if(!ignoreSeq)
-			seq.nt16Load(in);
 	/* update index */
 	updateIndex();
 	return in;
@@ -95,7 +81,7 @@ void MetaGenome::updateIndex() {
 	const size_t NC = numChroms();
 	size_t gid = 0;
 	size_t cid = 0;
-	uint64_t gStart = 0;
+	int64_t gStart = 0;
 	genomeIds.reserve(NG);
 	chromNames.reserve(NC);
 	genomeIdx2Loc.reserve(NG);
@@ -103,7 +89,7 @@ void MetaGenome::updateIndex() {
 	chromIdx2GenomeIdx.reserve(NC);
 	chromIdx2Nbefore.reserve(NC);
 	for(Genome& genome : genomes) {
-		uint64_t cStart = 0;
+		int64_t cStart = 0;
 		size_t nid = 0; // # of chrom before in this genome
 		if(genomeId2Idx.count(genome.id) > 0) { // genome.id must be unique
 			cerr << "Error: Redundant genome " << genome.displayId() << " found in database" << endl;
@@ -121,12 +107,12 @@ void MetaGenome::updateIndex() {
 			chromName2Idx[chr.name] = cid;
 			chromIdx2GenomeIdx.push_back(gid);
 			chromIdx2Nbefore.push_back(nid);
-			chromIdx2Loc.push_back(Loc(gStart + cStart, gStart + cStart + chr.size + 1)); // include the null terminal
+			chromIdx2Loc.push_back(Loc(gStart + cStart, gStart + cStart + (chr.size() + 1) * 2)); // include fwd + rev
 			cid++;
 			nid++;
-			cStart += chr.size + 1;
+			cStart += (chr.size() + 1) * 2; // update cStart
 		}
-		assert(cStart == genome.size());
+		assert(cStart == genome.size() * 2);
 		genomeIdx2Loc.push_back(Loc(gStart, gStart + cStart));
 		gid++;
 		gStart += cStart;

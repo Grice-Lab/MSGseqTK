@@ -13,7 +13,7 @@
 using namespace std;
 using namespace EGriceLab::MSGseqTK;
 
-bool isValidLocs(const DNAseq& seq, DNAseq pat, const vector<Loc>& locs, FMDIndex::STRAND strand = FMDIndex::FWD);
+bool isValidLocs(const DNAseq& seq, const DNAseq& pat, const vector<GLoc>& locs);
 
 int main() {
 	/* test part 1, basic and merging function */
@@ -22,7 +22,7 @@ int main() {
 	FMDIndex fmidx1, fmidx2;
 	saidx_t count1 = 0, count2 = 0;
 	DNAseq pat("CTAGC");
-	vector<Loc> locs;
+	vector<GLoc> locs;
 
 	/* series operator+= tests */
 	DNAseq seq1 = DNAseq("CTAGCATAGAC") + DNAseq::DNAgap + DNAseq("CTAGCATAGAC").revcom();
@@ -39,19 +39,19 @@ int main() {
 	cout << "found " << count1 << " of " << pat << " in " << seqM1 << endl;
 	if(count1 != 1)
 		return EXIT_FAILURE;
-	locs = fmidx1.locateAll(pat);
+	locs = fmidx1.locateAll(pat, GLoc::FWD);
 	cout << "All fwd loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
-	if(!isValidLocs(seqM1, pat, locs, FMDIndex::FWD))
+	if(!isValidLocs(seqM1, pat, locs))
 		return EXIT_FAILURE;
-	locs = fmidx1.locateAll(pat, FMDIndex::REV);
+	locs = fmidx1.locateAll(pat, GLoc::REV);
 	cout << "All rev loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
-	if(!isValidLocs(seqM1, pat, locs, FMDIndex::REV))
+	if(!isValidLocs(seqM1, pat, locs))
 		return EXIT_FAILURE;
 
 	DNAseq seq2 = DNAseq("CTAGCATCGAC") + DNAseq::DNAgap + DNAseq("CTAGCATCGAC").revcom();
@@ -70,17 +70,17 @@ int main() {
 		return EXIT_FAILURE;
 	locs = fmidx1.locateAll(pat);
 	cout << "All fwd loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
-	if(!isValidLocs(seqM1, pat, locs, FMDIndex::FWD))
+	if(!isValidLocs(seqM1, pat, locs))
 		return EXIT_FAILURE;
-	locs = fmidx1.locateAll(pat, FMDIndex::REV);
+	locs = fmidx1.locateAll(pat, GLoc::REV);
 	cout << "All rev loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
-	if(!isValidLocs(seqM1, pat, locs, FMDIndex::REV))
+	if(!isValidLocs(seqM1, pat, locs))
 		return EXIT_FAILURE;
 
 	DNAseq seq3 = DNAseq("CTAGCATGGAC") + DNAseq::DNAgap + DNAseq("CTAGCATGGAC").revcom();
@@ -99,17 +99,17 @@ int main() {
 		return EXIT_FAILURE;
 	locs = fmidx1.locateAll(pat);
 	cout << "All fwd loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
 	if(!isValidLocs(seqM1, pat, locs))
 		return EXIT_FAILURE;
-	locs = fmidx1.locateAll(pat, FMDIndex::REV);
+	locs = fmidx1.locateAll(pat, GLoc::REV);
 	cout << "All rev loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
-	if(!isValidLocs(seqM1, pat, locs, FMDIndex::REV))
+	if(!isValidLocs(seqM1, pat, locs))
 		return EXIT_FAILURE;
 
 	DNAseq seq4 = DNAseq("CTAGCATTGAC") + DNAseq::DNAgap + DNAseq("CTAGCATTGAC").revcom();
@@ -128,17 +128,17 @@ int main() {
 		return EXIT_FAILURE;
 	locs = fmidx1.locateAll(pat);
 	cout << "All fwd loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
 	if(!isValidLocs(seqM1, pat, locs))
 		return EXIT_FAILURE;
-	locs = fmidx1.locateAll(pat, FMDIndex::REV);
+	locs = fmidx1.locateAll(pat, GLoc::REV);
 	cout << "All rev loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
-	if(!isValidLocs(seqM1, pat, locs, FMDIndex::REV))
+	if(!isValidLocs(seqM1, pat, locs))
 		return EXIT_FAILURE;
 
 	/* series operator+ tests */
@@ -158,17 +158,17 @@ int main() {
 		return EXIT_FAILURE;
 	locs = fmidx2.locateAll(pat);
 	cout << "All fwd loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
-	if(!isValidLocs(seqM2, pat, locs, FMDIndex::FWD))
+	if(!isValidLocs(seqM2, pat, locs))
 		return EXIT_FAILURE;
-	locs = fmidx2.locateAll(pat, FMDIndex::REV);
+	locs = fmidx2.locateAll(pat, GLoc::REV);
 	cout << "All rev loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
-	if(!isValidLocs(seqM2, pat, locs, FMDIndex::REV))
+	if(!isValidLocs(seqM2, pat, locs))
 		return EXIT_FAILURE;
 
 	DNAseq seq6 = DNAseq("CTAGCACCTAG") + DNAseq::DNAgap + DNAseq("CTAGCACCTAG").revcom();
@@ -187,17 +187,17 @@ int main() {
 		return EXIT_FAILURE;
 	locs = fmidx2.locateAll(pat);
 	cout << "All fwd loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
-	if(!isValidLocs(seqM2, pat, locs, FMDIndex::FWD))
+	if(!isValidLocs(seqM2, pat, locs))
 		return EXIT_FAILURE;
-	locs = fmidx2.locateAll(pat, FMDIndex::REV);
+	locs = fmidx2.locateAll(pat, GLoc::REV);
 	cout << "All rev loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
-	if(!isValidLocs(seqM2, pat, locs, FMDIndex::REV))
+	if(!isValidLocs(seqM2, pat, locs))
 		return EXIT_FAILURE;
 
 	DNAseq seq7 = DNAseq("CTAGCAGCTAC") + DNAseq::DNAgap + DNAseq("CTAGCAGCTAC").revcom();
@@ -216,17 +216,17 @@ int main() {
 		return EXIT_FAILURE;
 	locs = fmidx2.locateAll(pat);
 	cout << "All fwd loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
-	if(!isValidLocs(seqM2, pat, locs, FMDIndex::FWD))
+	if(!isValidLocs(seqM2, pat, locs))
 		return EXIT_FAILURE;
-	locs = fmidx2.locateAll(pat, FMDIndex::REV);
+	locs = fmidx2.locateAll(pat, GLoc::REV);
 	cout << "All rev loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
-	if(!isValidLocs(seqM2, pat, locs, FMDIndex::REV))
+	if(!isValidLocs(seqM2, pat, locs))
 		return EXIT_FAILURE;
 
 	DNAseq seq8 = DNAseq("CTAGCATCTAC") + DNAseq::DNAgap + DNAseq("CTAGCATCTAC").revcom();
@@ -245,17 +245,17 @@ int main() {
 		return EXIT_FAILURE;
 	locs = fmidx2.locateAll(pat);
 	cout << "All fwd loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
-	if(!isValidLocs(seqM2, pat, locs, FMDIndex::FWD))
+	if(!isValidLocs(seqM2, pat, locs))
 		return EXIT_FAILURE;
-	locs = fmidx2.locateAll(pat, FMDIndex::REV);
+	locs = fmidx2.locateAll(pat, GLoc::REV);
 	cout << "All rev loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
-	if(!isValidLocs(seqM2, pat, locs, FMDIndex::REV))
+	if(!isValidLocs(seqM2, pat, locs))
 		return EXIT_FAILURE;
 
 	/* hierarchical merge test */
@@ -273,17 +273,17 @@ int main() {
 		return EXIT_FAILURE;
 	locs = fmidx.locateAll(pat);
 	cout << "All fwd loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
-	if(!isValidLocs(seqM, pat, locs, FMDIndex::FWD))
+	if(!isValidLocs(seqM, pat, locs))
 		return EXIT_FAILURE;
-	locs = fmidx.locateAll(pat, FMDIndex::REV);
+	locs = fmidx.locateAll(pat, GLoc::REV);
 	cout << "All rev loc:";
-	for(const Loc& loc : locs)
+	for(const GLoc& loc : locs)
 		cout << " " << loc;
 	cout << endl;
-	if(!isValidLocs(seqM, pat, locs, FMDIndex::REV))
+	if(!isValidLocs(seqM, pat, locs))
 		return EXIT_FAILURE;
 	/* test part 2, IO function */
 	ostringstream out;
@@ -306,9 +306,10 @@ int main() {
 	}
 }
 
-bool isValidLocs(const DNAseq& seq, DNAseq pat, const vector<Loc>& locs, FMDIndex::STRAND strand) {
-	if(strand == FMDIndex::REV)
-		pat.revcom();
+bool isValidLocs(const DNAseq& seq, const DNAseq& pat, const vector<GLoc>& locs) {
 	return std::all_of(locs.begin(), locs.end(),
-			[&](const Loc& loc) { return seq.substr(loc.start, loc.length()) == pat; });
+			[&](const GLoc& loc) {
+		return loc.strand == GLoc::FWD && pat == seq.substr(loc.start, loc.length()) ||
+				loc.strand == GLoc::REV && pat.revcom() == seq.substr(loc.start, loc.length());
+	});
 }

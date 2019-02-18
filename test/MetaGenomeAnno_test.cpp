@@ -20,14 +20,14 @@ int main() {
 	Genome g1("Staphylococcus aureus");
 	DNAseq chr1_1("ATCGNatcgnTCGANtcgan");
 	DNAseq chr1_2("TCGANtcganATCGNatcgn");
-	g1.addChrom(Genome::Chrom("chr1", chr1_1.length()));
-	g1.addChrom(Genome::Chrom("chr2", chr1_2.length()));
+	g1.addChrom("chr1", chr1_1);
+	g1.addChrom("chr2", chr1_2);
 
 	Genome g2("Homo sapiens");
 	DNAseq chr2_1("AAAAANgggggNCCCCCNtttttn");
 	DNAseq chr2_2("TTTTTNcccccNGGGGGNaaaaan");
-	g2.addChrom(Genome::Chrom("chr1", chr2_1.length()));
-	g2.addChrom(Genome::Chrom("chr2", chr2_2.length()));
+	g2.addChrom("chr1", chr2_1);
+	g2.addChrom("chr2", chr2_2);
 
 	MetaGenomeAnno mta1;
 	MetaGenomeAnno mta2;

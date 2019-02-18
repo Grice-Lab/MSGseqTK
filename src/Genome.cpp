@@ -20,13 +20,13 @@ const string Genome::REPLACEMENT_STR = ".";
 
 ostream& Genome::Chrom::save(ostream& out) const {
 	StringUtils::saveString(name, out);
-	out.write((const char*) &size, sizeof(uint64_t));
+	seq.nt16Save(out);
 	return out;
 }
 
 istream& Genome::Chrom::load(istream& in) {
 	StringUtils::loadString(name, in);
-	in.read((char*) &size, sizeof(uint64_t));
+	seq.nt16Load(in);
 	return in;
 }
 
@@ -37,19 +37,19 @@ bool Genome::hasChrom(const string& chrName) const {
 	return false;
 }
 
-uint64_t Genome::getChromSize(const string& chrName) const {
+size_t Genome::getChromSize(const string& chrName) const {
 	for(const Chrom& chr : chroms)
 		if(chr.name == chrName)
-			return chr.size;
+			return chr.size();
 	return 0;
 }
 
-size_t Genome::getChromIndex(uint64_t loc) const {
-	uint64_t start = 0;
+size_t Genome::getChromIndex(int64_t loc) const {
+	int64_t start = 0;
 	for(vector<Chrom>::const_iterator chr = chroms.begin(); chr != chroms.end(); ++chr) {
-		if(start <= loc && loc <= start + chr->size) /* include null terminal */
+		if(start <= loc && loc <= start + chr->size()) /* include null terminal */
 			return chr - chroms.begin();
-		start += chr->size + 1; /* with null terminal */
+		start += chr->size() + 1; /* with null terminal */
 	}
 	return -1;
 }
@@ -75,11 +75,19 @@ istream& Genome::load(istream& in) {
 	return in;
 }
 
-uint64_t Genome::size() const {
-	uint64_t size = 0;
+size_t Genome::size() const {
+	size_t size = 0;
 	for(const Chrom& chr : chroms)
-		size += chr.size;
+		size += chr.size();
 	return size + numChroms(); /* add one null gap after each chromosome */
+}
+
+DNAseq Genome::getSeq() const {
+	DNAseq seq;
+	seq.reserve(size() * 2);
+	for(const Chrom& chr : chroms)
+		seq += chr.seq + DNAseq::DNAgap + chr.seq.revcom() + DNAseq::DNAgap;
+	return seq;
 }
 
 string Genome::formatName(const string& name) {

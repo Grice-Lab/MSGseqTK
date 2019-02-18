@@ -21,7 +21,7 @@
 #include <utility>
 #include "DNAseq.h"
 #include "QualStr.h"
-#include "Loc.h"
+#include "GLoc.h"
 #include "divsufsort_private.h"
 #include "BitStr.h"
 #include "BitSeqRRR.h"
@@ -43,9 +43,6 @@ public:
 	/* typedefs */
 	typedef array<saidx_t, DNAalphabet::SIZE> BCarray_t; /* fixed array to store base counts */
 	typedef vector<saidx_t> SArray_t; /* store sampled Suffix-Array in std::vector */
-
-	/* enums */
-	enum STRAND { FWD /* forward strand */, REV /* reverse-complement strand */ };
 
 	/* constructors */
 	/** Default constructor */
@@ -202,14 +199,14 @@ public:
 	}
 
 	/** locate all matches to given pattern */
-	vector<Loc> locateAll(const DNAseq& pattern, STRAND strand = FWD) const {
-		return strand == FWD ? locateAllFwd(pattern) : locateAllRev(pattern);
+	vector<GLoc> locateAll(const DNAseq& pattern, GLoc::STRAND strand = GLoc::FWD) const {
+		return strand == GLoc::FWD ? locateAllFwd(pattern) : locateAllRev(pattern);
 	}
 
 	/** locate all matches in FWD direction */
-	vector<Loc> locateAllFwd(const DNAseq& pattern) const;
+	vector<GLoc> locateAllFwd(const DNAseq& pattern) const;
 
-	vector<Loc> locateAllRev(const DNAseq& pattern) const;
+	vector<GLoc> locateAllRev(const DNAseq& pattern) const;
 
 	/**
 	 * reverse a loc on this FM-index
@@ -220,7 +217,7 @@ public:
 		return length() - 1 - i;
 	}
 
-	/** reverse the coordinates of a Loc on this FM-index */
+	/** reverse the coordinates of a Loc */
 	Loc reverseLoc(const Loc& loc) const {
 		return Loc(length() - 1 - loc.end, length() - 1 - loc.start); // FM-index length is 1 more than the original seq length
 	}

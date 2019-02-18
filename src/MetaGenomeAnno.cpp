@@ -35,7 +35,7 @@ void MetaGenomeAnno::addGenome(const Genome& genome) {
 	for(const Genome::Chrom& chr : genome.chroms) {
 		string chrId = MetaGenome::getChromId(genome.id, chr.name);
 		addChromAnno(chrId, GFF(chr.name, progName, "chromosome",
-				1, chr.size, GFF::INVALID_SCORE, '.', GFF::INVALID_FRAME,
+				1, chr.size(), GFF::INVALID_SCORE, '.', GFF::INVALID_FRAME,
 				GFF::attr_map { {"ID", chrId}, {"Name", chr.name}, {"Parent", genome.id} }));
 	}
 }
@@ -237,7 +237,7 @@ istream& MetaGenomeAnno::readStartComment(istream& in, Genome& genome) {
 }
 
 ostream& MetaGenomeAnno::writeStartComment(ostream& out, const Genome& genome) {
-	out << GENOME_START_TAG << " " << genome.id << " (" << genome.name << ")" << endl;
+	out << GENOME_START_TAG << " " << genome.displayId() << endl;
 	return out;
 }
 

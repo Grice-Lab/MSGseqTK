@@ -17,7 +17,7 @@
 #include <algorithm>
 #include "MEM.h"
 #include "PrimarySeq.h"
-#include "FMIndex.h"
+#include "FMDIndex.h"
 #include "MetaGenome.h"
 
 namespace EGriceLab {
@@ -39,15 +39,15 @@ public:
 		return front().seq;
 	}
 
-	/** get FM-index */
-	const FMIndex* getFMIndex() const {
-		return front().fmidx;
+	/** get FMD-index */
+	const FMDIndex* getFMDIndex() const {
+		return front().fmdidx;
 	}
 
 	/** evaluate each MEM in this MEMS */
 	MEMS& evaluate();
 
-	/** find locs for all MEM in this MEMS */
+	/** find locs for all MEMs */
 	MEMS& findLocs(size_t maxNLocs = MEM::MAX_NLOCS);
 
 	/** get the loglik of the entire MEMS if it is from random matches */
@@ -55,16 +55,16 @@ public:
 
 	/** get the evalue of observing this MEMS by random */
 	double evalue() const {
-		return getFMIndex()->length() * std::exp(loglik());
+		return getFMDIndex()->length() * std::exp(loglik());
 	}
 
 	/** get the log-evalue of observing this MEMS by random */
 	double logevalue() const {
-		return std::log(getFMIndex()->length()) + loglik();
+		return std::log(getFMDIndex()->length()) + loglik();
 	}
 
 	/** get the total length of this MEMS */
-	uint64_t length() const;
+	int64_t length() const;
 
 	/**
 	 * locate the best MEM index with lowest pvalue or likelihood
@@ -80,30 +80,27 @@ public:
 	/** write this MEMS to text output */
 	ostream& write(ostream& out) const;
 
-	/** get strand of this MEMS */
-	MEM::STRAND getStrand() const {
-		return front().strand;
-	}
-
 	/* static methods */
 	/**
-	 * get one MEMS by MCMC sampling matches between db and seq
-	 * @param seq  primary sequence to search
-	 * @param fmidx  FM-index
+	 * sample MEMS for given read
+	 * @param seq  read to search
+	 * @param fmdidx  FMD-index
 	 * @param rng  random-number generator
-	 * @param from to  region to search
-	 * @param strand  searching strand
-	 * @return  a vector of ordered MEMs
+	 * @param maxEvalue  maxEvalue criteria for a significant MEM
+	 * @param dir  searching direction
+	 * @return  an ordered MEMs
 	 */
-	static MEMS sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx, RNG& rng, double maxEvalue = DEFAULT_MAX_EVALUE,
-			uint64_t from = 0, uint64_t to = UINT64_MAX, MEM::STRAND strand = MEM::FWD);
+	static MEMS sampleMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			RNG& rng, double maxEvalue = DEFAULT_MAX_EVALUE, GLoc::STRAND dir = GLoc::FWD) {
+		return dir == GLoc::FWD ? sampleMEMSfwd(seq, mtg, fmdidx, rng, maxEvalue) :
+				sampleMEMSrev(seq, mtg, fmdidx, rng, maxEvalue);
+	}
 
-	/**
-	 * get best MEMS by trying different strands and multiple random seeds
-	 * @param strand  different strands, 1 for FWD, 2 for REV, 3 for both
-	 */
-	static MEMS sampleMEMS(const PrimarySeq* seq, const FMIndex* fmidx, RNG& rng, double maxEvalue = DEFAULT_MAX_EVALUE,
-			uint64_t from = 0, uint64_t to = UINT64_MAX, int strand = 3);
+	static MEMS sampleMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			RNG& rng, double maxEvalue = DEFAULT_MAX_EVALUE);
+
+	static MEMS sampleMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			RNG& rng, double maxEvalue = DEFAULT_MAX_EVALUE);
 
 	/* static fields */
 	static boost::random::uniform_01<> mem_dist; /* random01 distribution for accepting MEMs */
@@ -133,28 +130,23 @@ struct MEMS_PE {
 		return fwdMems.loglik() + revMems.loglik();
 	}
 
-	/** get forward strand of this MEMS_PE */
-	MEM::STRAND getFwdStrand() const {
-		return fwdMems.getStrand();
-	}
-
-	/** get reverse strand of this MEMS_PE */
-	MEM::STRAND getRevStrand() const {
-		return revMems.getStrand();
-	}
-
-	/** get strand of this MEMS_PE, alias to getFwdStrand */
-	MEM::STRAND getStrand() const {
-		return getFwdStrand();
-	}
-
 	/* static methods */
 	/**
-	 * get best MEMS_PE by trying different strands and multiple random seeds
-	 * @param strand  different strands, 1 for FWD, 2 for REV, 3 for both
+	 * sample MEMS_PE for pair-end reads
+	 * @param fwdSeq  forward read
+	 * @param revSeq  reverse read
+	 * @param fmdidx  FMD-index
+	 * @param rng  random-number generator
+	 * @param maxEvalue  maxEvalue criteria for a significant MEM
+	 * @param dir  direction for sampling
 	 */
-	static MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq, const FMIndex* fmidx, RNG& rng, double maxEvalue = MEMS::DEFAULT_MAX_EVALUE,
-			uint64_t fwdFrom = 0, uint64_t fwdTo = UINT64_MAX, uint64_t revFrom = 0, uint64_t revTo = UINT64_MAX, int strand = 3);
+	static MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
+			 const MetaGenome* mtg, const FMDIndex* fmdidx,
+			RNG& rng, double maxEvalue = MEMS::DEFAULT_MAX_EVALUE, GLoc::STRAND dir = GLoc::FWD) {
+		return dir == GLoc::FWD ?
+				MEMS_PE(MEMS::sampleMEMSfwd(fwdSeq, mtg, fmdidx, rng, maxEvalue), MEMS::sampleMEMSrev(revSeq, mtg, fmdidx, rng, maxEvalue)) :
+				MEMS_PE(MEMS::sampleMEMSrev(fwdSeq, mtg, fmdidx, rng, maxEvalue), MEMS::sampleMEMSfwd(revSeq, mtg, fmdidx, rng, maxEvalue));
+	}
 
 	/* member fields */
 	MEMS fwdMems;

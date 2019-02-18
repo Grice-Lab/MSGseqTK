@@ -8,10 +8,13 @@
 #ifndef SRC_MSGSEQTK_H_
 #define SRC_MSGSEQTK_H_
 
-#include "Alignment.h"
+#include "MSGseqTKConst.h"
 #include "DNAalphabet.h"
 #include "DNAseq.h"
+#include "Loc.h"
+#include "GLoc.h"
 #include "FMIndex.h"
+#include "FMDIndex.h"
 #include "PrimarySeq.h"
 #include "SeqIO.h"
 #include "MEM.h"
@@ -19,6 +22,6 @@
 #include "MetaGenome.h"
 #include "MetaGenomeAnno.h"
 #include "ScoreScheme.h"
-#include "MSGseqTKConst.h"
+#include "Alignment.h"
 
 #endif /* SRC_MSGSEQTK_H_ */

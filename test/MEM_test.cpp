@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstring>
+#include <cassert>
 #include <algorithm>
 #include "MEM.h"
 
@@ -18,54 +19,56 @@ static bool isValidMEM(const DNAseq& db, const MEM& mem);
 
 int main() {
 	const DNAseq genomeDB("ACGTCGTAGTACTACGNACGTCGTAGTACTACG");
+	Genome genome("db");
+	genome.addChrom("chr1", genomeDB);
+	MetaGenome mtg;
+	mtg.addGenome(genome);
+	mtg.updateIndex();
 
-	FMIndex fmidx = FMIndex(genomeDB.reverse(), true);
+	FMDIndex fmdidx = FMDIndex(genomeDB + DNAseq::DNAgap + genomeDB.revcom(), true);
+	assert(mtg.size() == fmdidx.length());
 
-	DNAseq read("ACGTAGTA");
-	PrimarySeq seq(read, "seq1");
-
+	cout << "fwd MEM search ..." << endl;
+	PrimarySeq read(DNAseq("ACGTAGTA"), "seq1");
 	MEM mem;
-	int i = 0;
-	while( mem.to < read.length() ) {
-		mem = MEM::findMEM(&seq, &fmidx, i == 0 || !mem.empty() ? mem.to : mem.to + 1);
+	for(int from = 0; from < read.length(); from = mem.to + 1) {
+		mem = MEM::findMEM(&read, &mtg, &fmdidx, from, read.length(), GLoc::FWD);
 		mem.evaluate();
 		mem.findLocs();
-		cout << "mem " << i << " between db: " << genomeDB << " and read: " << read << " found at from: " << mem.from << " to: " << mem.to << endl;
+		cout << "mem between db: " << genomeDB << " and read: " << read.getSeq() << " found at from: " << mem.from << " to: " << mem.to << endl;
 		cout << "all matched locs:" << endl;
-		for(const Loc& loc : mem.locs)
+		for(const GLoc& loc : mem.locs)
 			cout << " " << loc;
 		cout << endl;
 		cout << "loglik: " << mem.loglik() << " likelihood: " << mem.pvalue()
 				<< " evalue: " << mem.evalue() << endl;
 		if(!isValidMEM(genomeDB, mem))
 			return EXIT_FAILURE;
-		i++;
 	}
 
-	cout << endl << "resetting read" << endl;
-	mem.reset();
-	read = "TACGNACGT";
-	i = 0;
-	while( mem.to < read.length() ) {
-		mem = MEM::findMEM(&seq, &fmidx, i == 0 || !mem.empty() ? mem.to : mem.to + 1);
+	cout << "rev MEM search ..." << endl;
+	read = PrimarySeq(DNAseq("TACGNACGT"), "seq2");
+	for(int to = read.length(); to > 0; to = mem.from - 1) {
+		mem = MEM::findMEM(&read, &mtg, &fmdidx, 0, to, GLoc::REV);
 		mem.findLocs();
-		cout << "N containing mem " << i << " between db: " << genomeDB << " and read: " << read << " found at from: " << mem.from << " to: " << mem.to << endl;
+		cout << "N containing mem between db: " << genomeDB << " and read: " << read.getSeq() << " found at from: " << mem.from << " to: " << mem.to << endl;
 		cout << "all matched locs:" << endl;
-		for(const Loc& loc : mem.locs)
+		for(const GLoc& loc : mem.locs)
 			cout << " " << loc;
 		cout << endl;
 		cout << "loglik: " << mem.loglik() << " likelihood: " << mem.pvalue()
 				<< " evalue: " << mem.evalue() << endl;
 		if(!isValidMEM(genomeDB, mem))
 			return EXIT_FAILURE;
-		i++;
 	}
 }
 
 bool isValidMEM(const DNAseq& db, const MEM& mem) {
-	for(const Loc& loc : mem.locs) {
+	for(const GLoc& loc : mem.locs) {
 		DNAseq dbSeg = db.substr(loc.start, loc.length());
 		DNAseq readSeg = mem.seq->getSeq().substr(mem.from, mem.length());
+		if(loc.strand == GLoc::REV)
+			readSeg.revcom();
 		if(dbSeg != readSeg) {
 			cerr << "Unmatched MEM seq db: " << dbSeg << " read: " << readSeg << endl;
 			return false;

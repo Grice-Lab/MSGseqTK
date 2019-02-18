@@ -47,38 +47,34 @@ struct Alignment {
 	typedef uint32_t CIGAR_OP_TYPE;
 	/* nested types and enums */
 	/** A SeedPair is a pair of exact matched seed region between query and target */
-	struct SeedPair {
+	struct SeedPair : public GLoc {
 		/* constructors */
 		/** default constructor */
 		SeedPair() = default;
 
 		/** construct from given values */
-		SeedPair(uint64_t from, uint64_t start, uint32_t len, int32_t tid, double logP)
-		: from(from), to(from + len), start(start), end(start + len), tid(tid), logP(logP)
-		{ 	}
+		SeedPair(int64_t from, int64_t start, int32_t len, int32_t tid, GLoc::STRAND qStrand, double logP)
+		: GLoc(start, start + len, tid, qStrand), from(from), to(from + len), logP(logP)
+		{  }
+
+		/** destructor */
+		virtual ~SeedPair() {  }
 
 		/* member methods */
-		uint32_t length() const {
+		int32_t length() const {
 			return end - start;
 		}
 
 		/** test whether this SeedPair is valid */
 		bool isValid() const {
-			return tid >= 0 && !std::isnan(logP);
+			return tid >= 0;
 		}
 
 		/* member fields */
-		uint64_t from = 0; /* 0-based query position */
-		uint64_t to = 0;   /* 1-based query position */
-		uint64_t start = 0; /* 0-based target position */
-		uint64_t end = 0; /* 1-based target position */
-		int32_t tid = -1; /* tid as chromId/locId determined by database */
+		int64_t from = 0; /* 0-based query position */
+		int64_t to = 0;   /* 1-based query position */
+		GLoc loc; /* target loc */
 		double logP = NAN; /* log-probability (loglik) of observing this SeedPair by chance */
-
-		/** test whether two SeedPairs overlap (on target) */
-		static bool isOverlap(const SeedPair& lhs, const SeedPair& rhs) {
-			return lhs.tid == rhs.tid && lhs.start < rhs.end && lhs.end > rhs.start;
-		}
 
 		/** get total indels between two seeds, positive values indicates insertions, and negative values gives deletions */
 		static int64_t numGaps(const SeedPair& lhs, const SeedPair& rhs) {
@@ -87,11 +83,11 @@ struct Alignment {
 
 		/** test whether two SeedPairs are compatitable */
 		static bool isCompatitable(const SeedPair& lhs, const SeedPair& rhs) {
-			return lhs.tid == rhs.tid && lhs.to < rhs.from && lhs.end < rhs.start;
+			return GLoc::isCompatitable(lhs, rhs) && lhs.to < rhs.from;
 		}
 
 		/** test whether two SeedPairs are compatitable and ordered and with not too much indels */
-		static bool isCompatitable(const SeedPair& lhs, const SeedPair& rhs, uint64_t maxIndel) {
+		static bool isCompatitable(const SeedPair& lhs, const SeedPair& rhs, int64_t maxIndel) {
 			return isCompatitable(lhs, rhs) &&
 					::abs(numGaps(lhs, rhs)) <= maxIndel;
 		}
@@ -106,29 +102,34 @@ struct Alignment {
 		bool isCompatitable() const;
 
 		/** test whether this SeedMatch is compatitable */
-		bool isCompatitable(uint64_t maxIndel) const;
+		bool isCompatitable(int64_t maxIndel) const;
 
-		/** get total length of SeedPairs within */
-		uint32_t length() const;
+		/** get total length of SeedPairs */
+		int32_t length() const;
 
 		/** get the from position as the first from */
-		uint64_t getFrom() const {
+		int64_t getFrom() const {
 			return front().from;
 		}
 
 		/** get the to position as the last to */
-		uint64_t getTo() const {
+		int64_t getTo() const {
 			return back().to;
 		}
 
 		/** get start position of this SeedMatch as the first SeedPair start */
-		uint64_t getStart() const {
+		int64_t getStart() const {
 			return front().start;
 		}
 
 		/** get end position of this SeedMatch as the last SeedPair end */
-		uint64_t getEnd() const {
+		int64_t getEnd() const {
 			return back().end;
+		}
+
+		/** get qStrand */
+		GLoc::STRAND getQStrand() const {
+			return front().strand;
 		}
 
 		/** get tid of this SeedMatch */
@@ -149,7 +150,7 @@ struct Alignment {
 
 		/** filter this SeedMatch using greedy algorithm,
 		 * by progressively remove bad SeedPair from it */
-		SeedMatch& filter(uint64_t maxIndel);
+		SeedMatch& filter(int64_t maxIndel);
 	};
 
 	typedef vector<SeedMatch> SeedMatchList;
@@ -160,33 +161,25 @@ struct Alignment {
 	Alignment() = default;
 
 	/** construct an AlignmentSE with all fields */
-	Alignment(const DNAseq* query, const DNAseq* target, const QualStr* qual, const string* qname, int32_t tid, uint64_t tShift,
-			uint64_t qFrom, uint64_t qTo, uint64_t tStart, uint64_t tEnd,
-			const ScoreScheme* ss, uint16_t flag, uint8_t mapQ, int32_t mtid, int32_t mpos, int32_t isize, uint32_t id)
-	: query(query), target(target), qual(qual), qname(qname), tid(tid), tShift(tShift),
-	  qFrom(qFrom), qTo(qTo), tStart(tStart), tEnd(tEnd), qLen(qTo - qFrom), tLen(tEnd - tStart),
-	  ss(ss), flag(flag), mapQ(mapQ), mtid(mtid), mpos(mpos), isize(isize), id(id),
-	  M(MatrixXd::Constant(qLen + 1, tLen + 1, infV)),
-	  I(MatrixXd::Constant(qLen + 1, tLen + 1, infV)),
-	  D(MatrixXd::Constant(qLen + 1, tLen + 1, infV)) {
-		assert(qFrom == 0 && qTo == query->length()); // cannot accept hard-clipped query
-		initScores();
-	}
-
-	/** construct an AlignmentSE with required fields */
-	Alignment(const DNAseq* query, const DNAseq* target, const QualStr* qual, const string* qname, int32_t tid,
-			uint64_t qFrom, uint64_t qTo, uint64_t tStart, uint64_t tEnd,
-			const ScoreScheme* ss, uint16_t flag, uint64_t tShift = 0)
-	: query(query), target(target), qual(qual), qname(qname), tid(tid), tShift(tShift),
-	  qFrom(qFrom), qTo(qTo), tStart(tStart), tEnd(tEnd), qLen(qTo - qFrom), tLen(tEnd - tStart),
-	  ss(ss), flag(flag),
-	  M(MatrixXd::Constant(qLen + 1, tLen + 1, infV)),
-	  I(MatrixXd::Constant(qLen + 1, tLen + 1, infV)),
-	  D(MatrixXd::Constant(qLen + 1, tLen + 1, infV))
+	Alignment(const DNAseq* query, const DNAseq* target, const QualStr* qual, const string* qname,
+			int32_t tid, GLoc::STRAND qStrand, int64_t tShift,
+			int64_t qFrom, int64_t qTo, int64_t tStart, int64_t tEnd,
+			const ScoreScheme* ss, uint8_t mapQ = INVALID_MAP_Q)
+	: query(query), target(target), qual(qual), qname(qname),
+	  tid(tid), qStrand(qStrand), tShift(tShift),
+	  qFrom(qFrom), qTo(qTo), tStart(tStart), tEnd(tEnd), ss(ss), mapQ(mapQ),
+	  M(MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV)),
+	  I(MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV)),
+	  D(MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV))
 	{
 		assert(qFrom == 0 && qTo == query->length()); // cannot accept hard-clipped query
 		initScores();
 	}
+
+	/** construct an unmapped AlignmentSE with minimum fields */
+	Alignment(const DNAseq* query, const QualStr* qual, const string* qname)
+	: query(query), qual(qual), qname(qname)
+	{  }
 
 	/* member methods */
 	/** test whether this alignment is initiated */
@@ -205,7 +198,7 @@ struct Alignment {
 	 * @param from, start  0-based
 	 * @param to, end  1-based
 	 */
-	void calculateScores(uint64_t from, uint64_t to, uint64_t start, uint64_t end);
+	void calculateScores(int64_t from, int64_t to, int64_t start, int64_t end);
 
 	/**
 	 * calculate scores in a SeedPair region, where only M scores on the diagnal are calculated
@@ -214,7 +207,7 @@ struct Alignment {
 
 	/** calculate all scores in the entire region using Dynamic-Programming, return the alnScore as the maximum score found */
 	Alignment& calculateScores() {
-		calculateScores(0, qLen, 0, tLen);
+		calculateScores(0, getQLen(), 0, getTLen());
 		alnScore = M.maxCoeff(&alnTo, &alnEnd); // determine aign 3' and score simultaneously
 		alnTo += qFrom;
 		alnEnd += tStart;
@@ -227,43 +220,43 @@ struct Alignment {
 	/** backtrace alnPath */
 	Alignment& backTrace();
 
-	/** test whether is reverse-complemented */
-	bool isRevcom() const {
-		return flag & BAM_FREVERSE;
+	/** get qLen */
+	int32_t getQLen() const {
+		return qTo - qFrom;
 	}
 
-	/** get strand of this Alignment */
-	MEM::STRAND getStrand() const {
-		return !isRevcom() ? MEM::FWD : MEM::REV;
+	/** get tLen */
+	int32_t getTLen() const {
+		return tEnd - tStart;
 	}
 
 	/** get 5' soft-clip size */
-	uint32_t getClip5Len() const {
+	int32_t getClip5Len() const {
 		return alnFrom - qFrom;
 	}
 
 	/** get 3' soft-clip size */
-	uint32_t getClip3Len() const {
+	int32_t getClip3Len() const {
 		return qTo - alnTo;
 	}
 
 	/** get all soft-clip size */
-	uint32_t getClipLen() const {
+	int32_t getClipLen() const {
 		return getClip5Len() + getClip3Len();
 	}
 
 	/** get align query length */
-	uint32_t getAlnQLen() const {
+	int32_t getAlnQLen() const {
 		return alnTo - alnFrom;
 	}
 
 	/** get align target length */
-	uint32_t getAlnTLen() const {
+	int32_t getAlnTLen() const {
 		return alnEnd - alnStart;
 	}
 
 	/** get align length, determined by alnPath, including M=XIDX but not H,P,N */
-	uint32_t getAlnLen() const;
+	int32_t getAlnLen() const;
 
 	/** get decoded aligned query seq */
 	string getAlnQSeq() const;
@@ -305,19 +298,19 @@ struct Alignment {
 		return ::pow(10.0, log10lik());
 	}
 
-	/** set flag */
-	Alignment& setFlag(uint16_t flag) {
-		this->flag |= flag;
-		return *this;
+	/** get flags based on strand information */
+	uint16_t getFlag() const {
+		return qStrand != GLoc::REV ? 0 : BAM_FREVERSE;
 	}
 
 	/**
 	 * export core info of this alignment to a BAM record, with no aux data
 	 */
 	BAM exportBAM() const {
-		return BAM(*qname, flag, tid, alnStart - tShift, mapQ,
-				getAlnCigar(), qLen, nt16Encode(*query), *qual,
-				mtid, mpos, isize, id);
+		if(qStrand == GLoc::FWD)
+			return BAM(*qname, getFlag(), tid, alnStart, mapQ, getAlnCigar(), getQLen(), query->nt16Encode(), *qual);
+		else
+			return BAM(*qname, getFlag(), tid, alnStart, mapQ, getAlnCigar(), getQLen(), query->revcom().nt16Encode(), qual->reverse());
 	}
 
 	/* member fields */
@@ -327,32 +320,26 @@ struct Alignment {
 	const QualStr* qual = nullptr; // query qual
 	const string* qname = nullptr; // query name
 	int32_t tid = -1;  // target id, should be determined from the database
-	uint64_t tShift = 0; // target/chromsome shift relative to metagenome
+	GLoc::STRAND qStrand = GLoc::UNK; // query strand
+	int64_t tShift = 0; // target/chromsome shift relative to metagenome
 
-	uint64_t qFrom = 0; // 0-based
-	uint64_t qTo = 0; // 1-based
-	uint64_t tStart = 0; // 0-based
-	uint64_t tEnd = 0; // 1-based
-	uint32_t qLen = 0; // query length (htslib query length is restricted to max chrom size (UITN32_MAX)
-	uint32_t tLen = 0; // target length
+	int64_t qFrom = 0; // 0-based
+	int64_t qTo = 0; // 1-based
+	int64_t tStart = 0; // 0-based
+	int64_t tEnd = 0; // 1-based
 
 	const ScoreScheme* ss = nullptr;
 
-	uint16_t flag = 0;
 	uint8_t mapQ = INVALID_MAP_Q;
-	int32_t mtid = -1;
-	int32_t mpos = -1;
-	int32_t isize = 0;
-	uint64_t id = 0;
 
 	MatrixXd M; // (qLen + 1) * (tLen + 1) DP-matrix to store scores that x[i] is aligned to y[j]
 	MatrixXd D; // (qLen + 1) * (tLen + 1) DP-matrix to store scores that x[i] is aligned to a gap (deletion for query)
 	MatrixXd I; // (qLen + 1) * (tLen + 1) DP-matrix to store scores that y[j] is aligned to a gap (insertion for query)
 
-	uint64_t alnFrom = 0; // 0-based alignment from
-	uint64_t alnTo = 0; // 1-based alignment to
-	uint64_t alnStart = 0; // 0-based alignment start
-	uint64_t alnEnd = 0; // 1-based alignment end
+	int64_t alnFrom = 0; // 0-based alignment from
+	int64_t alnTo = 0; // 1-based alignment to
+	int64_t alnStart = 0; // 0-based alignment start
+	int64_t alnEnd = 0; // 1-based alignment end
 	double alnScore = NAN; // alignment score
 	state_str alnPath; // backtrace alignment path using cigar ops defined htslib/sam.h
 //	BAM::cigar_str alnCigar; // cigar_str compressed from alnPath
@@ -383,18 +370,17 @@ struct Alignment {
 	static BAM::seq_str nt16Encode(const DNAseq& seq);
 
 	/** get algnQLen by MD tag */
-	static uint32_t mdTag2alnQLen(const string& mdTag);
+	static int32_t mdTag2alnQLen(const string& mdTag);
 
 	/** get a search region given max indel-rate */
-	static Loc getSearchRegion(uint64_t start, uint64_t end);
+	static Loc getSearchRegion(int64_t start, int64_t end);
 
-	/** get SeedMatchList from a pre-calculated MEMS and its shift of this region */
-	static SeedMatchList getSeedMatchList(const MetaGenome& mtg, const MEMS& mems,
-			uint32_t maxIt = MAX_ITER);
+	/** get SeedMatchList from a pre-calculated MEMS */
+	static SeedMatchList getSeedMatchList(const MEMS& mems, uint32_t maxIt = MAX_ITER);
 
 	/** get candidate Alignments from SeedMatch list */
-	static ALIGN_LIST getAlignments(const ScoreScheme& ss, const MetaGenome& mtg, const PrimarySeq& read,
-			const SeedMatchList& seedMatches, MEM::STRAND strand);
+	static ALIGN_LIST getAlignments(const ScoreScheme* ss, const MetaGenome* mtg, const PrimarySeq* read,
+			const SeedMatchList& seedMatches);
 
 	/** filter candidate list of Alignments using alnScore */
 	static ALIGN_LIST& filter(ALIGN_LIST& alnList, double bestFrac);
@@ -430,7 +416,7 @@ struct AlignmentPE {
 	/* member methods */
 	/** test whether this AlignmentPE is concordance */
 	bool isConcordant() const {
-		return fwdAln->tid == revAln->tid && fwdAln->getStrand() != revAln->getStrand();
+		return fwdAln->tid == revAln->tid && (fwdAln->qStrand & revAln->qStrand) == 0;
 	}
 
 	/** test whethther two mates is tail-overlap through each other */
@@ -479,6 +465,30 @@ struct AlignmentPE {
 		this->isize = isize;
 	}
 
+	/** export fwd bam record */
+	BAM exportFwdBAM() const {
+		return BAM(*(fwdAln->qname), getFwdFlag(), fwdAln->tid, fwdAln->alnStart, fwdAln->mapQ,
+				fwdAln->getAlnCigar(), fwdAln->getQLen(), fwdAln->query->nt16Encode(), *(fwdAln->qual),
+				revAln->tid, revAln->alnStart, isize);
+	}
+
+	/** exportrev bam record */
+	BAM exportRevBAM() const {
+		return BAM(*(revAln->qname), getRevFlag(), revAln->tid, revAln->alnStart, revAln->mapQ,
+				revAln->getAlnCigar(), revAln->getQLen(), revAln->query->nt16Encode(), *(revAln->qual),
+				fwdAln->tid, fwdAln->alnStart, isize);
+	}
+
+	/** get fwd flag */
+	uint16_t getFwdFlag() const {
+		return fwdAln->getFlag() | BAM_FPROPER_PAIR | BAM_FREAD1;
+	}
+
+	/** get rev flag */
+	uint16_t getRevFlag() const {
+		return revAln->getFlag() | BAM_FPROPER_PAIR | BAM_FREAD2;
+	}
+
 	/* member fields */
 	const Alignment* fwdAln = nullptr;
 	const Alignment* revAln = nullptr;
@@ -489,7 +499,7 @@ struct AlignmentPE {
 
 	/* static methods */
 	/** init candidate list of Alignment pairs from fwd and rev ALIGN_LIST */
-	static PAIR_LIST getPairs(ALIGN_LIST& fwdAlnList, ALIGN_LIST& revAlnList);
+	static PAIR_LIST getPairs(const ALIGN_LIST& fwdAlnList, const ALIGN_LIST& revAlnList);
 
 	/** filter candidate pairs using pairing criteria */
 	static PAIR_LIST& filter(PAIR_LIST& pairList,
@@ -506,8 +516,8 @@ struct AlignmentPE {
 	static PAIR_LIST& sort(PAIR_LIST& pairList);
 
 	/** calculate insert size of two Alignment
-	 * @return  zero if overlap,
-	 * or -1 if not on the same chromosome/target
+	 * @return  distance of two alignment,
+	 * or -1 if not on the same chromosome
 	  */
 	static int32_t getInsertSize(const Alignment& lhs, const Alignment& rhs);
 };
@@ -553,13 +563,18 @@ inline Alignment& Alignment::clearScores() {
 	return *this;
 }
 
-inline void Alignment::calculateScores(uint64_t from, uint64_t to, uint64_t start, uint64_t end) {
+inline void Alignment::calculateScores(int64_t from, int64_t to, int64_t start, int64_t end) {
 	assert(isInitiated());
-	for(uint64_t q = from; q < to; ++q) {
-		uint32_t i = q - qFrom + 1; // relative to score matrices
-		for(uint64_t t = start; t < end; ++t) {
-			uint32_t j = t - tStart + 1; // relative to score matrices
-			double s = ss->getScore((*query)[q], (*target)[t]);
+	if(qStrand == GLoc::REV)
+		Loc::reverseLoc(getQLen(), from, to);
+
+	for(int64_t q = from; q < to; ++q) {
+		int32_t i = q - qFrom + 1; // relative to score matrices
+		for(int64_t t = start; t < end; ++t) {
+			int32_t j = t - tStart + 1; // relative to score matrices
+			nt16_t qB = qStrand == GLoc::FWD ? (*query)[q] : DNAalphabet::complement((*query)[qTo - q - 1]);
+			nt16_t tB = (*target)[t];
+			double s = ss->getScore(qB, tB);
 			double o = -ss->openGapPenalty();
 			double e = -ss->extGapPenalty();
 			M(i,j) = std::max({
@@ -582,12 +597,19 @@ inline void Alignment::calculateScores(uint64_t from, uint64_t to, uint64_t star
 
 inline void Alignment::calculateScores(const SeedPair& pair) {
 	assert(isInitiated());
-	for(uint32_t k = 0; k < pair.length(); ++k) {
-		uint64_t q = pair.from + k;
-		uint64_t t = pair.start + k;
-		uint32_t i = q - qFrom + 1;
-		uint32_t j = t - tStart + 1;
-		M(i,j) = M(i-1,j-1) + ss->getScore((*query)[q], (*target)[t]);
+	int64_t from = pair.from;
+	int64_t to = pair.to;
+	if(qStrand == GLoc::REV)
+		Loc::reverseLoc(getQLen(), from, to);
+	for(int32_t k = 0; k < pair.length(); ++k) {
+		int64_t q = pair.from + k;
+		int64_t t = pair.start + k;
+		int32_t i = q - qFrom + 1;
+		int32_t j = t - tStart + 1;
+		nt16_t qB = qStrand == GLoc::FWD ? (*query)[q] : DNAalphabet::complement((*query)[qTo - q - 1]);
+		nt16_t tB = (*target)[t];
+//		std::cerr << "strand: " << qStrand << "q: " << q << " t: " << t << " i: " << i << " j: " << j << " qB: " << DNAalphabet::decode(qB) << " tB: " << DNAalphabet::decode(tB) << std::endl;
+		M(i,j) = M(i-1,j-1) + ss->getScore(qB, tB);;
 	}
 }
 

@@ -37,6 +37,7 @@ QualStr.cpp \
 PrimarySeq.cpp \
 SeqIO.cpp \
 Loc.cpp \
+GLoc.cpp \
 MEM.cpp \
 MEMS.cpp \
 ScoreScheme.cpp \

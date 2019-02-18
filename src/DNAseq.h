@@ -128,7 +128,7 @@ public:
 	 * @param i  position
 	 * @return  the decoded DNA character
 	 */
-	char decode(DNAseq::size_type i) const {
+	char decode(size_type i) const {
 		return DNAalphabet::decode((*this)[i]);
 	}
 

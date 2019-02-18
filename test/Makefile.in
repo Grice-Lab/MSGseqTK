@@ -154,7 +154,8 @@ Genome_test_OBJECTS = $(am_Genome_test_OBJECTS)
 Genome_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
 	$(top_srcdir)/src/util/libEGUtil.a \
 	$(top_srcdir)/src/util/UCSC/libEGUCSC.a
-am_MEM_test_OBJECTS = MEM_test.$(OBJEXT)
+am_MEM_test_OBJECTS = MEM_test.$(OBJEXT) \
+	$(top_srcdir)/src/MSGseqTKEnv.$(OBJEXT)
 MEM_test_OBJECTS = $(am_MEM_test_OBJECTS)
 MEM_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
 	$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
@@ -650,7 +651,7 @@ $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/util/libEGUtil.a \
 $(top_srcdir)/src/util/UCSC/libEGUCSC.a
 
-MEM_test_SOURCES = MEM_test.cpp 
+MEM_test_SOURCES = MEM_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
 MEM_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \

@@ -297,44 +297,44 @@ saidx_t FMDIndex::accessSA(saidx_t i) const {
 	return SAsampled[SAbit.rank1(i) - 1] + dist;
 }
 
-vector<Loc> FMDIndex::locateAllFwd(const DNAseq& pattern) const {
-	vector<Loc> locs;
+vector<GLoc> FMDIndex::locateAllFwd(const DNAseq& pattern) const {
+	vector<GLoc> locs;
 	if(pattern.empty())
 		return locs;
 
-	DNAseq::const_iterator b = pattern.begin();
-	saidx_t p = C[*b];
-	saidx_t q = C[DNAalphabet::complement(*b)];
-	saidx_t s = C[*b + 1] - C[*b];
+	nt16_t b = pattern.front();
+	saidx_t p = C[b];
+	saidx_t q = C[DNAalphabet::complement(b)];
+	saidx_t s = C[b + 1] - C[b];
 
-	/* backward search */
-    while(s >= 0 && ++b < pattern.end())
-    	fwdExt(p, q, s, *b);
+	/* forward search */
+    for(DNAseq::const_iterator it = pattern.begin() + 1; s >= 0 && it < pattern.end() && *it != 0; ++it)
+    	fwdExt(p, q, s, *it);
 
-    for(saidx_t i = p; i < p + s; ++i) {
+    for(saidx_t i = p; i < p + s; ++i) { // locate fwd locs
     	saidx_t SAstart = accessSA(i);
-    	locs.push_back(Loc(SAstart, SAstart + pattern.length()));
+    	locs.push_back(GLoc(SAstart, SAstart + pattern.length(), -1, GLoc::FWD));
     }
     return locs;
 }
 
-vector<Loc> FMDIndex::locateAllRev(const DNAseq& pattern) const {
-	vector<Loc> locs;
+vector<GLoc> FMDIndex::locateAllRev(const DNAseq& pattern) const {
+	vector<GLoc> locs;
 	if(pattern.empty())
 		return locs;
 
-	DNAseq::const_reverse_iterator b = pattern.rbegin();
-	saidx_t p = C[*b];
-	saidx_t q = C[DNAalphabet::complement(*b)];
-	saidx_t s = C[*b + 1] - C[*b];
+	nt16_t b = pattern.back();
+	saidx_t p = C[b];
+	saidx_t q = C[DNAalphabet::complement(b)];
+	saidx_t s = C[b + 1] - C[b];
 
 	/* backward search */
-    while(s >= 0 && ++b < pattern.rend())
-    	backExt(p, q, s, *b);
+    for(DNAseq::const_reverse_iterator it = pattern.rbegin() + 1; s >= 0 && it < pattern.rend(); ++it)
+    	backExt(p, q, s, *it);
 
-    for(saidx_t i = q; i < q + s; ++i) {
+    for(saidx_t i = q; i < q + s; ++i) { // locate rev locs
     	saidx_t SAstart = accessSA(i);
-    	locs.push_back(Loc(SAstart, SAstart + pattern.length()));
+    	locs.push_back(GLoc(SAstart, SAstart + pattern.length(), -1, GLoc::REV));
     }
     return locs;
 }
@@ -390,11 +390,19 @@ FMDIndex operator+(const FMDIndex& lhs, const FMDIndex& rhs) {
 }
 
 void FMDIndex::backExt(saidx_t& p, saidx_t& q, saidx_t& s, sauchar_t b) const {
+	if(!DNAalphabet::isBasic(b))
+		return;
 	BCarray_t pB, qB, sB;
 	for(nt16_t i = 0; i < DNAalphabet::SIZE; ++i) {
-		saidx_t O = bwt.rank(i, p - 1);
-		pB[i] = C[i] + O;
-		sB[i] = bwt.rank(i, p + s - 1) - O;
+		if(DNAalphabet::isBasic(b)) {
+			saidx_t O = bwt.rank(i, p - 1);
+			pB[i] = C[i] + O;
+			sB[i] = bwt.rank(i, p + s - 1) - O;
+		}
+		else { // non-basic base
+			pB[i] = 0;
+			sB[i] = 0;
+		}
 	}
 	/* new range of [q', q' + s' - 1] is a subrange of original [q, q + s] */
 	/* devide q + q + s */

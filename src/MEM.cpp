@@ -26,30 +26,25 @@ MEM& MEM::evaluate() {
 	if(empty())
 		return *this;
 	logP = 0;
+	int64_t N = 0;
 	for(int64_t i = from; i < to; ++i) {
 		DNAseq::value_type b = seq->getBase(i);
-		if(strand == REV)
-			b = DNAalphabet::complement(b);
-		if(DNAalphabet::isBasic(b))
-			logP += std::log(fmidx->getBaseCount(b));
+		if(DNAalphabet::isBasic(b)) {
+			logP += std::log(fmdidx->getBaseCount(b)) +
+			std::log(fmdidx->getBaseCount(DNAalphabet::complement(b))); // always observe both fwd and rev read
+			N++;
+		}
 	}
-	logP -= length() * log(fmidx->getBasicBaseCount()); /* subtract denominator */
+	logP -= 2 * N * log(fmdidx->getBasicBaseCount()); /* subtract denominator */
 	return *this;
 }
 
-uint64_t MEM::seqDist(const MEM& mem1, const MEM& mem2) {
-	assert(mem1.seq == mem2.seq);
-	if(isOverlap(mem1, mem2))
-		return 0;
-	else
-		return mem1.from < mem2.from ? mem2.from - mem1.to + 1 : mem1.from - mem2.to + 1;
-}
-
-uint64_t MEM::dbDist(const MetaGenome* mtg, const MEM& mem1, const MEM& mem2) {
-	uint64_t minD = std::numeric_limits<uint64_t>::max();
-	for(const Loc& loc1 : mem1.locs) {
-		for(const Loc& loc2 : mem2.locs) {
-			if(isCompatitable(mtg, loc1, loc2)) {
+int64_t MEM::dbDist(const MEM& lhs, const MEM& rhs) {
+	assert(lhs.mtg == rhs.mtg);
+	int64_t minD = std::numeric_limits<int64_t>::max();
+	for(const Loc& loc1 : lhs.locs) {
+		for(const Loc& loc2 : rhs.locs) {
+			if(isCompatitable(lhs.mtg, loc1, loc2)) {
 				int64_t d = Loc::dist(loc1, loc2);
 				if(d < minD)
 					minD = d;
@@ -61,53 +56,77 @@ uint64_t MEM::dbDist(const MetaGenome* mtg, const MEM& mem1, const MEM& mem2) {
 
 ostream& MEM::write(ostream& out) const {
 	/* write basic info */
-	out << strand << ':' << from << '-' << to << ':'; /* SAstart and SAend are ignored */
+	out << from << '-' << to << ':'; /* SAstart and SAend are ignored */
 	/* write Loc info */
-	for(vector<Loc>::const_iterator loc = locs.begin(); loc != locs.end(); ++loc) {
+	for(vector<GLoc>::const_iterator loc = locs.begin(); loc != locs.end(); ++loc) {
 		if(loc != locs.begin())
 			out << ',';
 		out << *loc;
 	}
-
 	return out;
 }
 
-MEM MEM::findMEM(const PrimarySeq* seq, const FMIndex* fmidx, uint64_t from, uint64_t to, STRAND strand) {
-	uint64_t start = 0; /* 0-based SAstart */
-	uint64_t end = 0;   /* 1-based SAend */
-	uint64_t nextStart = start;
-	uint64_t nextEnd = end;
-	uint64_t i;
-	/* search left-to-right */
-	const DNAseq& ds = strand == FWD ? seq->getSeq() : seq->getSeq().revcom();
+MEM MEM::findMEMfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx, int64_t from) {
+	if(!(from < seq->length())) // empty search region
+		return MEM();
 
-	for(i = from; i < std::min(to, seq->length()); ++i, start = nextStart, end = nextEnd) {
-		sauchar_t b = ds[i];
-		if(b == DNAalphabet::GAP_BASE) /* null gap */
-			break;
-		if(start == 0) {
-			nextStart = fmidx->getCumCount(b);
-			nextEnd = fmidx->getCumCount(b + 1);
-		}
-		else {
-			nextStart = fmidx->LF(b, start - 1);
-			nextEnd = fmidx->LF(b, end - 1);
-		}
+	nt16_t b = seq->getBase(from);
+	saidx_t p = fmdidx->getCumCount(b);
+	saidx_t q = fmdidx->getCumCount(DNAalphabet::complement(b));
+	saidx_t s = fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b);
 
-		if(nextStart != 0 && nextStart >= nextEnd)
-			break;
+	int64_t fwdStart;
+	int64_t revStart;
+	int64_t size;
+	saidx_t to;
+	for(fwdStart = p, revStart = q, size = s, to = from; s > 0 && to < seq->length() && DNAalphabet::isBasic(b); fmdidx->fwdExt(p, q, s, b)) {
+		fwdStart = p;
+		revStart = q;
+		size = s;
+		b = seq->getBase(++to);
 	}
-
 	/* return MEM with basic info */
-	return MEM(seq, fmidx, strand, from, i, start, end);
+	return MEM(seq, mtg, fmdidx, from, to, fwdStart, revStart, size);
+}
+
+MEM MEM::findMEMrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx, int64_t to) {
+	if(to <= 0) // empty search region
+		return MEM();
+	to = std::min(to, static_cast<int64_t>(seq->length()));
+
+	nt16_t b = seq->getBase(to - 1);
+	saidx_t p = fmdidx->getCumCount(b);
+	saidx_t q = fmdidx->getCumCount(DNAalphabet::complement(b));
+	saidx_t s = fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b);
+
+	int64_t fwdStart;
+	int64_t revStart;
+	int64_t size;
+	saidx_t from;
+	for(fwdStart = p, revStart = q, size = s, from = to; s > 0 && from > 0 && DNAalphabet::isBasic(b); fmdidx->backExt(p, q, s, b)) {
+		fwdStart = p;
+		revStart = q;
+		size = s;
+		b = seq->getBase(--from - 1);
+	}
+	/* return MEM with basic info */
+	return MEM(seq, mtg, fmdidx, from, to, fwdStart, revStart, size);
 }
 
 MEM& MEM::findLocs(size_t maxNLocs) {
-	locs.reserve(SAend - SAstart);
-	for(uint64_t i = SAstart; i < std::min<size_t>(SAstart + maxNLocs, SAend); ++i) {
-		uint64_t start = fmidx->accessSA(i);
-		locs.push_back(fmidx->reverseLoc(Loc(start, start + length())));
-//		locs.push_back(Loc(start, start + length()));
+	locs.reserve(size);
+	const size_t N = std::min(maxNLocs, static_cast<size_t>(size));
+	for(size_t i = 0; i < N; ++i) {
+		{
+			saidx_t start = fmdidx->accessSA(fwdStart + i);
+			if(mtg->getStrand(start) == GLoc::FWD) // always only search loc on fwd tStrand
+				locs.push_back(GLoc(start, start + length(), mtg->getLocId(start), GLoc::FWD));
+		}
+		{
+			saidx_t start = fmdidx->accessSA(revStart + i);
+			if(mtg->getStrand(start) == GLoc::FWD) // always only search loc on fwd tStrand
+				locs.push_back(GLoc(start, start + length(), mtg->getLocId(start), GLoc::REV));
+		}
 	}
 	return *this;
 }

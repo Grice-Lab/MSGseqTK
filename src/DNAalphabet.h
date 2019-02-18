@@ -32,6 +32,7 @@ class DNAalphabet {
 public:
 	typedef array<nt16_t, 256> base_map; /* base map whose value type is base */
 	typedef array<char, 256> sym_map; /* symbol map whose value type is symbol */
+	typedef array<int, 256> int_map; /* base/symbol map whose value type is (small) int */
 	/* nested enum and types */
 	enum Base
 	{ N = 0, A = 1, C = 2, G = 4, T = 8,
@@ -51,6 +52,7 @@ public:
 	static const nt16_t NT16_MIN = 1;
 	static const nt16_t NT16_MAX = 0xE;
 	static const nt16_t SIZE = NT16_MAX + 1;
+	static const nt16_t BASIC_SIZE = 4; /* A, C, G, T */
 	static const char GAP_SYM = '-'; /* IUPAC gap */
 	static const char GAP_ALT = '.'; /* IUPAC alternative gap */
 	static const uint32_t NT16_LOWER_MASK = 0xf;
@@ -62,6 +64,8 @@ private:
 	static const sym_map base2sym;  /* internal base->sym map, almost the same as nt16 decoding except Ns */
 	static const sym_map sym2comp;  /* internal complement map from symbol to symbol, static zero initiated by default */
 	static const base_map base2comp;  /* internal complement map from base to base, static zero initiated by default */
+	static const int_map base2int; /* internal base->int(0,1,2,3) map, with default value 4 */
+	static const int_map sym2int;   /* internal sym->int(0,1,2,3) map, with default value 4 */
 
 	/* static methods */
 public:
@@ -128,6 +132,16 @@ public:
 	/** test whether a symbol is basic base */
 	static bool isBasic(char s) {
 		return isBasic(encode(s));
+	}
+
+	/** decode a base to small int */
+	static int toInt(nt16_t b) {
+		return base2int[b];
+	}
+
+	/** decode a symbol to small int */
+	static int toInt(char s) {
+		return sym2int[s];
 	}
 
 	/** get a reverse-completed copy of a dna string */

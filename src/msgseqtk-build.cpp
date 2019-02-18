@@ -1,7 +1,7 @@
 /*******************************************************************************
  * This file is part of MSGseqTK, a Metagenomics Shot-Gun sequencing ToolKit
  * for ultra-fast and accurate MSG-seq cleaning, mapping and more,
- * based on space-efficient FM-index on entire collection of meta-genomics sequences.
+ * based on space-efficient FMD-index on entire collection of meta-genomics sequences.
  * Copyright (C) 2018  Qi Zheng
  *
  * MSGseqTK is free software: you can redistribute it and/or modify
@@ -73,7 +73,7 @@ void printUsage(const string& progName) {
 		 << "Options:    -n  STR              : database name" << endl
 		 << "            -l  FILE             : tab-delimited genome list with 1st field unique genome IDs, 2nd filed genome names, 3nd field genomic sequence filenames; if provided, <SEQ-FILE> options are ignored" << ZLIB_SUPPORT << endl
 		 << "            -r|--update  STR     : update database based on this old DB, it can be the same name as -n, which will overwrite the old database" << endl
-		 << "            -b|--block  INT      : block size (in Mbp) for building FM-index, larget block size will lead to faster but more memory usage algorithm [" << DEFAULT_BLOCK_SIZE << "]" << endl
+		 << "            -b|--block  INT      : block size (in Mbp) for building FMD-index, larget block size will lead to faster but more memory usage algorithm [" << DEFAULT_BLOCK_SIZE << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing, only used in building SA and merging BWTs [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -88,11 +88,11 @@ int main(int argc, char* argv[]) {
 	map<string, string> genomeId2Fn;
 
 	string dbName, oldDBName;
-	string listFn, mtgFn, fmidxFn;
+	string listFn, mtgFn, fmdidxFn;
 
-	ifstream listIn, mtgIn, fmidxIn;
+	ifstream listIn, mtgIn, fmdidxIn;
 
-	ofstream mtgOut, fmidxOut;
+	ofstream mtgOut, fmdidxOut;
 	const SeqIO::FORMAT fmt = SeqIO::FASTA; // always use fasta format
 
 	int blockSize = DEFAULT_BLOCK_SIZE;
@@ -198,7 +198,7 @@ int main(int argc, char* argv[]) {
 
 	/* open output */
 	mtgFn = dbName + METAGENOME_FILE_SUFFIX;
-	fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
+	fmdidxFn = dbName + FMDINDEX_FILE_SUFFIX;
 
 	mtgOut.open(mtgFn.c_str(), ios_base::out | ios_base::binary);
 	if(!mtgOut.is_open()) {
@@ -206,21 +206,21 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	fmidxOut.open(fmidxFn.c_str(), ios_base::out | ios_base::binary);
-	if(!fmidxOut.is_open()) {
-		cerr << "Unable to write to '" << fmidxFn << "': " << ::strerror(errno) << endl;
+	fmdidxOut.open(fmdidxFn.c_str(), ios_base::out | ios_base::binary);
+	if(!fmdidxOut.is_open()) {
+		cerr << "Unable to write to '" << fmdidxFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
 	MetaGenome mtg;
-	FMIndex fmidx;
+	FMDIndex fmdidx;
 
 	/* try to open existing DB */
 	if(!oldDBName.empty()) { /* is an update */
 		infoLog << "Loading old database '" << oldDBName << "'" << endl;
 		/* set oldDBName */
 		mtgFn = oldDBName + METAGENOME_FILE_SUFFIX;
-		fmidxFn = oldDBName + FMINDEX_FILE_SUFFIX;
+		fmdidxFn = oldDBName + FMDINDEX_FILE_SUFFIX;
 
 		mtgIn.open(mtgFn.c_str(), ios_base::binary);
 		if(!mtgIn.is_open()) {
@@ -228,9 +228,9 @@ int main(int argc, char* argv[]) {
 			return EXIT_FAILURE;
 		}
 
-		fmidxIn.open(fmidxFn.c_str(), ios_base::binary);
-		if(!fmidxIn.is_open()) {
-			cerr << "Unable to open old database file '" << fmidxFn << "': " << ::strerror(errno) << endl;
+		fmdidxIn.open(fmdidxFn.c_str(), ios_base::binary);
+		if(!fmdidxIn.is_open()) {
+			cerr << "Unable to open old database file '" << fmdidxFn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
 
@@ -242,16 +242,16 @@ int main(int argc, char* argv[]) {
 			return EXIT_FAILURE;
 		}
 
-		loadProgInfo(fmidxIn);
-		if(!fmidxIn.bad())
-			fmidx.load(fmidxIn);
-		if(fmidxIn.bad()) {
-			cerr << "Unable to load '" << fmidxFn << "': " << ::strerror(errno) << endl;
+		loadProgInfo(fmdidxIn);
+		if(!fmdidxIn.bad())
+			fmdidx.load(fmdidxIn);
+		if(fmdidxIn.bad()) {
+			cerr << "Unable to load '" << fmdidxFn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
 
 		mtgIn.close();
-		fmidxIn.close();
+		fmdidxIn.close();
 	}
 
 	/* read all genomic files */
@@ -284,7 +284,6 @@ int main(int argc, char* argv[]) {
 
 		/* read in genome sequences */
 		Genome genome(genomeId, genomeName);
-		DNAseq genomeSeq;
 		infoLog << "Reading genome " << genome.displayId() << endl;
 		SeqIO seqI(&genomeIn, fmt);
 		while(seqI.hasNext()) {
@@ -292,13 +291,11 @@ int main(int argc, char* argv[]) {
 			const string& chrName = chr.getName();
 			const DNAseq& chrSeq = chr.getSeq();
 			debugLog << "  adding " << chrName << " with length " << chrSeq.length() << endl;
-			genome.addChrom(Genome::Chrom(chrName, chrSeq.length()));
-			genomeSeq += chrSeq;
-			genomeSeq.push_back(DNAalphabet::GAP_BASE);
+			genome.addChrom(chrName, chrSeq);
 		}
 
 		/* add this genome */
-		mtg.addGenome(genome, genomeSeq);
+		mtg.addGenome(genome);
 		infoLog << "  genome " << genome.displayId() << " added" << endl;
 	}
 
@@ -309,51 +306,57 @@ int main(int argc, char* argv[]) {
 		infoLog << "No new genomes found, database not modified, quit updating" << endl;
 		return EXIT_SUCCESS;
 	}
+	const size_t mtgSize = mtg.size();
+	const size_t NG = mtg.numGenomes();
 
-	infoLog << "Building FM-index incrementally" << endl;
-	DNAseq blockSeq;
-	blockSeq.reserve(blockSize * MBP_UNIT);
-	size_t k = 0;
-	size_t nBlock = 0;
-	for(size_t i = 0; i < mtg.numGenomes(); ++i) {
-		blockSeq += mtg.getGenomeSeq(i);
-		nBlock++;
-		bool isLast = i == mtg.numGenomes() - 1;
-
-		/* process block, if large enough */
-		if(blockSeq.length() >= blockSize * MBP_UNIT || isLast) { /* last genome or full block */
-			if(!isLast)
-				infoLog << "Adding " << nBlock << " genomes in block " << ++k << " into FM-index" << endl;
-			else
-				infoLog << "Adding " << nBlock << " genomes in block " << ++k << " into FM-index and building final sampled Suffix-Array" << endl;
-			blockSeq.erase(blockSeq.length() - 1); // remove GAP_BASE terminal
-			blockSeq.reverse(); // reverse genome sequences
-			fmidx = FMIndex(blockSeq, isLast) + fmidx; /* always use freshly built FMIndex as lhs */
-			blockSeq.clear();
-			nBlock = 0;
-			infoLog << "Currrent # of bases in FM-index: " << fmidx.length() << endl;
-		}
-	}
-	assert(mtg.size() == fmidx.length());
-
-	/* save output */
+	/* save MetaGenome */
 	saveProgInfo(mtgOut);
 	mtg.save(mtgOut);
 	if(mtgOut.bad()) {
 		cerr << "Unable to save MetaGenome: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	infoLog << "MetaGenome info saved to '" << mtgFn << "'" << endl;
+	infoLog << "MetaGenome of " << mtgSize << " bases saved to '" << mtgFn << "'" << endl;
 
-	saveProgInfo(fmidxOut);
-	fmidx.save(fmidxOut);
-	if(fmidxOut.bad()) {
-		cerr << "Unable to save FM-index: " << ::strerror(errno) << endl;
+	infoLog << "Building FMD-index incrementally" << endl;
+	DNAseq blockSeq;
+	blockSeq.reserve(blockSize * MBP_UNIT);
+	size_t k = 0;
+	size_t nBlock = 0;
+	while(!mtg.empty()) {
+		const Genome& genome = mtg.backGenome();
+		blockSeq = genome.getSeq() + blockSeq; // update seq
+		mtg.popGenome(); // pop the last genome
+
+		nBlock++;
+		bool isFirst = mtg.empty(); // flag whether the first genome
+
+		/* process block, if large enough */
+		if(blockSeq.length() >= blockSize * MBP_UNIT || isFirst) { /* first genome or full block */
+			if(!isFirst)
+				infoLog << "Adding " << nBlock << " genomes in block " << ++k << " into FMD-index" << endl;
+			else
+				infoLog << "Adding " << nBlock << " genomes in block " << ++k << " into FMD-index and building final sampled Suffix-Array" << endl;
+			assert(blockSeq.back() == DNAalphabet::GAP_BASE);
+			blockSeq.erase(blockSeq.length() - 1); // remove GAP_BASE terminal
+			fmdidx = FMDIndex(blockSeq, isFirst) + fmdidx; /* always use freshly built FMDIndex as lhs */
+			blockSeq.clear();
+			nBlock = 0;
+			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;
+		}
+	}
+	assert(mtgSize == fmdidx.length());
+
+	/* save FMDIndex */
+	saveProgInfo(fmdidxOut);
+	fmdidx.save(fmdidxOut);
+	if(fmdidxOut.bad()) {
+		cerr << "Unable to save FMD-index: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	infoLog << "FM-index saved to '" << fmidxFn << "'" << endl;
+	infoLog << "FMD-index saved to '" << fmdidxFn << "'" << endl;
 
 	if(!oldDBName.empty())
-		infoLog << "Database updated. Newly added # of genomes: " << nProcessed << " new size: " << mtg.size() << endl;
-	infoLog << "Database built. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
+		infoLog << "Database updated. Newly added # of genomes: " << nProcessed << " new size: " << mtgSize << endl;
+	infoLog << "Database built. Total # of genomes: " << NG << " size: " << mtgSize << endl;
 }

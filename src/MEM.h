@@ -11,9 +11,9 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
-#include "Loc.h"
 #include "PrimarySeq.h"
-#include "FMIndex.h"
+#include "FMDIndex.h"
+#include "GLoc.h"
 #include "MetaGenome.h"
 #include "MSGseqTKConst.h"
 
@@ -26,29 +26,26 @@ namespace MSGseqTK {
 using std::vector;
 
 struct MEM {
-	/* nested types and enums */
-	/* bit-mask for strands, 01 for FWD, 10 for REV */
-	enum STRAND { FWD = 1, REV };
-
 	/** default constructor */
 	MEM() = default;
 
 	/** construct an MEM with all info */
-	MEM(const PrimarySeq* seq, const FMIndex* fmidx, STRAND strand,
-			uint64_t from, uint64_t to, uint64_t SAstart, uint64_t SAend,
-			const vector<Loc>& locs)
-	: seq(seq), fmidx(fmidx), strand(strand), from(from), to(to), SAstart(SAstart), SAend(SAend), locs(locs)
+	MEM(const PrimarySeq* seq,  const MetaGenome* mtg, const FMDIndex* fmdidx,
+			int64_t from, int64_t to, int64_t fwdStart, int64_t revStart, int64_t size,
+			const vector<GLoc>& locs)
+	: seq(seq), mtg(mtg), fmdidx(fmdidx),
+	  from(from), to(to), fwdStart(fwdStart), revStart(revStart), size(size), locs(locs)
 	{ 	}
 
 	/** construct an MEM with all info but not locs */
-	MEM(const PrimarySeq* seq, const FMIndex* fmidx, STRAND strand,
-			uint64_t from, uint64_t to, uint64_t SAstart, uint64_t SAend)
-	: seq(seq), fmidx(fmidx), strand(strand), from(from), to(to), SAstart(SAstart), SAend(SAend)
+	MEM(const PrimarySeq* seq,  const MetaGenome* mtg, const FMDIndex* fmdidx,
+			int64_t from, int64_t to, int64_t fwdStart, int64_t revStart, int64_t size)
+	: seq(seq), mtg(mtg), fmdidx(fmdidx), from(from), to(to), fwdStart(fwdStart), revStart(revStart), size(size)
 	{   }
 
 	/* member methods */
 	/** get length of this MEM */
-	uint64_t length() const {
+	int64_t length() const {
 		return to - from;
 	}
 
@@ -61,16 +58,18 @@ struct MEM {
 	void reset() {
 		from = 0;
 		to = 0;
-		SAstart = 0;
-		SAend = 0;
+		fwdStart = 0;
+		revStart = 0;
+		size = 0;
 		seq = nullptr;
-		fmidx = nullptr;
+		mtg = nullptr;
+		fmdidx = nullptr;
 		locs.clear();
 	}
 
 	/**
-	 * fill the locs information of this MEM
-	 * locs are based on the forward direction of the original seq
+	 * fill the locs information of this MEM only on the fwd reference strand
+	 * @param maxNLocs  max # of locs to find
 	 */
 	MEM& findLocs(size_t maxNLocs = MAX_NLOCS);
 
@@ -95,12 +94,12 @@ struct MEM {
 
 	/** get the evalue of observing this MEM by random */
 	double evalue() const {
-		return fmidx->length() * pvalue();
+		return fmdidx->length() * pvalue();
 	}
 
 	/** get log-evalue of observing this MEM by random */
 	double logevalue() const {
-		return std::log(fmidx->length()) + loglik();
+		return std::log(fmdidx->length()) + loglik();
 	}
 
 	/** write this MEM to text output */
@@ -108,52 +107,55 @@ struct MEM {
 
 	/* static member methods */
 	/** test whether two MEM overlap on the seq */
-	static bool isOverlap(const MEM& mem1, const MEM& mem2) {
-		return mem1.from < mem2.to && mem1.to > mem2.from;
+	static bool isOverlap(const MEM& lhs, const MEM& rhs) {
+		return lhs.from < rhs.to && lhs.to > rhs.from;
 	}
 
 	/** test whether two Loc is compatitable
-	 * @return  true if they are on the same genome and chromosome
+	 * @return  true if they are on the same chrom and strand
 	 */
-	static bool isCompatitable(const MetaGenome* mtg, const Loc& loc1, const Loc& loc2) {
-		return mtg->getGenomeIndex(loc1.start) == mtg->getGenomeIndex(loc2.start) &&
-				mtg->getChromIndex(loc1.start) == mtg->getChromIndex(loc2.start);
+	static bool isCompatitable(const MetaGenome* mtg, const Loc& lhs, const Loc& rhs) {
+		return mtg->getChromIndex(lhs.start) == mtg->getChromIndex(rhs.start) &&
+				mtg->getStrand(lhs.start) == mtg->getStrand(rhs.start);
 	}
 
 	/** get the seq-distance of two mem,
 	 * return 0 if they are overlapping
 	 */
-	static uint64_t seqDist(const MEM& mem1, const MEM& mem2);
+	static int64_t seqDist(const MEM& lhs, const MEM& rhs) {
+		return isOverlap(lhs, rhs) ? 0 : lhs.from < rhs.from ? rhs.from - lhs.to + 1 : lhs.from - rhs.to + 1;
+	}
 
 	/** get the DB-distance of two mem,
 	 * return 0 if they are overlapping, or SIZE_MAX no compatitable locs found
 	 */
-	static uint64_t dbDist(const MetaGenome* mtg, const MEM& mem1, const MEM& mem2);
+	static int64_t dbDist(const MEM& lhs, const MEM& rhs);
 
 	/** get the number of indeals of two MEM
 	 * return positive number if insertion, negative if deletion, or 0 if none
 	 */
-	static int64_t nIndel(const MetaGenome* mtg, const MEM& mem1, const MEM& mem2) {
-		return seqDist(mem1, mem2) - dbDist(mtg, mem2, mem2);
+	static int64_t nIndel(const MEM& lhs, const MEM& rhs) {
+		return seqDist(lhs, rhs) - dbDist(rhs, rhs);
 	}
 
 	/** get the indel rate relative to the size of their mapped seq
 	 * return positive number if insertion, negative if deletion, or 0 if none
 	 */
-	static double rIndel(const MetaGenome* mtg, const MEM& mem1, const MEM& mem2) {
-		return static_cast<double> (nIndel(mtg, mem1, mem2)) / mem1.seq->length();
+	static double rIndel(const MEM& lhs, const MEM& rhs) {
+		return static_cast<double> (nIndel(lhs, rhs)) / lhs.seq->length();
 	}
 
 	/* member fields */
 	const PrimarySeq* seq = nullptr;
-	const FMIndex* fmidx = nullptr;
-	STRAND strand = FWD;
+	const MetaGenome* mtg = nullptr;
+	const FMDIndex* fmdidx = nullptr;
 	int64_t from = 0; /* 0-based relative start on seq */
 	int64_t to = 0;   /* 1-based relative end on seq */
-	int64_t SAstart = 0; /* 0-based start position on SA */
-	int64_t SAend = 0;   /* 1-based end position on SA */
+	int64_t fwdStart = 0; /* 0-based start position on SA of fwd match */
+	int64_t revStart = 0;   /* 0-based end position on SA of rev match */
+	int64_t size = 0; /* size of match region on SA */
 	double logP = 0; /* log-probability (loglik) of observing this MEM by chance */
-	vector<Loc> locs; /* all Loc this MEM matches to w/ reversed coordinates */
+	vector<GLoc> locs; /* locs of mathces */
 
 	/* static fields */
 	static const size_t MAX_NLOCS = 256;
@@ -164,10 +166,19 @@ struct MEM {
 	 * the locs will not be filled by this method
 	 * @param seq  seq to search, must be in reversed orientation of this FM-index
 	 * @param i  relative position of the seq
-	 * @param strand  which strand to search
+	 * @param strand  which direction/strand to search
 	 */
-	static MEM findMEM(const PrimarySeq* seq, const FMIndex* fmidx,
-			uint64_t from = 0, uint64_t to = UINT64_MAX, STRAND strand = FWD);
+	static MEM findMEM(const PrimarySeq* seq,  const MetaGenome* mtg, const FMDIndex* fmdidx,
+			int64_t from = 0, int64_t to = INT64_MAX, GLoc::STRAND dir = GLoc::FWD) {
+		return dir == GLoc::FWD ? findMEMfwd(seq, mtg, fmdidx, from) :
+				findMEMrev(seq, mtg, fmdidx, to);
+	}
+
+	static MEM findMEMfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			int64_t from = 0);
+
+	static MEM findMEMrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			int64_t to = INT64_MAX);
 
 	/* non-member methods */
 	friend ostream& operator<<(ostream& out, const MEM& mem);

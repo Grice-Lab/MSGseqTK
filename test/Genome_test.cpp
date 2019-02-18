@@ -19,14 +19,14 @@ int main() {
 	DNAseq chr1_1("ATCGNatcgnTCGANtcgan");
 	DNAseq chr1_2("TCGANtcganATCGNatcgn");
 	Genome g1("g1", "Staphylococcus aureus");
-	g1.addChrom(Genome::Chrom("chr1", chr1_1.length()));
-	g1.addChrom(Genome::Chrom("chr2", chr1_2.length()));
+	g1.addChrom("chr1", chr1_1);
+	g1.addChrom("chr2", chr1_2);
 
 	DNAseq chr2_1("AAAAANgggggNCCCCCNtttttn");
 	DNAseq chr2_2("TTTTTNcccccNGGGGGNaaaaan");
 	Genome g2("g2", "Homo sapiens");
-	g2.addChrom(Genome::Chrom("chr1", chr2_1.length()));
-	g2.addChrom(Genome::Chrom("chr2", chr2_2.length()));
+	g2.addChrom("chr1", chr2_1);
+	g2.addChrom("chr2", chr2_2);
 
 	ostringstream out;
 	g1.save(out);
@@ -64,7 +64,6 @@ int main() {
 		cerr << "g1N.chr1.name: " << g1N.getChrom(0).name << endl;
 		cerr << "g1.chr1.name: " << g1.getChrom(0).name << endl;
 		cerr << "g1.chr2 == g1N.chr2: " << (g1.getChrom(1) == g1N.getChrom(1)) << endl;
-
 		return EXIT_FAILURE;
 	}
 	if(g2N != g2) {
@@ -77,10 +76,10 @@ int main() {
 	/* part 2, MetaGenome test */
 	out.str("");
 	MetaGenome mtg1, mtg2;
-	mtg1.addGenome(g2, chr2_1 + DNAseq::DNAgap + chr2_2 + DNAseq::DNAgap);
-	mtg1.addGenome(g1, chr1_1 + DNAseq::DNAgap + chr1_2 + DNAseq::DNAgap);
-	mtg2.addGenome(g2N, chr2_1 + DNAseq::DNAgap + chr2_2 + DNAseq::DNAgap);
-	mtg2.addGenome(g1N, chr1_1 + DNAseq::DNAgap + chr1_2 + DNAseq::DNAgap);
+	mtg1.addGenome(g1);
+	mtg1.addGenome(g2);
+	mtg2.addGenome(g1N);
+	mtg2.addGenome(g2N);
 	mtg1.updateIndex();
 	mtg2.updateIndex();
 
@@ -89,31 +88,6 @@ int main() {
 		return EXIT_FAILURE;
 	}
 
-	size_t i1, i2;
-	size_t j1, j2;
-
-	if((i1 = mtg1.getGenomeIndex(0)) != 0 && (j1 = mtg1.getChromIndex(0)) != 0) {
-		cerr << "genomeIndex and chromIndex of mt1 at loc 0 should be 0, 0 but found " << i1 << ", " << j1 << endl;
-		return EXIT_FAILURE;
-	}
-	if((i1 = mtg1.getGenomeIndex(25)) != 0 && (j1 = mtg1.getChromIndex(25)) != 1) {
-		cerr << "genomeIndex and chromIndex of mt1 at loc 25 should be 0, 1 but found " << i1 << ", " << j1 << endl;
-		return EXIT_FAILURE;
-	}
-	if((i1 = mtg1.getGenomeIndex(51)) != 1 && (j1 = mtg1.getChromIndex(51)) != 0) {
-		cerr << "genomeIndex and chromIndex of mt1 at loc 51 should be 1, 0 but found " << i1 << ", " << j1 << endl;
-		return EXIT_FAILURE;
-	}
-	if((i1 = mtg1.getGenomeIndex(71)) != 1 && (j1 = mtg1.getChromIndex(71)) != 0) {
-		cerr << "genomeIndex and chromIndex of mt1 at loc 67 should be 1, 0 but found " << i1 << ", " << j1 << endl;
-		return EXIT_FAILURE;
-	}
-	if((i1 = mtg1.getGenomeIndex(72)) != 1 && (j1 = mtg1.getChromIndex(72)) != 1) {
-		cerr << "genomeIndex and chromIndex of mt1 at loc 72 should be 1, 1 but found " << i1 << ", " << j1 << endl;
-		return EXIT_FAILURE;
-	}
-
-	/* avoid genome ID collistions */
 	mtg2.getGenome(0).setId("g1N");
 	mtg2.getGenome(1).setId("g2N");
 	MetaGenome mtg = mtg1 + mtg2;

@@ -30,8 +30,8 @@ int main(int argc, char* argv[]) {
 	cout << "query1:  " << query1 << endl;
 	cout << "target1: " << target1 << endl;
 	/* build an alignment */
-	Alignment aln1(&query1, &target1, &qual1, &name1, 0,
-			0, query1.length(), 0, target1.length(), &ss, 0);
+	Alignment aln1(&query1, &target1, &qual1, &name1, 0, GLoc::FWD, 0,
+			0, query1.length(), 0, target1.length(), &ss);
 	cout << "AlignmentSE constructed" << endl;
 	aln1.calculateScores();
 	cout << "aln1 score calculated, score: " << aln1.getScore() << endl;
@@ -63,8 +63,8 @@ int main(int argc, char* argv[]) {
 	cout << "query2:  " << query2 << endl;
 	cout << "target2: " << target2 << endl;
 	/* build an alignment */
-	Alignment aln2(&query2, &target2, &qual2, &name2, 0,
-			0, query2.length(), 0, target2.length(), &ss, 0);	cout << "AlignmentSE constructed" << endl;
+	Alignment aln2(&query2, &target2, &qual2, &name2, 0, GLoc::FWD, 0,
+			0, query2.length(), 0, target2.length(), &ss);	cout << "AlignmentSE constructed" << endl;
 	aln2.calculateScores();
 	cout << "aln2 score calculated, score: " << aln2.getScore() << endl;
 	aln2.backTrace();
@@ -94,8 +94,8 @@ int main(int argc, char* argv[]) {
 	cout << "query3:  " << query3 << endl;
 	cout << "target3: " << target3 << endl;
 	/* build an alignment */
-	Alignment aln3(&query3, &target3, &qual3, &name3, 0,
-			0, query3.length(), 0, target3.length(), &ss, 0);
+	Alignment aln3(&query3, &target3, &qual3, &name3, 0, GLoc::FWD, 0,
+			0, query3.length(), 0, target3.length(), &ss);
 	cout << "AlignmentSE constructed" << endl;
 	cout << "AlignmentSE constructed" << endl;
 	aln3.calculateScores();
@@ -127,8 +127,8 @@ int main(int argc, char* argv[]) {
 	cout << "query4:  " << query4 << endl;
 	cout << "target4: " << target4 << endl;
 	/* build an alignment */
-	Alignment aln4(&query4, &target4, &qual4, &name4, 0,
-			0, query4.length(), 0, target4.length(), &ss, 0);
+	Alignment aln4(&query4, &target4, &qual4, &name4, 0, GLoc::FWD, 0,
+			0, query4.length(), 0, target4.length(), &ss);
 	cout << "AlignmentSE constructed" << endl;
 	aln4.calculateScores();
 	cout << "aln4 score calculated, score: " << aln4.getScore() << endl;
@@ -159,8 +159,8 @@ int main(int argc, char* argv[]) {
 	cout << "query5:  " << query5 << endl;
 	cout << "target5: " << target5 << endl;
 	/* build an alignment */
-	Alignment aln5(&query5, &target5, &qual5, &name5, 0,
-			0, query5.length(), 0, target5.length(), &ss, 0);
+	Alignment aln5(&query5, &target5, &qual5, &name5, 0, GLoc::FWD, 0,
+			0, query5.length(), 0, target5.length(), &ss);
 	cout << "AlignmentSE constructed" << endl;
 	aln5.calculateScores();
 	cout << "aln5 score calculated, score: " << aln5.getScore() << endl;

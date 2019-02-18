@@ -36,8 +36,13 @@ public:
 		Chrom() = default;
 
 		/** construct from given info */
-		Chrom(const string& name, uint64_t size) : name(name), size(size)
+		Chrom(const string& name, const DNAseq& seq) : name(name), seq(seq)
 		{  }
+
+		/* member methods */
+		size_t size() const {
+			return seq.length();
+		}
 
 		/** save this Chrom to binary output */
 		ostream& save(ostream& out) const;
@@ -49,7 +54,7 @@ public:
 		friend bool operator==(const Chrom& lhs, const Chrom& rhs);
 
 		string name;
-		uint64_t size = 0;
+		DNAseq seq;
 	};
 
 	/* constructors */
@@ -113,10 +118,13 @@ public:
 	bool hasChrom(const string& chrName) const;
 
 	/** get a single chromsome size, or 0 if not found */
-	uint64_t getChromSize(const string& chrName) const;
+	size_t getChromSize(const string& chrName) const;
 
 	/** get the overall size of this genome */
-	uint64_t size() const;
+	size_t size() const;
+
+	/** get bi-directional seq */
+	DNAseq getSeq() const;
 
 	/** add a new chrom object at the end */
 	void addChrom(const Chrom& chr) {
@@ -124,16 +132,16 @@ public:
 	}
 
 	/** add a new chromosome with given name and size */
-	void addChrom(const string& chrName, uint64_t size) {
-		addChrom(Chrom(chrName, size));
+	void addChrom(const string& chrName, const DNAseq& chrSeq) {
+		addChrom(Chrom(chrName, chrSeq));
 	}
 
 	/**
 	 * get chromosome index given a relative loc of this Genome
-	 * @param  loc  0-based loc relative to this Genome
+	 * @param  i  0-based position relative to this Genome
 	 * @return  0-based relative order, or -1 if not exists
 	 */
-	size_t getChromIndex(uint64_t loc) const;
+	size_t getChromIndex(int64_t i) const;
 
 	/** save this object to binary output */
 	ostream& save(ostream& out) const;
@@ -178,7 +186,7 @@ inline bool operator==(const Genome& lhs, const Genome& rhs) {
 }
 
 inline bool operator==(const Genome::Chrom& lhs, const Genome::Chrom& rhs) {
-	return lhs.name == rhs.name && lhs.size == rhs.size;
+	return lhs.name == rhs.name && lhs.seq == rhs.seq;
 }
 
 inline bool operator!=(const Genome::Chrom& lhs, const Genome::Chrom& rhs) {

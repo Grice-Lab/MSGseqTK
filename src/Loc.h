@@ -17,53 +17,68 @@ namespace MSGseqTK {
 using std::istream;
 using std::ostream;
 
+/** a basic location class */
 struct Loc {
-	/* enums */
-	enum STRAND { FWD = 1 /* forward */, REV /* reverse-complement */, UNK /* unknown */  };
-
 	/** default constructor */
 	Loc() = default;
 
-	/** constructor given all values */
-	Loc(int64_t start, int64_t end, STRAND strand) : start(start), end(end), strand(strand)
-	{  }
-
-	/** constructor given coordinates */
+	/** constructor given values */
 	Loc(int64_t start, int64_t end) : start(start), end(end)
 	{  }
 
+	/** destructor */
+	virtual ~Loc() {  }
+
 	/* member methods */
-	uint64_t length() const {
+	int64_t length() const {
 		return end - start;
 	}
 
+	/** reverse a Loc with given size */
+	Loc& reverse(int64_t size) {
+		reverseLoc(size, start, end);
+		return *this;
+	}
+
+	/** get a copy of reversed GenomeLoc */
+	Loc reverse(int64_t size) const {
+		Loc rLoc(*this);
+		return rLoc.reverse(size);
+	}
+
 	/** save this loc to binary output */
-	ostream& save(ostream& out) const;
+	virtual ostream& save(ostream& out) const;
 
 	/** load a loc from a binary input */
-	istream& load(istream& in);
+	virtual istream& load(istream& in);
 
 	/** write this loc to text output */
-	ostream& write(ostream& out) const;
+	virtual ostream& write(ostream& out) const;
 
 	/** read this loc from text output */
-	istream& read(istream& in);
+	virtual istream& read(istream& in);
 
 	/** static member methods */
-	static bool isOverlap(const Loc& lhs, const Loc& rhs, bool ignoreStrand = true) {
-		return lhs.start < rhs.end && lhs.end > rhs.start &&
-				(ignoreStrand || (lhs.strand & rhs.strand) != 0);
+	static bool isOverlap(const Loc& lhs, const Loc& rhs) {
+		return lhs.start < rhs.end && lhs.end > rhs.start;
 	}
 
 	static int64_t dist(const Loc& lhs, const Loc& rhs) {
 		return isOverlap(lhs, rhs) ? 0 : lhs.start < rhs.start ? rhs.start - lhs.end + 1: lhs.start - rhs.end + 1;
 	}
 
-	/** decode strand to char */
-	static char decodeStrand(STRAND strand);
+	/**
+	 * reverse a pos given total size
+	 * @param size  size of the region
+	 * @param i  0 or 1-based pos
+	 * @return  1 or 0-based reversed pos
+	 */
+	static int64_t reverseLoc(int64_t size, int64_t i) {
+		return size - i;
+	}
 
-	/** encode strand from char */
-	static STRAND encodeStrand(char s);
+	/** reverse a loc region with given size */
+	static void reverseLoc(int64_t size, int64_t& start, int64_t& end);
 
 	/* non-member methods */
 	/** formatted output */
@@ -73,12 +88,19 @@ struct Loc {
 
 	/* relational operators */
 	friend bool operator==(const Loc& lhs, const Loc& rhs);
+	friend bool operator<(const Loc& lhs, const Loc& rhs);
 
 	/* member fields */
 	int64_t start = 0; /* 0-based */
 	int64_t end = 0;   /* 1-based */
-	STRAND strand = UNK;
 };
+
+
+inline void Loc::reverseLoc(int64_t size, int64_t& start, int64_t& end) {
+	int64_t tmp = start;
+	start = reverseLoc(size, end);
+	end = reverseLoc(size, tmp);
+}
 
 inline ostream& operator<<(ostream& out, const Loc& loc) {
 	return loc.write(out); /* call virtual member method */
@@ -92,8 +114,24 @@ inline bool operator==(const Loc& lhs, const Loc& rhs) {
 	return lhs.start == rhs.start && lhs.end == rhs.end;
 }
 
+inline bool operator<(const Loc& lhs, const Loc& rhs) {
+	return lhs.start != rhs.start ? lhs.start < rhs.start : lhs.end < rhs.end;
+}
+
 inline bool operator!=(const Loc& lhs, const Loc& rhs) {
 	return !(lhs == rhs);
+}
+
+inline bool operator<=(const Loc& lhs, const Loc& rhs) {
+	return lhs < rhs || lhs == rhs;
+}
+
+inline bool operator>(const Loc& lhs, const Loc& rhs) {
+	return !(lhs <= rhs);
+}
+
+inline bool operator>=(const Loc& lhs, const Loc& rhs) {
+	return !(lhs < rhs);
 }
 
 } /* namespace MSGseqTK */
