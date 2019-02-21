@@ -1,7 +1,7 @@
 /*******************************************************************************
  * This file is part of MSGseqTK, a Metagenomics Shot-Gun sequencing ToolKit
  * for ultra-fast and accurate MSG-seq cleaning, mapping and more,
- * based on space-efficient FM-index on entire collection of meta-genomics sequences.
+ * based on space-efficient FMD-index on entire collection of meta-genomics sequences.
  * Copyright (C) 2018  Qi Zheng
  *
  * MSGseqTK is free software: you can redistribute it and/or modify
@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
 	/* variable declarations */
 	vector<string> inDBNames;
 	string dbName;
-	ofstream mtgOut, fmidxOut;
+	ofstream mtgOut, fmdidxOut;
 
 	/* parse options */
 	CommandOptions cmdOpts(argc, argv);
@@ -102,7 +102,7 @@ int main(int argc, char* argv[]) {
 
 	/* set dbName */
 	string mtgFn = dbName + METAGENOME_FILE_SUFFIX;
-	string fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
+	string fmdidxFn = dbName + FMDINDEX_FILE_SUFFIX;
 
 	/* open outputs */
 	mtgOut.open(mtgFn.c_str(), ios_base::out | ios_base::binary);
@@ -111,20 +111,20 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	fmidxOut.open(fmidxFn.c_str(), ios_base::out | ios_base::binary);
-	if(!fmidxOut.is_open()) {
-		cerr << "Unable to write to '" << fmidxFn << "': " << ::strerror(errno) << endl;
+	fmdidxOut.open(fmdidxFn.c_str(), ios_base::out | ios_base::binary);
+	if(!fmdidxOut.is_open()) {
+		cerr << "Unable to write to '" << fmdidxFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
 	MetaGenome mtg;
-	FMIndex fmidx;
+	FMDIndex fmdidx;
 
 	/* process each database */
 	for(vector<string>::const_iterator inDB = inDBNames.begin(); inDB != inDBNames.end(); ++inDB) {
 		bool isLast = inDB == inDBNames.end() - 1;
 		string mtgInfn = *inDB + METAGENOME_FILE_SUFFIX;
-		string fmidxInfn = *inDB + FMINDEX_FILE_SUFFIX;
+		string fmdidxInfn = *inDB + FMDINDEX_FILE_SUFFIX;
 		string gffInfn = *inDB + GFF::GFF3_SUFFIX;
 		/* open DB files */
 		ifstream mtgIn(mtgInfn.c_str(), ios_base::binary);
@@ -133,16 +133,16 @@ int main(int argc, char* argv[]) {
 			return EXIT_FAILURE;
 		}
 
-		ifstream fmidxIn(fmidxInfn.c_str(), ios_base::binary);
-		if(!fmidxIn.is_open()) {
-			cerr << "Unable to open '" << fmidxInfn << "': " << ::strerror(errno) << endl;
+		ifstream fmdidxIn(fmdidxInfn.c_str(), ios_base::binary);
+		if(!fmdidxIn.is_open()) {
+			cerr << "Unable to open '" << fmdidxInfn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
 
 		/* read in database files */
 		infoLog << "Loading database '" << *inDB << "'" << endl;
 		MetaGenome mtgPart;
-		FMIndex fmidxPart;
+		FMDIndex fmdidxPart;
 		loadProgInfo(mtgIn);
 		if(!mtgIn.bad())
 			mtgPart.load(mtgIn);
@@ -151,18 +151,18 @@ int main(int argc, char* argv[]) {
 			return EXIT_FAILURE;
 		}
 
-		loadProgInfo(fmidxIn);
-		if(!fmidxIn.bad())
-			fmidxPart.load(fmidxIn);
-		if(fmidxIn.bad()) {
-			cerr << "Unable to load '" << fmidxInfn << "': " << ::strerror(errno) << endl;
+		loadProgInfo(fmdidxIn);
+		if(!fmdidxIn.bad())
+			fmdidxPart.load(fmdidxIn);
+		if(fmdidxIn.bad()) {
+			cerr << "Unable to load '" << fmdidxInfn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
 
 		/* incremental update */
 		if(!isLast) {
-			debugLog << "Removing SA info from intermediate FM-index" << endl;
-			fmidxPart.clearSA(); /* do not store SA info for intermediate parts */
+			debugLog << "Removing SA info from intermediate FMD-index" << endl;
+			fmdidxPart.clearSA(); /* do not store SA info for intermediate parts */
 		}
 
 		if(!isLast)
@@ -170,12 +170,12 @@ int main(int argc, char* argv[]) {
 		else
 			infoLog << "Merging into new database and building final Suffix-Array" << endl;
 		mtg = mtgPart + mtg;
-		fmidx = fmidxPart + fmidx;
-		assert(mtg.size() == fmidx.length());
-		infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
+		fmdidx = fmdidxPart + fmdidx;
+		assert(mtg.size() == fmdidx.length());
+		infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmdidx.length() << endl;
 	}
 
-	infoLog << "Database merged. # of genomes: " << mtg.numGenomes() << " # of bases: " << fmidx.length() << endl;
+	infoLog << "Database merged. # of genomes: " << mtg.numGenomes() << " # of bases: " << fmdidx.length() << endl;
 	infoLog << "Saving database files ..." << endl;
 	/* write database files, all with prepend program info */
 	saveProgInfo(mtgOut);
@@ -186,11 +186,11 @@ int main(int argc, char* argv[]) {
 	}
 	infoLog << "MetaGenome info saved" << endl;
 
-	saveProgInfo(fmidxOut);
-	fmidx.save(fmidxOut);
-	if(fmidxOut.bad()) {
-		cerr << "Unable to save FM-index: " << ::strerror(errno) << endl;
+	saveProgInfo(fmdidxOut);
+	fmdidx.save(fmdidxOut);
+	if(fmdidxOut.bad()) {
+		cerr << "Unable to save FMD-index: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	infoLog << "FM-index saved" << endl;
+	infoLog << "FMD-index saved" << endl;
 }

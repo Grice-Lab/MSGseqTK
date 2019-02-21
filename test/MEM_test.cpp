@@ -50,6 +50,7 @@ int main() {
 	read = PrimarySeq(DNAseq("TACGNACGT"), "seq2");
 	for(int to = read.length(); to > 0; to = mem.from - 1) {
 		mem = MEM::findMEM(&read, &mtg, &fmdidx, 0, to, GLoc::REV);
+		mem.evaluate();
 		mem.findLocs();
 		cout << "N containing mem between db: " << genomeDB << " and read: " << read.getSeq() << " found at from: " << mem.from << " to: " << mem.to << endl;
 		cout << "all matched locs:" << endl;

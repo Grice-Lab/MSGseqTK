@@ -413,8 +413,8 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 				{
 					const string& id = read.getName();
 					const string& desc = read.getDesc();
-					MEMS refMems = MEMS::sampleMEMS(&read, &refMtg, &refFmdidx, rng, maxEvalue); // fwd sampling
-					MEMS bgMems = MEMS::sampleMEMS(&read, &bgMtg, &bgFmdidx, rng, maxEvalue); // fwd sampling
+					MEMS refMems = MEMS::sampleMEMS(&read, &refMtg, &refFmdidx, rng, maxEvalue, GLoc::FWD); // fwd sampling
+					MEMS bgMems = MEMS::sampleMEMS(&read, &bgMtg, &bgFmdidx, rng, maxEvalue, GLoc::FWD); // fwd sampling
 					double refLoglik = refMems.loglik();
 					double bgLoglik = bgMems.loglik();
 					double lod = - refLoglik + bgLoglik;
@@ -453,8 +453,8 @@ int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 				{
 					const string& id = fwdRead.getName();
 					const string& desc = fwdRead.getDesc();
-					MEMS_PE refMemsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &refMtg, &refFmdidx, rng, maxEvalue); // fwd PE sampling
-					MEMS_PE bgMemsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &bgMtg, &bgFmdidx, rng, maxEvalue);    // rev PE sampling
+					MEMS_PE refMemsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &refMtg, &refFmdidx, rng, maxEvalue, GLoc::FWD); // fwd PE sampling
+					MEMS_PE bgMemsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &bgMtg, &bgFmdidx, rng, maxEvalue, GLoc::FWD);    // rev PE sampling
 					double refLoglik = refMemsPE.loglik();
 					double bgLoglik = bgMemsPE.loglik();
 					double lod = - refLoglik + bgLoglik;

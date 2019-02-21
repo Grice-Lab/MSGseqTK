@@ -28,7 +28,6 @@ using std::pair;
 typedef boost::random::mt11213b RNG;
 
 struct MEMS : public vector<MEM> {
-public:
 	/* constructors */
 	/** default constructor */
 	MEMS() = default;
@@ -80,6 +79,9 @@ public:
 	/** write this MEMS to text output */
 	ostream& write(ostream& out) const;
 
+	/** append another MEMS to this MEMS */
+	MEMS& operator+=(const MEMS& other);
+
 	/* static methods */
 	/**
 	 * sample MEMS for given read
@@ -108,7 +110,10 @@ public:
 	static const double DEFAULT_MAX_EVALUE;
 
 	/* non-member methods */
+	/** formatted output */
 	friend ostream& operator<<(ostream& out, const MEMS& mems);
+	/** merge two MEMS */
+	friend MEMS operator+(const MEMS& lhs, const MEMS& rhs);
 };
 
 /** convenient wrapper class for MEMS paired-end (PE) */
@@ -144,8 +149,8 @@ struct MEMS_PE {
 			 const MetaGenome* mtg, const FMDIndex* fmdidx,
 			RNG& rng, double maxEvalue = MEMS::DEFAULT_MAX_EVALUE, GLoc::STRAND dir = GLoc::FWD) {
 		return dir == GLoc::FWD ?
-				MEMS_PE(MEMS::sampleMEMSfwd(fwdSeq, mtg, fmdidx, rng, maxEvalue), MEMS::sampleMEMSrev(revSeq, mtg, fmdidx, rng, maxEvalue)) :
-				MEMS_PE(MEMS::sampleMEMSrev(fwdSeq, mtg, fmdidx, rng, maxEvalue), MEMS::sampleMEMSfwd(revSeq, mtg, fmdidx, rng, maxEvalue));
+				MEMS_PE(MEMS::sampleMEMSfwd(fwdSeq, mtg, fmdidx, rng, maxEvalue), MEMS::sampleMEMSfwd(revSeq, mtg, fmdidx, rng, maxEvalue)) :
+				MEMS_PE(MEMS::sampleMEMSrev(fwdSeq, mtg, fmdidx, rng, maxEvalue), MEMS::sampleMEMSrev(revSeq, mtg, fmdidx, rng, maxEvalue));
 	}
 
 	/* member fields */
@@ -168,6 +173,12 @@ inline double MEMS::loglik() const {
 
 inline ostream& operator<<(ostream& out, const MEMS& mems) {
 	return mems.write(out); /* call virtual member method */
+}
+
+inline MEMS operator+(const MEMS& lhs, const MEMS& rhs) {
+	MEMS mems(lhs);
+	mems += rhs;
+	return mems;
 }
 
 inline MEMS& MEMS::findLocs(size_t maxNLocs) {

@@ -105,7 +105,7 @@ void printUsage(const string& progName) {
  */
 int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 		SeqIO& seqI, SAMfile& out, RNG& rng, double maxEvalue,
-		uint32_t maxMems, double bestFrac, uint32_t maxReport);
+		uint32_t maxSeedMatches, double bestFrac, uint32_t maxReport);
 
 /**
  * main function to process paired-ended reads
@@ -113,7 +113,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
  */
 int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 		SeqIO& fwdI, SeqIO& revI, SAMfile& out, RNG& rng, double maxEvalue,
-		uint32_t maxMems, double bestFrac, uint32_t maxReport,
+		uint32_t maxSeedMatches, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap);
 
@@ -141,6 +141,7 @@ int main(int argc, char* argv[]) {
 	string db;
 	boost::iostreams::filtering_istream fwdIn, revIn;
 
+	bool isPaired = false;
 	double maxEvalue = MEMS::DEFAULT_MAX_EVALUE;
 	unsigned seed = time(NULL); // using time as default seed
 //	double maxIndelRate = DEFAULT_INDEL_RATE;
@@ -148,7 +149,7 @@ int main(int argc, char* argv[]) {
 
 	typedef boost::random::mt11213b RNG; /* random number generator type */
 
-	uint32_t maxMems = Alignment::MAX_ITER;
+	uint32_t maxSeedMatches = Alignment::MAX_ITER;
 	uint32_t maxReport = DEFAULT_MAX_REPORT;
 	double bestFrac = DEFAULT_BEST_FRAC;
 
@@ -183,8 +184,10 @@ int main(int argc, char* argv[]) {
 
 	db = cmdOpts.getMainOpt(0);
 	fwdInFn = cmdOpts.getMainOpt(1);
-	if(cmdOpts.numMainOpts() == 3)
+	if(cmdOpts.numMainOpts() == 3) {
 		revInFn = cmdOpts.getMainOpt(2);
+		isPaired = true;
+	}
 
 	if(cmdOpts.hasOpt("-o"))
 		outFn = cmdOpts.getOpt("-o");
@@ -224,7 +227,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	if(cmdOpts.hasOpt("--max-mems"))
-		maxMems = ::atoi(cmdOpts.getOptStr("--max-mems"));
+		maxSeedMatches = ::atoi(cmdOpts.getOptStr("--max-mems"));
 
 	if(cmdOpts.hasOpt("-k"))
 		maxReport = ::atoi(cmdOpts.getOptStr("-k"));
@@ -283,7 +286,7 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	if(!(maxMems > 0)) {
+	if(!(maxSeedMatches > 0)) {
 		cerr << "--max-mems must be positive" << endl;
 		return EXIT_FAILURE;
 	}
@@ -322,7 +325,6 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 	bool fixQual = fmt != SeqIO::FASTQ; // non-fastq format need quality fix
-	bool isPaired = !revInFn.empty();
 
 	/* open inputs */
 #ifdef HAVE_LIBZ
@@ -427,9 +429,9 @@ int main(int argc, char* argv[]) {
 
 	/* main processing */
 	if(!isPaired)
-		return main_SE(mtg, fmdidx, fwdI, out, rng, maxEvalue, maxMems, bestFrac, maxReport);
+		return main_SE(mtg, fmdidx, fwdI, out, rng, maxEvalue, maxSeedMatches, bestFrac, maxReport);
 	else
-		return main_PE(mtg, fmdidx, fwdI, revI, out, rng, maxEvalue, maxMems, bestFrac, maxReport,
+		return main_PE(mtg, fmdidx, fwdI, revI, out, rng, maxEvalue, maxSeedMatches, bestFrac, maxReport,
 				minIns, maxIns, noMixed, noDiscordant, noTailOver, noContain, noOverlap);
 }
 
@@ -498,7 +500,7 @@ int output(const PrimarySeq& fwdRead, const PrimarySeq& revRead, SAMfile& out) {
 
 int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 		SeqIO& seqI, SAMfile& out, RNG& rng, double maxEvalue,
-		uint32_t maxMems, double bestFrac, uint32_t maxReport) {
+		uint32_t maxSeedMatches, double bestFrac, uint32_t maxReport) {
 	infoLog << "Aligning input reads" << endl;
 	/* search MEMS for each read */
 #pragma omp parallel
@@ -507,13 +509,12 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 		{
 			while(seqI.hasNext()) {
 				const PrimarySeq& read = seqI.nextSeq();
-				const PrimarySeq& rcRead = read.revcom();
-#pragma omp task firstprivate(read, rcRead)
+#pragma omp task firstprivate(read)
 				{
-					MEMS mems = MEMS::sampleMEMS(&read, &mtg, &fmdidx, rng, maxEvalue); // fwd sampling
+					MEMS mems = MEMS::sampleMEMS(&read, &mtg, &fmdidx, rng, maxEvalue, GLoc::FWD); // fwd sampling
 					mems.findLocs(); // only find fwd mapping locs (which can be on reverse-complement genome)
 					/* get SeedMatchList */
-					const Alignment::SeedMatchList& seedMatches = Alignment::getSeedMatchList(mems, maxMems);
+					const Alignment::SeedMatchList& seedMatches = Alignment::getSeedMatchList(mems, maxSeedMatches);
 					if(seedMatches.empty()) {
 #pragma omp critical(LOG)
 						infoLog << "Unable to find any valid SeedMatches for '" << read.getName() << "'" << endl;
@@ -521,8 +522,9 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 						output(read, out);
 					}
 					else {
+						const PrimarySeq& rcRead = read.revcom();
 						/* get alignments from SeedMatchList */
-						ALIGN_LIST alnList = Alignment::getAlignments(&ss, &mtg, &read, seedMatches);
+						ALIGN_LIST alnList = Alignment::getAlignments(&ss, &mtg, &read, &rcRead, seedMatches);
 						/* filter alignments */
 						Alignment::filter(alnList, bestFrac);
 						/* evaluate alignments */
@@ -544,7 +546,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 
 int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 		SeqIO& fwdI, SeqIO& revI, SAMfile& out, RNG& rng, double maxEvalue,
-		uint32_t maxMems, double bestFrac, uint32_t maxReport,
+		uint32_t maxSeedMatches, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap) {
 	infoLog << "Aligning paired-end reads" << endl;
@@ -556,8 +558,6 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 			while(fwdI.hasNext() && revI.hasNext()) {
 				PrimarySeq fwdRead = fwdI.nextSeq();
 				PrimarySeq revRead = revI.nextSeq();
-				PrimarySeq rcFwdRead = static_cast<const PrimarySeq&>(fwdRead).revcom();
-				PrimarySeq rcRevRead = static_cast<const PrimarySeq&>(revRead).revcom();
 				if(fwdRead.getName() != revRead.getName()) {
 					fwdRead.trimNameExt();
 					revRead.trimNameExt();
@@ -566,14 +566,13 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 						abort();
 					}
 				}
-#pragma omp task firstprivate(fwdRead) firstprivate(revRead)
+#pragma omp task firstprivate(fwdRead, revRead)
 				{
 					MEMS_PE memsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &mtg, &fmdidx, rng);
 					memsPE.findLocs(); // find locs on fwd strand only
-
 					/* get SeedMatchLists */
-					Alignment::SeedMatchList fwdSeedMatches = Alignment::getSeedMatchList(memsPE.fwdMems, maxMems);
-					Alignment::SeedMatchList revSeedMatches = Alignment::getSeedMatchList(memsPE.revMems, maxMems);
+					Alignment::SeedMatchList fwdSeedMatches = Alignment::getSeedMatchList(memsPE.fwdMems, maxSeedMatches);
+					Alignment::SeedMatchList revSeedMatches = Alignment::getSeedMatchList(memsPE.revMems, maxSeedMatches);
 					if(fwdSeedMatches.empty() && revSeedMatches.empty()) {
 #pragma omp critical(LOG)
 						infoLog << "Unable to find any valid SeedMatches for read pair '" << fwdRead.getName() << "'" << endl;
@@ -581,8 +580,10 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 						output(fwdRead, revRead, out);
 					}
 					else {
-						ALIGN_LIST fwdAlnList = Alignment::getAlignments(&ss, &mtg, &fwdRead, fwdSeedMatches);
-						ALIGN_LIST revAlnList = Alignment::getAlignments(&ss, &mtg, &revRead, revSeedMatches);
+						const PrimarySeq& rcFwdRead = static_cast<const PrimarySeq&>(fwdRead).revcom();
+						const PrimarySeq& rcRevRead = static_cast<const PrimarySeq&>(revRead).revcom();
+						ALIGN_LIST fwdAlnList = Alignment::getAlignments(&ss, &mtg, &fwdRead, &rcFwdRead, fwdSeedMatches);
+						ALIGN_LIST revAlnList = Alignment::getAlignments(&ss, &mtg, &revRead, &rcRevRead, revSeedMatches);
 						/* filter alignments */
 						Alignment::filter(fwdAlnList, bestFrac);
 						Alignment::filter(revAlnList, bestFrac);

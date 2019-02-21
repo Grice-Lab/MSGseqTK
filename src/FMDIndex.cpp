@@ -103,10 +103,10 @@ saidx_t FMDIndex::count(const DNAseq& pattern) const {
 	saidx_t s = C[*b + 1] - C[*b];
 
 	/* backward search */
-    while(s >= 0 && ++b < pattern.rend()) {
+    while(s > 0 && ++b < pattern.rend()) {
     	backExt(p, q, s, *b);
     }
-    return s >= 0 ? s : 0;
+    return std::max<int64_t>(s, 0);
 }
 
 FMDIndex& FMDIndex::operator+=(const FMDIndex& other) {
@@ -308,7 +308,7 @@ vector<GLoc> FMDIndex::locateAllFwd(const DNAseq& pattern) const {
 	saidx_t s = C[b + 1] - C[b];
 
 	/* forward search */
-    for(DNAseq::const_iterator it = pattern.begin() + 1; s >= 0 && it < pattern.end() && *it != 0; ++it)
+    for(DNAseq::const_iterator it = pattern.begin() + 1; s > 0 && it < pattern.end() && *it != 0; ++it)
     	fwdExt(p, q, s, *it);
 
     for(saidx_t i = p; i < p + s; ++i) { // locate fwd locs
@@ -329,7 +329,7 @@ vector<GLoc> FMDIndex::locateAllRev(const DNAseq& pattern) const {
 	saidx_t s = C[b + 1] - C[b];
 
 	/* backward search */
-    for(DNAseq::const_reverse_iterator it = pattern.rbegin() + 1; s >= 0 && it < pattern.rend(); ++it)
+    for(DNAseq::const_reverse_iterator it = pattern.rbegin() + 1; s > 0 && it < pattern.rend(); ++it)
     	backExt(p, q, s, *it);
 
     for(saidx_t i = q; i < q + s; ++i) { // locate rev locs
@@ -392,27 +392,27 @@ FMDIndex operator+(const FMDIndex& lhs, const FMDIndex& rhs) {
 void FMDIndex::backExt(saidx_t& p, saidx_t& q, saidx_t& s, sauchar_t b) const {
 	if(!DNAalphabet::isBasic(b))
 		return;
-	BCarray_t pB, qB, sB;
-	for(nt16_t i = 0; i < DNAalphabet::SIZE; ++i) {
-		if(DNAalphabet::isBasic(b)) {
-			saidx_t O = bwt.rank(i, p - 1);
-			pB[i] = C[i] + O;
-			sB[i] = bwt.rank(i, p + s - 1) - O;
-		}
-		else { // non-basic base
-			pB[i] = 0;
-			sB[i] = 0;
-		}
+	saidx_t pN; // fwd strand backExt
+	BCarray_t qB, sB;
+	qB.fill(0);
+	sB.fill(0);
+	sB[0] = bwt.rank(0, p + s - 1) - bwt.rank(0, p - 1);
+	saidx_t O = bwt.rank(b, p - 1);
+	pN = C[b] + O;
+	sB[b] = bwt.rank(b, p + s - 1) - O;
+	for(nt16_t i = b + 1; i <= DNAalphabet::NT16_MAX; ++i) { // search from b + 1
+		if(B[i] > 0)
+			sB[i] = bwt.rank(i, p + s - 1) - bwt.rank(i, p - 1);
 	}
 	/* new range of [q', q' + s' - 1] is a subrange of original [q, q + s] */
 	/* devide q + q + s */
 	qB[0] = q;
 	qB[DNAalphabet::NT16_MAX] = q + sB[0];
-	for(nt16_t i = DNAalphabet::NT16_MAX; i > DNAalphabet::NT16_MIN; --i)
+	for(nt16_t i = DNAalphabet::NT16_MAX; i > b; --i) // only need to search till b + 1
 		qB[i - 1] = qB[i] + sB[i];
 
 	/* update bi-interval */
-	p = pB[b];
+	p = pN;
 	q = qB[b];
 	s = sB[b];
 }

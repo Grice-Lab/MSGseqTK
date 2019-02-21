@@ -1,7 +1,7 @@
 /*******************************************************************************
  * This file is part of MSGseqTK, a Metagenomics Shot-Gun sequencing ToolKit
  * for ultra-fast and accurate MSG-seq cleaning, mapping and more,
- * based on space-efficient FM-index on entire collection of meta-genomics sequences.
+ * based on space-efficient FMD-index on entire collection of meta-genomics sequences.
  * Copyright (C) 2018  Qi Zheng
  *
  * MSGseqTK is free software: you can redistribute it and/or modify
@@ -70,8 +70,8 @@ void printUsage(const string& progName) {
 int main(int argc, char* argv[]) {
 	/* variable declarations */
 	string dbName;
-	string listFn, seqFn, mtgFn, fmidxFn, gffFn;
-	ifstream mtgIn, fmidxIn, gffIn;
+	string listFn, seqFn, mtgFn, fmdidxFn, gffFn;
+	ifstream mtgIn, fmdidxIn, gffIn;
 	ofstream listOut;
 	boost::iostreams::filtering_ostream seqOut;
 
@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
 	/* check options */
 	/* set dbName */
 	mtgFn = dbName + METAGENOME_FILE_SUFFIX;
-	fmidxFn = dbName + FMINDEX_FILE_SUFFIX;
+	fmdidxFn = dbName + FMDINDEX_FILE_SUFFIX;
 
 	/* open inputs */
 	mtgIn.open(mtgFn.c_str(), ios_base::binary);
@@ -124,9 +124,9 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	fmidxIn.open(fmidxFn.c_str(), ios_base::binary);
-	if(!fmidxIn.is_open()) {
-		cerr << "Unable to open '" << fmidxFn << "': " << ::strerror(errno) << endl;
+	fmdidxIn.open(fmdidxFn.c_str(), ios_base::binary);
+	if(!fmdidxIn.is_open()) {
+		cerr << "Unable to open '" << fmdidxFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -160,7 +160,7 @@ int main(int argc, char* argv[]) {
 
 	/* load data */
 	MetaGenome mtg;
-	FMIndex fmidx;
+	FMDIndex fmdidx;
 	MetaGenomeAnno mta;
 
 	infoLog << "Loading MetaGenome info ..." << endl;
@@ -172,12 +172,12 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	infoLog << "Loading FM-index ..." << endl;
-	loadProgInfo(fmidxIn);
-	if(!fmidxIn.bad())
-		fmidx.load(fmidxIn);
-	if(fmidxIn.bad()) {
-		cerr << "Unable to load FM-index: " << ::strerror(errno) << endl;
+	infoLog << "Loading FMD-index ..." << endl;
+	loadProgInfo(fmdidxIn);
+	if(!fmdidxIn.bad())
+		fmdidx.load(fmdidxIn);
+	if(fmdidxIn.bad()) {
+		cerr << "Unable to load FMD-index: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -199,12 +199,12 @@ int main(int argc, char* argv[]) {
 	}
 
 	cout << "MetaGenome info: # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
-	cout << "FM-index info: length: " << fmidx.length();
-	cout << " A: " << fmidx.getBaseCount(DNAalphabet::A);
-	cout << " C: " << fmidx.getBaseCount(DNAalphabet::C);
-	cout << " G: " << fmidx.getBaseCount(DNAalphabet::G);
-	cout << " T: " << fmidx.getBaseCount(DNAalphabet::T);
-//	cout << " IUPAC ambigous bases: " << fmidx.getExtBaseCount();
+	cout << "FMD-index info: length: " << fmdidx.length();
+	cout << " A: " << fmdidx.getBaseCount(DNAalphabet::A);
+	cout << " C: " << fmdidx.getBaseCount(DNAalphabet::C);
+	cout << " G: " << fmdidx.getBaseCount(DNAalphabet::G);
+	cout << " T: " << fmdidx.getBaseCount(DNAalphabet::T);
+//	cout << " IUPAC ambigous bases: " << fmdidx.getExtBaseCount();
 	cout << endl;
 
 	if(gffIn.is_open()) {
@@ -224,15 +224,11 @@ int main(int argc, char* argv[]) {
 	if(seqOut.is_complete()) {
 		infoLog << "Writing genome sequences" << endl;
 		SeqIO seqO(&seqOut, SeqIO::FASTA);
-		for(size_t cid = 0; cid < mtg.numChroms(); ++cid) {
-			size_t gid = mtg.getGenomeIndexByChromIdx(cid);
-			const string& genomeId = mtg.getGenomeId(gid);
-			const string& genomeName = mtg.getGenomeName(gid);
-			const string& chrName = mtg.getChromName(cid);
-			DNAseq chrSeq = mtg.getChromFwdSeq(cid);
-			chrSeq.erase(chrSeq.length() - 1); // remove null-terminal
-			seqO.writeSeq(PrimarySeq(chrSeq, Genome::formatName(MetaGenome::getChromId(genomeName, chrName)),
-					"genomeId=" + genomeId + ";genomeName=" + genomeName + ";chromName=" + chrName));
+		for(const Genome& genome : mtg.getGenomes()) {
+			for(const Genome::Chrom chr : genome.getChroms()) {
+				seqO.writeSeq(PrimarySeq(chr.seq, chr.name,
+						"genomeId=" + genome.getId() + ";genomeName=" + genome.getName() + ";chromName=" + chr.name));
+			}
 		}
 	}
 }

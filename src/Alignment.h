@@ -70,6 +70,30 @@ struct Alignment {
 			return tid >= 0;
 		}
 
+		/**
+		 * save this seed to binary output
+		 * @override base class method
+		 */
+		virtual ostream& save(ostream& out) const;
+
+		/**
+		 * load a seed from a binary input
+		 * @override base class method
+		 */
+		virtual istream& load(istream& in);
+
+		/**
+		 * write this seed to text output
+		 * @override base class method
+		 */
+		virtual ostream& write(ostream& out) const;
+
+		/**
+		 * read this seed from text output
+		 * @override base class method
+		 */
+		virtual istream& read(istream& in);
+
 		/* member fields */
 		int64_t from = 0; /* 0-based query position */
 		int64_t to = 0;   /* 1-based query position */
@@ -153,7 +177,7 @@ struct Alignment {
 		SeedMatch& filter(int64_t maxIndel);
 	};
 
-	typedef vector<SeedMatch> SeedMatchList;
+	typedef std::vector<SeedMatch> SeedMatchList;
 	typedef basic_string<uint32_t> state_str;
 
 	/* constructors */
@@ -207,7 +231,7 @@ struct Alignment {
 
 	/** calculate all scores in the entire region using Dynamic-Programming, return the alnScore as the maximum score found */
 	Alignment& calculateScores() {
-		calculateScores(0, getQLen(), 0, getTLen());
+		calculateScores(qFrom, qTo, 0, getTLen());
 		alnScore = M.maxCoeff(&alnTo, &alnEnd); // determine aign 3' and score simultaneously
 		alnTo += qFrom;
 		alnEnd += tStart;
@@ -272,7 +296,7 @@ struct Alignment {
 	/** get cigar_str */
 	BAM::cigar_str getAlnCigar() const;
 
-	/** get MD:Z tag for this Alignment */
+	/** get MD:Z tag for this alignment */
 	string getAlnMDTag() const;
 
 	/** get overall score of this alignment, including soft-clips */
@@ -378,9 +402,12 @@ struct Alignment {
 	/** get SeedMatchList from a pre-calculated MEMS */
 	static SeedMatchList getSeedMatchList(const MEMS& mems, uint32_t maxIt = MAX_ITER);
 
-	/** get candidate Alignments from SeedMatch list */
-	static ALIGN_LIST getAlignments(const ScoreScheme* ss, const MetaGenome* mtg, const PrimarySeq* read,
-			const SeedMatchList& seedMatches);
+	/** get permutations from raw list */
+	static SeedMatchList permuteSeedMatchList(const SeedMatchList& rawList, int64_t maxIndels, uint32_t maxIt = MAX_ITER);
+
+	/** get candidate Alignments from SeedMatch list given both fwd and revcom read */
+	static ALIGN_LIST getAlignments(const ScoreScheme* ss, const MetaGenome* mtg,
+			const PrimarySeq* read, const PrimarySeq* rcRead, const SeedMatchList& seedMatches);
 
 	/** filter candidate list of Alignments using alnScore */
 	static ALIGN_LIST& filter(ALIGN_LIST& alnList, double bestFrac);
@@ -476,7 +503,7 @@ struct AlignmentPE {
 	BAM exportRevBAM() const {
 		return BAM(*(revAln->qname), getRevFlag(), revAln->tid, revAln->alnStart, revAln->mapQ,
 				revAln->getAlnCigar(), revAln->getQLen(), revAln->query->nt16Encode(), *(revAln->qual),
-				fwdAln->tid, fwdAln->alnStart, isize);
+				fwdAln->tid, fwdAln->alnStart, -isize);
 	}
 
 	/** get fwd flag */
@@ -527,6 +554,12 @@ inline Alignment::SeedMatch& Alignment::SeedMatch::filter() {
 	return *this;
 }
 
+inline Alignment::SeedMatchList operator+(const Alignment::SeedMatchList& lhs, const Alignment::SeedMatchList& rhs) {
+	Alignment::SeedMatchList listM(lhs);
+	listM.insert(listM.end(), rhs.begin(), rhs.end());
+	return listM;
+}
+
 inline Alignment::CIGAR_OP_TYPE Alignment::matchMax(double match, double ins, double del) {
 	double max = match;
 	int s = BAM_CMATCH;
@@ -565,16 +598,11 @@ inline Alignment& Alignment::clearScores() {
 
 inline void Alignment::calculateScores(int64_t from, int64_t to, int64_t start, int64_t end) {
 	assert(isInitiated());
-	if(qStrand == GLoc::REV)
-		Loc::reverseLoc(getQLen(), from, to);
-
 	for(int64_t q = from; q < to; ++q) {
 		int32_t i = q - qFrom + 1; // relative to score matrices
 		for(int64_t t = start; t < end; ++t) {
 			int32_t j = t - tStart + 1; // relative to score matrices
-			nt16_t qB = qStrand == GLoc::FWD ? (*query)[q] : DNAalphabet::complement((*query)[qTo - q - 1]);
-			nt16_t tB = (*target)[t];
-			double s = ss->getScore(qB, tB);
+			double s = ss->getScore((*query)[q], (*target)[t]);
 			double o = -ss->openGapPenalty();
 			double e = -ss->extGapPenalty();
 			M(i,j) = std::max({
@@ -597,19 +625,10 @@ inline void Alignment::calculateScores(int64_t from, int64_t to, int64_t start, 
 
 inline void Alignment::calculateScores(const SeedPair& pair) {
 	assert(isInitiated());
-	int64_t from = pair.from;
-	int64_t to = pair.to;
-	if(qStrand == GLoc::REV)
-		Loc::reverseLoc(getQLen(), from, to);
 	for(int32_t k = 0; k < pair.length(); ++k) {
-		int64_t q = pair.from + k;
-		int64_t t = pair.start + k;
-		int32_t i = q - qFrom + 1;
-		int32_t j = t - tStart + 1;
-		nt16_t qB = qStrand == GLoc::FWD ? (*query)[q] : DNAalphabet::complement((*query)[qTo - q - 1]);
-		nt16_t tB = (*target)[t];
-//		std::cerr << "strand: " << qStrand << "q: " << q << " t: " << t << " i: " << i << " j: " << j << " qB: " << DNAalphabet::decode(qB) << " tB: " << DNAalphabet::decode(tB) << std::endl;
-		M(i,j) = M(i-1,j-1) + ss->getScore(qB, tB);;
+		int32_t i = pair.from + k - qFrom + 1;
+		int32_t j = pair.start + k - tStart + 1;
+		M(i,j) = M(i-1,j-1) + ss->matchScore;
 	}
 }
 

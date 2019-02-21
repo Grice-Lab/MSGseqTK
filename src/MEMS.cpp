@@ -31,7 +31,15 @@ int64_t MEMS::length() const {
 	return L;
 }
 
-MEMS MEMS::sampleMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx, RNG& rng, double maxEvalue) {
+MEMS& MEMS::operator+=(const MEMS& other) {
+	for(const MEM& mem : other)
+		if(MEM::isCompatitable(back(), mem))
+	insert(end(), mem);
+	return *this;
+}
+
+MEMS MEMS::sampleMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+		RNG& rng, double maxEvalue) {
 	MEMS mems;
 	int64_t from = 0;
 	while(from < seq->length()) {
@@ -44,7 +52,8 @@ MEMS MEMS::sampleMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMD
 	return mems;
 }
 
-MEMS MEMS::sampleMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx, RNG& rng, double maxEvalue) {
+MEMS MEMS::sampleMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+		RNG& rng, double maxEvalue) {
 	MEMS mems;
 	int64_t to = seq->length();
 	while(to > 0) {
@@ -52,7 +61,7 @@ MEMS MEMS::sampleMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMD
 		/* accept by chance */
 		if(mem_dist(rng) <= maxEvalue / mem.evalue())
 			mems.push_back(mem);
-		to = mem.from;
+		to = mem.from - 1;
 	}
 	return mems;
 }

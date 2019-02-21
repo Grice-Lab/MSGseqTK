@@ -29,13 +29,12 @@ MEM& MEM::evaluate() {
 	int64_t N = 0;
 	for(int64_t i = from; i < to; ++i) {
 		DNAseq::value_type b = seq->getBase(i);
-		if(DNAalphabet::isBasic(b)) {
-			logP += std::log(fmdidx->getBaseCount(b)) +
-			std::log(fmdidx->getBaseCount(DNAalphabet::complement(b))); // always observe both fwd and rev read
+		if(fmdidx->getBaseCount(b) > 0) { // ignore non-existing bases
+			logP += std::log(fmdidx->getBaseCount(b));
 			N++;
 		}
 	}
-	logP -= 2 * N * log(fmdidx->getBasicBaseCount()); /* subtract denominator */
+	logP -= N * log(fmdidx->length()); /* subtract denominator */
 	return *this;
 }
 
@@ -67,9 +66,7 @@ ostream& MEM::write(ostream& out) const {
 }
 
 MEM MEM::findMEMfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx, int64_t from) {
-	if(!(from < seq->length())) // empty search region
-		return MEM();
-
+	assert(from < seq->length());
 	nt16_t b = seq->getBase(from);
 	saidx_t p = fmdidx->getCumCount(b);
 	saidx_t q = fmdidx->getCumCount(DNAalphabet::complement(b));
@@ -90,10 +87,8 @@ MEM MEM::findMEMfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex
 }
 
 MEM MEM::findMEMrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx, int64_t to) {
-	if(to <= 0) // empty search region
-		return MEM();
-	to = std::min(to, static_cast<int64_t>(seq->length()));
-
+	assert(to > 0);
+	to = std::min<int64_t>(to, seq->length());
 	nt16_t b = seq->getBase(to - 1);
 	saidx_t p = fmdidx->getCumCount(b);
 	saidx_t q = fmdidx->getCumCount(DNAalphabet::complement(b));

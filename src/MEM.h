@@ -111,12 +111,20 @@ struct MEM {
 		return lhs.from < rhs.to && lhs.to > rhs.from;
 	}
 
+	/** test whether two MEM is compatitable
+	 * @return  true if they are ordered
+	 */
+	static bool isCompatitable(const MEM& lhs, const MEM& rhs) {
+		return lhs.to <= rhs.from;
+	}
+
 	/** test whether two Loc is compatitable
-	 * @return  true if they are on the same chrom and strand
+	 * @return  true if they are ordered
 	 */
 	static bool isCompatitable(const MetaGenome* mtg, const Loc& lhs, const Loc& rhs) {
-		return mtg->getChromIndex(lhs.start) == mtg->getChromIndex(rhs.start) &&
-				mtg->getStrand(lhs.start) == mtg->getStrand(rhs.start);
+		return mtg->getLocId(lhs.start) == mtg->getLocId(rhs.start) &&
+				mtg->getStrand(lhs.start) == mtg->getStrand(rhs.start) &&
+				lhs.end <= rhs.start;
 	}
 
 	/** get the seq-distance of two mem,
@@ -174,11 +182,9 @@ struct MEM {
 				findMEMrev(seq, mtg, fmdidx, to);
 	}
 
-	static MEM findMEMfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t from = 0);
+	static MEM findMEMfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx, int64_t from = 0);
 
-	static MEM findMEMrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t to = INT64_MAX);
+	static MEM findMEMrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx, int64_t to = INT64_MAX);
 
 	/* non-member methods */
 	friend ostream& operator<<(ostream& out, const MEM& mem);
