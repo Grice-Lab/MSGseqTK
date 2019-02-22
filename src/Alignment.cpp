@@ -61,8 +61,8 @@ istream& Alignment::SeedPair::read(istream& in) {
 
 Alignment& Alignment::calculateScores(const SeedMatch& seeds) {
 	assert(!seeds.empty());
-	/* DP at 5'*/
-	calculateScores(qFrom, seeds.front().from, tStart, seeds.front().start); /* could be empty loop */
+	/* DP at 5', if any */
+	calculateScores(qFrom, seeds.front().from, tStart, seeds.front().start);
 	for(SeedMatch::const_iterator seed = seeds.begin(); seed < seeds.end(); ++seed) {
 		/* DP within this seed */
 		calculateScores(*seed);
@@ -70,7 +70,7 @@ Alignment& Alignment::calculateScores(const SeedMatch& seeds) {
 		if(seed != seeds.end() - 1)
 			calculateScores(seed->to, (seed + 1)->from, seed->end, (seed + 1)->start);
 	}
-	/* DP at 3' */
+	/* DP at 3', if any */
 	calculateScores(seeds.back().to, qTo, seeds.back().end, tEnd); /* could be empty loop */
 	alnScore = M.maxCoeff(&alnTo, &alnEnd); // determine aign 3' and score simultaneously
 	alnTo += qFrom;

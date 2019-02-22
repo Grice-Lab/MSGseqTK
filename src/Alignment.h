@@ -9,7 +9,6 @@
 #define SRC_ALIGNMENT_H_
 
 #define _USE_MATH_DEFINES
-#define EIGEN_NO_DEBUG // disable eigen_assert
 
 #include <string>
 #include <Eigen/Dense>
@@ -232,7 +231,7 @@ struct Alignment {
 
 	/** calculate all scores in the entire region using Dynamic-Programming, return the alnScore as the maximum score found */
 	Alignment& calculateScores() {
-		calculateScores(0, getQLen(), 0, getTLen());
+		calculateScores(qFrom, qTo, 0, getTLen());
 		alnScore = M.maxCoeff(&alnTo, &alnEnd); // determine aign 3' and score simultaneously
 		alnTo += qFrom;
 		alnEnd += tStart;
