@@ -83,21 +83,28 @@ DNAseq DNAseq::nt16Decode(size_t L, const BAM::seq_str& seqNt16) {
 istream& DNAseq::nt16Load(istream& in) {
 	size_t L = 0; // uncompressed length
 	in.read((char*) &L, sizeof(size_t));
+	size_t N = (L + 1) / 2; // compressed length
+	value_type* data = new value_type[N];
+	in.read((char*) data, N * sizeof(value_type));
 	resize(L);
 	for(size_t i = 0; i < L; i += 2) {
-		value_type b = in.get();
+		value_type b = data[i / 2];
 		(*this)[i] = (b & DNAalphabet::NT16_UPPER_MASK) >> 4;
 		(*this)[i + 1] = b & DNAalphabet::NT16_LOWER_MASK; // i+1 always valid
 	}
+	delete[] data;
 	return in;
 }
 
 ostream& DNAseq::nt16Save(ostream& out) const {
 	const size_t L = length(); // raw length
+	const size_t N = (L + 1) / 2; // compressed length
 	out.write((const char*) &L, sizeof(size_t));
-	for(size_t i = 0; i < L; i += 2) { // (*this)[i+1] always valid
-		out.put((*this)[i] << 4 | (*this)[i + 1]); // value_type can be fit into char
-	}
+	value_type* data = new value_type[N];
+	for(size_t i = 0; i < L; i += 2) // (*this)[i+1] always valid
+		data[i / 2] = (*this)[i] << 4 | (*this)[i + 1];
+	out.write((const char*) data, N * sizeof(value_type));
+	delete[] data;
 	return out;
 }
 

@@ -20,6 +20,7 @@ namespace EGriceLab {
 namespace MSGseqTK {
 
 using std::string;
+using std::basic_string;
 using std::istream;
 using std::ostream;
 using SAMtools::BAM;
