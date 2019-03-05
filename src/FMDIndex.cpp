@@ -390,7 +390,7 @@ FMDIndex operator+(const FMDIndex& lhs, const FMDIndex& rhs) {
 }
 
 void FMDIndex::backExt(saidx_t& p, saidx_t& q, saidx_t& s, sauchar_t b) const {
-	if(!DNAalphabet::isBasic(b))
+	if(DNAalphabet::isGap(b))
 		return;
 	saidx_t pN; // fwd strand backExt
 	BCarray_t qB, sB;
@@ -401,7 +401,7 @@ void FMDIndex::backExt(saidx_t& p, saidx_t& q, saidx_t& s, sauchar_t b) const {
 	pN = C[b] + O;
 	sB[b] = bwt.rank(b, p + s - 1) - O;
 	for(nt16_t i = b + 1; i <= DNAalphabet::NT16_MAX; ++i) { // search from b + 1
-		if(B[i] > 0)
+		if(B[i] > 0) // if this symbol exists
 			sB[i] = bwt.rank(i, p + s - 1) - bwt.rank(i, p - 1);
 	}
 	/* new range of [q', q' + s' - 1] is a subrange of original [q, q + s] */

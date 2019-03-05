@@ -76,7 +76,7 @@ MEM MEM::findMEMfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex
 	int64_t revStart;
 	int64_t size;
 	saidx_t to;
-	for(fwdStart = p, revStart = q, size = s, to = from; s > 0 && to < seq->length() && DNAalphabet::isBasic(b); fmdidx->fwdExt(p, q, s, b)) {
+	for(fwdStart = p, revStart = q, size = s, to = from; s > 0 && to < seq->length() && !DNAalphabet::isGap(b); fmdidx->fwdExt(p, q, s, b)) {
 		fwdStart = p;
 		revStart = q;
 		size = s;
@@ -98,7 +98,7 @@ MEM MEM::findMEMrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex
 	int64_t revStart;
 	int64_t size;
 	saidx_t from;
-	for(fwdStart = p, revStart = q, size = s, from = to; s > 0 && from > 0 && DNAalphabet::isBasic(b); fmdidx->backExt(p, q, s, b)) {
+	for(fwdStart = p, revStart = q, size = s, from = to; s > 0 && from > 0 && !DNAalphabet::isGap(b); fmdidx->backExt(p, q, s, b)) {
 		fwdStart = p;
 		revStart = q;
 		size = s;
