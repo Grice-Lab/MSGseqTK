@@ -9,6 +9,7 @@
 #define SRC_ALIGNMENT_H_
 
 #define _USE_MATH_DEFINES
+#define EIGEN_NO_DEBUG // disable eigen assertions, use one-time assertion outside loops
 
 #include <string>
 #include <Eigen/Dense>
@@ -598,6 +599,8 @@ inline Alignment& Alignment::clearScores() {
 
 inline void Alignment::calculateScores(int64_t from, int64_t to, int64_t start, int64_t end) {
 	assert(isInitiated());
+	assert(qFrom <= from && to <= qTo);
+	assert(tStart <= start && end <= tEnd);
 	for(int64_t q = from; q < to; ++q) {
 		int32_t i = q - qFrom + 1; // relative to score matrices
 		for(int64_t t = start; t < end; ++t) {
