@@ -213,8 +213,9 @@ public:
 	 */
 	size_t getValue(size_type start, size_type len) const {
 		assert(len <= wid);
-		size_type i = start * len / wid;
-		size_type j = start * len % wid;
+		size_type k = start * len;
+		size_type i = k / wid;
+		size_type j = k - i * wid;
 		if (j + len <= wid)
 			return (data[i] << wid - j - len) >> (wid - len);
 		else
