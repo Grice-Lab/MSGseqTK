@@ -75,6 +75,7 @@ Alignment& Alignment::calculateScores(const SeedMatch& seeds) {
 	alnScore = M.maxCoeff(&alnTo, &alnEnd); // determine aign 3' and score simultaneously
 	alnTo += qFrom;
 	alnEnd += tStart;
+
 	assert(alnTo > 0 && alnEnd > 0);
 	return *this;
 }
@@ -253,6 +254,8 @@ Alignment::SeedMatch& Alignment::SeedMatch::filter(int64_t maxIndel) {
 }
 
 Alignment::SeedMatchList Alignment::getSeedMatchList(const MEMS& mems, uint32_t maxIt) {
+	if(mems.empty())
+		return SeedMatchList();
 	/* get a raw SeedMatchList to store all matches of each MEMS */
 	const size_t N = mems.size();
 	SeedMatchList fwdRawList, revRawList;

@@ -45,7 +45,9 @@ MEMS MEMS::sampleMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMD
 	while(from < seq->length()) {
 		MEM mem = MEM::findMEMfwd(seq, mtg, fmdidx, from).evaluate();
 		/* accept by chance */
-		if(mem_dist(rng) <= maxEvalue / mem.evalue())
+#pragma omp critical(RNG)
+		double rd = mem_dist(rng);
+		if(rd <= maxEvalue / mem.evalue())
 			mems.push_back(mem);
 		from = mem.to + 1;
 	}
@@ -59,7 +61,8 @@ MEMS MEMS::sampleMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMD
 	while(to > 0) {
 		MEM mem = MEM::findMEMrev(seq, mtg, fmdidx, to).evaluate();
 		/* accept by chance */
-		if(mem_dist(rng) <= maxEvalue / mem.evalue())
+		double rd = mem_dist(rng);
+		if(rd <= maxEvalue / mem.evalue())
 			mems.push_back(mem);
 		to = mem.from - 1;
 	}

@@ -55,17 +55,13 @@ struct Alignment {
 
 		/** construct from given values */
 		SeedPair(int64_t from, int64_t start, int32_t len, int32_t tid, GLoc::STRAND qStrand, double logP)
-		: GLoc(start, start + len, tid, qStrand), from(from), to(from + len), logP(logP)
+		: from(from), to(from + len), GLoc(start, start + len, tid, qStrand), logP(logP)
 		{  }
 
 		/** destructor */
 		virtual ~SeedPair() {  }
 
 		/* member methods */
-		int32_t length() const {
-			return end - start;
-		}
-
 		/** test whether this SeedPair is valid */
 		bool isValid() const {
 			return tid >= 0;
@@ -628,6 +624,7 @@ inline void Alignment::calculateScores(int64_t from, int64_t to, int64_t start, 
 
 inline void Alignment::calculateScores(const SeedPair& pair) {
 	assert(isInitiated());
+	assert(pair.length() > 0);
 	for(int32_t k = 0; k < pair.length(); ++k) {
 		int32_t i = pair.from + k - qFrom + 1;
 		int32_t j = pair.start + k - tStart + 1;

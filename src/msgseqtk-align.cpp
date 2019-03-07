@@ -508,7 +508,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 #pragma omp single
 		{
 			while(seqI.hasNext()) {
-				const PrimarySeq& read = seqI.nextSeq();
+				PrimarySeq read = seqI.nextSeq();
 #pragma omp task firstprivate(read)
 				{
 					MEMS mems = MEMS::sampleMEMS(&read, &mtg, &fmdidx, rng, maxEvalue, GLoc::FWD); // fwd sampling
@@ -517,12 +517,12 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 					const Alignment::SeedMatchList& seedMatches = Alignment::getSeedMatchList(mems, maxSeedMatches);
 					if(seedMatches.empty()) {
 #pragma omp critical(LOG)
-						infoLog << "Unable to find any valid SeedMatches for '" << read.getName() << "'" << endl;
+						debugLog << "Unable to find any valid SeedMatches for '" << read.getName() << "'" << endl;
 #pragma omp critical(BAM_OUTPUT)
 						output(read, out);
 					}
 					else {
-						const PrimarySeq& rcRead = read.revcom();
+						PrimarySeq rcRead = static_cast<const PrimarySeq&>(read).revcom();
 						/* get alignments from SeedMatchList */
 						ALIGN_LIST alnList = Alignment::getAlignments(&ss, &mtg, &read, &rcRead, seedMatches);
 						/* filter alignments */
@@ -537,6 +537,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 #pragma omp critical(BAM_OUTPUT)
 						output(alnList, out, maxReport);
 					} /* end task */
+#pragma omp taskwait
 				} /* end each read */
 			} /* end single, implicit barrier */
 		} /* end parallel */
@@ -575,13 +576,13 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 					Alignment::SeedMatchList revSeedMatches = Alignment::getSeedMatchList(memsPE.revMems, maxSeedMatches);
 					if(fwdSeedMatches.empty() && revSeedMatches.empty()) {
 #pragma omp critical(LOG)
-						infoLog << "Unable to find any valid SeedMatches for read pair '" << fwdRead.getName() << "'" << endl;
+						debugLog << "Unable to find any valid SeedMatches for read pair '" << fwdRead.getName() << "'" << endl;
 #pragma omp critical(BAM_OUTPUT)
 						output(fwdRead, revRead, out);
 					}
 					else {
-						const PrimarySeq& rcFwdRead = static_cast<const PrimarySeq&>(fwdRead).revcom();
-						const PrimarySeq& rcRevRead = static_cast<const PrimarySeq&>(revRead).revcom();
+						PrimarySeq rcFwdRead = static_cast<const PrimarySeq&>(fwdRead).revcom();
+						PrimarySeq rcRevRead = static_cast<const PrimarySeq&>(revRead).revcom();
 						ALIGN_LIST fwdAlnList = Alignment::getAlignments(&ss, &mtg, &fwdRead, &rcFwdRead, fwdSeedMatches);
 						ALIGN_LIST revAlnList = Alignment::getAlignments(&ss, &mtg, &revRead, &rcRevRead, revSeedMatches);
 						/* filter alignments */
@@ -627,6 +628,7 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 						}
 					} /* end SeedMatch tests */
 				} /* end task */
+#pragma omp taskwait
 			} /* end each read */
 		} /* end single, implicit barrier */
 	} /* end parallel */

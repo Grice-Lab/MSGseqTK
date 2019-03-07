@@ -431,6 +431,7 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 						}
 					}
 				} /* end task */
+#pragma omp taskwait
 			} /* end each read */
 		} /* end single, implicit barrier */
 	} /* end parallel */
@@ -479,6 +480,7 @@ int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 						}
 					}
 				} /* end task */
+#pragma omp taskwait
 			} /* end each pair */
 		} /* end single, implicit barrier */
 	} /* end parallel */

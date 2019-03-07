@@ -34,6 +34,10 @@ struct Loc {
 		return end - start;
 	}
 
+	bool empty() const {
+		return length() == 0;
+	}
+
 	/** reverse a Loc with given size */
 	Loc& reverse(int64_t size) {
 		reverseLoc(size, start, end);
