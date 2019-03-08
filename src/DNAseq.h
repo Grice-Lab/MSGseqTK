@@ -65,6 +65,9 @@ public:
 	DNAseq(std::basic_string<nt16_t>&& seq) : basic_string<nt16_t>(seq)
 	{  }
 
+	/** destructor */
+	virtual ~DNAseq() {  }
+
 	/* member methods */
 	/** copy assignment a DNAseq from a symbol string */
 	DNAseq& operator=(const string& str);

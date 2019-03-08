@@ -10,8 +10,6 @@
 
 #include <vector>
 #include <cmath>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/uniform_01.hpp>
 #include <cassert>
 #include <utility>
 #include <algorithm>
@@ -25,12 +23,14 @@ namespace MSGseqTK {
 
 using std::vector;
 using std::pair;
-typedef boost::random::mt11213b RNG;
 
 struct MEMS : public vector<MEM> {
 	/* constructors */
 	/** default constructor */
 	MEMS() = default;
+
+	/** destructor */
+	virtual ~MEMS() {  }
 
 	/* member methods */
 	/** get seq */
@@ -87,25 +87,23 @@ struct MEMS : public vector<MEM> {
 	 * sample MEMS for given read
 	 * @param seq  read to search
 	 * @param fmdidx  FMD-index
-	 * @param rng  random-number generator
 	 * @param maxEvalue  maxEvalue criteria for a significant MEM
 	 * @param dir  searching direction
 	 * @return  an ordered MEMs
 	 */
 	static MEMS sampleMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			RNG& rng, double maxEvalue = DEFAULT_MAX_EVALUE, GLoc::STRAND dir = GLoc::FWD) {
-		return dir == GLoc::FWD ? sampleMEMSfwd(seq, mtg, fmdidx, rng, maxEvalue) :
-				sampleMEMSrev(seq, mtg, fmdidx, rng, maxEvalue);
+			double maxEvalue = DEFAULT_MAX_EVALUE, GLoc::STRAND dir = GLoc::FWD) {
+		return dir == GLoc::FWD ? sampleMEMSfwd(seq, mtg, fmdidx, maxEvalue) :
+				sampleMEMSrev(seq, mtg, fmdidx, maxEvalue);
 	}
 
 	static MEMS sampleMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			RNG& rng, double maxEvalue = DEFAULT_MAX_EVALUE);
+			double maxEvalue = DEFAULT_MAX_EVALUE);
 
 	static MEMS sampleMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			RNG& rng, double maxEvalue = DEFAULT_MAX_EVALUE);
+			double maxEvalue = DEFAULT_MAX_EVALUE);
 
 	/* static fields */
-	static boost::random::uniform_01<> mem_dist; /* random01 distribution for accepting MEMs */
 	static const size_t MAX_MEM_NLOCS = 256;
 	static const double DEFAULT_MAX_EVALUE;
 
@@ -141,16 +139,15 @@ struct MEMS_PE {
 	 * @param fwdSeq  forward read
 	 * @param revSeq  reverse read
 	 * @param fmdidx  FMD-index
-	 * @param rng  random-number generator
 	 * @param maxEvalue  maxEvalue criteria for a significant MEM
 	 * @param dir  direction for sampling
 	 */
 	static MEMS_PE sampleMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
 			 const MetaGenome* mtg, const FMDIndex* fmdidx,
-			RNG& rng, double maxEvalue = MEMS::DEFAULT_MAX_EVALUE, GLoc::STRAND dir = GLoc::FWD) {
+			 double maxEvalue = MEMS::DEFAULT_MAX_EVALUE, GLoc::STRAND dir = GLoc::FWD) {
 		return dir == GLoc::FWD ?
-				MEMS_PE(MEMS::sampleMEMSfwd(fwdSeq, mtg, fmdidx, rng, maxEvalue), MEMS::sampleMEMSfwd(revSeq, mtg, fmdidx, rng, maxEvalue)) :
-				MEMS_PE(MEMS::sampleMEMSrev(fwdSeq, mtg, fmdidx, rng, maxEvalue), MEMS::sampleMEMSrev(revSeq, mtg, fmdidx, rng, maxEvalue));
+				MEMS_PE(MEMS::sampleMEMSfwd(fwdSeq, mtg, fmdidx, maxEvalue), MEMS::sampleMEMSfwd(revSeq, mtg, fmdidx, maxEvalue)) :
+				MEMS_PE(MEMS::sampleMEMSrev(fwdSeq, mtg, fmdidx, maxEvalue), MEMS::sampleMEMSrev(revSeq, mtg, fmdidx, maxEvalue));
 	}
 
 	/* member fields */

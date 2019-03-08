@@ -8,6 +8,7 @@
 #ifndef SRC_LOC_H_
 #define SRC_LOC_H_
 
+#include <cassert>
 #include <cstdint>
 #include <iostream>
 
@@ -78,6 +79,7 @@ struct Loc {
 	 * @return  1 or 0-based reversed pos
 	 */
 	static int64_t reverseLoc(int64_t size, int64_t i) {
+		assert(i <= size);
 		return size - i;
 	}
 

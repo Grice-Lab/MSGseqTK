@@ -160,6 +160,7 @@ public:
 	 * get the strand of given position
 	 */
 	GLoc::STRAND getStrand(int64_t pos) const {
+		assert(getChromIndex(pos) != -1);
 		return getStrand(getChromIndex(pos), pos);
 	}
 

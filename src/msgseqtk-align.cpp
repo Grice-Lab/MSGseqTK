@@ -20,7 +20,6 @@
 #include <boost/iostreams/filter/zlib.hpp> /* for zlib support */
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filter/bzip2.hpp> /* for bzip2 support */
-#include <boost/random/mersenne_twister.hpp>
 #include "MSGseqTK.h"
 #include "EGUtil.h"
 #include "EGSAMtools.h"
@@ -90,7 +89,6 @@ void printUsage(const string& progName) {
 		 << "            --no-overlap  FLAG   : not concordant when mates overlap" << endl
 		 << "Other:" << endl
 		 << "            -e|--evalue  DBL     : maximum e-value to consider an MEM as significant [" << MEMS::DEFAULT_MAX_EVALUE << "]" << endl
-		 << "            -S|--seed  INT       : random seed used for determing MEMS, for debug only" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -104,7 +102,7 @@ void printUsage(const string& progName) {
  * @return 0 if success, return non-zero otherwise
  */
 int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
-		SeqIO& seqI, SAMfile& out, RNG& rng, double maxEvalue,
+		SeqIO& seqI, SAMfile& out, double maxEvalue,
 		uint32_t maxSeedMatches, double bestFrac, uint32_t maxReport);
 
 /**
@@ -112,7 +110,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
  * @return 0 if success, return non-zero otherwise
  */
 int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
-		SeqIO& fwdI, SeqIO& revI, SAMfile& out, RNG& rng, double maxEvalue,
+		SeqIO& fwdI, SeqIO& revI, SAMfile& out, double maxEvalue,
 		uint32_t maxSeedMatches, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap);
@@ -143,11 +141,8 @@ int main(int argc, char* argv[]) {
 
 	bool isPaired = false;
 	double maxEvalue = MEMS::DEFAULT_MAX_EVALUE;
-	unsigned seed = time(NULL); // using time as default seed
 //	double maxIndelRate = DEFAULT_INDEL_RATE;
 	int nThreads = DEFAULT_NUM_THREADS;
-
-	typedef boost::random::mt11213b RNG; /* random number generator type */
 
 	uint32_t maxSeedMatches = Alignment::MAX_ITER;
 	uint32_t maxReport = DEFAULT_MAX_REPORT;
@@ -264,11 +259,6 @@ int main(int argc, char* argv[]) {
 		maxEvalue = ::atof(cmdOpts.getOptStr("-e"));
 	if(cmdOpts.hasOpt("--evalue"))
 		maxEvalue = ::atoi(cmdOpts.getOptStr("--evalue"));
-	if(cmdOpts.hasOpt("-S"))
-		seed = ::atoi(cmdOpts.getOptStr("-S"));
-	if(cmdOpts.hasOpt("--seed"))
-		seed = ::atoi(cmdOpts.getOptStr("--seed"));
-	srand(seed); /* set seed */
 
 #ifdef _OPENMP
 	if(cmdOpts.hasOpt("-p"))
@@ -412,9 +402,6 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	/* initiate RNG */
-	RNG rng(seed);
-
 	map<string, uint32_t> targetLen;
 	for(size_t i = 0; i < mtg.getChromNames().size(); ++i)
 		targetLen[mtg.getChromName(i)] = mtg.getChromLen(i);
@@ -429,9 +416,9 @@ int main(int argc, char* argv[]) {
 
 	/* main processing */
 	if(!isPaired)
-		return main_SE(mtg, fmdidx, fwdI, out, rng, maxEvalue, maxSeedMatches, bestFrac, maxReport);
+		return main_SE(mtg, fmdidx, fwdI, out, maxEvalue, maxSeedMatches, bestFrac, maxReport);
 	else
-		return main_PE(mtg, fmdidx, fwdI, revI, out, rng, maxEvalue, maxSeedMatches, bestFrac, maxReport,
+		return main_PE(mtg, fmdidx, fwdI, revI, out, maxEvalue, maxSeedMatches, bestFrac, maxReport,
 				minIns, maxIns, noMixed, noDiscordant, noTailOver, noContain, noOverlap);
 }
 
@@ -441,7 +428,7 @@ int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport) {
 	for(size_t i = 0; i < numReport; ++i) {
 		const Alignment& aln = alnList[i];
 		/* construct BAM */
-		BAM bamAln = alnList[i].exportBAM();
+		BAM bamAln = aln.exportBAM();
 		/* set flags */
 		bamAln.setSecondaryFlag(i > 0);
 		/* set standard aux tags */
@@ -499,19 +486,19 @@ int output(const PrimarySeq& fwdRead, const PrimarySeq& revRead, SAMfile& out) {
 }
 
 int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
-		SeqIO& seqI, SAMfile& out, RNG& rng, double maxEvalue,
+		SeqIO& seqI, SAMfile& out, double maxEvalue,
 		uint32_t maxSeedMatches, double bestFrac, uint32_t maxReport) {
 	infoLog << "Aligning input reads" << endl;
 	/* search MEMS for each read */
 #pragma omp parallel
 	{
-#pragma omp single
+#pragma omp master
 		{
 			while(seqI.hasNext()) {
 				PrimarySeq read = seqI.nextSeq();
 #pragma omp task firstprivate(read)
 				{
-					MEMS mems = MEMS::sampleMEMS(&read, &mtg, &fmdidx, rng, maxEvalue, GLoc::FWD); // fwd sampling
+					MEMS mems = MEMS::sampleMEMS(&read, &mtg, &fmdidx, maxEvalue, GLoc::FWD); // fwd sampling
 					mems.findLocs(); // only find fwd mapping locs (which can be on reverse-complement genome)
 					/* get SeedMatchList */
 					const Alignment::SeedMatchList& seedMatches = Alignment::getSeedMatchList(mems, maxSeedMatches);
@@ -537,16 +524,15 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 #pragma omp critical(BAM_OUTPUT)
 						output(alnList, out, maxReport);
 					} /* end task */
-#pragma omp taskwait
 				} /* end each read */
-			} /* end single, implicit barrier */
+			} /* end master, implicit barrier */
 		} /* end parallel */
 	}
 	return out.close();
 }
 
 int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
-		SeqIO& fwdI, SeqIO& revI, SAMfile& out, RNG& rng, double maxEvalue,
+		SeqIO& fwdI, SeqIO& revI, SAMfile& out, double maxEvalue,
 		uint32_t maxSeedMatches, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap) {
@@ -554,7 +540,7 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 	/* search MEMS for each read */
 #pragma omp parallel
 	{
-#pragma omp single
+#pragma omp master 
 		{
 			while(fwdI.hasNext() && revI.hasNext()) {
 				PrimarySeq fwdRead = fwdI.nextSeq();
@@ -569,7 +555,7 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 				}
 #pragma omp task firstprivate(fwdRead, revRead)
 				{
-					MEMS_PE memsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &mtg, &fmdidx, rng);
+					MEMS_PE memsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &mtg, &fmdidx);
 					memsPE.findLocs(); // find locs on fwd strand only
 					/* get SeedMatchLists */
 					Alignment::SeedMatchList fwdSeedMatches = Alignment::getSeedMatchList(memsPE.fwdMems, maxSeedMatches);
@@ -630,7 +616,7 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 				} /* end task */
 #pragma omp taskwait
 			} /* end each read */
-		} /* end single, implicit barrier */
+		} /* end master, implicit barrier */
 	} /* end parallel */
 	return out.close();
 }
