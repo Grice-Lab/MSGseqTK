@@ -112,16 +112,13 @@ MEM& MEM::findLocs(size_t maxNLocs) {
 	locs.reserve(size);
 	const size_t N = std::min(maxNLocs, static_cast<size_t>(size));
 	for(size_t i = 0; i < N; ++i) {
-		{
-			saidx_t start = fmdidx->accessSA(fwdStart + i);
-			if(mtg->getStrand(start) == GLoc::FWD) // always only search loc on fwd tStrand
-				locs.push_back(GLoc(start, start + length(), mtg->getLocId(start), GLoc::FWD));
-		}
-		{
-			saidx_t start = fmdidx->accessSA(revStart + i);
-			if(mtg->getStrand(start) == GLoc::FWD) // always only search loc on fwd tStrand
-				locs.push_back(GLoc(start, start + length(), mtg->getLocId(start), GLoc::REV));
-		}
+		saidx_t fStart = fmdidx->accessSA(fwdStart + i);
+		if(mtg->getStrand(fStart) == GLoc::FWD) // always only search loc on fwd tStrand
+			locs.push_back(GLoc(fStart, fStart + length(), mtg->getLocId(fStart), GLoc::FWD));
+		saidx_t rStart = fmdidx->accessSA(revStart + i);
+//		std::cerr << "rStart: " << rStart << " tid: " << mtg->getLocId(rStart) << std::endl;
+		if(mtg->getStrand(rStart) == GLoc::FWD) // always only search loc on fwd tStrand
+			locs.push_back(GLoc(rStart, rStart + length(), mtg->getLocId(rStart), GLoc::REV));
 	}
 	return *this;
 }

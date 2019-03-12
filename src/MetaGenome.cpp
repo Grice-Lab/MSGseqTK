@@ -41,7 +41,7 @@ ostream& MetaGenome::save(ostream& out) const {
 	return out;
 }
 
-istream& MetaGenome::load(istream& in, bool ignoreSeq) {
+istream& MetaGenome::load(istream& in) {
 	/* load basic info */
 	size_t NG = 0;
 	in.read((char*) &NG, sizeof(size_t));

@@ -167,7 +167,7 @@ public:
 
 	/** get the BWT string of the original seq */
 	string getBWTStr() const {
-		return getBWT().toString();
+		return dna::decode(getBWT());
 	}
 
 	/** get the original seq */

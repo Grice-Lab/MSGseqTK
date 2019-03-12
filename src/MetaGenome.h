@@ -343,7 +343,7 @@ public:
 
 	/** get chrom rev seq by chrom idx */
 	DNAseq getChromRevSeq(size_t chrIdx) const {
-		return getChromFwdSeq(chrIdx).revcom();
+		return dna::revcom(getChromFwdSeq(chrIdx));
 	}
 
 	/** get bi-directional genome seq by genome idx */
@@ -355,7 +355,7 @@ public:
 	ostream& save(ostream& out) const;
 
 	/** load an object from binary input */
-	istream& load(istream& in, bool ignoreSeq = false);
+	istream& load(istream& in);
 
 	/**
 	 * update all index, should be called if any containing Genome/Chrom changes

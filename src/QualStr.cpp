@@ -10,43 +10,29 @@
 
 namespace EGriceLab {
 namespace MSGseqTK {
+namespace quality {
 
-const double QualStr::PHRED_SCALE = -10;
-
-QualStr& QualStr::assign(const string& str) {
-	resize(str.length());
-	std::transform(str.begin(), str.end(), begin(),
-			[=](string::value_type q) { return std::max<uint8_t>(q - qShift, MIN_Q_SCORE); });
-	return *this;
+QualStr encode(const string& qStr, uint8_t qShift) {
+	QualStr qual(qStr.length(), 0);
+	std::transform(qStr.begin(), qStr.end(), qual.begin(),
+			[=](string::value_type q) { return q - qShift; });
+	return qual;
 }
 
-string QualStr::decode() const {
-	string qStr(length(), '\0');
-	std::transform(begin(), end(), qStr.begin(),
-			[=](value_type q) { return q + qShift; });
+string decode(const QualStr& qual, uint8_t qShift) {
+	string qStr(qual.length(), '\0');
+	std::transform(qual.begin(), qual.end(), qStr.begin(),
+			[=](QualStr::value_type q) { return q + qShift; });
 	return qStr;
 }
 
-QualStr QualStr::substr(size_t pos, size_t len) const {
-	QualStr seg;
-	if(pos + len >= length())
-		len = length() - pos;
-	seg.resize(len);
-	std::copy_n(begin() + pos, len, seg.begin());
-	return seg;
-}
-
-istream& QualStr::read(istream& in) {
-	string str;
-	in >> str;
-	assign(str);
+istream& read(QualStr& qual, istream& in, uint8_t qShift) {
+	string qStr;
+	in >> qStr;
+	qual = encode(qStr, qShift);
 	return in;
 }
 
-QualStr& QualStr::reverse() {
-	std::reverse(begin(), end());
-	return *this;
-}
-
+} /* namespace quality */
 } /* namespace MSGseqTK */
 } /* namespace EGriceLab */

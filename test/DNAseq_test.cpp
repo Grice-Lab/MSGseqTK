@@ -12,23 +12,23 @@ using std::cout;
 using std::cerr;
 using std::endl;
 using namespace EGriceLab::MSGseqTK;
-using namespace EGriceLab::SAMtools;
+using dna::operator<<;
 
 int main() {
-	DNAseq src1("ATCGNTCGANNNNNNNNNNNatcgntcga");
+	DNAseq src1 = dna::encode("ATCGNTCGANNNNNNNNNNNatcgntcga");
 	cout << "src1:" << endl << src1 << endl;
 	DNAseq dest1 = src1;
-	dest1.removeGaps();
-	if(dest1 != DNAseq("ATCGTCGAatcgtcga")) {
+	dna::removeGaps(dest1);
+	if(dest1 != dna::encode("ATCGTCGAatcgtcga")) {
 		cerr << "src1 gaps are not properly removed" << endl;
 		return EXIT_FAILURE;
 	}
 	else
 		cout << "src1.removeGaps():" << endl << dest1 << endl;
 
-	const DNAseq src2("ATCGURYSWKMBDHVN");
-	DNAseq dest2 = src2.revcom();
-	if(dest2 != DNAseq("NBDHVKMWSRYACGAT")) {
+	const DNAseq src2 = dna::encode("ATCGURYSWKMBDHVN");
+	DNAseq dest2 = dna::revcom(src2);
+	if(dest2 != dna::encode("NBDHVKMWSRYACGAT")) {
 		cerr << "src2 is not properly reversed-complemented" << endl;
 		return EXIT_FAILURE;
 	}
@@ -36,8 +36,8 @@ int main() {
 		cout << "src2.revcom():" << endl << dest2 << endl;
 
 	/* nt16 encode/decode tests */
-	BAM::seq_str src1Nt16 = src1.nt16Encode();
-	dest1 = DNAseq::nt16Decode(src1.length(), src1Nt16);
+	DNAseq src1Nt16 = dna::nt16Encode(src1);
+	dest1 = dna::nt16Decode(src1.length(), src1Nt16);
 	if(dest1 != src1) {
 		cerr << "nt16 encode/decode generated copy differs from original version" << endl <<
 				"src1: " << src1 << endl <<

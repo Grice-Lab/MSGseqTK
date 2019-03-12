@@ -14,18 +14,19 @@
 
 using namespace std;
 using namespace EGriceLab::MSGseqTK;
+using dna::operator<<;
 
 int main() {
 	/* part 1, Genome test */
 	Genome g1("Staphylococcus aureus");
-	DNAseq chr1_1("ATCGNatcgnTCGANtcgan");
-	DNAseq chr1_2("TCGANtcganATCGNatcgn");
+	DNAseq chr1_1 = dna::encode("ATCGNatcgnTCGANtcgan");
+	DNAseq chr1_2 = dna::encode("TCGANtcganATCGNatcgn");
 	g1.addChrom("chr1", chr1_1);
 	g1.addChrom("chr2", chr1_2);
 
 	Genome g2("Homo sapiens");
-	DNAseq chr2_1("AAAAANgggggNCCCCCNtttttn");
-	DNAseq chr2_2("TTTTTNcccccNGGGGGNaaaaan");
+	DNAseq chr2_1 = dna::encode("AAAAANgggggNCCCCCNtttttn");
+	DNAseq chr2_2 = dna::encode("TTTTTNcccccNGGGGGNaaaaan");
 	g2.addChrom("chr1", chr2_1);
 	g2.addChrom("chr2", chr2_2);
 

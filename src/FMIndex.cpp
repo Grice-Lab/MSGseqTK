@@ -85,7 +85,7 @@ istream& FMIndex::load(istream& in) {
 saidx_t FMIndex::count(const DNAseq& pattern) const {
 	if(pattern.empty())
 		return 0; /* empty pattern matches to nothing */
-	if(!pattern.isBase())
+	if(!dna::isBase(pattern))
 		return 0;
 
     saidx_t start = 0;
@@ -296,7 +296,7 @@ vector<Loc> FMIndex::locateAll(const DNAseq& pattern) const {
 	vector<Loc> locs;
 	if(pattern.empty())
 		return locs;
-	if(!pattern.isBase())
+	if(!dna::isBase(pattern))
 		return locs;
 
     saidx_t start = 0; /* 0-based */

@@ -20,13 +20,13 @@ const string Genome::REPLACEMENT_STR = ".";
 
 ostream& Genome::Chrom::save(ostream& out) const {
 	StringUtils::saveString(name, out);
-	seq.nt16Save(out);
+	dna::nt16Save(seq, out);
 	return out;
 }
 
 istream& Genome::Chrom::load(istream& in) {
 	StringUtils::loadString(name, in);
-	seq.nt16Load(in);
+	dna::nt16Load(seq, in);
 	return in;
 }
 
@@ -86,7 +86,7 @@ DNAseq Genome::getSeq() const {
 	DNAseq seq;
 	seq.reserve(size() * 2);
 	for(const Chrom& chr : chroms)
-		seq += chr.seq + DNAseq::DNAgap + chr.seq.revcom() + DNAseq::DNAgap;
+		seq += chr.seq + DNAalphabet::GAP_BASE + dna::revcom(chr.seq) + DNAalphabet::GAP_BASE;
 	return seq;
 }
 

@@ -329,9 +329,9 @@ struct Alignment {
 	 */
 	BAM exportBAM() const {
 		if(qStrand == GLoc::FWD)
-			return BAM(*qname, getFlag(), tid, alnStart, mapQ, getAlnCigar(), getQLen(), query->nt16Encode(), *qual);
+			return BAM(*qname, getFlag(), tid, alnStart, mapQ, getAlnCigar(), getQLen(), dna::nt16Encode(*query), *qual);
 		else
-			return BAM(*qname, getFlag(), tid, alnStart, mapQ, getAlnCigar(), getQLen(), query->revcom().nt16Encode(), qual->reverse());
+			return BAM(*qname, getFlag(), tid, alnStart, mapQ, getAlnCigar(), getQLen(), dna::nt16Encode(dna::revcom(*query)), quality::reverse(*qual));
 	}
 
 	/* member fields */
@@ -384,11 +384,6 @@ struct Alignment {
 	static CIGAR_OP_TYPE matchMax(double match, double ins, double del);
 	static CIGAR_OP_TYPE insMax(double match, double ins);
 	static CIGAR_OP_TYPE delMax(double match, double del);
-
-	/**
-	 * convert our DNAseq to BAM::seq_str encoding from htslib
-	 */
-	static BAM::seq_str nt16Encode(const DNAseq& seq);
 
 	/** get algnQLen by MD tag */
 	static int32_t mdTag2alnQLen(const string& mdTag);
@@ -492,14 +487,14 @@ struct AlignmentPE {
 	/** export fwd bam record */
 	BAM exportFwdBAM() const {
 		return BAM(*(fwdAln->qname), getFwdFlag(), fwdAln->tid, fwdAln->alnStart, fwdAln->mapQ,
-				fwdAln->getAlnCigar(), fwdAln->getQLen(), fwdAln->query->nt16Encode(), *(fwdAln->qual),
+				fwdAln->getAlnCigar(), fwdAln->getQLen(), dna::nt16Encode(*fwdAln->query), *(fwdAln->qual),
 				revAln->tid, revAln->alnStart, isize);
 	}
 
 	/** exportrev bam record */
 	BAM exportRevBAM() const {
 		return BAM(*(revAln->qname), getRevFlag(), revAln->tid, revAln->alnStart, revAln->mapQ,
-				revAln->getAlnCigar(), revAln->getQLen(), revAln->query->nt16Encode(), *(revAln->qual),
+				revAln->getAlnCigar(), revAln->getQLen(), dna::nt16Encode(*revAln->query), *(revAln->qual),
 				fwdAln->tid, fwdAln->alnStart, -isize);
 	}
 
@@ -624,7 +619,9 @@ inline void Alignment::calculateScores(int64_t from, int64_t to, int64_t start, 
 
 inline void Alignment::calculateScores(const SeedPair& pair) {
 	assert(isInitiated());
-	assert(pair.length() > 0);
+	if(!(qFrom <= pair.from && pair.to <= qTo && tStart <= pair.start && pair.end <= tEnd))
+		std::cerr << "qname: " << *qname << " pair: " << pair << std::endl;
+	assert(qFrom <= pair.from && pair.to <= qTo && tStart <= pair.start && pair.end <= tEnd);
 	for(int32_t k = 0; k < pair.length(); ++k) {
 		int32_t i = pair.from + k - qFrom + 1;
 		int32_t j = pair.start + k - tStart + 1;

@@ -324,7 +324,7 @@ int main(int argc, char* argv[]) {
 	size_t k = 0;
 	size_t nBlock = 0;
 	while(!mtg.empty()) {
-		const Genome& genome = mtg.backGenome();
+		Genome genome = mtg.backGenome();
 		blockSeq = genome.getSeq() + blockSeq; // update seq
 		mtg.popGenome(); // pop the last genome
 
@@ -338,7 +338,7 @@ int main(int argc, char* argv[]) {
 			else
 				infoLog << "Adding " << nBlock << " genomes in block " << ++k << " into FMD-index and building final sampled Suffix-Array" << endl;
 			assert(blockSeq.back() == DNAalphabet::GAP_BASE);
-			blockSeq.erase(blockSeq.length() - 1); // remove GAP_BASE terminal
+			blockSeq.pop_back(); // remove GAP_BASE terminal
 			fmdidx = FMDIndex(blockSeq, isFirst) + fmdidx; /* always use freshly built FMDIndex as lhs */
 			blockSeq.clear();
 			nBlock = 0;

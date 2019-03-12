@@ -12,29 +12,29 @@ namespace EGriceLab {
 namespace MSGseqTK {
 
 istream& PrimarySeq::load(istream& in) {
-	seq.load(in);
+	dna::load(seq, in);
 	StringUtils::loadString(name, in);
 	StringUtils::loadString(desc, in);
-	qual.load(in);
+	quality::load(qual, in);
 	return in;
 }
 
 ostream& PrimarySeq::save(ostream& out) const {
-	seq.save(out);
+	dna::save(seq, out);
 	StringUtils::saveString(name, out);
 	StringUtils::saveString(desc, out);
-	qual.save(out);
+	quality::save(qual, out);
 	return out;
 }
 
 PrimarySeq& PrimarySeq::reverse() {
-	seq.reverse();
-	qual.reverse();
+	dna::reverse(seq);
+	quality::reverse(qual);
 	return *this;
 }
 
 PrimarySeq& PrimarySeq::complement() {
-	seq.complement();
+	dna::complement(seq);
 	return *this;
 }
 

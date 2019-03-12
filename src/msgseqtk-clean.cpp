@@ -337,7 +337,7 @@ int main(int argc, char* argv[]) {
 	infoLog << "Loading reference MetaGenome info ..." << endl;
 	loadProgInfo(refMtgIn);
 	if(!refMtgIn.bad())
-		refMtg.load(refMtgIn, true);
+		refMtg.load(refMtgIn);
 	if(refMtgIn.bad()) {
 		cerr << "Unable to load reference MetaGenome: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
@@ -354,7 +354,7 @@ int main(int argc, char* argv[]) {
 	infoLog << "Loading background MetaGenome info ..." << endl;
 	loadProgInfo(bgMtgIn);
 	if(!bgMtgIn.bad())
-		bgMtg.load(bgMtgIn, true);
+		bgMtg.load(bgMtgIn);
 	if(bgMtgIn.bad()) {
 		cerr << "Unable to load background MetaGenome: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;

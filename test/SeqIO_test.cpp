@@ -20,6 +20,7 @@ using std::istringstream;
 using std::ostringstream;
 using EGriceLab::MSGseqTK::PrimarySeq;
 using EGriceLab::MSGseqTK::SeqIO;
+using EGriceLab::MSGseqTK::dna::operator<<;
 
 int main() {
 	PrimarySeq src1("ATCGNTCGANatcgntcgan", "seq1");

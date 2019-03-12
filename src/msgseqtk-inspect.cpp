@@ -28,6 +28,7 @@
 #include <fstream>
 #include <string>
 #include <cstdlib>
+#include <string>
 #include <boost/iostreams/filtering_stream.hpp> /* basic boost streams */
 #include <boost/iostreams/device/file.hpp> /* file sink and source */
 #include <boost/iostreams/filter/zlib.hpp> /* for zlib support */
@@ -194,6 +195,16 @@ int main(int argc, char* argv[]) {
 		mta.read(gffIn, mtg);
 		if(gffIn.bad()) {
 			cerr << "Unable to read MetaGenome annotation: " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
+	}
+
+	infoLog << "Checking MetaGenome indices ..." << endl;
+	for(size_t tid = 0; tid < mtg.numChroms(); ++tid) {
+		string tname = mtg.getChromName(tid);
+		const Genome::Chrom& chr = mtg.getChrom(tid);
+		if(!(tname == chr.name && mtg.getChromLen(tid) == (chr.size() + 1) * 2)) {
+			cerr << "Unmatched chrom record for tid: " << tid << endl;
 			return EXIT_FAILURE;
 		}
 	}

@@ -476,12 +476,12 @@ int output(const PAIR_LIST& pairList, SAMfile& out, uint32_t maxReport) {
 }
 
 int output(const PrimarySeq& read, SAMfile& out) {
-	return out.write(BAM(read.getName(), read.length(), read.getSeq().nt16Encode(), read.getQual()));
+	return out.write(BAM(read.getName(), read.length(), dna::nt16Encode(read.getSeq()), read.getQual()));
 }
 
 int output(const PrimarySeq& fwdRead, const PrimarySeq& revRead, SAMfile& out) {
-	out.write(BAM(fwdRead.getName(), fwdRead.length(), fwdRead.getSeq().nt16Encode(), fwdRead.getQual(), BAM_FREAD1));
-	out.write(BAM(revRead.getName(), revRead.length(), revRead.getSeq().nt16Encode(), revRead.getQual(), BAM_FREAD2));
+	out.write(BAM(fwdRead.getName(), fwdRead.length(), dna::nt16Encode(fwdRead.getSeq()), fwdRead.getQual(), BAM_FREAD1));
+	out.write(BAM(revRead.getName(), revRead.length(), dna::nt16Encode(revRead.getSeq()), revRead.getQual(), BAM_FREAD2));
 	return 2;
 }
 
@@ -614,7 +614,6 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 						}
 					} /* end SeedMatch tests */
 				} /* end task */
-#pragma omp taskwait
 			} /* end each read */
 		} /* end master, implicit barrier */
 	} /* end parallel */

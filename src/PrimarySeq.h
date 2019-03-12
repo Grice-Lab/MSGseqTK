@@ -38,23 +38,22 @@ public:
 
 	/** construct a PrimarySeq with given data */
 	PrimarySeq(const DNAseq& seq, const string& name, const string& desc,
-			const QualStr& qual, uint8_t qShift = QualStr::DEFAULT_Q_SHIFT)
+			const QualStr& qual, uint8_t qShift = quality::DEFAULT_Q_SHIFT)
 	: seq(seq), name(name), desc(desc), qual(qual)
 	{
-		this->qual.setQShift(qShift);
-		fixQual();
+		fixQual(qShift);
 	}
 
-	/** delegating construct a PrimarySeq with given seq, qual, name and optional desc and encoded quality string */
+	/** delegating construct a PrimarySeq with given seq, qual, name and optional desc and quality string */
 	PrimarySeq(const DNAseq& seq, const string& name, const string& desc = "",
-			const string& qStr = "", uint8_t qShift = QualStr::DEFAULT_Q_SHIFT)
-	: PrimarySeq(seq, name, desc, QualStr(qStr, qShift), qShift)
+			const string& qStr = "", uint8_t qShift = quality::DEFAULT_Q_SHIFT)
+	: PrimarySeq(seq, name, desc, quality::encode(qStr, qShift), qShift)
 	{  }
 
 	/** delegating construct using a seq string instead of DNAseq */
 	PrimarySeq(const string& seqStr, const string& name, const string& desc = "",
-			const string& qStr = "", uint8_t qShift = QualStr::DEFAULT_Q_SHIFT)
-	: PrimarySeq(DNAseq(seqStr), name, desc, QualStr(qStr, qShift), qShift)
+			const string& qStr = "", uint8_t qShift = quality::DEFAULT_Q_SHIFT)
+	: PrimarySeq(dna::encode(seqStr), name, desc, quality::encode(qStr, qShift), qShift)
 	{  }
 
 	/* getters and setters */
@@ -103,9 +102,9 @@ public:
 	}
 
 	/** check and fix QualStr */
-	PrimarySeq& fixQual() {
+	PrimarySeq& fixQual(uint8_t qShift = quality::DEFAULT_Q_SHIFT) {
 		if(qual.length() != seq.length())
-			qual.resize(seq.length(), QualStr::DEFAULT_Q_SCORE);
+			qual.resize(seq.length(), qShift);
 		return *this;
 	}
 

@@ -105,11 +105,15 @@ void SeqIO::writeFastaSeq(const PrimarySeq& seq) {
 		*out << " " << seq.getDesc();
 	*out << endl;
 	if(maxLine > 0) {
-		for(size_t i = 0; i < seq.length(); i += maxLine)
-			*out << seq.getSeq().substr(i, maxLine) << endl;
+		for(size_t i = 0; i < seq.length(); i += maxLine) {
+			dna::write(seq.getSeq().substr(i, maxLine), *out);
+			*out << endl;
+		}
 	}
-	else
-		*out << seq.getSeq() << endl;
+	else {
+		dna::write(seq.getSeq(), *out);
+		*out << endl;
+	}
 }
 
 void SeqIO::writeFastqSeq(const PrimarySeq& seq) {
@@ -117,8 +121,10 @@ void SeqIO::writeFastqSeq(const PrimarySeq& seq) {
 	if(!seq.getDesc().empty())
 		*out << " " + seq.getDesc();
 	*out << endl;
-	*out << seq.getSeq() << endl;
-	*out << fastqSep << endl << seq.getQual() << endl;
+	dna::write(seq.getSeq(), *out);
+	*out << endl << fastqSep << endl;
+	quality::write(seq.getQual(), *out);
+	*out << endl;
 }
 
 SeqIO::FORMAT SeqIO::guessFormat(const string& name) {

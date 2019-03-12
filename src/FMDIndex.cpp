@@ -396,24 +396,29 @@ void FMDIndex::backExt(saidx_t& p, saidx_t& q, saidx_t& s, sauchar_t b) const {
 	BCarray_t qB, sB;
 	qB.fill(0);
 	sB.fill(0);
-	sB[0] = bwt.rank(0, p + s - 1) - bwt.rank(0, p - 1);
+	/* calculate new p and s */
 	saidx_t O = bwt.rank(b, p - 1);
 	pN = C[b] + O;
 	sB[b] = bwt.rank(b, p + s - 1) - O;
-	for(nt16_t i = b + 1; i <= DNAalphabet::NT16_MAX; ++i) { // search from b + 1
-		if(B[i] > 0) // if this symbol exists
-			sB[i] = bwt.rank(i, p + s - 1) - bwt.rank(i, p - 1);
-	}
-	/* new range of [q', q' + s' - 1] is a subrange of original [q, q + s] */
-	/* devide q + q + s */
-	qB[0] = q;
-	qB[DNAalphabet::NT16_MAX] = q + sB[0];
-	for(nt16_t i = DNAalphabet::NT16_MAX; i > b; --i) // only need to search till b + 1
-		qB[i - 1] = qB[i] + sB[i];
 
-	/* update bi-interval */
+	/* update q if s changes */
+	if(sB[b] != s) {
+		sB[0] = bwt.rank(0, p + s - 1) - bwt.rank(0, p - 1);
+		for(nt16_t i = b + 1; i <= DNAalphabet::NT16_MAX; ++i) { // search from b + 1
+			if(B[i] > 0) // if this symbol exists
+				sB[i] = bwt.rank(i, p + s - 1) - bwt.rank(i, p - 1);
+		}
+		/* new range of [q', q' + s' - 1] is a subrange of original [q, q + s] */
+		/* devide q + q + s */
+		qB[0] = q;
+		qB[DNAalphabet::NT16_MAX] = qB[0] + sB[0];
+		for(nt16_t i = DNAalphabet::NT16_MAX; i > b; --i) // only need to search till b + 1
+			qB[i - 1] = qB[i] + sB[i];
+		q = qB[b];
+	}
+
+	/* update p and s */
 	p = pN;
-	q = qB[b];
 	s = sB[b];
 }
 

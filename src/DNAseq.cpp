@@ -6,115 +6,83 @@
  */
 #include <algorithm>
 #include <cassert>
+#include <htslib/sam.h>
 #include "DNAseq.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
-const DNAseq DNAseq::DNAgap(1, DNAalphabet::GAP_BASE); /* single base gap DNAseq */
+namespace dna {
 
-string DNAseq::decode() const {
-	string seq;
-	seq.reserve(length());
-	for(DNAseq::value_type b : *this)
-		seq.push_back(DNAalphabet::decode(b));
+DNAseq& removeGaps(DNAseq& seq) {
+	seq.erase(std::remove(seq.begin(), seq.end(), DNAalphabet::GAP_BASE), seq.end());
 	return seq;
 }
 
-DNAseq& DNAseq::reverse() {
-	std::reverse(begin(), end());
-	return *this;
+DNAseq encode(const string& seqStr) {
+	DNAseq seq;
+	seq.reserve(seqStr.length());
+	for(string::value_type c : seqStr)
+		seq.push_back(DNAalphabet::encode(c));
+	return seq;
 }
 
-DNAseq& DNAseq::complement() {
-	for(DNAseq::value_type& b: *this)
-		b = DNAalphabet::complement(b);
-	return *this;
+string decode(const DNAseq& seq) {
+	string seqStr;
+	seqStr.reserve(seq.length());
+	for(DNAseq::value_type b : seq)
+		seqStr.push_back(DNAalphabet::decode(b));
+	return seqStr;
 }
 
-DNAseq& DNAseq::assign(const string& str) {
-	resize(str.length());
-	std::transform(str.begin(), str.end(), begin(), DNAalphabet::encode);
-	return *this;
-}
-
-DNAseq& DNAseq::append(const string& str) {
-	reserve(length() + str.length());
-	for(char s : str)
-		push_back(DNAalphabet::encode(s));
-	return *this;
-}
-
-istream& DNAseq::read(istream& in) {
-	string str;
-	in >> str;
-	assign(str);
+istream& read(DNAseq& seq, istream& in) {
+	string seqStr;
+	in >> seqStr;
+	seq = encode(seqStr);
 	return in;
 }
 
-DNAseq& DNAseq::removeInvalid() {
-	erase(std::remove_if(begin(), end(),
-			[](DNAseq::value_type b) { return !DNAalphabet::isValid(b); }),
-			end());
-	return *this;
-}
-
-DNAseq& DNAseq::removeGaps() {
-	erase(std::remove(begin(), end(), DNAalphabet::GAP_BASE), end());
-	return *this;
-}
-
-BAM::seq_str DNAseq::nt16Encode() const {
-	const size_t L = length(); // raw length
-	const size_t L16 = (L + 1) / 2; // ceil(L / 2)
-	BAM::seq_str seqNt16(L16, 0);
+DNAseq nt16Encode(const DNAseq& seq) {
+	const size_t L = seq.length(); // seq length
+	const size_t N = (L + 1) / 2; // compressed length
+	DNAseq seqNt16(N, 0);
 	for(size_t i = 0; i < L; i += 2)
-		seqNt16[i / 2] = (*this)[i] << 4 | (*this)[i + 1]; // i+1 always valid since the added null at the end of *this
+		seqNt16[i / 2] = seq[i] << 4 | seq[i + 1]; // i+1 always valid since the added null at the end of *this
 	return seqNt16;
 }
 
-DNAseq DNAseq::nt16Decode(size_t L, const BAM::seq_str& seqNt16) {
+DNAseq nt16Decode(size_t L, const DNAseq& seqNt16) {
 	assert(seqNt16.length() == (L + 1) / 2);
 	DNAseq seq(L, 0); // 0 init a DNAseq
 	for(size_t i = 0; i < L; ++i)
-		seq[i] = BAM::getSeqBase(seqNt16, i);
+		seq[i] = bam_seqi(seqNt16, i);
 	return seq;
 }
 
-istream& DNAseq::nt16Load(istream& in) {
-	size_t L = 0; // uncompressed length
+istream& nt16Load(DNAseq& seq, istream& in) {
+	DNAseq nt16Seq;
+	size_t L = 0; // original length
 	in.read((char*) &L, sizeof(size_t));
 	size_t N = (L + 1) / 2; // compressed length
-	value_type* data = new value_type[N];
-	in.read((char*) data, N * sizeof(value_type));
-	resize(L);
-	for(size_t i = 0; i < L; i += 2) {
-		value_type b = data[i / 2];
-		(*this)[i] = (b & DNAalphabet::NT16_UPPER_MASK) >> 4;
-		(*this)[i + 1] = b & DNAalphabet::NT16_LOWER_MASK; // i+1 always valid
-	}
-	delete[] data;
+	StringUtils::loadString(nt16Seq, in, N);
+	seq = nt16Decode(L, nt16Seq);
 	return in;
 }
 
-ostream& DNAseq::nt16Save(ostream& out) const {
-	const size_t L = length(); // raw length
+ostream& nt16Save(const DNAseq& seq, ostream& out) {
+	const size_t L = seq.length(); // original length
 	const size_t N = (L + 1) / 2; // compressed length
 	out.write((const char*) &L, sizeof(size_t));
-	value_type* data = new value_type[N];
-	for(size_t i = 0; i < L; i += 2) // (*this)[i+1] always valid
-		data[i / 2] = (*this)[i] << 4 | (*this)[i + 1];
-	out.write((const char*) data, N * sizeof(value_type));
-	delete[] data;
-	return out;
+	return StringUtils::saveString(nt16Encode(seq), out, N);
 }
 
-DNAseq::BASE_COUNT DNAseq::baseCount(size_type from, size_type len) const {
-	BASE_COUNT bc;
+BaseCount baseCount(const DNAseq& seq, size_t from, size_t len) {
+	BaseCount bc;
 	bc.fill(0);
-	for(size_type i = from; i < from + len; ++i)
-		bc[(*this)[i]]++;
+	for(size_t i = from; i < from + len; ++i)
+		bc[seq[i]]++;
 	return bc;
 }
 
+} /* namespace dna */
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */

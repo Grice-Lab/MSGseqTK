@@ -13,6 +13,7 @@
 using namespace std;
 using namespace EGriceLab::MSGseqTK;
 using namespace EGriceLab::SAMtools;
+using dna::operator<<;
 
 int main(int argc, char* argv[]) {
 	string prog = argv[0];
@@ -20,9 +21,9 @@ int main(int argc, char* argv[]) {
 	ScoreScheme ss;
 
 	/* perfect match test */
-	DNAseq query1("ATCG");
-	DNAseq target1("AAAATCGCCC");
-	QualStr qual1(query1.length());
+	DNAseq query1 = dna::encode("ATCG");
+	DNAseq target1 = dna::encode("AAAATCGCCC");
+	QualStr qual1(query1.length(), 0);
 	string name1 = "r1";
 
 	cout << "querys and targets constructed" << endl;
@@ -53,9 +54,9 @@ int main(int argc, char* argv[]) {
 	}
 
 	/* perfect match in middle test */
-	DNAseq query2("TTTATCGAAA");
-	DNAseq target2("AAAATCGCCC");
-	QualStr qual2(query2.length());
+	DNAseq query2 = dna::encode("TTTATCGAAA");
+	DNAseq target2 = dna::encode("AAAATCGCCC");
+	QualStr qual2(query2.length(), 0);
 	string name2 = "r2";
 
 	cout << "querys and targets constructed" << endl;
@@ -85,9 +86,9 @@ int main(int argc, char* argv[]) {
 	}
 
 	/* mis-match test */
-	DNAseq query3("AAAATCGATCGATCGATCGTTT");
-	DNAseq target3("GGGATCGATCAATCGATCGCCC");
-	QualStr qual3(query3.length());
+	DNAseq query3 = dna::encode("AAAATCGATCGATCGATCGTTT");
+	DNAseq target3 = dna::encode("GGGATCGATCAATCGATCGCCC");
+	QualStr qual3(query3.length(), 0);
 	string name3 = "r3";
 	cout << "querys and targets constructed" << endl;
 
@@ -118,9 +119,9 @@ int main(int argc, char* argv[]) {
 	}
 
 	/* insertion match test */
-	DNAseq  query4("AAAATCGATCAATCGATCGTTT");
-	DNAseq target4("AAAATCGATCATCGATCGTTT");
-	QualStr qual4(query4.length());
+	DNAseq query4 = dna::encode("AAAATCGATCAATCGATCGTTT");
+	DNAseq target4 = dna::encode("AAAATCGATCATCGATCGTTT");
+	QualStr qual4(query4.length(), 0);
 	string name4 = "r4";
 	cout << "querys and targets constructed" << endl;
 
@@ -150,9 +151,9 @@ int main(int argc, char* argv[]) {
 	}
 
 	/* deletion match test */
-	DNAseq  query5("AAAATCGATCGTCGATCGTTT");
-	DNAseq target5("AAAATCGATCGATCGATCGTTT");
-	QualStr qual5(query5.length());
+	DNAseq query5 = dna::encode("AAAATCGATCGTCGATCGTTT");
+	DNAseq target5 = dna::encode("AAAATCGATCGATCGATCGTTT");
+	QualStr qual5(query5.length(), 0);
 	string name5 = "r5";
 	cout << "querys and targets constructed" << endl;
 

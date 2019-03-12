@@ -11,6 +11,7 @@
 
 using std::cout;
 using std::endl;
+using EGriceLab::MSGseqTK::dna::operator<<;
 using EGriceLab::MSGseqTK::PrimarySeq;
 
 int main() {
