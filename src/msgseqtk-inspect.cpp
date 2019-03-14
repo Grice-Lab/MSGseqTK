@@ -217,18 +217,6 @@ int main(int argc, char* argv[]) {
 			<< " G: " << fmdidx.getBaseCount(DNAalphabet::G)
 			<< " T: " << fmdidx.getBaseCount(DNAalphabet::T)
 			<< endl;
-	cout << "IUPAC extended base count:"
-			<< " R: " << fmdidx.getBaseCount(DNAalphabet::R)
-			<< " Y: " << fmdidx.getBaseCount(DNAalphabet::Y)
-			<< " S: " << fmdidx.getBaseCount(DNAalphabet::S)
-			<< " W: " << fmdidx.getBaseCount(DNAalphabet::W)
-			<< " K: " << fmdidx.getBaseCount(DNAalphabet::K)
-			<< " M: " << fmdidx.getBaseCount(DNAalphabet::M)
-			<< " B: " << fmdidx.getBaseCount(DNAalphabet::B)
-			<< " D: " << fmdidx.getBaseCount(DNAalphabet::D)
-			<< " H: " << fmdidx.getBaseCount(DNAalphabet::H)
-			<< " V: " << fmdidx.getBaseCount(DNAalphabet::V)
-			<< endl;
 
 	if(gffIn.is_open()) {
 		cout << "# of annotated genomes: " << mta.numAnnotatedGenomes() << endl <<

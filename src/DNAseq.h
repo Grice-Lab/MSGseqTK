@@ -107,6 +107,21 @@ DNAseq revcom(const DNAseq& seq) {
 	return revcom(rcSeq);
 }
 
+/** transform a DNAseq to basic-only */
+inline
+DNAseq& toBasic(DNAseq& seq) {
+	for(DNAseq::value_type& b : seq)
+		b = DNAalphabet::toBasic(b);
+	return seq;
+}
+
+/** get a basic-only copy of a DNAseq */
+inline
+DNAseq toBasic(const DNAseq& seq) {
+	DNAseq bSeq(seq);
+	return toBasic(bSeq);
+}
+
 DNAseq& removeGaps(DNAseq& seq);
 
 /** encode a DNAseq from seqStr */

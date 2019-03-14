@@ -123,8 +123,11 @@ public:
 	/** get the overall size of this genome */
 	size_t size() const;
 
-	/** get bi-directional seq */
+	/** get bi-directional seq of genome */
 	DNAseq getSeq() const;
+
+	/** get bi-directional seq of genome, with basic bases only */
+	DNAseq getBasicSeq() const;
 
 	/** add a new chrom object at the end */
 	void addChrom(const Chrom& chr) {

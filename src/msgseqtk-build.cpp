@@ -326,7 +326,7 @@ int main(int argc, char* argv[]) {
 	size_t k = 0;
 	size_t nBlock = 0;
 	while(!mtg.empty()) {
-		blockSeq = mtg.backGenome().getSeq() + blockSeq; // update seq
+		blockSeq = mtg.backGenome().getBasicSeq() + blockSeq; // update seq
 		mtg.popGenome(); // pop the last genome
 
 		nBlock++;

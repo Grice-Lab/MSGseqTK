@@ -90,6 +90,16 @@ DNAseq Genome::getSeq() const {
 	return seq;
 }
 
+DNAseq Genome::getBasicSeq() const {
+	DNAseq seq;
+	seq.reserve(size() * 2);
+	for(const Chrom& chr : chroms) {
+		const DNAseq& bSeq = dna::toBasic(chr.seq);
+		seq += bSeq + DNAalphabet::GAP_BASE + dna::revcom(bSeq) + DNAalphabet::GAP_BASE;
+	}
+	return seq;
+}
+
 string Genome::formatName(const string& name) {
 	return std::regex_replace(
 			std::regex_replace(name, INVALID_NAMEPREFIX_PATTERN, ""),

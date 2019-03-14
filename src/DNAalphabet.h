@@ -66,6 +66,7 @@ private:
 	static const base_map base2comp;  /* internal complement map from base to base, static zero initiated by default */
 	static const int_map base2int; /* internal base->int(0,1,2,3) map, with default value 4 */
 	static const int_map sym2int;   /* internal sym->int(0,1,2,3) map, with default value 4 */
+	static const base_map base2basic; /* internal base->base map to map IUPAC extended bases to nearest basic bases */
 
 	/* static methods */
 public:
@@ -75,7 +76,7 @@ public:
 	}
 
 	/** decode a DNA base to from a char symbol */
-	static char decode(int8_t b) {
+	static char decode(nt16_t b) {
 		return base2sym[b];
 	}
 
@@ -87,6 +88,16 @@ public:
 	/** get complement base of a given base */
 	static nt16_t complement(nt16_t b) {
 		return base2comp[b];
+	}
+
+	/** map a base to basic base */
+	static nt16_t toBasic(nt16_t b) {
+		return base2basic[b];
+	}
+
+	/** map a symbol to basic symbol */
+	static char toBasic(char s) {
+		return DNAalphabet::decode(base2basic[DNAalphabet::encode(s)]);
 	}
 
 	/** test whether a base is valid ( a gap or base ) */

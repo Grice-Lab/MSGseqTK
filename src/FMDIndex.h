@@ -104,9 +104,9 @@ public:
 		return B[DNAalphabet::A] + B[DNAalphabet::C] + B[DNAalphabet::G] + B[DNAalphabet::T];
 	}
 
-	/** get baseCount of extended/ambigous bases (IUPAC non-A,T,C,G) */
+	/** get baseCount of extended/ambigous bases (IUPAC non-A,T,C,G and non-gap) */
 	saidx_t getExtBaseCount() const {
-		return C[DNAalphabet::NT16_MAX] - getBasicBaseCount();
+		return getCumCount(DNAalphabet::NT16_MAX) - getBasicBaseCount() - B[0];
 	}
 
 	/** get cumulative base count of given base */
