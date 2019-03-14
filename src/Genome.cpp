@@ -57,8 +57,8 @@ size_t Genome::getChromIndex(int64_t loc) const {
 ostream& Genome::save(ostream& out) const {
 	StringUtils::saveString(id, out);
 	StringUtils::saveString(name, out);
-	size_t NChrom = numChroms();
-	out.write((const char*) &NChrom, sizeof(size_t));
+	size_t NC = numChroms();
+	out.write((const char*) &NC, sizeof(size_t));
 	for(const Chrom& chr : chroms)
 		chr.save(out);
 	return out;

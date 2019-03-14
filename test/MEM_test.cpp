@@ -19,14 +19,18 @@ using dna::operator<<;
 static bool isValidMEM(const DNAseq& db, const MEM& mem);
 
 int main() {
-	const DNAseq genomeDB = dna::encode("ACGTCGTAGTACTACGNACGTCGTAGTACTACG");
+	const DNAseq chr1 = dna::encode("ACGTCGTAGTACTACGNACGTCGTAGTACTACG");
+	const DNAseq chr2 = chr1;
 	Genome genome("db");
-	genome.addChrom("chr1", genomeDB);
+	genome.addChrom("chr1", chr1);
+	genome.addChrom("chr2", chr2);
 	MetaGenome mtg;
 	mtg.addGenome(genome);
 	mtg.updateIndex();
 
-	FMDIndex fmdidx = FMDIndex(genomeDB + DNAalphabet::GAP_BASE + dna::revcom(genomeDB), true);
+	DNAseq genomeSeq = genome.getSeq();
+	genomeSeq.pop_back();
+	FMDIndex fmdidx = FMDIndex(genomeSeq, true);
 	assert(mtg.size() == fmdidx.length());
 
 	cout << "fwd MEM search ..." << endl;
@@ -36,14 +40,14 @@ int main() {
 		mem = MEM::findMEMfwd(&read, &mtg, &fmdidx, from);
 		mem.evaluate();
 		mem.findLocs();
-		cout << "mem between db: " << genomeDB << " and read: " << read.getSeq() << " found at from: " << mem.from << " to: " << mem.to << endl;
+		cout << "mem between db: " << genomeSeq << " and read: " << read.getSeq() << " found at from: " << mem.from << " to: " << mem.to << endl;
 		cout << "all matched locs:" << endl;
 		for(const GLoc& loc : mem.locs)
 			cout << " " << loc;
 		cout << endl;
 		cout << "loglik: " << mem.loglik() << " likelihood: " << mem.pvalue()
 				<< " evalue: " << mem.evalue() << endl;
-		if(!isValidMEM(genomeDB, mem))
+		if(!isValidMEM(genomeSeq, mem))
 			return EXIT_FAILURE;
 	}
 
@@ -53,14 +57,14 @@ int main() {
 		mem = MEM::findMEMrev(&read, &mtg, &fmdidx, to);
 		mem.evaluate();
 		mem.findLocs();
-		cout << "N containing mem between db: " << genomeDB << " and read: " << read.getSeq() << " found at from: " << mem.from << " to: " << mem.to << endl;
+		cout << "N containing mem between db: " << genomeSeq << " and read: " << read.getSeq() << " found at from: " << mem.from << " to: " << mem.to << endl;
 		cout << "all matched locs:" << endl;
 		for(const GLoc& loc : mem.locs)
 			cout << " " << loc;
 		cout << endl;
 		cout << "loglik: " << mem.loglik() << " likelihood: " << mem.pvalue()
 				<< " evalue: " << mem.evalue() << endl;
-		if(!isValidMEM(genomeDB, mem))
+		if(!isValidMEM(genomeSeq, mem))
 			return EXIT_FAILURE;
 	}
 }

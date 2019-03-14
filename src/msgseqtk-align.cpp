@@ -495,10 +495,10 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 #pragma omp master
 		{
 			while(seqI.hasNext()) {
-				PrimarySeq read = seqI.nextSeq();
+				const PrimarySeq& read = seqI.nextSeq();
 #pragma omp task firstprivate(read)
 				{
-					MEMS mems = MEMS::sampleMEMS(&read, &mtg, &fmdidx, maxEvalue, GLoc::FWD); // fwd sampling
+					MEMS mems = MEMS::searchMEMS(&read, &mtg, &fmdidx, maxEvalue, GLoc::FWD); // fwd sampling
 					mems.findLocs(); // only find fwd mapping locs (which can be on reverse-complement genome)
 					/* get SeedMatchList */
 					const Alignment::SeedMatchList& seedMatches = Alignment::getSeedMatchList(mems, maxSeedMatches);
@@ -509,7 +509,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 						output(read, out);
 					}
 					else {
-						PrimarySeq rcRead = static_cast<const PrimarySeq&>(read).revcom();
+						const PrimarySeq& rcRead = read.revcom();
 						/* get alignments from SeedMatchList */
 						ALIGN_LIST alnList = Alignment::getAlignments(&ss, &mtg, &read, &rcRead, seedMatches);
 						/* filter alignments */

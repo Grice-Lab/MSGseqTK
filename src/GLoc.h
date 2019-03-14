@@ -27,7 +27,7 @@ struct GLoc: public Loc {
 	{  }
 
 	/** construct with basic values */
-	GLoc(int64_t start, int64_t end) : Loc(start, end), tid(tid), strand(strand)
+	GLoc(int64_t start, int64_t end) : Loc(start, end)
 	{  }
 
 	virtual ~GLoc() {  }

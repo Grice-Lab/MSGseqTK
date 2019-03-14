@@ -210,13 +210,25 @@ int main(int argc, char* argv[]) {
 	}
 
 	cout << "MetaGenome info: # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
-	cout << "FMD-index info: length: " << fmdidx.length();
-	cout << " A: " << fmdidx.getBaseCount(DNAalphabet::A);
-	cout << " C: " << fmdidx.getBaseCount(DNAalphabet::C);
-	cout << " G: " << fmdidx.getBaseCount(DNAalphabet::G);
-	cout << " T: " << fmdidx.getBaseCount(DNAalphabet::T);
-//	cout << " IUPAC ambigous bases: " << fmdidx.getExtBaseCount();
-	cout << endl;
+	cout << "FMD-index info: length: " << fmdidx.length() << endl;
+	cout << "Basic base count:"
+			<< " A: " << fmdidx.getBaseCount(DNAalphabet::A)
+			<< " C: " << fmdidx.getBaseCount(DNAalphabet::C)
+			<< " G: " << fmdidx.getBaseCount(DNAalphabet::G)
+			<< " T: " << fmdidx.getBaseCount(DNAalphabet::T)
+			<< endl;
+	cout << "IUPAC extended base count:"
+			<< " R: " << fmdidx.getBaseCount(DNAalphabet::R)
+			<< " Y: " << fmdidx.getBaseCount(DNAalphabet::Y)
+			<< " S: " << fmdidx.getBaseCount(DNAalphabet::S)
+			<< " W: " << fmdidx.getBaseCount(DNAalphabet::W)
+			<< " K: " << fmdidx.getBaseCount(DNAalphabet::K)
+			<< " M: " << fmdidx.getBaseCount(DNAalphabet::M)
+			<< " B: " << fmdidx.getBaseCount(DNAalphabet::B)
+			<< " D: " << fmdidx.getBaseCount(DNAalphabet::D)
+			<< " H: " << fmdidx.getBaseCount(DNAalphabet::H)
+			<< " V: " << fmdidx.getBaseCount(DNAalphabet::V)
+			<< endl;
 
 	if(gffIn.is_open()) {
 		cout << "# of annotated genomes: " << mta.numAnnotatedGenomes() << endl <<

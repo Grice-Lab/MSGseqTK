@@ -84,6 +84,7 @@ void printUsage(const string& progName) {
 
 int main(int argc, char* argv[]) {
 	/* variable declarations */
+	vector<string> genomeIds; // genome ids in original order
 	map<string, string> genomeId2Name;
 	map<string, string> genomeId2Fn;
 
@@ -114,6 +115,7 @@ int main(int argc, char* argv[]) {
 	for(int i = 0; i < cmdOpts.numMainOpts(); ++i) {
 		string fn = cmdOpts.getMainOpt(i);
 		/* use filename as ID and Name */
+		genomeIds.push_back(fn); // fn as id
 		genomeId2Name[fn] = fn;
 		genomeId2Fn[fn] = fn;
 	}
@@ -184,6 +186,7 @@ int main(int argc, char* argv[]) {
 					warningLog << "Non-unique genome ID " << id << " found in " << listFn << ", ignore" << endl;
 					continue;
 				}
+				genomeIds.push_back(id);
 				genomeId2Name[id] = name;
 				genomeId2Fn[id] = fn;
 			}
@@ -191,7 +194,7 @@ int main(int argc, char* argv[]) {
 		listIn.close();
 		infoLog << "Found " << genomeId2Fn.size() << " user-provided genome information" << endl;
 	}
-	if(genomeId2Fn.empty()) {
+	if(genomeIds.empty()) {
 		cerr << "At least one genome file must be provided" << endl;
 		return EXIT_FAILURE;
 	}
@@ -256,9 +259,8 @@ int main(int argc, char* argv[]) {
 
 	/* read all genomic files */
 	size_t nProcessed = 0;
-	for(const std::map<string, string>::value_type& entry : genomeId2Fn) {
-		const string& genomeId = entry.first;
-		const string& genomeFn = entry.second;
+	for(const string& genomeId : genomeIds) {
+		const string& genomeFn = genomeId2Fn[genomeId];
 		const string& genomeName = genomeId2Name[genomeId];
 
 		if(mtg.hasGenome(genomeId)) {
@@ -324,8 +326,7 @@ int main(int argc, char* argv[]) {
 	size_t k = 0;
 	size_t nBlock = 0;
 	while(!mtg.empty()) {
-		Genome genome = mtg.backGenome();
-		blockSeq = genome.getSeq() + blockSeq; // update seq
+		blockSeq = mtg.backGenome().getSeq() + blockSeq; // update seq
 		mtg.popGenome(); // pop the last genome
 
 		nBlock++;

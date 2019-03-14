@@ -84,23 +84,23 @@ struct MEMS : public vector<MEM> {
 
 	/* static methods */
 	/**
-	 * sample MEMS for given read
+	 * search MEMS for given read
 	 * @param seq  read to search
 	 * @param fmdidx  FMD-index
 	 * @param maxEvalue  maxEvalue criteria for a significant MEM
 	 * @param dir  searching direction
 	 * @return  an ordered MEMs
 	 */
-	static MEMS sampleMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+	static MEMS searchMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			double maxEvalue = DEFAULT_MAX_EVALUE, GLoc::STRAND dir = GLoc::FWD) {
-		return dir == GLoc::FWD ? sampleMEMSfwd(seq, mtg, fmdidx, maxEvalue) :
-				sampleMEMSrev(seq, mtg, fmdidx, maxEvalue);
+		return dir == GLoc::FWD ? searchMEMSfwd(seq, mtg, fmdidx, maxEvalue) :
+				searchMEMSrev(seq, mtg, fmdidx, maxEvalue);
 	}
 
-	static MEMS sampleMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+	static MEMS searchMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			double maxEvalue = DEFAULT_MAX_EVALUE);
 
-	static MEMS sampleMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+	static MEMS searchMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			double maxEvalue = DEFAULT_MAX_EVALUE);
 
 	/* static fields */
@@ -146,8 +146,8 @@ struct MEMS_PE {
 			 const MetaGenome* mtg, const FMDIndex* fmdidx,
 			 double maxEvalue = MEMS::DEFAULT_MAX_EVALUE, GLoc::STRAND dir = GLoc::FWD) {
 		return dir == GLoc::FWD ?
-				MEMS_PE(MEMS::sampleMEMSfwd(fwdSeq, mtg, fmdidx, maxEvalue), MEMS::sampleMEMSfwd(revSeq, mtg, fmdidx, maxEvalue)) :
-				MEMS_PE(MEMS::sampleMEMSrev(fwdSeq, mtg, fmdidx, maxEvalue), MEMS::sampleMEMSrev(revSeq, mtg, fmdidx, maxEvalue));
+				MEMS_PE(MEMS::searchMEMSfwd(fwdSeq, mtg, fmdidx, maxEvalue), MEMS::searchMEMSfwd(revSeq, mtg, fmdidx, maxEvalue)) :
+				MEMS_PE(MEMS::searchMEMSrev(fwdSeq, mtg, fmdidx, maxEvalue), MEMS::searchMEMSrev(revSeq, mtg, fmdidx, maxEvalue));
 	}
 
 	/* member fields */

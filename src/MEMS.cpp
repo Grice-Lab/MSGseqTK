@@ -38,28 +38,28 @@ MEMS& MEMS::operator+=(const MEMS& other) {
 	return *this;
 }
 
-MEMS MEMS::sampleMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+MEMS MEMS::searchMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		double maxEvalue) {
 	MEMS mems;
-	int64_t from = 0;
-	while(from < seq->length()) {
-		MEM mem = MEM::findMEMfwd(seq, mtg, fmdidx, from).evaluate();
+	MEM mem;
+	for(int64_t from = 0; from < seq->length(); from = mem.to + 1) {
+		mem = MEM::findMEMfwd(seq, mtg, fmdidx, from);
+		mem.evaluate();
 		if(mem.evalue() <= maxEvalue)
 			mems.push_back(mem);
-		from = mem.to + 1;
 	}
 	return mems;
 }
 
-MEMS MEMS::sampleMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+MEMS MEMS::searchMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		double maxEvalue) {
 	MEMS mems;
+	MEM mem;
 	int64_t to = seq->length();
-	while(to > 0) {
-		MEM mem = MEM::findMEMrev(seq, mtg, fmdidx, to).evaluate();
-		if( mem.evalue() <= maxEvalue)
+	for(int64_t to = seq->length(); to > 0; to = mem.from - 1) {
+		mem = MEM::findMEMrev(seq, mtg, fmdidx, to).evaluate();
+		if(mem.evalue() <= maxEvalue)
 			mems.push_back(mem);
-		to = mem.from - 1;
 	}
 	return mems;
 }

@@ -19,8 +19,6 @@ namespace MSGseqTK {
 
 using namespace EGriceLab::Math;
 using std::unordered_set;
-using std::endl;
-using std::cerr;
 
 MEM& MEM::evaluate() {
 	if(empty())
@@ -76,11 +74,12 @@ MEM MEM::findMEMfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex
 	int64_t revStart;
 	int64_t size;
 	saidx_t to;
-	for(fwdStart = p, revStart = q, size = s, to = from; s > 0 && to < seq->length() && !DNAalphabet::isGap(b); fmdidx->fwdExt(p, q, s, b)) {
+	for(fwdStart = p, revStart = q, size = s, to = from; s > 0 && to < seq->length() && DNAalphabet::isBasic(b); ++to) {
 		fwdStart = p;
 		revStart = q;
 		size = s;
-		b = seq->getBase(++to);
+		b = seq->getBase(to + 1);
+		fmdidx->fwdExt(p, q, s, b);
 	}
 	/* return MEM with basic info */
 	return MEM(seq, mtg, fmdidx, from, to, fwdStart, revStart, size);
@@ -98,27 +97,31 @@ MEM MEM::findMEMrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex
 	int64_t revStart;
 	int64_t size;
 	saidx_t from;
-	for(fwdStart = p, revStart = q, size = s, from = to; s > 0 && from > 0 && !DNAalphabet::isGap(b); fmdidx->backExt(p, q, s, b)) {
+	for(fwdStart = p, revStart = q, size = s, from = to - 1; s > 0 && from > 0 && DNAalphabet::isBasic(b); --from) {
 		fwdStart = p;
 		revStart = q;
 		size = s;
-		b = seq->getBase(--from - 1);
+		b = seq->getBase(from - 1);
+		fmdidx->backExt(p, q, s, b);
 	}
 	/* return MEM with basic info */
-	return MEM(seq, mtg, fmdidx, from, to, fwdStart, revStart, size);
+	return MEM(seq, mtg, fmdidx, from + 1, to, fwdStart, revStart, size);
 }
 
 MEM& MEM::findLocs(size_t maxNLocs) {
 	locs.reserve(size);
 	const size_t N = std::min(maxNLocs, static_cast<size_t>(size));
 	for(size_t i = 0; i < N; ++i) {
-		saidx_t fStart = fmdidx->accessSA(fwdStart + i);
-		if(mtg->getStrand(fStart) == GLoc::FWD) // always only search loc on fwd tStrand
-			locs.push_back(GLoc(fStart, fStart + length(), mtg->getLocId(fStart), GLoc::FWD));
-		saidx_t rStart = fmdidx->accessSA(revStart + i);
-//		std::cerr << "rStart: " << rStart << " tid: " << mtg->getLocId(rStart) << std::endl;
-		if(mtg->getStrand(rStart) == GLoc::FWD) // always only search loc on fwd tStrand
-			locs.push_back(GLoc(rStart, rStart + length(), mtg->getLocId(rStart), GLoc::REV));
+		{
+			saidx_t start = fmdidx->accessSA(fwdStart + i);
+			if(mtg->getStrand(start) == GLoc::FWD) // always only search loc on fwd tStrand
+				locs.push_back(GLoc(start, start + length(), mtg->getLocId(start), GLoc::FWD));
+		}
+		{
+			saidx_t start = fmdidx->accessSA(revStart + i);
+			if(mtg->getStrand(start) == GLoc::FWD) // always only search loc on fwd tStrand
+				locs.push_back(GLoc(start, start + length(), mtg->getLocId(start), GLoc::REV));
+		}
 	}
 	return *this;
 }

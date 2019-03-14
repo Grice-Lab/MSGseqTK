@@ -251,21 +251,22 @@ Alignment::SeedMatchList Alignment::getSeedMatchList(const MEMS& mems, uint32_t 
 	/* get a raw SeedMatchList to store all matches of each MEMS */
 	const size_t N = mems.size();
 	SeedMatchList fwdRawList, revRawList;
-	fwdRawList.resize(N);
-	revRawList.resize(N);
-	for(size_t i = 0; i < N; ++i) {
-		const MEM& mem = mems[i];
+	fwdRawList.reserve(N);
+	revRawList.reserve(N);
+	for(const MEM& mem : mems) {
 		/* search locs */
+		SeedMatch fwdSeeds, revSeeds;
 		for(const GLoc& loc : mem.locs) {
 			if(loc.strand == GLoc::FWD)
-				fwdRawList[i].push_back(SeedPair(mem.from, loc.start - mem.mtg->getChromStart(loc.tid), mem.length(), loc.tid, loc.strand, mem.loglik()));
+				fwdSeeds.push_back(SeedPair(mem.from, loc.start - mem.mtg->getChromStart(loc.tid), mem.length(), loc.tid, loc.strand, mem.loglik()));
 			else
-				revRawList[i].push_back(SeedPair(Loc::reverseLoc(mem.seq->length(), mem.to), loc.start - mem.mtg->getChromStart(loc.tid), mem.length(), loc.tid, loc.strand, mem.loglik()));
+				revSeeds.push_back(SeedPair(Loc::reverseLoc(mem.seq->length(), mem.to), loc.start - mem.mtg->getChromStart(loc.tid), mem.length(), loc.tid, loc.strand, mem.loglik()));
 		}
+		if(!fwdSeeds.empty())
+			fwdRawList.push_back(fwdSeeds);
+		if(!revSeeds.empty())
+			revRawList.push_back(revSeeds);
 	}
-	/* filter empty SeedMatches */
-	fwdRawList.erase(std::remove_if(fwdRawList.begin(), fwdRawList.end(), [](const SeedMatch& seedMatch) { return seedMatch.empty(); }), fwdRawList.end());
-	revRawList.erase(std::remove_if(revRawList.begin(), revRawList.end(), [](const SeedMatch& seedMatch) { return seedMatch.empty(); }), revRawList.end());
 	/* reverse the order of revList */
 	std::reverse(revRawList.begin(), revRawList.end());
 
@@ -519,14 +520,10 @@ ALIGN_LIST Alignment::getAlignments(const ScoreScheme* ss, const MetaGenome* mtg
 		int64_t chrLen = mtg->getChrom(tid).size();
 		int64_t tStart = seedMatch.getStart() - seedMatch.getFrom() * (1 + Alignment::MAX_INDEL_RATE);
 		int64_t tEnd = seedMatch.getEnd() + (read->length() - seedMatch.getTo()) * (1 + Alignment::MAX_INDEL_RATE);
-		if(read->getName() == "GCA_001704115.1:NZ_CP016895.1-6341")
-			std::cerr << "tStart: " << tStart << " tEnd: " << tEnd << " tid: " << tid << " chrLen: " << chrLen << std::endl;
 		if(tStart < 0) // searhStart too far
 			tStart = 0;
 		if(tEnd > chrLen) // searhEnd too far
 			tEnd = chrLen;
-		if(read->getName() == "GCA_001704115.1:NZ_CP016895.1-6341")
-			std::cerr << "tStart: " << tStart << " tEnd: " << tEnd << " tid: " << tid << " chrLen: " << chrLen << std::endl;
 		const DNAseq& target = mtg->getChromFwdSeq(tid); // target is always the entire metagenome
 		/* add a new alignment */
 		if(qStrand == GLoc::FWD)

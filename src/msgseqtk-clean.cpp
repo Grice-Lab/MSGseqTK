@@ -399,8 +399,8 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 				{
 					const string& id = read.getName();
 					const string& desc = read.getDesc();
-					MEMS refMems = MEMS::sampleMEMS(&read, &refMtg, &refFmdidx, maxEvalue, GLoc::FWD); // fwd sampling
-					MEMS bgMems = MEMS::sampleMEMS(&read, &bgMtg, &bgFmdidx, maxEvalue, GLoc::FWD); // fwd sampling
+					MEMS refMems = MEMS::searchMEMS(&read, &refMtg, &refFmdidx, maxEvalue, GLoc::FWD); // fwd sampling
+					MEMS bgMems = MEMS::searchMEMS(&read, &bgMtg, &bgFmdidx, maxEvalue, GLoc::FWD); // fwd sampling
 					double refLoglik = refMems.loglik();
 					double bgLoglik = bgMems.loglik();
 					double lod = - refLoglik + bgLoglik;
