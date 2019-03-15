@@ -245,7 +245,7 @@ Alignment::SeedMatch& Alignment::SeedMatch::filter(int64_t maxIndel) {
 	return *this;
 }
 
-Alignment::SeedMatchList Alignment::getSeedMatchList(const MEMS& mems, uint32_t maxIt) {
+Alignment::SeedMatchList Alignment::getSeedMatchList(const MEMS& mems, uint32_t maxAln) {
 	if(mems.empty())
 		return SeedMatchList();
 	/* get a raw SeedMatchList to store all matches of each MEMS */
@@ -271,18 +271,18 @@ Alignment::SeedMatchList Alignment::getSeedMatchList(const MEMS& mems, uint32_t 
 	std::reverse(revRawList.begin(), revRawList.end());
 
 	/* return concatenated permutated raw lists */
-	return permuteSeedMatchList(fwdRawList, mems.getSeq()->length() * DEFAULT_INDEL_RATE, maxIt) +
-			permuteSeedMatchList(revRawList, mems.getSeq()->length() * DEFAULT_INDEL_RATE, maxIt);
+	return permuteSeedMatchList(fwdRawList, mems.getSeq()->length() * DEFAULT_INDEL_RATE, maxAln) +
+			permuteSeedMatchList(revRawList, mems.getSeq()->length() * DEFAULT_INDEL_RATE, maxAln);
 }
 
-Alignment::SeedMatchList Alignment::permuteSeedMatchList(const SeedMatchList& rawList, int64_t maxIndel, uint32_t maxIt) {
+Alignment::SeedMatchList Alignment::permuteSeedMatchList(const SeedMatchList& rawList, int64_t maxIndel, uint32_t maxAln) {
 	const size_t N = rawList.size();
 	SeedMatchList outputList;
 	if(N == 0)
 		return outputList;
 	vector<size_t> idx(N, 0); // index to keep track of next element in each of the N SeedMatch
 	/* non-recursive algorithm to get SeedMatchList by randomly picking up elements from rawList */
-	while(outputList.size() <= maxIt) {
+	while(outputList.size() <= maxAln) {
 		/* get current combination */
 		SeedMatch combination;
 		combination.reserve(N);
@@ -540,13 +540,21 @@ ALIGN_LIST Alignment::getAlignments(const ScoreScheme* ss, const MetaGenome* mtg
 	return alnList;
 }
 
-PAIR_LIST AlignmentPE::getPairs(const ALIGN_LIST& fwdAlnList, const ALIGN_LIST& revAlnList) {
+PAIR_LIST AlignmentPE::getPairs(const ALIGN_LIST& fwdAlnList, const ALIGN_LIST& revAlnList, uint32_t maxPair) {
 	PAIR_LIST pairList;
-	pairList.reserve(fwdAlnList.size() * revAlnList.size());
-	for(const Alignment& fwdAln : fwdAlnList)
-		for(const Alignment& revAln : revAlnList)
-			if((fwdAln.qStrand & revAln.qStrand) == 0) // AlignmentPE must be on different strand
+	pairList.reserve(std::min<size_t>(fwdAlnList.size() * revAlnList.size(), maxPair));
+	bool flag = false;
+	for(const Alignment& fwdAln : fwdAlnList) {
+		for(const Alignment& revAln : revAlnList) {
+			if((fwdAln.qStrand & revAln.qStrand) == 0) { // AlignmentPE must be on different strand
 				pairList.push_back(AlignmentPE(&fwdAln, &revAln));
+				flag = pairList.size() > maxPair;
+				break;
+			}
+		}
+		if(flag)
+			break;
+	}
 	return pairList;
 }
 

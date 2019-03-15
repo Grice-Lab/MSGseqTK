@@ -370,7 +370,7 @@ struct Alignment {
 
 	/* static fileds */
 	static const uint8_t INVALID_MAP_Q = 0xff;
-	static const uint32_t MAX_ITER = UINT16_MAX;
+	static const uint32_t MAX_ALIGN = UINT16_MAX;
 	static const double DEFAULT_INDEL_RATE;
 	static const double MAX_INDEL_RATE;
 	static const string STATES; // human readable STATES
@@ -392,10 +392,10 @@ struct Alignment {
 	static Loc getSearchRegion(int64_t start, int64_t end);
 
 	/** get SeedMatchList from a pre-calculated MEMS */
-	static SeedMatchList getSeedMatchList(const MEMS& mems, uint32_t maxIt = MAX_ITER);
+	static SeedMatchList getSeedMatchList(const MEMS& mems, uint32_t maxAln = MAX_ALIGN);
 
 	/** get permutations from raw list */
-	static SeedMatchList permuteSeedMatchList(const SeedMatchList& rawList, int64_t maxIndels, uint32_t maxIt = MAX_ITER);
+	static SeedMatchList permuteSeedMatchList(const SeedMatchList& rawList, int64_t maxIndels, uint32_t maxAln = MAX_ALIGN);
 
 	/** get candidate Alignments from SeedMatch list given both fwd and revcom read */
 	static ALIGN_LIST getAlignments(const ScoreScheme* ss, const MetaGenome* mtg,
@@ -518,7 +518,7 @@ struct AlignmentPE {
 
 	/* static methods */
 	/** init candidate list of Alignment pairs from fwd and rev ALIGN_LIST */
-	static PAIR_LIST getPairs(const ALIGN_LIST& fwdAlnList, const ALIGN_LIST& revAlnList);
+	static PAIR_LIST getPairs(const ALIGN_LIST& fwdAlnList, const ALIGN_LIST& revAlnList, uint32_t maxPair = MAX_PAIR);
 
 	/** filter candidate pairs using pairing criteria */
 	static PAIR_LIST& filter(PAIR_LIST& pairList,
@@ -539,6 +539,9 @@ struct AlignmentPE {
 	 * or -1 if not on the same chromosome
 	  */
 	static int32_t getInsertSize(const Alignment& lhs, const Alignment& rhs);
+
+	/* static fields */
+	static const uint32_t MAX_PAIR = UINT16_MAX;
 };
 
 inline Alignment::SeedMatch& Alignment::SeedMatch::filter() {
