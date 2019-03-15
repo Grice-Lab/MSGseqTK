@@ -6,6 +6,7 @@
  */
 
 #include "ScoreScheme.h"
+#include "libsdsBitBasic.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
@@ -18,8 +19,13 @@ const double ScoreScheme::DEFAULT_CLIP_PENALTY = 4; /* 5' and 3' soft-clip (S) p
 
 void ScoreScheme::updateScores() {
 	for(nt16_t i = 0; i < DNAalphabet::SIZE; ++i)
-		for(nt16_t j = 0; j < DNAalphabet::SIZE; ++j)
-			SCORE[i][j] = i & j ? matchScore : -mismatchPenalty; /* intesecting bits is a match */
+		for(nt16_t j = 0; j < DNAalphabet::SIZE; ++j) {
+			uint32_t nOverlap = libSDS::popcount8(i & j);
+			if(nOverlap > 0) // match
+				SCORE[i][j] = matchScore * nOverlap / std::max(libSDS::popcount8(i), libSDS::popcount8(j));
+			else
+				SCORE[i][j] = -mismatchPenalty; /* intesecting bits is a match */
+		}
 }
 
 } /* namespace MSGseqTK */

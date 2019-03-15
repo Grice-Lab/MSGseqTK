@@ -35,7 +35,8 @@ struct ScoreScheme {
 	}
 
 	/* member methods */
-	/* update match/mismatch scores */
+	/* update match/mismatch scores
+	 * matched score is weighted by # of overlapping bits to relative down-weight IUPAC ambiguous bases */
 	void updateScores();
 
 	/** get match score between two DNA::alpahbet bases */
