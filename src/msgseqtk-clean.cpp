@@ -71,8 +71,8 @@ void printUsage(const string& progName) {
 	cerr << "Usage:    " << progName << "  <READ-FILE> [MATE-FILE] <-r|--ref REF-DB> <-b|--bg BG-DB> <-o READ-OUT> [-p MATE-OUT] [other-options]" << endl
 		 << "READ-FILE  FILE                  : single-end/forward read file need to be cleaned" << ZLIB_SUPPORT << endl
 		 << "MATE-FILE  FILE                  : mate/reverse read file need to be cleaned" << ZLIB_SUPPORT << endl
-	     << "Options:    -r|--ref  STR        : name of reference/target database from which WGS reads need to be kept" << endl
-		 << "            -b|--bg  STR         : name of background/host database from which WGS reads need to be removed" << endl
+	     << "Options:    -r|--ref  STR        : name/prefix of reference/target database from which WGS reads need to be kept" << endl
+		 << "            -b|--bg  STR         : name/prefix of background/host database from which WGS reads need to be removed" << endl
 		 << "            -o  FILE             : output of cleaned single-end/forward reads" << ZLIB_SUPPORT << endl
 		 << "            -m  FILE             : output of cleaned mate/reverse reads" << ZLIB_SUPPORT << endl
 		 << "            -a  FILE             : write an additional TSV file with the detailed assignment information for each read" << endl

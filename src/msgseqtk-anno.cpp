@@ -42,7 +42,7 @@ void printUsage(const string& progName) {
 	#endif
 
 	cerr << "Usage:    " << progName << "  <DB> [options]" << endl
-		 << "DB          STR                  : pre-built database name" << endl
+		 << "DB          STR                  : database name/prefix" << endl
 		 << "Options:    -o  FILE             : write database annotation to FILE instead of the default file [DB" << GFF::GFF3_SUFFIX << "]" << endl
 		 << "            -l  FILE             : tab-delimited annotation list with first field unique genome IDs and last field external GFF annotation filenames, any middle fields are ignored" << ZLIB_SUPPORT << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl

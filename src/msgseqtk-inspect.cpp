@@ -58,7 +58,7 @@ void printUsage(const string& progName) {
 	#endif
 
 	cerr << "Usage:    " << progName << "  <DB-NAME> [options]" << endl
-		 << "DB-NAME    STR                   : database name (prefix)" << endl
+		 << "DB-NAME    STR                   : database name/prefix" << endl
 		 << "Options:    -l  FILE             : write the genome names included in this database to FILE" << endl
 		 << "            -s  FILE             : write the genome sequences in this database to FILE" << ZLIB_SUPPORT << endl
 		 << "            -a|--anno  FLAG      : also inspect the database annotation GFF file, if exists" << endl

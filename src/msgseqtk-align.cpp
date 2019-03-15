@@ -68,7 +68,7 @@ void printUsage(const string& progName) {
 	#endif
 
 	cerr << "Usage:    " << progName << "  <DB> <READ-FILE> [MATE-FILE] <-o ALIGN-OUT> [other-options]" << endl
-		 << "DB  STR                          : database name" << endl
+		 << "DB  STR                          : database name/prefix" << endl
 		 << "READ-FILE  FILE                  : single-end/forward MSG read file" << ZLIB_SUPPORT << endl
 		 << "MATE-FILE  FILE                  : mate/reverse MSG read file" << ZLIB_SUPPORT << endl
 		 << "Options:    -o  FILE             : BAM or SAM output file" << endl
@@ -76,7 +76,7 @@ void printUsage(const string& progName) {
 		 << "            --mis-match  DBL     : penalty for mis-matches [" << ScoreScheme::DEFAULT_MISMATCH_PENALTY << "]" << endl
 		 << "            --gap-open  DBL      : penalty for (affine) gap opening [" << ScoreScheme::DEFAULT_GAP_OPEN_PENALTY << "]" << endl
 		 << "            --gap-ext  DBL       : penalty for (affine) gap extension [" << ScoreScheme::DEFAULT_GAP_EXT_PENALTY << "]" << endl
-		 << "            --max-mems  INT      : maximum # of different loc/MEMS to check for a read/pair [" << Alignment::MAX_ITER << "]" << endl
+		 << "            --max-mems  INT      : maximum # of different loc/MEMS to check for a read/pair [" << Alignment::MAX_ALIGN << "]" << endl
 		 << "            -k/--max-report  INT : maximum loci to consider for a read/pair, set to 0 to report all candidate alignments [" << DEFAULT_MAX_REPORT << "]" << endl
 		 << "            -f--best-frac        : minimum score as a fraction of the highest alignment score of all candidates to consider for full evaluation [" << DEFAULT_BEST_FRAC << "]" << endl
 		 << "Paired-end:" << endl
@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
 //	double maxIndelRate = DEFAULT_INDEL_RATE;
 	int nThreads = DEFAULT_NUM_THREADS;
 
-	uint32_t maxSeedMatches = Alignment::MAX_ITER;
+	uint32_t maxSeedMatches = Alignment::MAX_ALIGN;
 	uint32_t maxReport = DEFAULT_MAX_REPORT;
 	double bestFrac = DEFAULT_BEST_FRAC;
 
