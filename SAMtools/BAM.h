@@ -111,6 +111,16 @@ public:
 		bamAln->core.bin = bin;
 	}
 
+	/** get mapQ */
+	uint8_t getMapQ() const {
+		return bamAln->core.qual;
+	}
+
+	/** set mapQ */
+	void setMapQ(uint8_t mapQ) {
+		bamAln->core.qual = mapQ;
+	}
+
 	/** get qname len, including tailing nulls */
 	uint8_t getQNameLen() const {
 		return bamAln->core.l_qname;
@@ -483,7 +493,6 @@ public:
 	const seq_str getSeqStr() const {
 		return seq_str(bam_get_seq(bamAln), bamAln->core.l_qseq);
 	}
-
 
 	/**
 	 * get the decoded seq string
