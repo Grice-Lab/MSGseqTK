@@ -455,6 +455,9 @@ int output(const PAIR_LIST& pairList, SAMfile& out, uint32_t maxReport) {
 		/* set flags */
 		bamFwd.setSecondaryFlag(i > 0);
 		bamRev.setSecondaryFlag(i > 0);
+		/* set mapQ */
+		bamFwd.setMapQ(pair.mapQ);
+		bamRev.setMapQ(pair.mapQ);
 		/* set standard aux tags */
 		bamFwd.setAux(NUM_REPORTED_ALIGNMENT_TAG, numReport);
 		bamFwd.setAux(NUM_TOTAL_ALIGNMENT_TAG, pairList.size());
@@ -465,9 +468,9 @@ int output(const PAIR_LIST& pairList, SAMfile& out, uint32_t maxReport) {
 		bamRev.setAux(MISMATCH_POSITION_TAG, pair.revAln->getAlnMDTag());
 		/* set customized aux tags */
 		bamFwd.setAux(ALIGNMENT_LOG10LIK_TAG, pair.log10lik());
-		bamFwd.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, pair.fwdAln->postP);
+		bamFwd.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, pair.postP);
 		bamRev.setAux(ALIGNMENT_LOG10LIK_TAG, pair.log10lik());
-		bamRev.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, pair.revAln->postP);
+		bamRev.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, pair.postP);
 		/* write BAM */
 		out.write(bamFwd);
 		out.write(bamRev);
