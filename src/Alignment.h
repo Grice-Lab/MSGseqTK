@@ -626,7 +626,17 @@ inline void Alignment::calculateScores(const SeedPair& pair) {
 	for(int32_t k = 0; k < pair.length(); ++k) {
 		int32_t i = pair.from + k - qFrom + 1;
 		int32_t j = pair.start + k - tStart + 1;
-		M(i,j) = M(i-1,j-1) + ss->matchScore;
+		double s = ss->matchScore;
+		if(k == 0) {
+			M(i,j) = std::max({
+				M(i-1,j-1) + s,
+				D(i-1,j-1) + s,
+				I(i-1,j-1) + s,
+				0.0
+			});
+		}
+		else
+			M(i,j) = M(i-1,j-1) + s;
 	}
 }
 

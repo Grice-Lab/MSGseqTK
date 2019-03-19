@@ -513,12 +513,20 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 					}
 					else {
 						const PrimarySeq& rcRead = read.revcom();
+						debugLog << "id: " << read.getName() << endl;
 						/* get alignments from SeedMatchList */
+						debugLog << "found " << seedMatches.size() << " seed-matches" << endl;
 						ALIGN_LIST alnList = Alignment::getAlignments(&ss, &mtg, &read, &rcRead, seedMatches);
+						debugLog << "get " << alnList.size() << " potential aligns" << endl;
 						/* filter alignments */
 						Alignment::filter(alnList, bestFrac);
+						debugLog << "get " << alnList.size() << " best aligns" << endl;
 						/* evaluate alignments */
 						Alignment::evaluate(alnList);
+						for(const Alignment& aln : alnList) {
+							debugLog << "cigar:" << BAM::decodeCigar(aln.getAlnCigar())
+							<< " aln.loglik10():" << aln.log10lik() << endl;
+						}
 						/* calculate mapQ for alignments */
 						Alignment::calcMapQ(alnList);
 						/* sort alignments */
