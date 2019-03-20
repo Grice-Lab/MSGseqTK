@@ -92,12 +92,12 @@ check_PROGRAMS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
 	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) \
 	FMDIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
 	MetaGenomeAnno_test$(EXEEXT) MEM_test$(EXEEXT) \
-	Alignment_test$(EXEEXT)
+	SMEM_test$(EXEEXT) Alignment_test$(EXEEXT)
 TESTS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
 	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) \
 	FMDIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
 	MetaGenomeAnno_test$(EXEEXT) MEM_test$(EXEEXT) \
-	Alignment_test$(EXEEXT)
+	SMEM_test$(EXEEXT) Alignment_test$(EXEEXT)
 subdir = test
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_with_htslib.m4 \
@@ -171,6 +171,14 @@ MetaGenomeAnno_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
 am_PrimarySeq_test_OBJECTS = PrimarySeq_test.$(OBJEXT)
 PrimarySeq_test_OBJECTS = $(am_PrimarySeq_test_OBJECTS)
 PrimarySeq_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a
+am_SMEM_test_OBJECTS = SMEM_test.$(OBJEXT) \
+	$(top_srcdir)/src/MSGseqTKEnv.$(OBJEXT)
+SMEM_test_OBJECTS = $(am_SMEM_test_OBJECTS)
+SMEM_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
+	$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+	$(top_srcdir)/src/libsds/src/libsds.la \
+	$(top_srcdir)/src/util/libEGUtil.a \
+	$(top_srcdir)/src/util/UCSC/libEGUCSC.a
 am_SeqIO_test_OBJECTS = SeqIO_test.$(OBJEXT)
 SeqIO_test_OBJECTS = $(am_SeqIO_test_OBJECTS)
 SeqIO_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
@@ -213,12 +221,12 @@ SOURCES = $(Alignment_test_SOURCES) $(DNAseq_test_SOURCES) \
 	$(FMDIndex_test_SOURCES) $(FMIndex_test_SOURCES) \
 	$(Genome_test_SOURCES) $(MEM_test_SOURCES) \
 	$(MetaGenomeAnno_test_SOURCES) $(PrimarySeq_test_SOURCES) \
-	$(SeqIO_test_SOURCES)
+	$(SMEM_test_SOURCES) $(SeqIO_test_SOURCES)
 DIST_SOURCES = $(Alignment_test_SOURCES) $(DNAseq_test_SOURCES) \
 	$(FMDIndex_test_SOURCES) $(FMIndex_test_SOURCES) \
 	$(Genome_test_SOURCES) $(MEM_test_SOURCES) \
 	$(MetaGenomeAnno_test_SOURCES) $(PrimarySeq_test_SOURCES) \
-	$(SeqIO_test_SOURCES)
+	$(SMEM_test_SOURCES) $(SeqIO_test_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -659,6 +667,14 @@ $(top_srcdir)/src/libsds/src/libsds.la \
 $(top_srcdir)/src/util/libEGUtil.a \
 $(top_srcdir)/src/util/UCSC/libEGUCSC.a
 
+SMEM_test_SOURCES = SMEM_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
+SMEM_test_LDADD = \
+$(top_srcdir)/src/libMSGseqTK.a \
+$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+$(top_srcdir)/src/libsds/src/libsds.la \
+$(top_srcdir)/src/util/libEGUtil.a \
+$(top_srcdir)/src/util/UCSC/libEGUCSC.a
+
 Alignment_test_SOURCES = Alignment_test.cpp 
 Alignment_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
@@ -757,6 +773,10 @@ PrimarySeq_test$(EXEEXT): $(PrimarySeq_test_OBJECTS) $(PrimarySeq_test_DEPENDENC
 	@rm -f PrimarySeq_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(PrimarySeq_test_OBJECTS) $(PrimarySeq_test_LDADD) $(LIBS)
 
+SMEM_test$(EXEEXT): $(SMEM_test_OBJECTS) $(SMEM_test_DEPENDENCIES) $(EXTRA_SMEM_test_DEPENDENCIES) 
+	@rm -f SMEM_test$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(SMEM_test_OBJECTS) $(SMEM_test_LDADD) $(LIBS)
+
 SeqIO_test$(EXEEXT): $(SeqIO_test_OBJECTS) $(SeqIO_test_DEPENDENCIES) $(EXTRA_SeqIO_test_DEPENDENCIES) 
 	@rm -f SeqIO_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(SeqIO_test_OBJECTS) $(SeqIO_test_LDADD) $(LIBS)
@@ -777,6 +797,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MEM_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MetaGenomeAnno_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PrimarySeq_test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SMEM_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SeqIO_test.Po@am__quote@
 
 .cpp.o:
@@ -1054,6 +1075,13 @@ MetaGenomeAnno_test.log: MetaGenomeAnno_test$(EXEEXT)
 MEM_test.log: MEM_test$(EXEEXT)
 	@p='MEM_test$(EXEEXT)'; \
 	b='MEM_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+SMEM_test.log: SMEM_test$(EXEEXT)
+	@p='SMEM_test$(EXEEXT)'; \
+	b='SMEM_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

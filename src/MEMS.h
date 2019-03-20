@@ -22,7 +22,6 @@ namespace EGriceLab {
 namespace MSGseqTK {
 
 using std::vector;
-using std::pair;
 
 struct MEMS : public vector<MEM> {
 	/* constructors */

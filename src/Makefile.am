@@ -40,6 +40,7 @@ Loc.cpp \
 GLoc.cpp \
 MEM.cpp \
 MEMS.cpp \
+SMEM.cpp \
 ScoreScheme.cpp \
 FMIndex.cpp \
 FMDIndex.cpp \
@@ -84,7 +85,6 @@ util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB)
-
 
 msgseqtk_mergedb_SOURCES = msgseqtk-mergedb.cpp MSGseqTKEnv.cpp
 msgseqtk_mergedb_LDADD = \

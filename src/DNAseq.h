@@ -172,19 +172,20 @@ ostream& nt16Save(const DNAseq& seq, ostream& out);
 /** get base count of a given region */
 BaseCount baseCount(const DNAseq& seq, size_t start = 0, size_t len = DNAseq::npos);
 
+} /* namespace dna */
+
 /** read a DNAseq from text input */
 inline
 istream& operator>>(istream& in, DNAseq& seq) {
-	return read(seq, in);
+	return dna::read(seq, in);
 }
 
 /** write a DNAseq to text output */
 inline
 ostream& operator<<(ostream& out, const DNAseq& seq) {
-	return write(seq, out);
+	return dna::write(seq, out);
 }
 
-} /* namespace dna */
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */
 

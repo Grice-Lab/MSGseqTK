@@ -9,10 +9,8 @@
 #include <algorithm>
 #include "PrimarySeq.h"
 
-using std::cout;
-using std::endl;
-using EGriceLab::MSGseqTK::dna::operator<<;
-using EGriceLab::MSGseqTK::PrimarySeq;
+using namespace std;
+using namespace EGriceLab::MSGseqTK;
 
 int main() {
 	PrimarySeq src1("ATCGNTCGANatcgntcgan", "seq1");

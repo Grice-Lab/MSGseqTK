@@ -14,7 +14,6 @@
 
 using namespace std;
 using namespace EGriceLab::MSGseqTK;
-using dna::operator<<;
 
 static bool isValidMEM(const DNAseq& db, const MEM& mem);
 

@@ -17,9 +17,6 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 
-using namespace EGriceLab::Math;
-using std::unordered_set;
-
 MEM& MEM::evaluate() {
 	if(empty())
 		return *this;
@@ -64,48 +61,30 @@ ostream& MEM::write(ostream& out) const {
 }
 
 MEM MEM::findMEMfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx, int64_t from) {
-	assert(from < seq->length());
-	nt16_t b = seq->getBase(from);
-	saidx_t p = fmdidx->getCumCount(b);
-	saidx_t q = fmdidx->getCumCount(DNAalphabet::complement(b));
-	saidx_t s = fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b);
-
-	int64_t fwdStart;
-	int64_t revStart;
-	int64_t size;
-	saidx_t to;
-	for(fwdStart = p, revStart = q, size = s, to = from; s > 0 && to < seq->length() && DNAalphabet::isBasic(b); ++to) {
-		fwdStart = p;
-		revStart = q;
-		size = s;
-		b = seq->getBase(to + 1);
-		fmdidx->fwdExt(p, q, s, b);
-	}
-	/* return MEM with basic info */
-	return MEM(seq, mtg, fmdidx, from, to, fwdStart, revStart, size);
+	const size_t L = seq->length();
+	assert(from < L);
+	int64_t to = from;
+	nt16_t b = seq->getBase(to);
+	int64_t p = fmdidx->getCumCount(b);
+	int64_t q = fmdidx->getCumCount(DNAalphabet::complement(b));
+	int64_t s = fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b);
+	for(to = from + 1; to < L && fmdidx->fwdExt(p, q, s, seq->getBase(to)); ++to)
+		continue;
+	return MEM(seq, mtg, fmdidx, from, to, p, q, s);
 }
 
 MEM MEM::findMEMrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx, int64_t to) {
-	assert(to > 0);
-	to = std::min<int64_t>(to, seq->length());
-	nt16_t b = seq->getBase(to - 1);
-	saidx_t p = fmdidx->getCumCount(b);
-	saidx_t q = fmdidx->getCumCount(DNAalphabet::complement(b));
-	saidx_t s = fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b);
-
-	int64_t fwdStart;
-	int64_t revStart;
-	int64_t size;
-	saidx_t from;
-	for(fwdStart = p, revStart = q, size = s, from = to - 1; s > 0 && from > 0 && DNAalphabet::isBasic(b); --from) {
-		fwdStart = p;
-		revStart = q;
-		size = s;
-		b = seq->getBase(from - 1);
-		fmdidx->backExt(p, q, s, b);
-	}
-	/* return MEM with basic info */
-	return MEM(seq, mtg, fmdidx, from + 1, to, fwdStart, revStart, size);
+	const size_t L = seq->length();
+	to = std::min<int64_t>(to, L);
+	assert(0 < to && to <= L);
+	int64_t from = to;
+	nt16_t b = seq->getBase(from - 1);
+	int64_t p = fmdidx->getCumCount(b);
+	int64_t q = fmdidx->getCumCount(DNAalphabet::complement(b));
+	int64_t s = fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b);
+	for(from = to - 1; from > 0 && fmdidx->backExt(p, q, s, seq->getBase(from - 1)); --from)
+		continue;
+	return MEM(seq, mtg, fmdidx, from, to, p, q, s);
 }
 
 MEM& MEM::findLocs(size_t maxNLocs) {

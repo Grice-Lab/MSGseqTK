@@ -14,7 +14,6 @@
 
 using namespace std;
 using namespace EGriceLab::MSGseqTK;
-using dna::operator<<;
 
 int main() {
 	/* part 1, Genome test */

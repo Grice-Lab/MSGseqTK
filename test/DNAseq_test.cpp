@@ -12,7 +12,6 @@ using std::cout;
 using std::cerr;
 using std::endl;
 using namespace EGriceLab::MSGseqTK;
-using dna::operator<<;
 
 int main() {
 	DNAseq src1 = dna::encode("ATCGNTCGANNNNNNNNNNNatcgntcga");

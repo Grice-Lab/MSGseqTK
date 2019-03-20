@@ -41,8 +41,8 @@ using EGriceLab::libSDS::WaveletTreeRRR;
 class FMDIndex {
 public:
 	/* typedefs */
-	typedef array<saidx_t, DNAalphabet::SIZE> BCarray_t; /* fixed array to store base counts */
-	typedef vector<saidx_t> SArray_t; /* store sampled Suffix-Array in std::vector */
+	typedef array<int64_t, DNAalphabet::SIZE> BCarray_t; /* fixed array to store base counts */
+	typedef vector<int64_t> SArray_t; /* store sampled Suffix-Array in std::vector */
 
 	/* constructors */
 	/** Default constructor */
@@ -63,7 +63,7 @@ public:
 	 * @param b  base/character for lookup
 	 * @return  1-based index on F column (original seq)
 	 */
-	saidx_t LF(sauchar_t b, saidx_t i) const {
+	int64_t LF(sauchar_t b, int64_t i) const {
 		return C[b] + bwt.rank(b, i);
 	}
 
@@ -72,7 +72,7 @@ public:
 	 * @param i  0-based location in bwt
 	 * @return 1-based index on F column (original seq)
 	 */
-	saidx_t LF(saidx_t i) const {
+	int64_t LF(int64_t i) const {
 		return LF(bwt.access(i), i);
 	}
 
@@ -85,7 +85,7 @@ public:
 	bool isBiDirectional() const;
 
 	/** get the length of this index */
-	saidx_t length() const {
+	int64_t length() const {
 		return bwt.length();
 	}
 
@@ -95,27 +95,27 @@ public:
 	}
 
 	/** get baseCount of given base in fwd seq */
-	saidx_t getBaseCount(sauchar_t b) const {
+	int64_t getBaseCount(sauchar_t b) const {
 		return B[b];
 	}
 
 	/** get baseCount of basic bases (A,T,C,G) */
-	saidx_t getBasicBaseCount() const {
+	int64_t getBasicBaseCount() const {
 		return B[DNAalphabet::A] + B[DNAalphabet::C] + B[DNAalphabet::G] + B[DNAalphabet::T];
 	}
 
 	/** get baseCount of extended/ambigous bases (IUPAC non-A,T,C,G and non-gap) */
-	saidx_t getExtBaseCount() const {
+	int64_t getExtBaseCount() const {
 		return getCumCount(DNAalphabet::NT16_MAX) - getBasicBaseCount() - B[0];
 	}
 
 	/** get cumulative base count of given base */
-	saidx_t getCumCount(sauchar_t b) const {
+	int64_t getCumCount(sauchar_t b) const {
 		return C[b];
 	}
 
 	/** get total bases in this FM-index excluding gaps */
-	const saidx_t totalBases() const;
+	const int64_t totalBases() const;
 
 	/**
 	 * Build an FMDIndex from a combined seq, in which seq is always in the order of R0R0'R1R1', etc
@@ -140,7 +140,7 @@ public:
 	 * @param i  0-based on SA
 	 * @return  0-based position on original seq
 	 */
-	saidx_t accessSA(saidx_t i) const;
+	int64_t accessSA(int64_t i) const;
 
 	/** build SAbit and SAsampled from the internal BWT, where raw BWTseq not available */
 	void buildSA();
@@ -153,21 +153,29 @@ protected:
 	 * build SAbit and SAsampled from given SA and raw BWTseq, which are available during direct construction
 	 * this version of buildSA is parallelized by openMP
 	 */
-	void buildSA(const saidx_t* SA, const DNAseq& bwtSeq);
+	void buildSA(const int64_t* SA, const DNAseq& bwtSeq);
 
 public:
-	/** backward extension of a bi-interval [p, q, s] */
-	void backExt(saidx_t& p, saidx_t& q, saidx_t& s, sauchar_t b) const;
+	/**
+	 * backward extension of a bi-interval [p, q, s]
+	 * @return  true if extension success,
+	 * or false if found a non-basic base, or the new size will become empty
+	 */
+	bool backExt(int64_t& p, int64_t& q, int64_t& s, sauchar_t b) const;
 
-	/** forward extension of a bi-interval [p, q, s] */
-	void fwdExt(saidx_t& p, saidx_t& q, saidx_t& s, sauchar_t b) const {
-		backExt(q, p, s, DNAalphabet::complement(b));
+	/**
+	 * forward extension of a bi-interval [p, q, s]
+	 * @return  true if extension success,
+	 * or false if found a non-basic base, or the new size will become empty
+	 */
+	bool fwdExt(int64_t& p, int64_t& q, int64_t& s, sauchar_t b) const {
+		return backExt(q, p, s, DNAalphabet::complement(b));
 	}
 
 	/**
 	 * count present times of a DNAseq pattern in forward version
 	 */
-	saidx_t count(const DNAseq& pattern) const;
+	int64_t count(const DNAseq& pattern) const;
 
 	/** merge this RRFMIndex with another index with only very little overhead memory
 	 * using the BWT-merge algorithm described in
@@ -213,7 +221,7 @@ public:
 	 * @param i  0-based loc
 	 * @return  1-based loc on the reversed direction
 	 */
-	saidx_t reverseLoc(saidx_t i) const {
+	int64_t reverseLoc(int64_t i) const {
 		return length() - 1 - i;
 	}
 
@@ -248,7 +256,7 @@ private:
 
 	/* static member fields */
 public:
-	static const saidx_t MAX_LENGTH = std::numeric_limits<saidx_t>::max();
+	static const int64_t MAX_LENGTH = std::numeric_limits<int64_t>::max();
 };
 
 } /* namespace MSGSeqClean */

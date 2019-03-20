@@ -12,15 +12,8 @@
 #include "PrimarySeq.h"
 #include "SeqIO.h"
 
-using std::string;
-using std::cout;
-using std::cerr;
-using std::endl;
-using std::istringstream;
-using std::ostringstream;
-using EGriceLab::MSGseqTK::PrimarySeq;
-using EGriceLab::MSGseqTK::SeqIO;
-using EGriceLab::MSGseqTK::dna::operator<<;
+using namespace std;
+using namespace EGriceLab::MSGseqTK;
 
 int main() {
 	PrimarySeq src1("ATCGNTCGANatcgntcgan", "seq1");

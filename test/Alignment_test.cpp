@@ -13,7 +13,6 @@
 using namespace std;
 using namespace EGriceLab::MSGseqTK;
 using namespace EGriceLab::SAMtools;
-using dna::operator<<;
 
 int main(int argc, char* argv[]) {
 	string prog = argv[0];

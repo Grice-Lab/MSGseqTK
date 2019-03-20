@@ -12,7 +12,6 @@
 
 using namespace std;
 using namespace EGriceLab::MSGseqTK;
-using dna::operator<<;
 
 bool isValidLocs(const DNAseq& seq, const DNAseq& pat, const vector<GLoc>& locs);
 
