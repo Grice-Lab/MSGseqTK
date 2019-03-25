@@ -63,7 +63,7 @@ ostream& MEM::write(ostream& out) const {
 MEM MEM::findMEMfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx, int64_t from) {
 	const size_t L = seq->length();
 	assert(from < L);
-	int64_t to = from;
+	int64_t to = from; // 0-based;
 	nt16_t b = seq->getBase(to);
 	int64_t p = fmdidx->getCumCount(b);
 	int64_t q = fmdidx->getCumCount(DNAalphabet::complement(b));
@@ -77,7 +77,7 @@ MEM MEM::findMEMrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex
 	const size_t L = seq->length();
 	to = std::min<int64_t>(to, L);
 	assert(0 < to && to <= L);
-	int64_t from = to;
+	int64_t from = to; // 1-based
 	nt16_t b = seq->getBase(from - 1);
 	int64_t p = fmdidx->getCumCount(b);
 	int64_t q = fmdidx->getCumCount(DNAalphabet::complement(b));

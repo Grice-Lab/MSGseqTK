@@ -158,17 +158,15 @@ protected:
 public:
 	/**
 	 * backward extension of a bi-interval [p, q, s]
-	 * @return  true if extension success,
-	 * or false if found a non-basic base, or the new size will become empty
+	 * @return  the new size as an indication of success or not
 	 */
-	bool backExt(int64_t& p, int64_t& q, int64_t& s, sauchar_t b) const;
+	int64_t backExt(int64_t& p, int64_t& q, int64_t& s, sauchar_t b) const;
 
 	/**
 	 * forward extension of a bi-interval [p, q, s]
-	 * @return  true if extension success,
-	 * or false if found a non-basic base, or the new size will become empty
+	 * @return  the new size as an indication of success or not
 	 */
-	bool fwdExt(int64_t& p, int64_t& q, int64_t& s, sauchar_t b) const {
+	int64_t fwdExt(int64_t& p, int64_t& q, int64_t& s, sauchar_t b) const {
 		return backExt(q, p, s, DNAalphabet::complement(b));
 	}
 

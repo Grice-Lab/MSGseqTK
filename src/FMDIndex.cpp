@@ -106,10 +106,10 @@ int64_t FMDIndex::count(const DNAseq& pattern) const {
 	int64_t s = C[b + 1] - C[b];
 
 	/* backward search */
-    for(i = L - 1; i > 0 && backExt(p, q, s, pattern[i - 1]); --i)
+    for(i = L - 1; i > 0 && backExt(p, q, s, pattern[i - 1]) > 0; --i)
     	continue;
 
-    return i == 0 ? s : 0;
+    return std::max<int64_t>(s, 0);
 }
 
 FMDIndex& FMDIndex::operator+=(const FMDIndex& other) {
@@ -313,14 +313,12 @@ vector<GLoc> FMDIndex::locateAllFwd(const DNAseq& pattern) const {
 	int64_t s = C[b + 1] - C[b];
 
 	/* forward search */
-    for(i = 1; i < L && fwdExt(p, q, s, pattern[i]); ++i)
+    for(i = 1; i < L && fwdExt(p, q, s, pattern[i]) > 0; ++i)
     	continue;
 
-    if(i == L) { // search successful
-    	for(int64_t j = p; j < p + s; ++j) { // locate fwd locs
-    		int64_t start = accessSA(j);
-    		locs.push_back(GLoc(start, start + L, -1, GLoc::FWD));
-    	}
+    for(int64_t j = p; j < p + s; ++j) { // locate fwd locs
+    	int64_t start = accessSA(j);
+    	locs.push_back(GLoc(start, start + L, -1, GLoc::FWD));
     }
     return locs;
 }
@@ -338,14 +336,12 @@ vector<GLoc> FMDIndex::locateAllRev(const DNAseq& pattern) const {
 	int64_t s = C[b + 1] - C[b];
 
 	/* backward search */
-    for(i = L - 1; i > 0 && backExt(p, q, s, pattern[i - 1]); --i)
+    for(i = L - 1; i > 0 && backExt(p, q, s, pattern[i - 1]) > 0; --i)
     	continue;
 
-    if(i == 0) { // search successful
-    	for(int64_t j = q; j < q + s; ++j) { // locate rev locs
-    		int64_t start = accessSA(j);
-    		locs.push_back(GLoc(start, start + pattern.length(), -1, GLoc::REV));
-    	}
+    for(int64_t j = q; j < q + s; ++j) { // locate rev locs
+    	int64_t start = accessSA(j);
+    	locs.push_back(GLoc(start, start + pattern.length(), -1, GLoc::REV));
     }
     return locs;
 }
@@ -400,9 +396,9 @@ FMDIndex operator+(const FMDIndex& lhs, const FMDIndex& rhs) {
 	return FMDIndex(BMerged, CMerged, bwtM, lhs.keepSA || rhs.keepSA /* keep SA if any of the two operands keepSA */);
 }
 
-bool FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, sauchar_t b) const {
+int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, sauchar_t b) const {
 	if(!DNAalphabet::isBasic(b))
-		return false;
+		return 0;
 	int64_t pN; // fwd strand backExt
 	BCarray_t qB, sB;
 	qB.fill(0);
@@ -412,30 +408,26 @@ bool FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, sauchar_t b) const {
 	pN = C[b] + O;
 	sB[b] = bwt.rank(b, p + s - 1) - O;
 
-	if(sB[b] <= 0) // new match will become empty
-		return false;
-	else {
-		/* update q if s changes */
-		if(sB[b] != s) {
-			sB[0] = bwt.rank(0, p + s - 1) - bwt.rank(0, p - 1);
-			for(nt16_t i = b + 1; i <= DNAalphabet::NT16_MAX; ++i) { // search from b + 1
-				if(DNAalphabet::isBasic(i))
-					sB[i] = bwt.rank(i, p + s - 1) - bwt.rank(i, p - 1);
-			}
-			/* new range of [q', q' + s' - 1] is a subrange of original [q, q + s] */
-			/* devide q + q + s */
-			qB[0] = q;
-			qB[DNAalphabet::T] = qB[0] + sB[0];
-			for(nt16_t i = DNAalphabet::T; i > b; --i) // only need to search till b + 1
-				qB[i - 1] = qB[i] + sB[i];
-			q = qB[b];
+	/* update q if s changes */
+	if(sB[b] != s) {
+		sB[0] = bwt.rank(0, p + s - 1) - bwt.rank(0, p - 1);
+		for(nt16_t i = b + 1; i <= DNAalphabet::NT16_MAX; ++i) { // search from b + 1
+			if(DNAalphabet::isBasic(i))
+				sB[i] = bwt.rank(i, p + s - 1) - bwt.rank(i, p - 1);
 		}
-
-		/* update p and s */
-		p = pN;
-		s = sB[b];
-		return true;
+		/* new range of [q', q' + s' - 1] is a subrange of original [q, q + s] */
+		/* devide q + q + s */
+		qB[0] = q;
+		qB[DNAalphabet::T] = qB[0] + sB[0];
+		for(nt16_t i = DNAalphabet::T; i > b; --i) // only need to search till b + 1
+			qB[i - 1] = qB[i] + sB[i];
+		q = qB[b];
 	}
+
+	/* update p and s */
+	p = pN;
+	s = sB[b];
+	return s;
 }
 
 } /* namespace MSGSeqClean */
