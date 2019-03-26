@@ -404,6 +404,7 @@ struct Alignment {
 	/** filter candidate list of Alignments using alnScore */
 	static ALIGN_LIST& filter(ALIGN_LIST& alnList, double bestFrac);
 
+	/** evaluate each SMEM in an SMEM_LIST */
 	static ALIGN_LIST& evaluate(ALIGN_LIST& alnList);
 
 	/**

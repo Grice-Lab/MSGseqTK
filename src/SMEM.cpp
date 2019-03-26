@@ -123,5 +123,52 @@ SMEM& SMEM::findLocs(size_t maxNLocs) {
 	return *this;
 }
 
+int64_t SMEM::length(const SMEM_CHAIN& smemChain) {
+	int64_t L = 0;
+	for(const SMEM& smem : smemChain)
+		L += smem.length();
+	return L;
+}
+
+ostream& SMEM::write(const SMEM_CHAIN& smemChain, ostream& out) {
+	for(SMEM_CHAIN::const_iterator smem = smemChain.begin(); smem != smemChain.end(); ++smem) {
+		if(smem != smemChain.begin())
+			out << ';';
+		out << *smem;
+	}
+	return out;
+}
+
+bool isCompatitable(const SMEM_CHAIN& smemChain) {
+	if(smemChain.size() <= 1)
+		return true;
+	for(size_t i = 0; i < smemChain.size() - 1; ++i)
+		if(!SMEM::isCompatitable(smemChain[i], smemChain[i+1]))
+			return false;
+	return true;
+}
+
+CHAIN_LIST SMEM::getChains(const SMEM_LIST& smems, uint32_t maxChains) {
+	const size_t N = smems.size();
+	CHAIN_LIST outputList;
+	if(N == 0)
+		return outputList;
+
+	/* non-recursive algorithm of combinations with size 1..N */
+	for(size_t r = 1; r <= N && outputList.size() < maxChains; ++r) {
+		vector<bool> bitmask(N); // element N indicates ignore this SMEM
+		std::fill(bitmask.end() - r, bitmask.end(), true);
+		do {
+			SMEM_CHAIN combination;
+			combination.reserve(r);
+			for(size_t i = 0; i < N; ++i)
+				if(bitmask[i])
+					combination.push_back(smems[i]);
+		}
+		while(std::next_permutation(bitmask.begin(), bitmask.end()) && outputList.size() < maxChains);
+	}
+	return outputList;
+}
+
 } /* namespace MSGseqTK */
 } /* namespace EGriceLab */

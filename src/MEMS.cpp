@@ -34,7 +34,7 @@ int64_t MEMS::length() const {
 MEMS& MEMS::operator+=(const MEMS& other) {
 	for(const MEM& mem : other)
 		if(MEM::isCompatitable(back(), mem))
-	insert(end(), mem);
+	push_back(mem);
 	return *this;
 }
 

@@ -26,6 +26,8 @@ using std::vector;
 
 struct SMEM;
 typedef vector<SMEM> SMEM_LIST;
+typedef SMEM_LIST SMEM_CHAIN; // SMEM_CHAIN is an ordered and colinear SMEM_LIST
+typedef vector<SMEM_CHAIN> CHAIN_LIST;
 
 /**
  * A Super-Maximum Exact Match class representing a
@@ -61,7 +63,7 @@ struct SMEM {
 	}
 
 	/** test whether two MEM is compatitable
-	 * @return  true if they are ordered
+	 * @return  true if they are linearly compatitable
 	 */
 	static bool isCompatitable(const SMEM& lhs, const SMEM& rhs) {
 		return lhs.to <= rhs.from;
@@ -232,6 +234,7 @@ public:
 
 	/* static fields */
 	static const size_t MAX_NLOCS = 256;
+	static const size_t MAX_NCHAINS = 256;
 	static const double DEFAULT_MAX_EVALUE;
 
 	/* static methods */
@@ -270,20 +273,111 @@ public:
 		return smems;
 	}
 
-	/* non-member methods */
-	friend ostream& operator<<(ostream& out, const SMEM& smem);
+	/** order SMEM in lexicographical order */
+	static SMEM_LIST& order(SMEM_LIST& smems) {
+		std::sort(smems.begin(), smems.end());
+		return smems;
+	}
 
+	/** get the seq of a SMEM chain */
+	static const PrimarySeq* getSeq(const SMEM_CHAIN& smemChain) {
+		return smemChain.front().seq;
+	}
+
+	/** get the FMD-index of a SMEM chain */
+	static const FMDIndex* getFMDIndex(const SMEM_CHAIN& smemChain) {
+		return smemChain.front().fmdidx;
+	}
+
+	/** get the MetaGenome of a SMEM chain */
+	static const MetaGenome* getMetaGenome(const SMEM_CHAIN& smemChain) {
+		return smemChain.front().mtg;
+	}
+
+	/** get the loglik of an SMEM chain */
+	static double loglik(const SMEM_CHAIN& smemChain);
+
+	/** get the evalue of an SMEM chain */
+	static double evalue(const SMEM_CHAIN& smemChain) {
+		return getFMDIndex(smemChain)->length() * std::exp(loglik(smemChain));
+	}
+
+	/** get the log-evalue of an MEMS chain */
+	static double logevalue(const SMEM_CHAIN& smemChain) {
+		return std::log(getFMDIndex(smemChain)->length()) + loglik(smemChain);
+	}
+
+	/** get the total length of this MEMS */
+	static int64_t length(const SMEM_CHAIN& smemChain);
+
+	/** write an SMEM chain to text output */
+	static ostream& write(const SMEM_CHAIN& smemChain, ostream& out);
+
+	/**
+	 *  test whether an SMEM_CHAIN is compatitable
+	 */
+	static bool isCompatitable(const SMEM_CHAIN& smemChain);
+
+	/**
+	 * get candidate SMEM_CHAINs by trying different combinations of SMEM_LIST elements
+	 * @param smems  un-chained SMEM list ordered by position
+	 * @param maxChains  maximum valid chains to try
+	 * @return  a list of valid SMEM_CHAINs
+	 */
+	static CHAIN_LIST getChains(const SMEM_LIST& smems, uint32_t maxChains = MAX_NCHAINS);
+
+	/* non-member methods */
+	/** formatted output for SMEM */
+	friend ostream& operator<<(ostream& out, const SMEM& smem);
+	/** formatted output for SMEM chain */
+	friend ostream& operator<<(ostream& out, const SMEM_CHAIN& smemChain);
+	/** merge two SMEM lists */
 	friend SMEM_LIST operator+(const SMEM_LIST& lhs, const SMEM_LIST& rhs);
+
+	/* relationship operators, all comparions are only based on from and to */
+	friend bool operator<(const SMEM& lhs, const SMEM& rhs);
+	friend bool operator==(const SMEM& lhs, const SMEM& rhs);
+
 };
 
 inline ostream& operator<<(ostream& out, const SMEM& smem) {
 	return smem.write(out); /* call virtual member method */
 }
 
+inline ostream& operator<<(ostream& out, const SMEM_CHAIN& smemChain) {
+	return SMEM::write(smemChain, out);
+}
+
 inline SMEM_LIST operator+(const SMEM_LIST& lhs, const SMEM_LIST& rhs) {
 	SMEM_LIST smems_merged(lhs);
 	smems_merged.insert(smems_merged.end(), rhs.begin(), rhs.end());
 	return smems_merged;
+}
+
+inline bool operator<(const SMEM& lhs, const SMEM& rhs) {
+	assert(lhs.seq == rhs.seq && lhs.fmdidx == rhs.fmdidx && lhs.mtg == rhs.mtg);
+	return lhs.from != rhs.from ? lhs.from < rhs.from : lhs.to < rhs.to;
+}
+
+inline bool operator==(const SMEM& lhs, const SMEM& rhs) {
+	assert(lhs.seq == rhs.seq && lhs.fmdidx == rhs.fmdidx && lhs.mtg == rhs.mtg);
+	return lhs.from == rhs.from && lhs.to == rhs.to;
+}
+
+inline bool operator<=(const SMEM& lhs, const SMEM& rhs) {
+	return lhs < rhs || lhs == rhs;
+}
+
+inline bool operator>(const SMEM& lhs, const SMEM& rhs) {
+	return rhs < lhs;
+}
+
+inline bool operator>=(const SMEM& lhs, const SMEM& rhs) {
+	return !(lhs < rhs);
+}
+
+inline bool operator!=(const SMEM& lhs, const SMEM& rhs) {
+	return !(lhs == rhs);
 }
 
 } /* namespace MSGseqTK */
