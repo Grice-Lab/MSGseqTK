@@ -129,6 +129,44 @@ struct SMEM {
 	SMEM& findLocs(size_t maxNLocs = MAX_NLOCS);
 
 	/**
+	 * forward extend this SMEM at current end
+	 * @return  updated SMEM
+	 */
+	SMEM& fwdExt() {
+		fmdidx->fwdExt(fwdStart, revStart, size, seq->getBase(to));
+		to++;
+		return *this;
+	}
+
+	/**
+	 * get a copy of forward extension of this SMEM
+	 * @return  new SMEM with extended values
+	 */
+	SMEM fwdExt() const {
+		SMEM smemExt(*this);
+		return smemExt.fwdExt();
+	}
+
+	/**
+	 * backward extend this SMEM at current start
+	 * @return  updated SMEM
+	 */
+	SMEM& backExt() {
+		fmdidx->backExt(fwdStart, revStart, size, seq->getBase(from - 1));
+		from--;
+		return *this;
+	}
+
+	/**
+	 * get a copy of backward extension of this SMEM
+	 * @return  new SMEM with extended values
+	 */
+	SMEM backExt() const {
+		SMEM smemExt(*this);
+		return smemExt.backExt();
+	}
+
+	/**
 	 * evaluate the log-probality of this SMEM
 	 * @return  log-pvalue of observing this SMEM by chance, using base-frequency only
 	 */

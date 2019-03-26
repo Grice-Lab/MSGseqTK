@@ -56,69 +56,57 @@ SMEM_LIST SMEM::findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	assert(from < L);
 	SMEM_LIST curr, prev, match;
 
-	int64_t i = from;
-	nt16_t b = seq->getBase(i);
+	to = from;
+	nt16_t b = seq->getBase(from);
 	if(!DNAalphabet::isBasic(b)) // first base is non-basic, no-matches
 		return curr;
 
+	/* set init SMEM */
+	SMEM smem(seq, mtg, fmdidx, from, from + 1, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
+	SMEM smem0 = smem;
 	/* forward extension */
-	int64_t p = fmdidx->getCumCount(b);
-	int64_t q = fmdidx->getCumCount(DNAalphabet::complement(b));
-	int64_t s = fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b);
-	int64_t p0 = p;
-	int64_t q0 = q;
-	int64_t s0 = s;
-	for(i = from + 1; i <= L; ++i) {
-		if(i == L) {
-			curr.push_back(SMEM(seq, mtg, fmdidx, from, i, p0, q0, s0));
+	while(smem.to <= L) {
+		if(smem.to == L) {
+			curr.push_back(smem0);
 			break;
 		}
 		else {
-			fmdidx->fwdExt(p, q, s, seq->getBase(i));
-			if(s != s0) // a different [p, q, s] Bi-directional interval found
-				curr.push_back(SMEM(seq, mtg, fmdidx, from, i, p0, q0, s0));
-			if(s <= 0)
+			smem = static_cast<const SMEM&>(smem0).fwdExt();
+			if(smem.size != smem0.size) // a different [p, q, s] Bi-directional interval found
+				curr.push_back(smem0);
+			if(smem.size <= 0)
 				break;
 			// updates
-			p0 = p;
-			q0 = q;
-			s0 = s;
+			smem0 = smem;
 		}
 	}
-	// set to
-	to = i;
+	// update to
+	to = smem0.to;
 
 	/* backward extension */
 	if(from == 0) {
 		match = curr; // back-ext not possible
 	}
 	else {
-		std::reverse(curr.begin(), curr.end()); // put larger SMEM in the front
 		std::swap(curr, prev);
 		size_t i0 = L;
+		int64_t i;
 		for(i = from - 1; i >= -1; --i) {
 			curr.clear();
 			int64_t s1 = -1;
-			for(const SMEM& smem : prev) {
-				p = smem.fwdStart;
-				q = smem.revStart;
-				s = smem.size;
-				p0 = p;
-				q0 = q;
-				s0 = s;
-				fmdidx->backExt(p, q, s, (i >= 0 ? seq->getBase(i) : 0));
-				if((s <= 0 || i == -1) && curr.empty() && i < i0) {
-					match.push_back(SMEM(seq, mtg, fmdidx, i + 1, smem.to, p0, q0, s0));
+			for(SMEM_LIST::const_iterator smem0 = prev.begin(); smem0 != prev.end(); ++smem0) { // search from the back/largest SMEM
+				SMEM smem = smem0->backExt();
+				if((smem.size <= 0 || i == -1) && curr.empty() && i < i0) {
+					match.push_back(*smem0);
 					i0 = i;
 				}
-				if(s > 0 && s1 != s) {
-					curr.push_back(SMEM(seq, mtg, fmdidx, i, smem.to, p, q, s));
-					s1 = s;
+				if(smem.size > 0 && s1 != smem.size) {
+					curr.push_back(smem);
+					s1 = smem.size;
 				}
 			}
 			if(curr.empty())
 				break;
-			std::reverse(curr.begin(), curr.end()); // put larger SMEM in the front
 			std::swap(curr, prev);
 		}
 		from = i + 1; // update from
