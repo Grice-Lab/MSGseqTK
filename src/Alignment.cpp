@@ -282,7 +282,7 @@ Alignment::SeedMatchList Alignment::permuteSeedMatchList(const SeedMatchList& ra
 		return outputList;
 	vector<size_t> idx(N, 0); // index to keep track of next element in each of the N SeedMatch
 	/* non-recursive algorithm to get SeedMatchList by randomly picking up elements from rawList */
-	while(outputList.size() <= maxAln) {
+	while(outputList.size() < maxAln) {
 		/* get current combination */
 		SeedMatch combination;
 		combination.reserve(N);
