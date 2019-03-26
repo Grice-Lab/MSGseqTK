@@ -63,7 +63,7 @@ public:
 	 * @param b  base/character for lookup
 	 * @return  1-based index on F column (original seq)
 	 */
-	int64_t LF(sauchar_t b, int64_t i) const {
+	int64_t LF(uint8_t b, int64_t i) const {
 		return C[b] + bwt.rank(b, i);
 	}
 
@@ -95,7 +95,7 @@ public:
 	}
 
 	/** get baseCount of given base in fwd seq */
-	int64_t getBaseCount(sauchar_t b) const {
+	int64_t getBaseCount(uint8_t b) const {
 		return B[b];
 	}
 
@@ -110,12 +110,27 @@ public:
 	}
 
 	/** get cumulative base count of given base */
-	int64_t getCumCount(sauchar_t b) const {
+	int64_t getCumCount(uint8_t b) const {
 		return C[b];
 	}
 
-	/** get total bases in this FM-index excluding gaps */
-	const int64_t totalBases() const;
+	/** get total bases in this FMD-index, alias to length() */
+	const int64_t totalBases() const {
+		return length();
+	}
+
+	/**
+	 * get the frequency of a given base
+	 * @return  base frequency if is a basic base, or the mapped basic base frequency if is an IMPAC extension
+	 */
+	double getBaseFreq(uint8_t b) const {
+		return static_cast<double>(getBaseCount(DNAalphabet::toBasic(b))) / length();
+	}
+
+	/** get loglik() of a given base as the log base-frequency */
+	double loglik(uint8_t b) const {
+		return std::log(getBaseCount(DNAalphabet::toBasic(b))) - std::log(length());
+	}
 
 	/**
 	 * Build an FMDIndex from a combined seq, in which seq is always in the order of R0R0'R1R1', etc
@@ -160,13 +175,13 @@ public:
 	 * backward extension of a bi-interval [p, q, s]
 	 * @return  the new size as an indication of success or not
 	 */
-	int64_t backExt(int64_t& p, int64_t& q, int64_t& s, sauchar_t b) const;
+	int64_t backExt(int64_t& p, int64_t& q, int64_t& s, uint8_t b) const;
 
 	/**
 	 * forward extension of a bi-interval [p, q, s]
 	 * @return  the new size as an indication of success or not
 	 */
-	int64_t fwdExt(int64_t& p, int64_t& q, int64_t& s, sauchar_t b) const {
+	int64_t fwdExt(int64_t& p, int64_t& q, int64_t& s, uint8_t b) const {
 		return backExt(q, p, s, DNAalphabet::complement(b));
 	}
 

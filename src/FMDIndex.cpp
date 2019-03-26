@@ -21,13 +21,6 @@ namespace MSGseqTK {
 using std::vector;
 using EGriceLab::libSDS::BitStr32;
 
-const int64_t FMDIndex::totalBases() const {
-	int64_t N = 0;
-	for(int64_t i = 0; i < B.size(); ++i)
-		N += B[i];
-	return N;
-}
-
 FMDIndex& FMDIndex::build(const DNAseq& seq) {
 	if(seq.length() > MAX_LENGTH)
 		throw std::length_error("DNAseq length exceeding the max allowed length");
@@ -131,7 +124,7 @@ FMDIndex& FMDIndex::operator+=(const FMDIndex& other) {
 	for(int64_t i = 0; i < C[0 + 1]; ++i) { // i-th pass of LF-mapping
 		int64_t j = i;
 		int64_t RA = other.C[0 + 1];
-		sauchar_t b;
+		uint8_t b;
 	  do {
 #pragma omp critical(WRITE_bstr)
 			bstr.set(j + RA);
@@ -180,7 +173,7 @@ DNAseq FMDIndex::getSeq() const {
 	seq.reserve(length());
 	for(int64_t i = 0; i < C[0 + 1]; ++i) { // i-th pass of LF-mapping
 		seq.push_back(0);
-		sauchar_t b;
+		uint8_t b;
 		for(int64_t j = i; (b = bwt.access(j)) != 0; j = LF(b, j) - 1 /* LF-mapping */)
 			seq.push_back(b);
 	}
@@ -193,7 +186,7 @@ void FMDIndex::buildBWT(const DNAseq& seq) {
 	const size_t N =  seq.length() + 1;
 	/* construct SA */
     int64_t* SA = new int64_t[N];
-    int64_t errn = divsufsort((const sauchar_t*) (seq.c_str()), (saidx_t*) SA, N);
+    int64_t errn = divsufsort((const uint8_t*) (seq.c_str()), (saidx_t*) SA, N);
 	if(errn != 0)
 		throw std::runtime_error("Error: Cannot build suffix-array on DNAseq");
 
@@ -228,7 +221,7 @@ void FMDIndex::buildSA() {
 	int64_t k = N;
 	for(int64_t i = 0; i < C[0 + 1]; ++i) { // i-th pass of LF-mapping loop
 		int64_t j = i;
-		sauchar_t b;
+		uint8_t b;
 		do {
 			b = bwt.access(j);
 			if(bstr.test(j))
@@ -257,7 +250,7 @@ void FMDIndex::buildSA(const DNAseq& bwtSeq) {
 	int64_t k = N; // position on seq, start from 1 after end
 	for(int64_t i = 0; i < C[0 + 1]; ++i) { // the i-th null segment
 		int64_t j = i;
-		sauchar_t b;
+		uint8_t b;
 		do {
 			b = bwtSeq[j];
 			if(bstr.test(j))
@@ -376,7 +369,7 @@ FMDIndex operator+(const FMDIndex& lhs, const FMDIndex& rhs) {
 	for(int64_t i = 0; i < lhs.C[0 + 1]; ++i) { // i-th pass LF-mapping on lhs
 		int64_t j = i;
 		int64_t RA = rhs.C[0 + 1];
-		sauchar_t b;
+		uint8_t b;
 		do {
 #pragma omp critical(WRITE_bstrM)
 			bstrM.set(j + RA);
@@ -396,7 +389,7 @@ FMDIndex operator+(const FMDIndex& lhs, const FMDIndex& rhs) {
 	return FMDIndex(BMerged, CMerged, bwtM, lhs.keepSA || rhs.keepSA /* keep SA if any of the two operands keepSA */);
 }
 
-int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, sauchar_t b) const {
+int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, uint8_t b) const {
 	if(!DNAalphabet::isBasic(b))
 		return 0;
 	int64_t pN; // fwd strand backExt

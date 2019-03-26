@@ -4,7 +4,7 @@
  *  Created on: Mar 20, 2019
  *      Author: zhengqi
  */
-
+#include <cassert>
 #include "SMEM.h"
 
 namespace EGriceLab {
@@ -13,18 +13,9 @@ namespace MSGseqTK {
 const double SMEM::DEFAULT_MAX_EVALUE = 0.01;
 
 SMEM& SMEM::evaluate() {
-	if(empty())
-		return *this;
 	logP = 0;
-	int64_t N = 0;
-	for(int64_t i = from; i < to; ++i) {
-		DNAseq::value_type b = seq->getBase(i);
-		if(fmdidx->getBaseCount(b) > 0) { // ignore non-existing bases
-			logP += std::log(fmdidx->getBaseCount(b));
-			N++;
-		}
-	}
-	logP -= N * log(fmdidx->length()); /* subtract denominator */
+	for(int64_t i = from; i < to; ++i)
+		logP += fmdidx->loglik(seq->getBase(i));
 	return *this;
 }
 
@@ -94,7 +85,7 @@ SMEM_LIST SMEM::findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 		for(i = from - 1; i >= -1; --i) {
 			curr.clear();
 			int64_t s1 = -1;
-			for(SMEM_LIST::const_iterator smem0 = prev.begin(); smem0 != prev.end(); ++smem0) { // search from the back/largest SMEM
+			for(SMEM_LIST::const_reverse_iterator smem0 = prev.rbegin(); smem0 != prev.rend(); ++smem0) { // search from the back/largest SMEM
 				SMEM smem = smem0->backExt();
 				if((smem.size <= 0 || i == -1) && curr.empty() && i < i0) {
 					match.push_back(*smem0);

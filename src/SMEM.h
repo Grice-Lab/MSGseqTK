@@ -41,13 +41,17 @@ struct SMEM {
 			const vector<GLoc>& locs)
 	: seq(seq), mtg(mtg), fmdidx(fmdidx),
 	  from(from), to(to), fwdStart(fwdStart), revStart(revStart), size(size), locs(locs)
-	{ 	}
+	{
+		evaluate();
+	}
 
 	/** construct an SMEM with all info but not locs */
 	SMEM(const PrimarySeq* seq,  const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t from, int64_t to, int64_t fwdStart, int64_t revStart, int64_t size)
 	: seq(seq), mtg(mtg), fmdidx(fmdidx), from(from), to(to), fwdStart(fwdStart), revStart(revStart), size(size)
-	{   }
+	{
+		evaluate();
+	}
 
 	/* member methods */
 	/* static member methods */
@@ -134,6 +138,7 @@ struct SMEM {
 	 */
 	SMEM& fwdExt() {
 		fmdidx->fwdExt(fwdStart, revStart, size, seq->getBase(to));
+		fwdEvaluate();
 		to++;
 		return *this;
 	}
@@ -153,6 +158,7 @@ struct SMEM {
 	 */
 	SMEM& backExt() {
 		fmdidx->backExt(fwdStart, revStart, size, seq->getBase(from - 1));
+		backEvaluate();
 		from--;
 		return *this;
 	}
@@ -172,6 +178,20 @@ struct SMEM {
 	 */
 	SMEM& evaluate();
 
+protected:
+	/** forward evaluation during forward extension */
+	SMEM& fwdEvaluate() {
+		logP += fmdidx->loglik(seq->getBase(to));
+		return *this;
+	}
+
+	/** backward evaluation during backward extension */
+	SMEM& backEvaluate() {
+		logP += fmdidx->loglik(seq->getBase(from - 1));
+		return *this;
+	}
+
+public:
 	/**
 	 * get loglikelihood of this SMEM, use pre-evaluate logP value
 	 * @return  log-pvalue of observing this SMEM by chance, using base-frequency only
