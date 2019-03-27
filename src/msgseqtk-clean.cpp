@@ -47,8 +47,8 @@ using namespace EGriceLab::MSGseqTK;
 /* program default values */
 static const double DEFAULT_MIN_LOD = 0;
 static const string ASSIGNMENT_BASIC_HEADER = "id\tdescription\tref_loglik\tbg_loglik\tLOD";
-static const string ASSIGNMENT_SE_DETAIL = "ref_MEMS\tbg_MEMS";
-static const string ASSIGNMENT_PE_DETAIL = "ref_MEMS_fwd\tref_MEMS_rev\tbg_MEMS_fwd\tbg_MEMS_rev";
+static const string ASSIGNMENT_SE_DETAIL = "ref_SMEM\tbg_SMEM";
+static const string ASSIGNMENT_PE_DETAIL = "ref_SMEM_fwd\tref_SMEM_rev\tbg_SMEM_fwd\tbg_SMEM_rev";
 static const int DEFAULT_NUM_THREADS = 1;
 
 /**
@@ -56,7 +56,7 @@ static const int DEFAULT_NUM_THREADS = 1;
  */
 void printIntro(void) {
 	cerr << "Clean/remove background (i.e. host contamination) reads from Metagenomics Shot-Gun (MSG) sequencing data,"
-		 << " based on Maximal Exact Matched Seeds (MEMS) searches and Baysian inference" << endl;
+		 << " based on Maximal Exact Matched Seeds (SMEM) searches and Baysian inference" << endl;
 }
 
 /**
@@ -76,9 +76,9 @@ void printUsage(const string& progName) {
 		 << "            -o  FILE             : output of cleaned single-end/forward reads" << ZLIB_SUPPORT << endl
 		 << "            -m  FILE             : output of cleaned mate/reverse reads" << ZLIB_SUPPORT << endl
 		 << "            -a  FILE             : write an additional TSV file with the detailed assignment information for each read" << endl
-		 << "            --detail  FLAG       : write detailed information of MEMS in the assignment output, ignored if -a is not specified; this may lead to much slower processing" << endl
+		 << "            --detail  FLAG       : write detailed information of SMEM in the assignment output, ignored if -a is not specified; this may lead to much slower processing" << endl
 		 << "            -L|--lod  DBL        : minimum log-odd required to determine a read/pair as reference vs. background [" << DEFAULT_MIN_LOD << "]" << endl
-		 << "            -e|--evalue  DBL     : maximum e-value to consider an MEM as significant [" << MEMS::DEFAULT_MAX_EVALUE << "]" << endl
+		 << "            -e|--evalue  DBL     : maximum e-value to consider an MEM as significant [" << SMEM::DEFAULT_MAX_EVALUE << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
 	bool withDetail = false;
 
 	double minLod = DEFAULT_MIN_LOD;
-	double maxEvalue = MEMS::DEFAULT_MAX_EVALUE;
+	double maxEvalue = SMEM::DEFAULT_MAX_EVALUE;
 	int nThreads = DEFAULT_NUM_THREADS;
 
 	/* parse options */
@@ -388,7 +388,7 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut, double maxEvalue,
 		bool withDetail, double minLod) {
 	infoLog << "Filtering input reads" << endl;
-	/* search MEMS for each read */
+	/* search SMEM for each read */
 #pragma omp parallel
 	{
 #pragma omp master
@@ -399,10 +399,11 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 				{
 					const string& id = read.getName();
 					const string& desc = read.getDesc();
-					MEMS refMems = MEMS::searchMEMS(&read, &refMtg, &refFmdidx, maxEvalue, GLoc::FWD); // fwd sampling
-					MEMS bgMems = MEMS::searchMEMS(&read, &bgMtg, &bgFmdidx, maxEvalue, GLoc::FWD); // fwd sampling
-					double refLoglik = refMems.loglik();
-					double bgLoglik = bgMems.loglik();
+					SMEMS refMems = SMEM::searchSMEMS(&read, &refMtg, &refFmdidx, maxEvalue);
+					SMEMS bgMems = SMEM::searchSMEMS(&read, &bgMtg, &bgFmdidx, maxEvalue);
+
+					double refLoglik = SMEM::loglik(refMems);
+					double bgLoglik = SMEM::loglik(bgMems);
 					double lod = - refLoglik + bgLoglik;
 					if(lod >= minLod)
 #pragma omp critical(writeSeq)
@@ -412,7 +413,7 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 						{
 							assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod;
 							if(withDetail) // only findLocs when detail requested
-								assignOut << "\t" << refMems.findLocs() << "\t" << bgMems.findLocs();
+								assignOut << "\t" << SMEM::findLocs(refMems) << "\t" << SMEM::findLocs(bgMems);
 							assignOut << endl;
 						}
 					}
@@ -427,7 +428,7 @@ int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut, double maxEvalue,
 		bool withDetail, double minLod) {
 	infoLog << "Filtering input paired-end reads" << endl;
-	/* search MEMS for each pair */
+	/* search SMEM for each pair */
 #pragma omp parallel
 	{
 #pragma omp master
@@ -439,10 +440,10 @@ int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 				{
 					const string& id = fwdRead.getName();
 					const string& desc = fwdRead.getDesc();
-					MEMS_PE refMemsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &refMtg, &refFmdidx, maxEvalue, GLoc::FWD); // fwd PE sampling
-					MEMS_PE bgMemsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &bgMtg, &bgFmdidx, maxEvalue, GLoc::FWD);    // rev PE sampling
-					double refLoglik = refMemsPE.loglik();
-					double bgLoglik = bgMemsPE.loglik();
+					SMEMS_PE refMemsPE = SMEM::searchSMEMS(&fwdRead, &revRead, &refMtg, &refFmdidx, maxEvalue);
+					SMEMS_PE bgMemsPE = SMEM::searchSMEMS(&fwdRead, &revRead, &bgMtg, &bgFmdidx, maxEvalue);
+					double refLoglik = SMEM::loglik(refMemsPE);
+					double bgLoglik = SMEM::loglik(bgMemsPE);
 					double lod = - refLoglik + bgLoglik;
 					if(lod >= minLod) {
 #pragma omp critical(writeSeq)
@@ -456,10 +457,10 @@ int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 						{
 							assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod;
 							if(withDetail) {
-								refMemsPE.findLocs();
-								bgMemsPE.findLocs();
-								assignOut << refMemsPE.fwdMems << "\t" << refMemsPE.revMems << "\t"
-								<< bgMemsPE.fwdMems << "\t" << bgMemsPE.revMems;
+								SMEM::findLocs(refMemsPE);
+								SMEM::findLocs(bgMemsPE);
+								assignOut << refMemsPE.first << "\t" << refMemsPE.second << "\t"
+								<< bgMemsPE.first << "\t" << bgMemsPE.second;
 							}
 							assignOut << endl;
 						}

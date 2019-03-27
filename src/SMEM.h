@@ -23,11 +23,11 @@ namespace EGriceLab {
 namespace MSGseqTK {
 
 using std::vector;
+using std::pair;
 
 struct SMEM;
-typedef vector<SMEM> SMEM_LIST;
-typedef SMEM_LIST SMEM_CHAIN; // SMEM_CHAIN is an ordered and colinear SMEM_LIST
-typedef vector<SMEM_CHAIN> CHAIN_LIST;
+typedef vector<SMEM> SMEMS;
+typedef pair<SMEMS, SMEMS> SMEMS_PE;
 
 /**
  * A Super-Maximum Exact Match class representing a
@@ -76,6 +76,16 @@ struct SMEM {
 		return mtg->getLocId(lhs.start) == mtg->getLocId(rhs.start) &&
 				mtg->getStrand(lhs.start) == mtg->getStrand(rhs.start) &&
 				lhs.end <= rhs.start;
+	}
+
+	/** test whether one SMEM contains the other */
+	static bool contains(const SMEM& lhs, const SMEM& rhs) {
+		return lhs.from <= rhs.from && lhs.to >= rhs.to;
+	}
+
+	/** testh wheter one SMEM is contained in the other */
+	static bool contained(const SMEM& lhs, const SMEM& rhs) {
+		return contains(rhs, lhs);
 	}
 
 	/** get the seq-distance of two mem,
@@ -249,90 +259,118 @@ public:
 	 * @param to  end on seq, will be updated after search
 	 * @return  SMEM_LIST found at this position
 	 */
-	static SMEM_LIST findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+	static SMEMS findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t &from, int64_t& to);
 
+	/**
+	 * get an aggregated SMEM_LIST of a given seq using step-wise forward/backward searches
+	 * returned seq will be sorted based on the SMEM's lexical order (of from and to)
+	 */
+	static SMEMS searchSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			double maxEvalue = DEFAULT_MAX_EVALUE);
+
 	/** evaluate an SMEM_LIST */
-	static SMEM_LIST& evaluate(SMEM_LIST& smems) {
+	static SMEMS& evaluate(SMEMS& smems) {
 		for(SMEM& smem : smems)
 			smem.evaluate();
 		return smems;
 	}
 
 	/** filter an SMEM_LIST by removing SMEM with evalue great than threshold */
-	static SMEM_LIST& filter(SMEM_LIST& smems, double maxEvalue = DEFAULT_MAX_EVALUE) {
+	static SMEMS& filter(SMEMS& smems, double maxEvalue = DEFAULT_MAX_EVALUE) {
 		smems.erase(std::remove_if(smems.begin(), smems.end(), [=](const SMEM& smem) { return smem.evalue() > maxEvalue; }),
 				smems.end());
 		return smems;
 	}
 
 	/** find locs for all SMEMS */
-	static SMEM_LIST& findLocs(SMEM_LIST& smems, uint32_t maxNLocs = SMEM::MAX_NLOCS) {
+	static SMEMS& findLocs(SMEMS& smems, uint32_t maxNLocs = SMEM::MAX_NLOCS) {
 		for(SMEM& smem : smems)
 			smem.findLocs(maxNLocs);
 		return smems;
 	}
 
 	/** order SMEM in lexicographical order */
-	static SMEM_LIST& order(SMEM_LIST& smems) {
+	static SMEMS& sort(SMEMS& smems) {
 		std::sort(smems.begin(), smems.end());
 		return smems;
 	}
 
-	/** get the seq of a SMEM chain */
-	static const PrimarySeq* getSeq(const SMEM_CHAIN& smemChain) {
-		return smemChain.front().seq;
+	/** get the best (min) loglik of an SEMEM LIST */
+	static double bestLoglik(const SMEMS& smems);
+
+	/** get the best (min) evalue of an SMEM_LIST */
+	static double bestEvalue(const SMEMS& smems);
+
+	/** test whether an SMEM_LIST is compatitable */
+	static bool isCompatitable(const SMEMS& smems);
+
+	/** get the seq of an SMEM list */
+	static const PrimarySeq* getSeq(const SMEMS& smems) {
+		return smems.front().seq;
 	}
 
-	/** get the FMD-index of a SMEM chain */
-	static const FMDIndex* getFMDIndex(const SMEM_CHAIN& smemChain) {
-		return smemChain.front().fmdidx;
+	/** get the FMD-index of an SMEM list */
+	static const FMDIndex* getFMDIndex(const SMEMS& smems) {
+		return smems.front().fmdidx;
 	}
 
-	/** get the MetaGenome of a SMEM chain */
-	static const MetaGenome* getMetaGenome(const SMEM_CHAIN& smemChain) {
-		return smemChain.front().mtg;
+	/** get the MetaGenome of an SMEM list */
+	static const MetaGenome* getMetaGenome(const SMEMS& smems) {
+		return smems.front().mtg;
 	}
 
-	/** get the loglik of an SMEM chain */
-	static double loglik(const SMEM_CHAIN& smemChain);
-
-	/** get the evalue of an SMEM chain */
-	static double evalue(const SMEM_CHAIN& smemChain) {
-		return getFMDIndex(smemChain)->length() * std::exp(loglik(smemChain));
+	/** get from of an ordered SMEM list */
+	static int64_t getFrom(const SMEMS& smems) {
+		return smems.front().from;
 	}
 
-	/** get the log-evalue of an MEMS chain */
-	static double logevalue(const SMEM_CHAIN& smemChain) {
-		return std::log(getFMDIndex(smemChain)->length()) + loglik(smemChain);
+	/** get the loglik of an SMEM list */
+	static double loglik(const SMEMS& smems);
+
+	/** get the evalue of an SMEM list */
+	static double evalue(const SMEMS& smems) {
+		return getFMDIndex(smems)->length() * std::exp(loglik(smems));
 	}
 
-	/** get the total length of this MEMS */
-	static int64_t length(const SMEM_CHAIN& smemChain);
+	/** get the log-evalue of an MEMS list */
+	static double logevalue(const SMEMS& smems) {
+		return std::log(getFMDIndex(smems)->length()) + loglik(smems);
+	}
 
-	/** write an SMEM chain to text output */
-	static ostream& write(const SMEM_CHAIN& smemChain, ostream& out);
+	/** get the total length of an MEMS list */
+	static int64_t length(const SMEMS& smems);
+
+	/** write an SMEM list to text output */
+	static ostream& write(const SMEMS& smems, ostream& out);
+
+	/** find locs for an SMEM_PE */
+	static SMEMS_PE& findLocs(SMEMS_PE& smemsPE, size_t maxNLocs = SMEM::MAX_NLOCS) {
+		SMEM::findLocs(smemsPE.first, maxNLocs);
+		SMEM::findLocs(smemsPE.second, maxNLocs);
+		return smemsPE;
+	}
+
+	/** get the loglik of an SMEMS_PE */
+	static double loglik(const SMEMS_PE& smemsPE) {
+		return SMEM::loglik(smemsPE.first) + SMEM::loglik(smemsPE.second);
+	}
 
 	/**
-	 *  test whether an SMEM_CHAIN is compatitable
+	 * search SMEMS_PE for pair-end reads
 	 */
-	static bool isCompatitable(const SMEM_CHAIN& smemChain);
-
-	/**
-	 * get candidate SMEM_CHAINs by trying different combinations of SMEM_LIST elements
-	 * @param smems  un-chained SMEM list ordered by position
-	 * @param maxChains  maximum valid chains to try
-	 * @return  a list of valid SMEM_CHAINs
-	 */
-	static CHAIN_LIST getChains(const SMEM_LIST& smems, uint32_t maxChains = MAX_NCHAINS);
+	static SMEMS_PE searchSMEMS(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
+			 const MetaGenome* mtg, const FMDIndex* fmdidx, double maxEvalue = SMEM::DEFAULT_MAX_EVALUE) {
+		return SMEMS_PE(SMEM::searchSMEMS(fwdSeq, mtg, fmdidx, maxEvalue), SMEM::searchSMEMS(revSeq, mtg, fmdidx, maxEvalue));
+	}
 
 	/* non-member methods */
 	/** formatted output for SMEM */
 	friend ostream& operator<<(ostream& out, const SMEM& smem);
 	/** formatted output for SMEM chain */
-	friend ostream& operator<<(ostream& out, const SMEM_CHAIN& smemChain);
+	friend ostream& operator<<(ostream& out, const SMEMS& smems);
 	/** merge two SMEM lists */
-	friend SMEM_LIST operator+(const SMEM_LIST& lhs, const SMEM_LIST& rhs);
+	friend SMEMS operator+(const SMEMS& lhs, const SMEMS& rhs);
 
 	/* relationship operators, all comparions are only based on from and to */
 	friend bool operator<(const SMEM& lhs, const SMEM& rhs);
@@ -344,12 +382,12 @@ inline ostream& operator<<(ostream& out, const SMEM& smem) {
 	return smem.write(out); /* call virtual member method */
 }
 
-inline ostream& operator<<(ostream& out, const SMEM_CHAIN& smemChain) {
-	return SMEM::write(smemChain, out);
+inline ostream& operator<<(ostream& out, const SMEMS& smems) {
+	return SMEM::write(smems, out);
 }
 
-inline SMEM_LIST operator+(const SMEM_LIST& lhs, const SMEM_LIST& rhs) {
-	SMEM_LIST smems_merged(lhs);
+inline SMEMS operator+(const SMEMS& lhs, const SMEMS& rhs) {
+	SMEMS smems_merged(lhs);
 	smems_merged.insert(smems_merged.end(), rhs.begin(), rhs.end());
 	return smems_merged;
 }
@@ -382,5 +420,16 @@ inline bool operator!=(const SMEM& lhs, const SMEM& rhs) {
 
 } /* namespace MSGseqTK */
 } /* namespace EGriceLab */
+
+/** customized hash function in std namespace */
+namespace std {
+template<>
+class hash<EGriceLab::MSGseqTK::SMEM> {
+public:
+	size_t operator() (const EGriceLab::MSGseqTK::SMEM& smem) const {
+		return hash(smem.from) ^ hash(smem.to);
+	}
+};
+} /* namespace std */
 
 #endif /* SSMEM_H_ */

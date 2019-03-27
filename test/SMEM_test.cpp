@@ -36,7 +36,7 @@ int main() {
 	PrimarySeq read("ACGTAGTA", "seq1");
 	for(int64_t from = 0, to = 1; from < read.length(); from = to) {
 		cout << "finding smem at from: " << from << endl;
-		SMEM_LIST smems = SMEM::findSMEMS(&read, &mtg, &fmdidx, from, to);
+		SMEMS smems = SMEM::findSMEMS(&read, &mtg, &fmdidx, from, to);
 		SMEM::findLocs(smems);
 		cout << "found " << smems.size() << " SMEMS between read: " << read.getSeq() << " and db:" << endl << fmdidx.getSeq() << endl << "from: " << from << " to:" << to << endl;
 		for(const SMEM& smem : smems) {

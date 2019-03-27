@@ -41,11 +41,11 @@ ostream& SMEM::write(ostream& out) const {
 	return out;
 }
 
-SMEM_LIST SMEM::findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+SMEMS SMEM::findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		int64_t& from, int64_t& to) {
 	const size_t L = seq->length();
 	assert(from < L);
-	SMEM_LIST curr, prev, match;
+	SMEMS curr, prev, match;
 
 	to = from;
 	nt16_t b = seq->getBase(from);
@@ -85,7 +85,7 @@ SMEM_LIST SMEM::findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 		for(i = from - 1; i >= -1; --i) {
 			curr.clear();
 			int64_t s1 = -1;
-			for(SMEM_LIST::const_reverse_iterator smem0 = prev.rbegin(); smem0 != prev.rend(); ++smem0) { // search from the back/largest SMEM
+			for(SMEMS::const_reverse_iterator smem0 = prev.rbegin(); smem0 != prev.rend(); ++smem0) { // search from the back/largest SMEM
 				SMEM smem = smem0->backExt();
 				if((smem.size <= 0 || i == -1) && curr.empty() && i < i0) {
 					match.push_back(*smem0);
@@ -123,15 +123,15 @@ SMEM& SMEM::findLocs(size_t maxNLocs) {
 	return *this;
 }
 
-int64_t SMEM::length(const SMEM_CHAIN& smemChain) {
+int64_t SMEM::length(const SMEMS& smemChain) {
 	int64_t L = 0;
 	for(const SMEM& smem : smemChain)
 		L += smem.length();
 	return L;
 }
 
-ostream& SMEM::write(const SMEM_CHAIN& smemChain, ostream& out) {
-	for(SMEM_CHAIN::const_iterator smem = smemChain.begin(); smem != smemChain.end(); ++smem) {
+ostream& SMEM::write(const SMEMS& smemChain, ostream& out) {
+	for(SMEMS::const_iterator smem = smemChain.begin(); smem != smemChain.end(); ++smem) {
 		if(smem != smemChain.begin())
 			out << ';';
 		out << *smem;
@@ -139,35 +139,39 @@ ostream& SMEM::write(const SMEM_CHAIN& smemChain, ostream& out) {
 	return out;
 }
 
-bool isCompatitable(const SMEM_CHAIN& smemChain) {
-	if(smemChain.size() <= 1)
+double SMEM::bestLoglik(const SMEMS& smems) {
+	double minLL= inf;
+	for(const SMEM& smem : smems)
+		minLL = std::min(minLL, smem.loglik());
+	return minLL;
+}
+
+double SMEM::bestEvalue(const SMEMS& smems) {
+	double minE = inf;
+	for(const SMEM& smem : smems)
+		minE = std::min(minE, smem.evalue());
+	return minE;
+}
+
+bool SMEM::isCompatitable(const SMEMS& smems) {
+	if(smems.size() <= 1)
 		return true;
-	for(size_t i = 0; i < smemChain.size() - 1; ++i)
-		if(!SMEM::isCompatitable(smemChain[i], smemChain[i+1]))
+	for(SMEMS::const_iterator smem = smems.begin(); smem < smems.end() - 1; ++smem)
+		if(!isCompatitable(*smem, *(smem + 1)))
 			return false;
 	return true;
 }
 
-CHAIN_LIST SMEM::getChains(const SMEM_LIST& smems, uint32_t maxChains) {
-	const size_t N = smems.size();
-	CHAIN_LIST outputList;
-	if(N == 0)
-		return outputList;
-
-	/* non-recursive algorithm of combinations with size 1..N */
-	for(size_t r = 1; r <= N && outputList.size() < maxChains; ++r) {
-		vector<bool> bitmask(N); // element N indicates ignore this SMEM
-		std::fill(bitmask.end() - r, bitmask.end(), true);
-		do {
-			SMEM_CHAIN combination;
-			combination.reserve(r);
-			for(size_t i = 0; i < N; ++i)
-				if(bitmask[i])
-					combination.push_back(smems[i]);
-		}
-		while(std::next_permutation(bitmask.begin(), bitmask.end()) && outputList.size() < maxChains);
+SMEMS SMEM::searchSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx, double maxEvalue) {
+	SMEMS smemsMerged;
+	double bestE = 0;
+	for(int64_t from = 0, to = 0; from < seq->length(); from = bestE <= maxEvalue ? to + 1 /* good SMEMS */ : to /* bad SMEMS */) {
+		SMEMS smems = SMEM::findSMEMS(seq, mtg, fmdidx, from, to);
+		SMEM::filter(smems, maxEvalue); // filter bad SMEM, list may become empty
+		smemsMerged.insert(smemsMerged.end(), smems.begin(), smems.end());
+		bestE = SMEM::bestEvalue(smems); // update bestE
 	}
-	return outputList;
+	return SMEM::sort(smemsMerged);
 }
 
 } /* namespace MSGseqTK */

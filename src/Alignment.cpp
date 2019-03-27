@@ -235,7 +235,7 @@ Alignment::SeedMatch& Alignment::SeedMatch::filter(int64_t maxIndel) {
 			[] (const SeedPair& lhs, const SeedPair& rhs) { return lhs.logP < rhs.logP; });
 
 	while(!isCompatitable(maxIndel)) // till compatitable
-		pop_back();
+		pop_back(); // remove worst SeedPair in this SeedMatch
 
 	/* re-order this SeedMatch by location */
 	std::sort(begin(), end(),
@@ -245,64 +245,67 @@ Alignment::SeedMatch& Alignment::SeedMatch::filter(int64_t maxIndel) {
 	return *this;
 }
 
-Alignment::SeedMatchList Alignment::getSeedMatchList(const MEMS& mems, uint32_t maxAln) {
-	if(mems.empty())
+Alignment::SeedMatchList Alignment::getSeedMatchList(const SMEMS& smems, uint32_t maxAln) {
+	if(smems.empty())
 		return SeedMatchList();
 	/* get a raw SeedMatchList to store all matches of each MEMS */
-	const size_t N = mems.size();
+	const size_t N = smems.size();
 	SeedMatchList fwdRawList, revRawList;
 	fwdRawList.reserve(N);
 	revRawList.reserve(N);
-	for(const MEM& mem : mems) {
+	for(const SMEM& smem : smems) {
 		/* search locs */
 		SeedMatch fwdSeeds, revSeeds;
-		for(const GLoc& loc : mem.locs) {
+		for(const GLoc& loc : smem.locs) {
 			if(loc.strand == GLoc::FWD)
-				fwdSeeds.push_back(SeedPair(mem.from, loc.start - mem.mtg->getChromStart(loc.tid), mem.length(), loc.tid, loc.strand, mem.loglik()));
+				fwdSeeds.push_back(SeedPair(smem.from, loc.start - smem.mtg->getChromStart(loc.tid), smem.length(), loc.tid, loc.strand, smem.loglik()));
 			else
-				revSeeds.push_back(SeedPair(Loc::reverseLoc(mem.seq->length(), mem.to), loc.start - mem.mtg->getChromStart(loc.tid), mem.length(), loc.tid, loc.strand, mem.loglik()));
+				revSeeds.push_back(SeedPair(Loc::reverseLoc(smem.seq->length(), smem.to), loc.start - smem.mtg->getChromStart(loc.tid), smem.length(), loc.tid, loc.strand, smem.loglik()));
 		}
 		if(!fwdSeeds.empty())
 			fwdRawList.push_back(fwdSeeds);
 		if(!revSeeds.empty())
 			revRawList.push_back(revSeeds);
 	}
+
 	/* reverse the order of revList */
 	std::reverse(revRawList.begin(), revRawList.end());
 
 	/* return concatenated permutated raw lists */
-	return permuteSeedMatchList(fwdRawList, mems.getSeq()->length() * DEFAULT_INDEL_RATE, maxAln) +
-			permuteSeedMatchList(revRawList, mems.getSeq()->length() * DEFAULT_INDEL_RATE, maxAln);
+	return permuteSeedMatchList(fwdRawList, SMEM::getSeq(smems)->length() * DEFAULT_INDEL_RATE, maxAln) +
+			permuteSeedMatchList(revRawList, SMEM::getSeq(smems)->length() * DEFAULT_INDEL_RATE, maxAln);
 }
 
 Alignment::SeedMatchList Alignment::permuteSeedMatchList(const SeedMatchList& rawList, int64_t maxIndel, uint32_t maxAln) {
-	const size_t N = rawList.size();
 	SeedMatchList outputList;
-	if(N == 0)
+	if(rawList.empty())
 		return outputList;
-	vector<size_t> idx(N, 0); // index to keep track of next element in each of the N SeedMatch
-	/* non-recursive algorithm to get SeedMatchList by randomly picking up elements from rawList */
-	while(outputList.size() < maxAln) {
-		/* get current combination */
-		SeedMatch combination;
-		combination.reserve(N);
-		for(size_t i = 0; i < N; ++i)
-			combination.push_back(rawList[i][idx[i]]);
-		outputList.push_back(combination.filter(maxIndel)); // add filtered combination, which guaranteed to be comptatitable
 
-		/* find the rightmost SeedMatch that has more elemtns left after current element */
-		int64_t next = N - 1;
-		while(next >= 0 && idx[next] + 1 >= rawList[next].size())
-			next--;
-		if(next < 0) // so such SeedMatch found, all combination explored
-			break;
-		idx[next]++;  // if found move to next element in that array
+	/* try combination of size 1 .. N */
+	for(size_t N = 1; N <= rawList.size() && outputList.size() < maxAln; ++N) {
+		vector<size_t> idx(N, 0); // index to keep track of next element in each of the N SeedMatch
+		/* non-recursive algorithm to get SeedMatchList by randomly picking up elements from rawList */
+		while(outputList.size() < maxAln) {
+			/* get current combination */
+			SeedMatch combination;
+			combination.reserve(N);
+			for(size_t i = 0; i < N; ++i)
+				combination.push_back(rawList[i][idx[i]]);
+			outputList.push_back(combination.filter(maxIndel)); // add filtered combination, which guaranteed to be comptatitable
 
-		/* reset index right of next */
-		for(size_t i = next + 1; i < N; ++i)
-			idx[i] = 0;
+			/* find the rightmost SeedMatch that has more elemtns left after current element */
+			int64_t next = N - 1;
+			while(next >= 0 && idx[next] + 1 >= rawList[next].size())
+				next--;
+			if(next < 0) // so such SeedMatch found, all combination explored
+				break;
+			idx[next]++;  // if found move to next element in that array
+
+			/* reset index right of next */
+			for(size_t i = next + 1; i < N; ++i)
+				idx[i] = 0;
+		}
 	}
-
 	return outputList;
 }
 

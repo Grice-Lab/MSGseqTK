@@ -21,8 +21,7 @@
 #include <regex> // C++11
 #include "DNAseq.h"
 #include "ScoreScheme.h"
-#include "MEM.h"
-#include "MEMS.h"
+#include "SMEM.h"
 #include "MetaGenome.h"
 #include "BAM.h"
 
@@ -104,7 +103,7 @@ struct Alignment {
 
 		/** test whether two SeedPairs are compatitable */
 		static bool isCompatitable(const SeedPair& lhs, const SeedPair& rhs) {
-			return GLoc::isCompatitable(lhs, rhs) && lhs.to < rhs.from;
+			return lhs.to <= rhs.from && GLoc::isCompatitable(lhs, rhs);
 		}
 
 		/** test whether two SeedPairs are compatitable and ordered and with not too much indels */
@@ -391,10 +390,10 @@ struct Alignment {
 	/** get a search region given max indel-rate */
 	static Loc getSearchRegion(int64_t start, int64_t end);
 
-	/** get SeedMatchList from a pre-calculated MEMS */
-	static SeedMatchList getSeedMatchList(const MEMS& mems, uint32_t maxAln = MAX_ALIGN);
+	/** get SeedMatchList from a pre-calculated and ordered SMEM_LIST */
+	static SeedMatchList getSeedMatchList(const SMEMS& smems, uint32_t maxAln = MAX_ALIGN);
 
-	/** get permutations from raw list */
+	/** get combination from raw list */
 	static SeedMatchList permuteSeedMatchList(const SeedMatchList& rawList, int64_t maxIndels, uint32_t maxAln = MAX_ALIGN);
 
 	/** get candidate Alignments from SeedMatch list given both fwd and revcom read */

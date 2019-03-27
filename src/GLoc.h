@@ -97,9 +97,9 @@ struct GLoc: public Loc {
 		return isOverlap(lhs, rhs) ? 0 : lhs.start < rhs.start ? rhs.start - lhs.end + 1: lhs.start - rhs.end + 1;
 	}
 
-	/** test whether two GLocs are compatitable (ordered by strand) */
+	/** test whether two GLocs are compatitable (linearly ordered) */
 	static bool isCompatitable(const GLoc& lhs, const GLoc& rhs) {
-		return lhs.tid == rhs.tid && lhs.strand == rhs.strand && lhs.end < rhs.start;
+		return lhs.tid == rhs.tid && lhs.strand == rhs.strand && lhs.end <= rhs.start;
 	}
 
 	/** decode strand to char */
