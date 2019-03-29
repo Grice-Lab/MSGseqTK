@@ -43,10 +43,11 @@ using std::ostream;
 class TSVRecord {
 public:
 	/** nested types and enums */
-	struct TSVHeader {
+	class TSVHeader {
+	public:
 		/** constructors */
 		/** default constructor */
-		TSVHeader() {  }
+		TSVHeader() = default;
 
 		/** construct a header with a list of names */
 		explicit TSVHeader(const vector<string>& headerNames): names(headerNames) {
@@ -98,10 +99,11 @@ public:
 
 		friend ostream& operator<<(ostream& out, const TSVHeader& header);
 
-	private:
+	protected:
 		/** internal method */
 		void setHeaderIndex();
 
+	private:
 		/** member fields */
 		vector<string> names;
 		map<string, size_t> index;
