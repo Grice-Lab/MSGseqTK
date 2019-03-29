@@ -12,14 +12,14 @@ namespace MSGseqTK {
 
 ostream& GLoc::save(ostream& out) const {
 	Loc::save(out);
-	out.write((const char*) &tid, sizeof(int32_t));
+	out.write((const char*) &tid, sizeof(int64_t));
 	out.write((const char*) &strand, sizeof(STRAND));
 	return out;
 }
 
 istream& GLoc::load(istream& in) {
 	Loc::load(in);
-	in.read((char*) &tid, sizeof(int32_t));
+	in.read((char*) &tid, sizeof(int64_t));
 	in.read((char*) &strand, sizeof(STRAND));
 	return in;
 }

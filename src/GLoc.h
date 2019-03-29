@@ -14,8 +14,9 @@ namespace EGriceLab {
 namespace MSGseqTK {
 
 /** an extended location class with chrom and strand info */
-struct GLoc: public Loc {
-	/* enums */
+class GLoc: public Loc {
+public:
+	/* nested enums */
 	enum STRAND { FWD = 1 /* forward */, REV /* reverse-complement */, UNK /* unknown */  };
 
 	/* constructors */
@@ -23,7 +24,7 @@ struct GLoc: public Loc {
 	GLoc() = default;
 
 	/** construct with all given values */
-	GLoc(int64_t start, int64_t end, int32_t tid, STRAND strand) : Loc(start, end), tid(tid), strand(strand)
+	GLoc(int64_t start, int64_t end, int64_t tid, STRAND strand) : Loc(start, end), tid(tid), strand(strand)
 	{  }
 
 	/** construct with basic values */
@@ -31,6 +32,23 @@ struct GLoc: public Loc {
 	{  }
 
 	virtual ~GLoc() {  }
+
+	/* getters and setters */
+	STRAND getStrand() const {
+		return strand;
+	}
+
+	void setStrand(STRAND strand = UNK) {
+		this->strand = strand;
+	}
+
+	int64_t getTid() const {
+		return tid;
+	}
+
+	void setTid(int64_t tid = -1) {
+		this->tid = tid;
+	}
 
 	/* member methods */
 	/** complement a GenomeLoc */
@@ -94,12 +112,7 @@ struct GLoc: public Loc {
 	}
 
 	static int64_t dist(const GLoc& lhs, const GLoc& rhs) {
-		return isOverlap(lhs, rhs) ? 0 : lhs.start < rhs.start ? rhs.start - lhs.end + 1: lhs.start - rhs.end + 1;
-	}
-
-	/** test whether two GLocs are compatitable (linearly ordered) */
-	static bool isCompatitable(const GLoc& lhs, const GLoc& rhs) {
-		return lhs.tid == rhs.tid && lhs.strand == rhs.strand && lhs.end <= rhs.start;
+		return isOverlap(lhs, rhs) ? 0 : Loc::dist(lhs, rhs);
 	}
 
 	/** decode strand to char */
@@ -114,18 +127,20 @@ struct GLoc: public Loc {
 	friend bool operator<(const GLoc& lhs, const GLoc& rhs);
 
 	/* member fields */
-	int32_t tid = -1;
+private:
+	int64_t tid = -1;
 	STRAND strand = UNK;
 };
 
 inline bool operator==(const GLoc& lhs, const GLoc& rhs) {
-	return lhs.tid == rhs.tid && lhs.strand == rhs.strand && dynamic_cast<const Loc&>(lhs) == dynamic_cast<const Loc&>(rhs);
+	return dynamic_cast<const Loc&>(lhs) == dynamic_cast<const Loc&>(rhs)
+			&& lhs.tid == rhs.tid && lhs.strand == rhs.strand;
 }
 
 inline bool operator<(const GLoc& lhs, const GLoc& rhs) {
-	return lhs.tid != rhs.tid ? lhs.tid < rhs.tid :
-			lhs.strand != rhs.strand ? lhs.strand < rhs.strand :
-					dynamic_cast<const Loc&>(lhs) < dynamic_cast<const Loc&>(rhs);
+	return dynamic_cast<const Loc&>(lhs) != dynamic_cast<const Loc&>(rhs) ?
+			dynamic_cast<const Loc&>(lhs) < dynamic_cast<const Loc&>(rhs) :
+			lhs.tid != rhs.tid ? lhs.tid < rhs.tid : lhs.strand < rhs.strand;
 }
 
 inline bool operator!=(const GLoc& lhs, const GLoc& rhs) {
@@ -137,7 +152,7 @@ inline bool operator<=(const GLoc& lhs, const GLoc& rhs) {
 }
 
 inline bool operator>(const GLoc& lhs, const GLoc& rhs) {
-	return !(lhs <= rhs);
+	return rhs < lhs;
 }
 
 inline bool operator>=(const GLoc& lhs, const GLoc& rhs) {
@@ -146,5 +161,22 @@ inline bool operator>=(const GLoc& lhs, const GLoc& rhs) {
 
 } /* namespace MSGseqTK */
 } /* namespace EGriceLab */
+
+/** template specialization for customized hash function in std namespace */
+namespace std {
+template<>
+class hash<EGriceLab::MSGseqTK::GLoc> {
+public:
+  size_t operator() (const EGriceLab::MSGseqTK::GLoc& gLoc) const {
+	size_t res = 0;
+	res ^= gLoc.getStart() + 0x9e3779b9 + (res << 6) + (res >> 2);
+	res ^= gLoc.getEnd() + 0x9e3779b9 + (res << 6) + (res >> 2);
+	res ^= gLoc.getTid() + 0x9e3779b9 + (res << 6) + (res >> 2);
+	res ^= gLoc.getStrand() + 0x9e3779b9 + (res << 6) + (res >> 2);
+	return res;
+  }
+};
+
+} /* namespace std */
 
 #endif /* SRC_GLOC_H_ */

@@ -19,7 +19,8 @@ using std::istream;
 using std::ostream;
 
 /** a basic location class */
-struct Loc {
+class Loc {
+public:
 	/** default constructor */
 	Loc() = default;
 
@@ -30,13 +31,30 @@ struct Loc {
 	/** destructor */
 	virtual ~Loc() {  }
 
+	/* getters and setters */
+	int64_t getEnd() const {
+		return end;
+	}
+
+	void setEnd(int64_t end = 0) {
+		this->end = end;
+	}
+
+	int64_t getStart() const {
+		return start;
+	}
+
+	void setStart(int64_t start = 0) {
+		this->start = start;
+	}
+
 	/* member methods */
 	int64_t length() const {
 		return end - start;
 	}
 
 	bool empty() const {
-		return length() == 0;
+		return length() <= 0;
 	}
 
 	/** reverse a Loc with given size */
@@ -96,11 +114,11 @@ struct Loc {
 	friend bool operator==(const Loc& lhs, const Loc& rhs);
 	friend bool operator<(const Loc& lhs, const Loc& rhs);
 
+private:
 	/* member fields */
 	int64_t start = 0; /* 0-based */
 	int64_t end = 0;   /* 1-based */
 };
-
 
 inline void Loc::reverseLoc(int64_t size, int64_t& start, int64_t& end) {
 	int64_t tmp = start;
@@ -142,5 +160,20 @@ inline bool operator>=(const Loc& lhs, const Loc& rhs) {
 
 } /* namespace MSGseqTK */
 } /* namespace EGriceLab */
+
+/** template specialization for customized hash function in std namespace */
+namespace std {
+template<>
+class hash<EGriceLab::MSGseqTK::Loc> {
+public:
+  size_t operator() (const EGriceLab::MSGseqTK::Loc& loc) const {
+	size_t res = 0;
+	res ^= loc.getStart() + 0x9e3779b9 + (res << 6) + (res >> 2);
+	res ^= loc.getEnd() + 0x9e3779b9 + (res << 6) + (res >> 2);
+	return res;
+  }
+};
+
+} /* namespace std */
 
 #endif /* SRC_LOC_H_ */
