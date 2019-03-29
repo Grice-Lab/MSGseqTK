@@ -19,7 +19,8 @@ using std::array;
 /**
  * An alignment scoring scheme for DNAalphabet
  */
-struct ScoreScheme {
+class ScoreScheme {
+public:
 	/* constructors */
 	/** default constructor */
 	ScoreScheme() {
@@ -35,6 +36,8 @@ struct ScoreScheme {
 	}
 
 	/* member methods */
+
+
 	/* update match/mismatch scores
 	 * matched score is weighted by # of overlapping bits to relative down-weight IUPAC ambiguous bases */
 	void updateScores();
@@ -75,6 +78,7 @@ struct ScoreScheme {
 	}
 
 	/* member fields */
+private:
 	array<array<double, DNAalphabet::SIZE>, DNAalphabet::SIZE> SCORE; /* match/mismatch score matrix */
 	double matchScore = DEFAULT_MATCH_SCORE;
 	double mismatchPenalty = DEFAULT_MISMATCH_PENALTY;
@@ -82,6 +86,7 @@ struct ScoreScheme {
 	double gapEPenalty = DEFAULT_GAP_EXT_PENALTY;
 	double clipPenalty = DEFAULT_CLIP_PENALTY;
 
+public:
 	/* static fields */
 	static const double DEFAULT_MATCH_SCORE;
 	static const double DEFAULT_MISMATCH_PENALTY;
