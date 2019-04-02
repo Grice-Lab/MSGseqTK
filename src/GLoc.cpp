@@ -27,7 +27,7 @@ istream& GLoc::load(istream& in) {
 ostream& GLoc::write(ostream& out) const {
 	out << tid << ":";
 	Loc::write(out);
-	out << ":" << decodeStrand(strand);
+	out << ":" << decode(strand);
 	return out;
 }
 
@@ -38,11 +38,11 @@ istream& GLoc::read(istream& in) {
 	in.ignore(1, ':');
 	char s;
 	in >> s;
-	strand = encodeStrand(s);
+	strand = encode(s);
 	return in;
 }
 
-char GLoc::decodeStrand(STRAND strand) {
+char GLoc::decode(STRAND strand) {
 	switch(strand) {
 	case FWD:
 		return '+';
@@ -55,7 +55,7 @@ char GLoc::decodeStrand(STRAND strand) {
 	}
 }
 
-GLoc::STRAND GLoc::encodeStrand(char s) {
+GLoc::STRAND GLoc::encode(char s) {
 	switch(s) {
 	case '+':
 		return FWD;

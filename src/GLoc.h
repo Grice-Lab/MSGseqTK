@@ -116,10 +116,10 @@ public:
 	}
 
 	/** decode strand to char */
-	static char decodeStrand(STRAND strand);
+	static char decode(STRAND strand);
 
 	/** encode strand from char */
-	static STRAND encodeStrand(char s);
+	static STRAND encode(char s);
 
 	/* non-member methods */
 	/* relational operators */

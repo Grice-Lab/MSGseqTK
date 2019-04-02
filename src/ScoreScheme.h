@@ -36,7 +36,37 @@ public:
 	}
 
 	/* member methods */
+	double getClipPenalty() const {
+		return clipPenalty;
+	}
 
+	void setClipPenalty(double clipPenalty = DEFAULT_CLIP_PENALTY) {
+		this->clipPenalty = clipPenalty;
+	}
+
+	double getGapEPenalty() const {
+		return gapEPenalty;
+	}
+
+	void setGapEPenalty(double gapEPenalty = DEFAULT_GAP_EXT_PENALTY) {
+		this->gapEPenalty = gapEPenalty;
+	}
+
+	double getGapOPenalty() const {
+		return gapOPenalty;
+	}
+
+	void setGapOPenalty(double gapOPenalty = DEFAULT_GAP_OPEN_PENALTY) {
+		this->gapOPenalty = gapOPenalty;
+	}
+
+	double getMatchScore() const {
+		return matchScore;
+	}
+
+	double getMismatchPenalty() const {
+		return mismatchPenalty;
+	}
 
 	/* update match/mismatch scores
 	 * matched score is weighted by # of overlapping bits to relative down-weight IUPAC ambiguous bases */
@@ -66,13 +96,13 @@ public:
 	}
 
 	/** set match score */
-	void setMatchScore(double matchScore) {
+	void setMatchScore(double matchScore = DEFAULT_MATCH_SCORE) {
 		this->matchScore = matchScore;
 		updateScores();
 	}
 
 	/** set mis-match penalty */
-	void setMismatchPenalty(double mismatchPenalty) {
+	void setMismatchPenalty(double mismatchPenalty = DEFAULT_MISMATCH_PENALTY) {
 		this->mismatchPenalty = mismatchPenalty;
 		updateScores();
 	}
