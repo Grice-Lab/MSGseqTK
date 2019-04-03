@@ -11,7 +11,7 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 
-const double SMEMS::DEFAULT_MAX_EVALUE = 0.01;
+const double SMEM::DEFAULT_MAX_EVALUE = 0.01;
 
 SMEM& SMEM::evaluate() {
 	logP = 0;
@@ -84,6 +84,35 @@ SMEMS SMEMS::findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIn
 	return match;
 }
 
+SMEM SMEM::findSMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+		int64_t& from, int64_t& to) {
+	const size_t L = seq->length();
+	assert(from < L);
+	to = from + 1;
+	nt16_t b = seq->getBase(from);
+	if(!DNAalphabet::isBasic(b)) // first base is non-basic, no-matches
+		return SMEM(); // return an empty SMEM
+
+	/* init */
+	SMEM smem(seq, mtg, fmdidx, from, to, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
+	assert(smem.size > 0 && smem.to <= L);
+	/* forward extension */
+	for(SMEM smem1 = smem; smem.to < L; smem = smem1) {
+		smem1 = static_cast<const SMEM&>(smem).fwdExt();
+		if(smem1.size <= 0)
+			break;
+	}
+	to = smem.to;
+	/* backward extension */
+	for(SMEM smem1 = smem; smem.from > 0; smem = smem1) {
+		smem1 = static_cast<const SMEM&>(smem).backExt();
+		if(smem1.size <= 0)
+			break;
+	}
+	from = smem.from;
+	return smem;
+}
+
 SeedList SMEM::getSeeds() const {
 	SeedList seeds;
 	const size_t N = std::min(MAX_NLOCS, static_cast<size_t>(size));
@@ -101,6 +130,19 @@ SeedList SMEM::getSeeds() const {
 		}
 	}
 	return seeds;
+}
+
+SMEM SMEM::findSMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+		double maxEvalue = DEFAULT_MAX_EVALUE) {
+	SMEMS smems;
+	SMEM smem;
+	for(int64_t from = 0, to = 0; to <= seq->length(); from = smem.evalue() <= maxEvalue ? to + 1 /* good SMEMS */ : to /* bad SMEMS */) {
+		// get longest SMEM  at current position
+		smem = SMEM::findSMEM(seq, mtg, fmdidx, from, to);
+		if(smem.evalue() <= maxEvalue)
+			smems.push_back(smem);
+	}
+	return smems;
 }
 
 SMEMS SMEMS::findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
@@ -130,6 +172,13 @@ SeedList SMEMS::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	/* sort seeds in lexical order */
 	std::sort(allSeeds.begin(), allSeeds.end());
 	return allSeeds;
+}
+
+double SMEMS::loglik() const {
+	double ll = 0;
+	for(const SMEM& smem : *this)
+		ll += smem.loglik();
+	return ll;
 }
 
 double SMEMS::bestLoglik() const {
