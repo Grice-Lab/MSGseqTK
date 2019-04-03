@@ -35,7 +35,6 @@ FMIndex_test \
 FMDIndex_test \
 Genome_test \
 MetaGenomeAnno_test \
-MEM_test \
 SMEM_test \
 Alignment_test
 
@@ -80,14 +79,6 @@ $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/util/libEGUtil.a \
 $(top_srcdir)/src/util/UCSC/libEGUCSC.a
 
-MEM_test_SOURCES = MEM_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
-MEM_test_LDADD = \
-$(top_srcdir)/src/libMSGseqTK.a \
-$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-$(top_srcdir)/src/libsds/src/libsds.la \
-$(top_srcdir)/src/util/libEGUtil.a \
-$(top_srcdir)/src/util/UCSC/libEGUCSC.a
-
 SMEM_test_SOURCES = SMEM_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
 SMEM_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
@@ -118,6 +109,5 @@ FMIndex_test \
 FMDIndex_test \
 Genome_test \
 MetaGenomeAnno_test \
-MEM_test \
 SMEM_test \
 Alignment_test

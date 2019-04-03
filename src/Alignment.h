@@ -19,9 +19,12 @@
 #include <cmath>
 #include <algorithm>
 #include <regex> // C++11
-#include "DNAseq.h"
+#include "MSGseqTKConst.h"
+#include "PrimarySeq.h"
+#include "QualStr.h"
 #include "ScoreScheme.h"
-#include "SMEM.h"
+#include "SeedPair.h"
+#include "SeedChain.h"
 #include "MetaGenome.h"
 #include "BAM.h"
 
@@ -35,180 +38,143 @@ using std::ostream;
 using EGriceLab::SAMtools::BAM;
 using std::vector;
 
-struct Alignment; // forward declaration
-struct AlignmentPE; // forward declaration
+class Alignment; // forward declaration
+class AlignmentPE; // forward declaration
 typedef vector<Alignment> ALIGN_LIST;
 typedef vector<AlignmentPE> PAIR_LIST;
 
 /**
- * an alignment region of between a single-end read/query and a database/target
+ * an alignment region of between a single-end read/query and a database/target using a seed chain
  */
-struct Alignment {
+class Alignment {
+public:
 	typedef uint32_t CIGAR_OP_TYPE;
-	/* nested types and enums */
-	/** A SeedPair is a pair of exact matched seed region between query and target */
-	struct SeedPair : public GLoc {
-		/* constructors */
-		/** default constructor */
-		SeedPair() = default;
-
-		/** construct from given values */
-		SeedPair(int64_t from, int64_t start, int32_t len, int32_t tid, GLoc::STRAND qStrand, double logP)
-		: from(from), to(from + len), GLoc(start, start + len, tid, qStrand), logP(logP)
-		{  }
-
-		/** destructor */
-		virtual ~SeedPair() {  }
-
-		/* member methods */
-		/** test whether this SeedPair is valid */
-		bool isValid() const {
-			return tid >= 0;
-		}
-
-		/**
-		 * save this seed to binary output
-		 * @override base class method
-		 */
-		virtual ostream& save(ostream& out) const;
-
-		/**
-		 * load a seed from a binary input
-		 * @override base class method
-		 */
-		virtual istream& load(istream& in);
-
-		/**
-		 * write this seed to text output
-		 * @override base class method
-		 */
-		virtual ostream& write(ostream& out) const;
-
-		/**
-		 * read this seed from text output
-		 * @override base class method
-		 */
-		virtual istream& read(istream& in);
-
-		/* member fields */
-		int64_t from = 0; /* 0-based query position */
-		int64_t to = 0;   /* 1-based query position */
-		GLoc loc; /* target loc */
-		double logP = NAN; /* log-probability (loglik) of observing this SeedPair by chance */
-
-		/** get total indels between two seeds, positive values indicates insertions, and negative values gives deletions */
-		static int64_t numGaps(const SeedPair& lhs, const SeedPair& rhs) {
-			return (rhs.from - lhs.to) - (rhs.start - lhs.end);
-		}
-
-		/** test whether two SeedPairs are compatitable */
-		static bool isCompatitable(const SeedPair& lhs, const SeedPair& rhs) {
-			return lhs.to <= rhs.from && GLoc::isCompatitable(lhs, rhs);
-		}
-
-		/** test whether two SeedPairs are compatitable and ordered and with not too much indels */
-		static bool isCompatitable(const SeedPair& lhs, const SeedPair& rhs, int64_t maxIndel) {
-			return isCompatitable(lhs, rhs) &&
-					::abs(numGaps(lhs, rhs)) <= maxIndel;
-		}
-	};
-
-	/**
-	 * a SeedMatch is an ordered lists of SeedPairs
-	 */
-	struct SeedMatch : public std::vector<SeedPair> {
-		/* member methods */
-		/** test whether this SeedMatch is compatitable */
-		bool isCompatitable() const;
-
-		/** test whether this SeedMatch is compatitable */
-		bool isCompatitable(int64_t maxIndel) const;
-
-		/** get total length of SeedPairs */
-		int32_t length() const;
-
-		/** get the from position as the first from */
-		int64_t getFrom() const {
-			return front().from;
-		}
-
-		/** get the to position as the last to */
-		int64_t getTo() const {
-			return back().to;
-		}
-
-		/** get start position of this SeedMatch as the first SeedPair start */
-		int64_t getStart() const {
-			return front().start;
-		}
-
-		/** get end position of this SeedMatch as the last SeedPair end */
-		int64_t getEnd() const {
-			return back().end;
-		}
-
-		/** get qStrand */
-		GLoc::STRAND getQStrand() const {
-			return front().strand;
-		}
-
-		/** get tid of this SeedMatch */
-		int32_t getTId() const {
-			return front().tid;
-		}
-
-		/** get loglik of this SeedMatch */
-		double loglik() const {
-			double logP = 0;
-			for(const SeedPair& seed : *this)
-				logP += seed.logP;
-			return logP;
-		}
-
-		/** filter this SeedMatch by removing invalid seeds */
-		SeedMatch& filter();
-
-		/** filter this SeedMatch using greedy algorithm,
-		 * by progressively remove bad SeedPair from it */
-		SeedMatch& filter(int64_t maxIndel);
-	};
-
-	typedef std::vector<SeedMatch> SeedMatchList;
 	typedef basic_string<uint32_t> state_str;
 
 	/* constructors */
 	/** default constructor */
 	Alignment() = default;
 
-	/** construct an AlignmentSE with all fields */
-	Alignment(const DNAseq* query, const DNAseq* target, const QualStr* qual, const string* qname,
+	/** construct an Alignment with all fields */
+	Alignment(const PrimarySeq* read, const PrimarySeq* rcRead, const DNAseq* target,
 			int32_t tid, GLoc::STRAND qStrand, int64_t tShift,
 			int64_t qFrom, int64_t qTo, int64_t tStart, int64_t tEnd,
 			const ScoreScheme* ss, uint8_t mapQ = INVALID_MAP_Q)
-	: query(query), target(target), qual(qual), qname(qname),
+	: read(read), rcRead(rcRead), target(target),
 	  tid(tid), qStrand(qStrand), tShift(tShift),
-	  qFrom(qFrom), qTo(qTo), tStart(tStart), tEnd(tEnd), ss(ss), mapQ(mapQ),
-	  M(MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV)),
-	  I(MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV)),
-	  D(MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV))
+	  qFrom(qFrom), qTo(qTo), tStart(tStart), tEnd(tEnd), ss(ss), mapQ(mapQ)
 	{
-		assert(qFrom == 0 && qTo == query->length()); // cannot accept hard-clipped query
-		initScores();
+		assert(qFrom == 0 && qTo == read->length()); // cannot accept hard-clipped query
+		init();
+	}
+
+	/** construct an Alignment between a query, database and a SeedChain */
+	Alignment(const PrimarySeq* read, const PrimarySeq* rcRead, const MetaGenome& mtg,
+			const ScoreScheme* ss, const SeedChain& chain, uint8_t mapQ = INVALID_MAP_Q)
+	: read(read), rcRead(rcRead), tid(chain.getTid()), target(&mtg.getChromFwdSeq(tid)),
+	  qStrand(chain.getStrand()), tShift(mtg.getChromStart(tid)),
+			qFrom(0), qTo(read->length()), ss(ss), mapQ(mapQ)
+	{
+		init(mtg.getChromFwdStart(tid), mtg.getChromFwdEnd(tid), chain);
 	}
 
 	/** construct an unmapped AlignmentSE with minimum fields */
-	Alignment(const DNAseq* query, const QualStr* qual, const string* qname)
-	: query(query), qual(qual), qname(qname)
+	Alignment(const PrimarySeq* read) : read(read)
 	{  }
 
 	/* member methods */
-	/** test whether this alignment is initiated */
-	bool isInitiated() const {
-		return query != nullptr && target != nullptr && qual != nullptr && ss != nullptr;
+	/** getters and setters */
+
+	int64_t getAlnEnd() const {
+		return alnEnd;
 	}
 
-	/** initiate all score matrices */
-	Alignment& initScores();
+	int64_t getAlnFrom() const {
+		return alnFrom;
+	}
+
+	const state_str& getAlnPath() const {
+		return alnPath;
+	}
+
+	double getAlnScore() const {
+		return alnScore;
+	}
+
+	int64_t getAlnStart() const {
+		return alnStart;
+	}
+
+	int64_t getAlnTo() const {
+		return alnTo;
+	}
+
+	double getLog10P() const {
+		return log10P;
+	}
+
+	uint8_t getMapQ() const {
+		return mapQ;
+	}
+
+	double getPostP() const {
+		return postP;
+	}
+
+	int64_t getFrom() const {
+		return qFrom;
+	}
+
+	GLoc::STRAND getStrand() const {
+		return qStrand;
+	}
+
+	int64_t getTo() const {
+		return qTo;
+	}
+
+	const PrimarySeq* getRcRead() const {
+		return rcRead;
+	}
+
+	const PrimarySeq* getRead() const {
+		return read;
+	}
+
+	const ScoreScheme* getSS() const {
+		return ss;
+	}
+
+	const DNAseq* getTarget() const {
+		return target;
+	}
+
+	int64_t getEnd() const {
+		return tEnd;
+	}
+
+	int32_t getTid() const {
+		return tid;
+	}
+
+	int64_t getShift() const {
+		return tShift;
+	}
+
+	int64_t getStart() const {
+		return tStart;
+	}
+
+	/** test whether this alignment is initiated */
+	bool isInitiated() const {
+		return read != nullptr && rcRead != nullptr && target != nullptr && ss != nullptr;
+	}
+
+	/** init Alignment with current values */
+	Alignment& init();
+
+	/** init Alignment with given MetaGenome and SeedChain */
+	Alignment& init(int64_t chrStart, int64_t chrEnd, const SeedChain& chain);
 
 	/** clear all scores to save storage (for copying/moving) */
 	Alignment& clearScores();
@@ -234,8 +200,8 @@ struct Alignment {
 		return *this;
 	}
 
-	/** calculate all scores in the restricted "SeedMatch" regions using Dynamic-Programming, return the alnScore as the maximum score found */
-	Alignment& calculateScores(const SeedMatch& seeds);
+	/** calculate all scores given a SeedChain restricts using Dynamic-Programming, return the alnScore as the maximum score found */
+	Alignment& calculateScores(const SeedChain& chain);
 
 	/** backtrace alnPath */
 	Alignment& backTrace();
@@ -297,7 +263,7 @@ struct Alignment {
 
 	/** get overall score of this alignment, including soft-clips */
 	double getScore() const {
-		return alnScore - ss->clipPenalty * getClipLen();
+		return alnScore - ss->getClipPenalty() * getClipLen();
 	}
 
 	/** evaluate this alignment log-liklihood using seq, align-path and quality */
@@ -327,19 +293,17 @@ struct Alignment {
 	 * export core info of this alignment to a BAM record, with no aux data
 	 */
 	BAM exportBAM() const {
-		if(qStrand == GLoc::FWD)
-			return BAM(*qname, getFlag(), tid, alnStart, mapQ, getAlnCigar(), getQLen(), dna::nt16Encode(*query), *qual);
-		else
-			return BAM(*qname, getFlag(), tid, alnStart, mapQ, getAlnCigar(), getQLen(), dna::nt16Encode(dna::revcom(*query)), quality::reverse(*qual));
+		const PrimarySeq* query = qStrand == GLoc::FWD ? read : rcRead;
+		return BAM(query->getName(), getFlag(), tid, alnStart, mapQ, getAlnCigar(), getQLen(),
+				dna::nt16Encode(query->getSeq()), query->getQual());
 	}
 
+private:
 	/* member fields */
-	/* htslib required fields */
-	const DNAseq* query = nullptr;
-	const DNAseq* target = nullptr;
-	const QualStr* qual = nullptr; // query qual
-	const string* qname = nullptr; // query name
+	const PrimarySeq* read = nullptr;
+	const PrimarySeq* rcRead = nullptr;
 	int32_t tid = -1;  // target id, should be determined from the database
+	const DNAseq* target = nullptr;
 	GLoc::STRAND qStrand = GLoc::UNK; // query strand
 	int64_t tShift = 0; // target/chromsome shift relative to metagenome
 
@@ -367,6 +331,7 @@ struct Alignment {
 	double log10P = 0;  // log10-liklihood of this alignment, given the alignment and quality
 	double postP = 0;   // posterior probability of this alignment, given all candidate alignments
 
+public:
 	/* static fileds */
 	static const uint8_t INVALID_MAP_Q = 0xff;
 	static const uint32_t MAX_ALIGN = UINT16_MAX;
@@ -379,6 +344,10 @@ struct Alignment {
 	static const std::regex MDTAG_LEADING_PATTERN;
 	static const std::regex MDTAG_MAIN_PATTERN;
 
+	static const string MISMATCH_POSITION_TAG;
+	static const string ALIGNMENT_LOG10LIK_TAG;
+	static const string ALIGNMENT_POSTERIOR_PROB_TAG;
+
 	/* static methods */
 	static CIGAR_OP_TYPE matchMax(double match, double ins, double del);
 	static CIGAR_OP_TYPE insMax(double match, double ins);
@@ -387,18 +356,9 @@ struct Alignment {
 	/** get algnQLen by MD tag */
 	static int32_t mdTag2alnQLen(const string& mdTag);
 
-	/** get a search region given max indel-rate */
-	static Loc getSearchRegion(int64_t start, int64_t end);
-
-	/** get SeedMatchList from a pre-calculated and ordered SMEM_LIST */
-	static SeedMatchList getSeedMatchList(const SMEMS& smems, uint32_t maxAln = MAX_ALIGN);
-
-	/** get combination from raw list */
-	static SeedMatchList permuteSeedMatchList(const SeedMatchList& rawList, int64_t maxIndels, uint32_t maxAln = MAX_ALIGN);
-
-	/** get candidate Alignments from SeedMatch list given both fwd and revcom read */
-	static ALIGN_LIST getAlignments(const ScoreScheme* ss, const MetaGenome* mtg,
-			const PrimarySeq* read, const PrimarySeq* rcRead, const SeedMatchList& seedMatches);
+	/** get calculated and cleaned alignments from database and a ChainList */
+	static ALIGN_LIST buildAlignments(const PrimarySeq* read, const PrimarySeq* rcRead, const MetaGenome& mtg,
+			const ScoreScheme* ss, const ChainList& chains);
 
 	/** filter candidate list of Alignments using alnScore */
 	static ALIGN_LIST& filter(ALIGN_LIST& alnList, double bestFrac);
@@ -414,6 +374,8 @@ struct Alignment {
 
 	/** sort Alignment by mapQ/loglik decreasingly */
 	static ALIGN_LIST& sort(ALIGN_LIST& alnList);
+
+	friend class AlignmentPE;
 };
 
 /**
@@ -421,7 +383,8 @@ struct Alignment {
  * it stores mate Alignments in pointers for performance
  * it never alter the original Alignment objects by using const pointers and keeping its own additional fields
  */
-struct AlignmentPE {
+class AlignmentPE {
+public:
 	/* constructors */
 	/** default constructor */
 	AlignmentPE() = default;
@@ -484,18 +447,24 @@ struct AlignmentPE {
 		this->isize = isize;
 	}
 
-	/** export fwd bam record */
+	/** export fwd BAM */
 	BAM exportFwdBAM() const {
-		return BAM(*(fwdAln->qname), getFwdFlag(), fwdAln->tid, fwdAln->alnStart, fwdAln->mapQ,
-				fwdAln->getAlnCigar(), fwdAln->getQLen(), dna::nt16Encode(*fwdAln->query), *(fwdAln->qual),
-				revAln->tid, revAln->alnStart, isize);
+		BAM fwdBam = fwdAln->exportBAM();
+		// update paired-end info
+		fwdBam.setMapQ(mapQ);
+		fwdBam.setISize(isize);
+		fwdBam.setFlag(getFwdFlag());
+		return fwdBam;
 	}
 
-	/** exportrev bam record */
+	/** export rev BAM */
 	BAM exportRevBAM() const {
-		return BAM(*(revAln->qname), getRevFlag(), revAln->tid, revAln->alnStart, revAln->mapQ,
-				revAln->getAlnCigar(), revAln->getQLen(), dna::nt16Encode(*revAln->query), *(revAln->qual),
-				fwdAln->tid, fwdAln->alnStart, -isize);
+		BAM revBam = fwdAln->exportBAM();
+		// update paired-end info
+		revBam.setMapQ(mapQ);
+		revBam.setISize(isize);
+		revBam.setFlag(getRevFlag());
+		return revBam;
 	}
 
 	/** get fwd flag */
@@ -544,17 +513,6 @@ struct AlignmentPE {
 	static const uint32_t MAX_PAIR = UINT16_MAX;
 };
 
-inline Alignment::SeedMatch& Alignment::SeedMatch::filter() {
-	erase(std::remove_if(begin(), end(), [] (const SeedPair& seed) { return !seed.isValid(); }), end());
-	return *this;
-}
-
-inline Alignment::SeedMatchList operator+(const Alignment::SeedMatchList& lhs, const Alignment::SeedMatchList& rhs) {
-	Alignment::SeedMatchList listM(lhs);
-	listM.insert(listM.end(), rhs.begin(), rhs.end());
-	return listM;
-}
-
 inline Alignment::CIGAR_OP_TYPE Alignment::matchMax(double match, double ins, double del) {
 	double max = match;
 	int s = BAM_CMATCH;
@@ -577,8 +535,11 @@ inline Alignment::CIGAR_OP_TYPE Alignment::delMax(double match, double del) {
 	return match > del ? BAM_CMATCH : BAM_CDEL;
 }
 
-inline Alignment& Alignment::initScores() {
+inline Alignment& Alignment::init() {
 //	assert(isInitiated());
+	M = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
+	I = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
+	D = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
 	M.row(0).setZero();
 	M.col(0).setZero();
 	return *this;
@@ -595,11 +556,12 @@ inline void Alignment::calculateScores(int64_t from, int64_t to, int64_t start, 
 	assert(isInitiated());
 	assert(qFrom <= from && to <= qTo);
 	assert(tStart <= start && end <= tEnd);
+	const DNAseq& query = qStrand == GLoc::FWD ? read->getSeq() : rcRead->getSeq();
 	for(int64_t q = from; q < to; ++q) {
 		int32_t i = q - qFrom + 1; // relative to score matrices
 		for(int64_t t = start; t < end; ++t) {
 			int32_t j = t - tStart + 1; // relative to score matrices
-			double s = ss->getScore((*query)[q], (*target)[t]);
+			double s = ss->getScore(query[q], (*target)[t]);
 			double o = -ss->openGapPenalty();
 			double e = -ss->extGapPenalty();
 			M(i,j) = std::max({
@@ -622,11 +584,11 @@ inline void Alignment::calculateScores(int64_t from, int64_t to, int64_t start, 
 
 inline void Alignment::calculateScores(const SeedPair& pair) {
 	assert(isInitiated());
-	assert(qFrom <= pair.from && pair.to <= qTo && tStart <= pair.start && pair.end <= tEnd);
+	assert(qFrom <= pair.getFrom() && pair.getTo() <= qTo && tStart <= pair.getStart() && pair.getEnd() <= tEnd);
 	for(int32_t k = 0; k < pair.length(); ++k) {
-		int32_t i = pair.from + k - qFrom + 1;
-		int32_t j = pair.start + k - tStart + 1;
-		double s = ss->matchScore;
+		int32_t i = pair.getFrom() + k - qFrom + 1;
+		int32_t j = pair.getStart() + k - tStart + 1;
+		double s = ss->getMatchScore();
 		if(k == 0) {
 			M(i,j) = std::max({
 				M(i-1,j-1) + s,

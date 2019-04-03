@@ -240,7 +240,7 @@ public:
 
 	/** reverse the coordinates of a Loc */
 	Loc reverseLoc(const Loc& loc) const {
-		return Loc(length() - 1 - loc.end, length() - 1 - loc.start); // FM-index length is 1 more than the original seq length
+		return Loc(length() - 1 - loc.getEnd(), length() - 1 - loc.getStart()); // FM-index length is 1 more than the original seq length
 	}
 
 	/* non-member functions */

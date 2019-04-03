@@ -309,7 +309,7 @@ int main() {
 bool isValidLocs(const DNAseq& seq, const DNAseq& pat, const vector<GLoc>& locs) {
 	return std::all_of(locs.begin(), locs.end(),
 			[&](const GLoc& loc) {
-		return loc.strand == GLoc::FWD && pat == seq.substr(loc.start, loc.length()) ||
-				loc.strand == GLoc::REV && dna::revcom(pat) == seq.substr(loc.start, loc.length());
+		return loc.getStrand() == GLoc::FWD && pat == seq.substr(loc.getStart(), loc.length()) ||
+				loc.getStrand() == GLoc::REV && dna::revcom(pat) == seq.substr(loc.getStart(), loc.length());
 	});
 }

@@ -88,7 +88,7 @@ void printUsage(const string& progName) {
 		 << "            --no-contain  FLAG   : not concordant when one mate alignment contains other" << endl
 		 << "            --no-overlap  FLAG   : not concordant when mates overlap" << endl
 		 << "Other:" << endl
-		 << "            -e|--evalue  DBL     : maximum e-value to consider an MEM as significant [" << MEMS::DEFAULT_MAX_EVALUE << "]" << endl
+		 << "            -e|--evalue  DBL     : maximum e-value to consider an MEM as significant [" << SMEMS::DEFAULT_MAX_EVALUE << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -140,7 +140,7 @@ int main(int argc, char* argv[]) {
 	boost::iostreams::filtering_istream fwdIn, revIn;
 
 	bool isPaired = false;
-	double maxEvalue = MEMS::DEFAULT_MAX_EVALUE;
+	double maxEvalue = SMEMS::DEFAULT_MAX_EVALUE;
 //	double maxIndelRate = DEFAULT_INDEL_RATE;
 	int nThreads = DEFAULT_NUM_THREADS;
 
@@ -206,19 +206,21 @@ int main(int argc, char* argv[]) {
 	}
 
 	if(cmdOpts.hasOpt("--gap-open")) {
-		ss.gapOPenalty = ::atof(cmdOpts.getOptStr("--gap-open"));
-		if(!(ss.gapOPenalty >= 0)) {
+		double op = ::atof(cmdOpts.getOptStr("--gap-open"));
+		if(!(op >= 0)) {
 			cerr << "--gap-open must be non-negative" << endl;
 			return EXIT_FAILURE;
 		}
+		ss.setGapOPenalty(op);
 	}
 
 	if(cmdOpts.hasOpt("--gap-ext")) {
-		ss.gapEPenalty = ::atof(cmdOpts.getOptStr("--gap-ext"));
-		if(!(ss.gapEPenalty >= 0)) {
+		double op = ::atof(cmdOpts.getOptStr("--gap-ext"));
+		if(!(op >= 0)) {
 			cerr << "--gap-ext must be non-negative" << endl;
 			return EXIT_FAILURE;
 		}
+		ss.setGapEPenalty(op);
 	}
 
 	if(cmdOpts.hasOpt("--max-mems"))
@@ -429,15 +431,15 @@ int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport) {
 		const Alignment& aln = alnList[i];
 		/* construct BAM */
 		BAM bamAln = aln.exportBAM();
-		/* set flags */
+		/* set additional flags only available at output */
 		bamAln.setSecondaryFlag(i > 0);
 		/* set standard aux tags */
 		bamAln.setAux(NUM_REPORTED_ALIGNMENT_TAG, numReport);
 		bamAln.setAux(NUM_TOTAL_ALIGNMENT_TAG, alnList.size());
 		bamAln.setAux(MISMATCH_POSITION_TAG, aln.getAlnMDTag());
 		/* set customized aux tags */
-		bamAln.setAux(ALIGNMENT_LOG10LIK_TAG, aln.log10P);
-		bamAln.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, aln.postP);
+		bamAln.setAux(ALIGNMENT_LOG10LIK_TAG, aln.getLog10P());
+		bamAln.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, aln.getPostP());
 		/* write BAM */
 		out.write(bamAln);
 	}
@@ -452,12 +454,9 @@ int output(const PAIR_LIST& pairList, SAMfile& out, uint32_t maxReport) {
 		/* construct BAM */
 		BAM bamFwd = pair.exportFwdBAM();
 		BAM bamRev = pair.exportRevBAM();
-		/* set flags */
+		/* set additional flags only available at output */
 		bamFwd.setSecondaryFlag(i > 0);
 		bamRev.setSecondaryFlag(i > 0);
-		/* set mapQ */
-		bamFwd.setMapQ(pair.mapQ);
-		bamRev.setMapQ(pair.mapQ);
 		/* set standard aux tags */
 		bamFwd.setAux(NUM_REPORTED_ALIGNMENT_TAG, numReport);
 		bamFwd.setAux(NUM_TOTAL_ALIGNMENT_TAG, pairList.size());
@@ -501,13 +500,11 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 				const PrimarySeq& read = seqI.nextSeq();
 #pragma omp task firstprivate(read)
 				{
-					MEMS mems = MEMS::searchMEMS(&read, &mtg, &fmdidx, maxEvalue, GLoc::FWD); // fwd sampling
-					mems.findLocs(); // only find fwd mapping locs (which can be on reverse-complement genome)
-					/* get SeedMatchList */
-					const Alignment::SeedMatchList& seedMatches = Alignment::getSeedMatchList(mems, maxSeedMatches);
-					if(seedMatches.empty()) {
+					/* get SeedList */
+					SeedList seeds = SMEMS::findSeeds(&read, &mtg, &fmdidx, maxEvalue);
+					if(seeds.empty()) {
 #pragma omp critical(LOG)
-						debugLog << "Unable to find any valid SeedMatches for '" << read.getName() << "'" << endl;
+						debugLog << "Unable to find any valid SMEM seads for '" << read.getName() << "'" << endl;
 #pragma omp critical(BAM_OUTPUT)
 						output(read, out);
 					}
@@ -515,9 +512,9 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 						const PrimarySeq& rcRead = read.revcom();
 						debugLog << "id: " << read.getName() << endl;
 						/* get alignments from SeedMatchList */
-						debugLog << "found " << seedMatches.size() << " seed-matches" << endl;
-						ALIGN_LIST alnList = Alignment::getAlignments(&ss, &mtg, &read, &rcRead, seedMatches);
-						debugLog << "get " << alnList.size() << " potential aligns" << endl;
+						ALIGN_LIST alnList = Alignment::buildAlignments(&read, &rcRead, mtg, &ss,
+								SeedChain::getChains(seeds, read.length() * Alignment::MAX_INDEL_RATE));
+						debugLog << "get " << alnList.size() << " potential alignments" << endl;
 						/* filter alignments */
 						Alignment::filter(alnList, bestFrac);
 						debugLog << "get " << alnList.size() << " best aligns" << endl;
@@ -566,22 +563,20 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 				}
 #pragma omp task firstprivate(fwdRead, revRead)
 				{
-					MEMS_PE memsPE = MEMS_PE::sampleMEMS(&fwdRead, &revRead, &mtg, &fmdidx);
-					memsPE.findLocs(); // find locs on fwd strand only
-					/* get SeedMatchLists */
-					Alignment::SeedMatchList fwdSeedMatches = Alignment::getSeedMatchList(memsPE.fwdMems, maxSeedMatches);
-					Alignment::SeedMatchList revSeedMatches = Alignment::getSeedMatchList(memsPE.revMems, maxSeedMatches);
-					if(fwdSeedMatches.empty() && revSeedMatches.empty()) {
+					SeedListPE seedsPE = SMEMS::findSeedsPE(&fwdRead, &revRead, &mtg, &fmdidx, maxEvalue);
+					if(seedsPE.first.empty() && seedsPE.second.empty()) {
 #pragma omp critical(LOG)
-						debugLog << "Unable to find any valid SeedMatches for read pair '" << fwdRead.getName() << "'" << endl;
+						debugLog << "Unable to find any valid SMEMS seeds for read pair '" << fwdRead.getName() << "'" << endl;
 #pragma omp critical(BAM_OUTPUT)
 						output(fwdRead, revRead, out);
 					}
 					else {
 						PrimarySeq rcFwdRead = static_cast<const PrimarySeq&>(fwdRead).revcom();
 						PrimarySeq rcRevRead = static_cast<const PrimarySeq&>(revRead).revcom();
-						ALIGN_LIST fwdAlnList = Alignment::getAlignments(&ss, &mtg, &fwdRead, &rcFwdRead, fwdSeedMatches);
-						ALIGN_LIST revAlnList = Alignment::getAlignments(&ss, &mtg, &revRead, &rcRevRead, revSeedMatches);
+						ALIGN_LIST fwdAlnList = Alignment::buildAlignments(&fwdRead, &rcFwdRead, mtg, &ss,
+								SeedChain::getChains(seedsPE.first,  fwdRead.length() * Alignment::MAX_INDEL_RATE));
+						ALIGN_LIST revAlnList = Alignment::buildAlignments(&revRead, &rcRevRead, mtg, &ss,
+								SeedChain::getChains(seedsPE.second, fwdRead.length() * Alignment::MAX_INDEL_RATE));
 						/* filter alignments */
 						Alignment::filter(fwdAlnList, bestFrac);
 						Alignment::filter(revAlnList, bestFrac);

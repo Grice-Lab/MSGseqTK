@@ -91,13 +91,13 @@ target_triplet = @target@
 check_PROGRAMS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
 	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) \
 	FMDIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
-	MetaGenomeAnno_test$(EXEEXT) MEM_test$(EXEEXT) \
-	SMEM_test$(EXEEXT) Alignment_test$(EXEEXT)
+	MetaGenomeAnno_test$(EXEEXT) SMEM_test$(EXEEXT) \
+	Alignment_test$(EXEEXT)
 TESTS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
 	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) \
 	FMDIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
-	MetaGenomeAnno_test$(EXEEXT) MEM_test$(EXEEXT) \
-	SMEM_test$(EXEEXT) Alignment_test$(EXEEXT)
+	MetaGenomeAnno_test$(EXEEXT) SMEM_test$(EXEEXT) \
+	Alignment_test$(EXEEXT)
 subdir = test
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_with_htslib.m4 \
@@ -152,14 +152,6 @@ am_Genome_test_OBJECTS = Genome_test.$(OBJEXT) \
 	$(top_srcdir)/src/MSGseqTKEnv.$(OBJEXT)
 Genome_test_OBJECTS = $(am_Genome_test_OBJECTS)
 Genome_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
-	$(top_srcdir)/src/util/libEGUtil.a \
-	$(top_srcdir)/src/util/UCSC/libEGUCSC.a
-am_MEM_test_OBJECTS = MEM_test.$(OBJEXT) \
-	$(top_srcdir)/src/MSGseqTKEnv.$(OBJEXT)
-MEM_test_OBJECTS = $(am_MEM_test_OBJECTS)
-MEM_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
-	$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-	$(top_srcdir)/src/libsds/src/libsds.la \
 	$(top_srcdir)/src/util/libEGUtil.a \
 	$(top_srcdir)/src/util/UCSC/libEGUCSC.a
 am_MetaGenomeAnno_test_OBJECTS = MetaGenomeAnno_test.$(OBJEXT) \
@@ -219,14 +211,14 @@ am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(Alignment_test_SOURCES) $(DNAseq_test_SOURCES) \
 	$(FMDIndex_test_SOURCES) $(FMIndex_test_SOURCES) \
-	$(Genome_test_SOURCES) $(MEM_test_SOURCES) \
-	$(MetaGenomeAnno_test_SOURCES) $(PrimarySeq_test_SOURCES) \
-	$(SMEM_test_SOURCES) $(SeqIO_test_SOURCES)
+	$(Genome_test_SOURCES) $(MetaGenomeAnno_test_SOURCES) \
+	$(PrimarySeq_test_SOURCES) $(SMEM_test_SOURCES) \
+	$(SeqIO_test_SOURCES)
 DIST_SOURCES = $(Alignment_test_SOURCES) $(DNAseq_test_SOURCES) \
 	$(FMDIndex_test_SOURCES) $(FMIndex_test_SOURCES) \
-	$(Genome_test_SOURCES) $(MEM_test_SOURCES) \
-	$(MetaGenomeAnno_test_SOURCES) $(PrimarySeq_test_SOURCES) \
-	$(SMEM_test_SOURCES) $(SeqIO_test_SOURCES)
+	$(Genome_test_SOURCES) $(MetaGenomeAnno_test_SOURCES) \
+	$(PrimarySeq_test_SOURCES) $(SMEM_test_SOURCES) \
+	$(SeqIO_test_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -659,14 +651,6 @@ $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/util/libEGUtil.a \
 $(top_srcdir)/src/util/UCSC/libEGUCSC.a
 
-MEM_test_SOURCES = MEM_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
-MEM_test_LDADD = \
-$(top_srcdir)/src/libMSGseqTK.a \
-$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-$(top_srcdir)/src/libsds/src/libsds.la \
-$(top_srcdir)/src/util/libEGUtil.a \
-$(top_srcdir)/src/util/UCSC/libEGUCSC.a
-
 SMEM_test_SOURCES = SMEM_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
 SMEM_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
@@ -761,10 +745,6 @@ Genome_test$(EXEEXT): $(Genome_test_OBJECTS) $(Genome_test_DEPENDENCIES) $(EXTRA
 	@rm -f Genome_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(Genome_test_OBJECTS) $(Genome_test_LDADD) $(LIBS)
 
-MEM_test$(EXEEXT): $(MEM_test_OBJECTS) $(MEM_test_DEPENDENCIES) $(EXTRA_MEM_test_DEPENDENCIES) 
-	@rm -f MEM_test$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(MEM_test_OBJECTS) $(MEM_test_LDADD) $(LIBS)
-
 MetaGenomeAnno_test$(EXEEXT): $(MetaGenomeAnno_test_OBJECTS) $(MetaGenomeAnno_test_DEPENDENCIES) $(EXTRA_MetaGenomeAnno_test_DEPENDENCIES) 
 	@rm -f MetaGenomeAnno_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(MetaGenomeAnno_test_OBJECTS) $(MetaGenomeAnno_test_LDADD) $(LIBS)
@@ -794,7 +774,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FMDIndex_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FMIndex_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Genome_test.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MEM_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MetaGenomeAnno_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PrimarySeq_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SMEM_test.Po@am__quote@
@@ -1068,13 +1047,6 @@ Genome_test.log: Genome_test$(EXEEXT)
 MetaGenomeAnno_test.log: MetaGenomeAnno_test$(EXEEXT)
 	@p='MetaGenomeAnno_test$(EXEEXT)'; \
 	b='MetaGenomeAnno_test'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-MEM_test.log: MEM_test$(EXEEXT)
-	@p='MEM_test$(EXEEXT)'; \
-	b='MEM_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

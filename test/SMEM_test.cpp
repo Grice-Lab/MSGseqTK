@@ -15,7 +15,7 @@
 using namespace std;
 using namespace EGriceLab::MSGseqTK;
 
-static bool isValidSMEM(const DNAseq& db, const SMEM& smem);
+static bool isValidSeed(const DNAseq& target, const DNAseq& query, const SeedPair& seed);
 
 int main() {
 	const DNAseq chr1 = dna::encode("ACGTCGTAGTACTACGNACGTCGTAGTACTACG");
@@ -34,28 +34,20 @@ int main() {
 
 	cout << "SMEM search ..." << endl;
 	PrimarySeq read("ACGTAGTA", "seq1");
-	for(int64_t from = 0, to = 1; from < read.length(); from = to) {
-		cout << "finding smem at from: " << from << endl;
-		SMEMS smems = SMEM::findSMEMS(&read, &mtg, &fmdidx, from, to);
-		SMEM::findLocs(smems);
-		cout << "found " << smems.size() << " SMEMS between read: " << read.getSeq() << " and db:" << endl << fmdidx.getSeq() << endl << "from: " << from << " to:" << to << endl;
-		for(const SMEM& smem : smems) {
-			if(!isValidSMEM(genomeSeq, smem))
-				return EXIT_FAILURE;
-		}
-	}
+	SeedList seeds = SMEMS::findSeeds(&read, &mtg, &fmdidx, inf);
+	for(const SeedPair& seed : seeds)
+		if(!isValidSeed(genomeSeq, read.getSeq(), seed))
+			return EXIT_FAILURE;
 }
 
-bool isValidSMEM(const DNAseq& db, const SMEM& smem) {
-	for(const GLoc& loc : smem.locs) {
-		DNAseq dbSeg = db.substr(loc.start, loc.length());
-		DNAseq readSeg = smem.seq->getSeq().substr(smem.from, smem.length());
-		if(loc.strand == GLoc::REV)
-			dna::revcom(readSeg);
-		if(dbSeg != readSeg) {
-			cerr << "Unmatched SMEM seq db: " << dbSeg << " read: " << readSeg << endl;
-			return false;
-		}
+bool isValidSeed(const DNAseq& target, const DNAseq& query, const SeedPair& seed) {
+	DNAseq tSeg = target.substr(seed.getStart(), seed.length());
+	DNAseq qSeg = query.substr(seed.getFrom(), seed.length());
+	if(seed.getStrand() == GLoc::REV)
+		dna::revcom(qSeg);
+	if(tSeg != qSeg) {
+		cerr << "Unmatched SMEM seq db: " << tSeg << " read: " << qSeg << endl;
+		return false;
 	}
 	return true;
 }

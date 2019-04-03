@@ -192,14 +192,14 @@ public:
 	 * get the start of the i-th genome
 	 */
 	int64_t getGenomeStart(size_t i) const {
-		return getGenomeLoc(i).start;
+		return getGenomeLoc(i).getStart();
 	}
 
 	/**
 	 * get the end of the i-th genome
 	 */
 	int64_t getGenomeEnd(size_t i) const {
-		return getGenomeLoc(i).end;
+		return getGenomeLoc(i).getEnd();
 	}
 
 	/** get the length of the i-th genome, include fwd + rev */
@@ -232,7 +232,7 @@ public:
 	 * get the start of the i-th chrom
 	 */
 	int64_t getChromStart(size_t i) const {
-		return getChromLoc(i).start;
+		return getChromLoc(i).getStart();
 	}
 
 	/**
@@ -253,7 +253,7 @@ public:
 	 * get the end of the i-th chrom
 	 */
 	int64_t getChromEnd(size_t i) const {
-		return getChromLoc(i).end;
+		return getChromLoc(i).getEnd();
 	}
 
 	/**
@@ -410,7 +410,7 @@ inline size_t MetaGenome::getGenomeIndex(const string& genomeId) const {
 
 inline size_t MetaGenome::getGenomeIndex(int64_t pos) const {
 	GENOME_LOC::const_iterator result = std::find_if(genomeIdx2Loc.begin(), genomeIdx2Loc.end(),
-			[=] (const GENOME_LOC::value_type& item) { return item.start <= pos && pos < item.end; }
+			[=] (const GENOME_LOC::value_type& item) { return item.getStart() <= pos && pos < item.getEnd(); }
 	);
 	return result != genomeIdx2Loc.end() ? result - genomeIdx2Loc.begin() : -1;
 }
@@ -422,7 +422,7 @@ inline size_t MetaGenome::getChromIndex(const string& chrName) const {
 
 inline size_t MetaGenome::getChromIndex(int64_t pos) const {
 	CHROM_LOC::const_iterator result = std::find_if(chromIdx2Loc.begin(), chromIdx2Loc.end(),
-			[=] (const CHROM_LOC::value_type& item) { return item.start <= pos && pos < item.end; }
+			[=] (const CHROM_LOC::value_type& item) { return item.getStart() <= pos && pos < item.getEnd(); }
 	);
 	return result != chromIdx2Loc.end() ? result - chromIdx2Loc.begin() : -1;
 }

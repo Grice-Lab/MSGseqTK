@@ -38,9 +38,9 @@ PrimarySeq.cpp \
 SeqIO.cpp \
 Loc.cpp \
 GLoc.cpp \
-MEM.cpp \
-MEMS.cpp \
 SMEM.cpp \
+SeedPair.cpp \
+SeedChain.cpp \
 ScoreScheme.cpp \
 FMIndex.cpp \
 FMDIndex.cpp \

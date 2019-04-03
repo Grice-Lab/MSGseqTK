@@ -5,12 +5,13 @@
  *      Author: zhengqi
  */
 #include <cassert>
+#include "MSGseqTKConst.h"
 #include "SMEM.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
 
-const double SMEM::DEFAULT_MAX_EVALUE = 0.01;
+const double SMEMS::DEFAULT_MAX_EVALUE = 0.01;
 
 SMEM& SMEM::evaluate() {
 	logP = 0;
@@ -19,29 +20,7 @@ SMEM& SMEM::evaluate() {
 	return *this;
 }
 
-int64_t SMEM::dbDist(const SMEM& lhs, const SMEM& rhs) {
-	assert(lhs.mtg == rhs.mtg);
-	int64_t minD = INT64_MAX;
-	for(const Loc& loc1 : lhs.locs)
-		for(const Loc& loc2 : rhs.locs)
-			if(isCompatitable(lhs.mtg, loc1, loc2))
-				minD = std::min(minD, Loc::dist(loc1, loc2));
-	return minD;
-}
-
-ostream& SMEM::write(ostream& out) const {
-	/* write basic info */
-	out << from << '-' << to << ':' << loglik() << ':'; /* SAstart and SAend are ignored */
-	/* write Loc info */
-	for(vector<GLoc>::const_iterator loc = locs.begin(); loc != locs.end(); ++loc) {
-		if(loc != locs.begin())
-			out << ',';
-		out << *loc;
-	}
-	return out;
-}
-
-SMEMS SMEM::findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+SMEMS SMEMS::findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		int64_t& from, int64_t& to) {
 	const size_t L = seq->length();
 	assert(from < L);
@@ -105,73 +84,59 @@ SMEMS SMEM::findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDInd
 	return match;
 }
 
-SMEM& SMEM::findLocs(size_t maxNLocs) {
-	locs.reserve(size);
-	const size_t N = std::min(maxNLocs, static_cast<size_t>(size));
+SeedList SMEM::getSeeds() const {
+	SeedList seeds;
+	const size_t N = std::min(MAX_NLOCS, static_cast<size_t>(size));
+	seeds.reserve(N);
 	for(size_t i = 0; i < N; ++i) {
 		{
 			int64_t start = fmdidx->accessSA(fwdStart + i);
 			if(mtg->getStrand(start) == GLoc::FWD) // always only search loc on fwd tStrand
-				locs.push_back(GLoc(start, start + length(), mtg->getLocId(start), GLoc::FWD));
+				seeds.push_back(SeedPair(from, start, length(), mtg->getLocId(start), GLoc::FWD, loglik()));
 		}
 		{
 			int64_t start = fmdidx->accessSA(revStart + i);
 			if(mtg->getStrand(start) == GLoc::FWD) // always only search loc on fwd tStrand
-				locs.push_back(GLoc(start, start + length(), mtg->getLocId(start), GLoc::REV));
+				seeds.push_back(SeedPair(from, start, length(), mtg->getLocId(start), GLoc::REV, loglik()));
 		}
 	}
-	return *this;
+	return seeds;
 }
 
-int64_t SMEM::length(const SMEMS& smemChain) {
-	int64_t L = 0;
-	for(const SMEM& smem : smemChain)
-		L += smem.length();
-	return L;
-}
-
-ostream& SMEM::write(const SMEMS& smemChain, ostream& out) {
-	for(SMEMS::const_iterator smem = smemChain.begin(); smem != smemChain.end(); ++smem) {
-		if(smem != smemChain.begin())
-			out << ';';
-		out << *smem;
-	}
-	return out;
-}
-
-double SMEM::bestLoglik(const SMEMS& smems) {
-	double minLL= inf;
-	for(const SMEM& smem : smems)
-		minLL = std::min(minLL, smem.loglik());
-	return minLL;
-}
-
-double SMEM::bestEvalue(const SMEMS& smems) {
-	double minE = inf;
-	for(const SMEM& smem : smems)
-		minE = std::min(minE, smem.evalue());
-	return minE;
-}
-
-bool SMEM::isCompatitable(const SMEMS& smems) {
-	if(smems.size() <= 1)
-		return true;
-	for(SMEMS::const_iterator smem = smems.begin(); smem < smems.end() - 1; ++smem)
-		if(!isCompatitable(*smem, *(smem + 1)))
-			return false;
-	return true;
-}
-
-SMEMS SMEM::searchSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx, double maxEvalue) {
-	SMEMS smemsMerged;
-	double bestE = 0;
+SMEMS SMEMS::findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+		double maxEvalue) {
+	SMEMS allSmems;
+	double bestE = inf;
 	for(int64_t from = 0, to = 0; from < seq->length(); from = bestE <= maxEvalue ? to + 1 /* good SMEMS */ : to /* bad SMEMS */) {
-		SMEMS smems = SMEM::findSMEMS(seq, mtg, fmdidx, from, to);
-		SMEM::filter(smems, maxEvalue); // filter bad SMEM, list may become empty
-		smemsMerged.insert(smemsMerged.end(), smems.begin(), smems.end());
-		bestE = SMEM::bestEvalue(smems); // update bestE
+		// get SMEM list at current position
+		const SMEMS& smems = SMEMS::findSMEMS(seq, mtg, fmdidx, from, to);
+		allSmems.insert(allSmems.end(), smems.begin(), smems.end());
+		bestE = std::min(bestE, smems.bestEvalue()); // update bestE
 	}
-	return SMEM::sort(smemsMerged);
+	return allSmems;
+}
+
+SeedList SMEMS::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+		double maxEvalue) {
+	const SMEMS& smems = findSMEMS(seq, mtg, fmdidx, maxEvalue); // get SMEMS
+	/* get seeds */
+	SeedList allSeeds;
+	for(const SMEM& smem : smems) {
+		if(smem.evalue() <= maxEvalue) {
+			const SeedList& seeds = smem.getSeeds();
+			allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
+		}
+	}
+	/* sort seeds in lexical order */
+	std::sort(allSeeds.begin(), allSeeds.end());
+	return allSeeds;
+}
+
+double SMEMS::bestLoglik() const {
+	double minLoglik = inf;
+	for(const SMEM& smem : *this)
+		minLoglik = std::min(minLoglik, smem.loglik());
+	return minLoglik;
 }
 
 } /* namespace MSGseqTK */

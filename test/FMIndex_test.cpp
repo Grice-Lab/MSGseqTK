@@ -237,7 +237,7 @@ int main() {
 
 bool isValidLocs(const DNAseq& seq, const DNAseq& pat, const vector<Loc>& locs) {
 	for(const Loc& loc : locs)
-		if(seq.substr(loc.start, loc.length()) != pat)
+		if(seq.substr(loc.getStart(), loc.length()) != pat)
 			return false;
 	return true;
 }
