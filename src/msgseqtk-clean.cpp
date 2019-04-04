@@ -75,7 +75,7 @@ void printUsage(const string& progName) {
 		 << "            -m  FILE             : output of cleaned mate/reverse reads" << ZLIB_SUPPORT << endl
 		 << "            -a  FILE             : write an additional TSV file with the detailed assignment information for each read" << endl
 		 << "            -L|--lod  DBL        : minimum log-odd required to determine a read/pair as reference vs. background [" << DEFAULT_MIN_LOD << "]" << endl
-		 << "            -e|--evalue  DBL     : maximum e-value to consider an MEM as significant [" << SMEM::DEFAULT_MAX_EVALUE << "]" << endl
+		 << "            -e|--evalue  DBL     : maximum e-value to consider an MEM as significant [" << SMEMS::DEFAULT_MAX_EVALUE << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
 	ofstream assignOut;
 
 	double minLod = DEFAULT_MIN_LOD;
-	double maxEvalue = SMEM::DEFAULT_MAX_EVALUE;
+	double maxEvalue = SMEMS::DEFAULT_MAX_EVALUE;
 	int nThreads = DEFAULT_NUM_THREADS;
 
 	/* parse options */
@@ -386,8 +386,8 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 				{
 					const string& id = read.getName();
 					const string& desc = read.getDesc();
-					SMEMS refSmems = SMEM::findSMEM(&read, &refMtg, &refFmdidx, infV);
-					SMEMS bgSmems = SMEM::findSMEM(&read, &bgMtg, &bgFmdidx, infV);
+					SMEMS refSmems = SMEMS::findSMEMS(&read, &refMtg, &refFmdidx, infV);
+					SMEMS bgSmems = SMEMS::findSMEMS(&read, &bgMtg, &bgFmdidx, infV);
 					debugLog << "refSmems.size(): " << refSmems.size() << endl;
 					debugLog << "bgSmems.size(): " << bgSmems.size() << endl;
 

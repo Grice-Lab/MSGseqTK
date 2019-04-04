@@ -14,7 +14,6 @@
 #include <cassert>
 #include <utility>
 #include <algorithm>
-#include "SMEM.h"
 #include "SeedPair.h"
 #include "PrimarySeq.h"
 #include "FMDIndex.h"
@@ -173,12 +172,6 @@ protected:
 	static SMEM findSMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t& from, int64_t& to);
 
-	/**
-	 * get an longest SMEM LIST of a given seq using step-wise forward/backward searches
-	 */
-	static SMEM findSMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			double maxEvalue = DEFAULT_MAX_EVALUE);
-
 private:
 	/* member fields */
 	const PrimarySeq* seq = nullptr;
@@ -195,8 +188,6 @@ public:
 	/* static fields */
 	static const size_t MAX_NLOCS = 256;
 	static const size_t MAX_NCHAINS = 256;
-	/* static fields */
-	static const double DEFAULT_MAX_EVALUE;
 
 	friend class SMEMS;
 };
@@ -236,39 +227,47 @@ public:
 		return front().fmdidx->length() * bestPvalue();
 	}
 
+	/**
+	 * filter this SMEMS list by evalue
+	 */
+	SMEMS& filter(double maxEvalue = DEFAULT_MAX_EVALUE) {
+		erase(std::remove_if(begin(), end(),
+				[=](const SMEM& mem) { return mem.evalue() > maxEvalue; }),
+				end());
+		return *this;
+	}
+
 	/* static methods */
 	/**
-	 * get an SMEM_LIST of a given seq starting at given position relative to the seq by forward/backward extensions
-	 * the locs will not be filled by this method
-	 * @param seq  seq to search, must be in reversed orientation of this FM-index
-	 * @param mtg  MetaGenome
-	 * @param fmdidx  FMD-index
-	 * @param smems  SMEM_LIST to store results
-	 * @param from  start on the seq, will be updated after search
-	 * @param to  end on seq, will be updated after search
-	 * @return  SMEMS found at this position
+	 * find longest SMEMS of a given seq using step-wise forward/backward searches with required evalue threshold
 	 */
 	static SMEMS findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			double maxEvalue = DEFAULT_MAX_EVALUE);
+
+	/**
+	 * find all SMEMS of a given seq starting at given position relative to the seq by forward/backward extensions
+	 */
+	static SMEMS findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t& from, int64_t& to);
 
 	/**
-	 * get an SMEM LIST of a given seq using step-wise forward/backward searches
+	 * find all SMEMS of a given seq using step-wise forward/backward searches
 	 */
-	static SMEMS findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			double maxEvalue = SMEM::DEFAULT_MAX_EVALUE);
+	static SMEMS findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			double maxEvalue = DEFAULT_MAX_EVALUE);
 
 	/**
 	 * get a SeedList of a given seq using step-wise forward/backward searches
 	 * seeds will be filtered and sorted
 	 */
 	static SeedList findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			double maxEvalue = SMEM::DEFAULT_MAX_EVALUE);
+			double maxEvalue = DEFAULT_MAX_EVALUE);
 
 	/**
 	 * find SMEMS_PE for paired-end reads
 	 */
 	static SMEMS_PE findSMEMS_PE(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
-			const MetaGenome* mtg, const FMDIndex* fmdidx, double maxEvalue = SMEM::DEFAULT_MAX_EVALUE) {
+			const MetaGenome* mtg, const FMDIndex* fmdidx, double maxEvalue = DEFAULT_MAX_EVALUE) {
 		return SMEMS_PE(findSMEMS(fwdSeq, mtg, fmdidx, maxEvalue), findSMEMS(revSeq, mtg, fmdidx, maxEvalue));
 	}
 
@@ -276,7 +275,7 @@ public:
 	 * find SeedListPE for pair-end reads
 	 */
 	static SeedListPE findSeedsPE(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
-			 const MetaGenome* mtg, const FMDIndex* fmdidx, double maxEvalue = SMEM::DEFAULT_MAX_EVALUE) {
+			 const MetaGenome* mtg, const FMDIndex* fmdidx, double maxEvalue = DEFAULT_MAX_EVALUE) {
 		return SeedListPE(findSeeds(fwdSeq, mtg, fmdidx, maxEvalue), findSeeds(revSeq, mtg, fmdidx, maxEvalue));
 	}
 
@@ -284,6 +283,9 @@ public:
 	static double bestLoglik(const SMEMS_PE& smemsPE) {
 		return std::min(smemsPE.first.bestLoglik(), smemsPE.second.bestLoglik());
 	}
+
+	/* static fields */
+	static const double DEFAULT_MAX_EVALUE;
 };
 
 } /* namespace MSGseqTK */
