@@ -36,18 +36,9 @@ public:
 
 	/** construct an SMEM with all info */
 	SMEM(const PrimarySeq* seq,  const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t from, int64_t to, int64_t fwdStart, int64_t revStart, int64_t size,
-			const vector<GLoc>& locs)
+			int64_t from, int64_t to, int64_t fwdStart, int64_t revStart, int64_t size)
 	: seq(seq), mtg(mtg), fmdidx(fmdidx),
 	  from(from), to(to), fwdStart(fwdStart), revStart(revStart), size(size)
-	{
-		evaluate();
-	}
-
-	/** construct an SMEM with all info but not locs */
-	SMEM(const PrimarySeq* seq,  const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t from, int64_t to, int64_t fwdStart, int64_t revStart, int64_t size)
-	: seq(seq), mtg(mtg), fmdidx(fmdidx), from(from), to(to), fwdStart(fwdStart), revStart(revStart), size(size)
 	{
 		evaluate();
 	}
