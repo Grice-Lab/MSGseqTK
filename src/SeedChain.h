@@ -77,7 +77,7 @@ private:
 	 * a Depth-First-Search algorithm of finding all leaf paths (chains) from a raw SeedList
 	 * it recursively calls itself on newly unvisited seed, or return and append to the output list
 	 */
-	static void dfsSeeds(const SeedList& inputSeeds, ChainList& outputChains,
+	static void dfsSeeds(const SeedList& inputSeeds, size_t i, ChainList& outputChains,
 			vector<size_t>& chainIdx, vector<bool>& seedIdx, int64_t maxIndel);
 
 public:

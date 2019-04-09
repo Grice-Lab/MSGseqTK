@@ -193,7 +193,6 @@ public:
 	/** merge this RRFMIndex with another index with only very little overhead memory
 	 * using the BWT-merge algorithm described in
 	 * Burrows-Wheeler transform for terabases, Jouni Sirén, 2016 Data Compression Conference
-	 * Note that the other will be used as seq 1, to improve the performance of the algorithm
 	 */
 	FMDIndex& operator+=(const FMDIndex& other);
 

@@ -20,13 +20,13 @@ const string Genome::REPLACEMENT_STR = ".";
 
 ostream& Genome::Chrom::save(ostream& out) const {
 	StringUtils::saveString(name, out);
-	dna::nt16Save(seq, out);
+	StringUtils::saveString(seq, out);
 	return out;
 }
 
 istream& Genome::Chrom::load(istream& in) {
 	StringUtils::loadString(name, in);
-	dna::nt16Load(seq, in);
+	StringUtils::loadString(seq, in);
 	return in;
 }
 
@@ -79,24 +79,14 @@ size_t Genome::size() const {
 	size_t size = 0;
 	for(const Chrom& chr : chroms)
 		size += chr.size();
-	return size + numChroms(); /* add one null gap after each chromosome */
+	return size;
 }
 
-DNAseq Genome::getSeq() const {
+DNAseq Genome::getBDSeq() const {
 	DNAseq seq;
-	seq.reserve(size() * 2);
+	seq.reserve(BDSize());
 	for(const Chrom& chr : chroms)
-		seq += chr.seq + DNAalphabet::GAP_BASE + dna::revcom(chr.seq) + DNAalphabet::GAP_BASE;
-	return seq;
-}
-
-DNAseq Genome::getBasicSeq() const {
-	DNAseq seq;
-	seq.reserve(size() * 2);
-	for(const Chrom& chr : chroms) {
-		const DNAseq& bSeq = dna::toBasic(chr.seq);
-		seq += bSeq + DNAalphabet::GAP_BASE + dna::revcom(bSeq) + DNAalphabet::GAP_BASE;
-	}
+		seq += chr.getBDSeq();
 	return seq;
 }
 

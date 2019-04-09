@@ -21,7 +21,7 @@ using std::pair;
 size_t MetaGenome::size() const {
 	size_t size = 0;
 	for(const Genome& genome : genomes)
-		size += genome.size() * 2; /* metagenome is bi-directional (fwd + rev) */
+		size += genome.BDSize(); /* metagenome is bi-directional (fwd + rev) */
 	return size;
 }
 
@@ -107,12 +107,12 @@ void MetaGenome::updateIndex() {
 			chromName2Idx[chr.name] = cid;
 			chromIdx2GenomeIdx.push_back(gid);
 			chromIdx2Nbefore.push_back(nid);
-			chromIdx2Loc.push_back(Loc(gStart + cStart, gStart + cStart + (chr.size() + 1) * 2)); // include fwd + rev
+			chromIdx2Loc.push_back(Loc(gStart + cStart, gStart + cStart + chr.BDSize())); // use BDseq
 			cid++;
 			nid++;
-			cStart += (chr.size() + 1) * 2; // update cStart
+			cStart += chr.BDSize(); // update cStart
 		}
-		assert(cStart == genome.size() * 2);
+		assert(cStart == genome.BDSize());
 		genomeIdx2Loc.push_back(Loc(gStart, gStart + cStart));
 		gid++;
 		gStart += cStart;

@@ -92,12 +92,12 @@ check_PROGRAMS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
 	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) \
 	FMDIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
 	MetaGenomeAnno_test$(EXEEXT) SMEM_test$(EXEEXT) \
-	Alignment_test$(EXEEXT)
+	SeedChain_test$(EXEEXT) Alignment_test$(EXEEXT)
 TESTS = DNAseq_test$(EXEEXT) PrimarySeq_test$(EXEEXT) \
 	SeqIO_test$(EXEEXT) FMIndex_test$(EXEEXT) \
 	FMDIndex_test$(EXEEXT) Genome_test$(EXEEXT) \
 	MetaGenomeAnno_test$(EXEEXT) SMEM_test$(EXEEXT) \
-	Alignment_test$(EXEEXT)
+	SeedChain_test$(EXEEXT) Alignment_test$(EXEEXT)
 subdir = test
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_with_htslib.m4 \
@@ -171,6 +171,14 @@ SMEM_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
 	$(top_srcdir)/src/libsds/src/libsds.la \
 	$(top_srcdir)/src/util/libEGUtil.a \
 	$(top_srcdir)/src/util/UCSC/libEGUCSC.a
+am_SeedChain_test_OBJECTS = SeedChain_test.$(OBJEXT) \
+	$(top_srcdir)/src/MSGseqTKEnv.$(OBJEXT)
+SeedChain_test_OBJECTS = $(am_SeedChain_test_OBJECTS)
+SeedChain_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
+	$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+	$(top_srcdir)/src/libsds/src/libsds.la \
+	$(top_srcdir)/src/util/libEGUtil.a \
+	$(top_srcdir)/src/util/UCSC/libEGUCSC.a
 am_SeqIO_test_OBJECTS = SeqIO_test.$(OBJEXT)
 SeqIO_test_OBJECTS = $(am_SeqIO_test_OBJECTS)
 SeqIO_test_DEPENDENCIES = $(top_srcdir)/src/libMSGseqTK.a \
@@ -213,12 +221,12 @@ SOURCES = $(Alignment_test_SOURCES) $(DNAseq_test_SOURCES) \
 	$(FMDIndex_test_SOURCES) $(FMIndex_test_SOURCES) \
 	$(Genome_test_SOURCES) $(MetaGenomeAnno_test_SOURCES) \
 	$(PrimarySeq_test_SOURCES) $(SMEM_test_SOURCES) \
-	$(SeqIO_test_SOURCES)
+	$(SeedChain_test_SOURCES) $(SeqIO_test_SOURCES)
 DIST_SOURCES = $(Alignment_test_SOURCES) $(DNAseq_test_SOURCES) \
 	$(FMDIndex_test_SOURCES) $(FMIndex_test_SOURCES) \
 	$(Genome_test_SOURCES) $(MetaGenomeAnno_test_SOURCES) \
 	$(PrimarySeq_test_SOURCES) $(SMEM_test_SOURCES) \
-	$(SeqIO_test_SOURCES)
+	$(SeedChain_test_SOURCES) $(SeqIO_test_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -659,6 +667,14 @@ $(top_srcdir)/src/libsds/src/libsds.la \
 $(top_srcdir)/src/util/libEGUtil.a \
 $(top_srcdir)/src/util/UCSC/libEGUCSC.a
 
+SeedChain_test_SOURCES = SeedChain_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
+SeedChain_test_LDADD = \
+$(top_srcdir)/src/libMSGseqTK.a \
+$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+$(top_srcdir)/src/libsds/src/libsds.la \
+$(top_srcdir)/src/util/libEGUtil.a \
+$(top_srcdir)/src/util/UCSC/libEGUCSC.a
+
 Alignment_test_SOURCES = Alignment_test.cpp 
 Alignment_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
@@ -757,6 +773,10 @@ SMEM_test$(EXEEXT): $(SMEM_test_OBJECTS) $(SMEM_test_DEPENDENCIES) $(EXTRA_SMEM_
 	@rm -f SMEM_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(SMEM_test_OBJECTS) $(SMEM_test_LDADD) $(LIBS)
 
+SeedChain_test$(EXEEXT): $(SeedChain_test_OBJECTS) $(SeedChain_test_DEPENDENCIES) $(EXTRA_SeedChain_test_DEPENDENCIES) 
+	@rm -f SeedChain_test$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(SeedChain_test_OBJECTS) $(SeedChain_test_LDADD) $(LIBS)
+
 SeqIO_test$(EXEEXT): $(SeqIO_test_OBJECTS) $(SeqIO_test_DEPENDENCIES) $(EXTRA_SeqIO_test_DEPENDENCIES) 
 	@rm -f SeqIO_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(SeqIO_test_OBJECTS) $(SeqIO_test_LDADD) $(LIBS)
@@ -777,6 +797,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MetaGenomeAnno_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PrimarySeq_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SMEM_test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SeedChain_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SeqIO_test.Po@am__quote@
 
 .cpp.o:
@@ -1054,6 +1075,13 @@ MetaGenomeAnno_test.log: MetaGenomeAnno_test$(EXEEXT)
 SMEM_test.log: SMEM_test$(EXEEXT)
 	@p='SMEM_test$(EXEEXT)'; \
 	b='SMEM_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+SeedChain_test.log: SeedChain_test$(EXEEXT)
+	@p='SeedChain_test$(EXEEXT)'; \
+	b='SeedChain_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

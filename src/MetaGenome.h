@@ -311,19 +311,36 @@ public:
 		genomes.push_back(genome);
 	}
 
-	/** get the last/back genome, const version */
-	const Genome& backGenome() const {
+	/** get the last/top genome, const version */
+	const Genome& topGenome() const {
 		return genomes.back();
 	}
 
-	/** get the last/back genome */
-	Genome& backGenome() {
+	/** get the last/top genome, non-const version */
+	Genome& topGenome() {
 		return genomes.back();
 	}
 
-	/** pop the last genome */
+	/** pop the last/top genome */
 	void popGenome() {
 		genomes.pop_back();
+	}
+
+	/** get the last/top chromsome, const version */
+	const Genome::Chrom& topChrom() const {
+		return genomes.back().chroms.back();
+	}
+
+	/** get the last/top chromsome, non-const version */
+	Genome::Chrom& topChrom() {
+		return genomes.back().chroms.back();
+	}
+
+	/** pop the last chorosome */
+	void popChrom() {
+		genomes.back().chroms.pop_back();
+		if(genomes.back().chroms.empty()) // no more chromsomes
+			genomes.pop_back();
 	}
 
 	/** get chromosome given chrIdx */
@@ -331,27 +348,12 @@ public:
 		return getGenome(getGenomeIndexByChromIdx(chrIdx)).getChrom(getChromNbefore(chrIdx));
 	}
 
-	/** get chrom seq by chrom idx, with null-terminal */
-	DNAseq getChromSeq(size_t chrIdx) const {
-		return getChromFwdSeq(chrIdx) + getChromRevSeq(chrIdx);
-	}
-
-	/** get chrom fwd seq by chrom idx */
-	const DNAseq& getChromFwdSeq(size_t chrIdx) const {
-		return getChrom(chrIdx).seq;
-	}
-
-	/** get chrom rev seq by chrom idx */
-	DNAseq getChromRevSeq(size_t chrIdx) const {
-		return dna::revcom(getChromFwdSeq(chrIdx));
-	}
-
 	/** get bi-directional genome seq by genome idx */
 	DNAseq getGenomeSeq(size_t genomeIdx) const {
-		return getGenome(genomeIdx).getSeq();
+		return getGenome(genomeIdx).getBDSeq();
 	}
 
-	/** save this object to binary output, in compressed or raw mode */
+	/** save this object to binary output */
 	ostream& save(ostream& out) const;
 
 	/** load an object from binary input */

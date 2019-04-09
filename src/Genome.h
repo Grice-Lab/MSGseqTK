@@ -31,17 +31,42 @@ using std::ostream;
 class Genome {
 public:
 	/* nested types and enums */
+	/** a POD type of Genome chromosome */
 	struct Chrom {
-		/** default constructor */
+		/* constructors */
+		/** default construcor */
 		Chrom() = default;
 
-		/** construct from given info */
+		/** construct from given values */
 		Chrom(const string& name, const DNAseq& seq) : name(name), seq(seq)
 		{  }
 
 		/* member methods */
 		size_t size() const {
 			return seq.length();
+		}
+
+		size_t BDSize() const {
+			return size() * 2 + 2; // include gap after fwd and rev seq
+		}
+
+		bool empty() const {
+			return seq.empty();
+		}
+
+		/** get fwdSeq */
+		const DNAseq& getFwdSeq() const {
+			return seq;
+		}
+
+		/** ret revSeq */
+		DNAseq getRevSeq() const {
+			return dna::revcom(seq);
+		}
+
+		/** get BD seq, which is guranteed to be bi-directional and symmetric */
+		DNAseq getBDSeq() const {
+			return dna::toBasic(seq) + DNAalphabet::GAP_BASE + dna::revcom(dna::toBasic(seq)) + DNAalphabet::GAP_BASE;
 		}
 
 		/** save this Chrom to binary output */
@@ -53,6 +78,7 @@ public:
 		/* non-member functions */
 		friend bool operator==(const Chrom& lhs, const Chrom& rhs);
 
+		/* member fields */
 		string name;
 		DNAseq seq;
 	};
@@ -123,11 +149,13 @@ public:
 	/** get the overall size of this genome */
 	size_t size() const;
 
-	/** get bi-directional seq of genome */
-	DNAseq getSeq() const;
+	/** get bi-directional size of this genome */
+	size_t BDSize() const {
+		return (size() + numChroms()) * 2;
+	}
 
-	/** get bi-directional seq of genome, with basic bases only */
-	DNAseq getBasicSeq() const;
+	/** get bi-directional seq of genome */
+	DNAseq getBDSeq() const;
 
 	/** add a new chrom object at the end */
 	void addChrom(const Chrom& chr) {

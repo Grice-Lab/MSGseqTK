@@ -326,8 +326,8 @@ int main(int argc, char* argv[]) {
 	size_t k = 0;
 	size_t nBlock = 0;
 	while(!mtg.empty()) {
-		blockSeq = mtg.backGenome().getBasicSeq() + blockSeq; // update seq
-		mtg.popGenome(); // pop the last genome
+		blockSeq = dna::toBasic(mtg.topChrom().getBDSeq()) + blockSeq; // update seq
+		mtg.popChrom(); // pop the last chrom
 
 		nBlock++;
 		bool isFirst = mtg.empty(); // flag whether the first genome
@@ -335,9 +335,9 @@ int main(int argc, char* argv[]) {
 		/* process block, if large enough */
 		if(blockSeq.length() >= blockSize * MBP_UNIT || isFirst) { /* first genome or full block */
 			if(!isFirst)
-				infoLog << "Adding " << nBlock << " genomes in block " << ++k << " into FMD-index" << endl;
+				infoLog << "Adding " << nBlock << " chroms in block " << ++k << " into FMD-index" << endl;
 			else
-				infoLog << "Adding " << nBlock << " genomes in block " << ++k << " into FMD-index and building final sampled Suffix-Array" << endl;
+				infoLog << "Adding " << nBlock << " chroms in block " << ++k << " into FMD-index and building final sampled Suffix-Array" << endl;
 			assert(blockSeq.back() == DNAalphabet::GAP_BASE);
 			blockSeq.pop_back(); // remove GAP_BASE terminal
 			fmdidx = FMDIndex(blockSeq, isFirst) + fmdidx; /* always use freshly built FMDIndex as lhs */

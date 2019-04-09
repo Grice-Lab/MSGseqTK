@@ -27,17 +27,26 @@ int main() {
 	mtg.addGenome(genome);
 	mtg.updateIndex();
 
-	DNAseq genomeSeq = genome.getSeq();
+	DNAseq genomeSeq = genome.getBDSeq();
 	genomeSeq.pop_back();
 	FMDIndex fmdidx = FMDIndex(genomeSeq, true);
 	assert(mtg.size() == fmdidx.length());
 
-	cout << "SMEM search ..." << endl;
 	PrimarySeq read("ACGTAGTA", "seq1");
+	cout << "SMEM search between genome:" << endl << genomeSeq << endl << "query:" << endl << read.getSeq() << endl;
+	SMEMS smems = SMEMS::findSMEMS(&read, &mtg, &fmdidx, inf);
+	cout << "found " << smems.size() << " smems" << endl;
+	for(const SMEM& smem : smems)
+		for(const SeedPair& seed : smem.getSeeds())
+			if(!isValidSeed(genomeSeq, read.getSeq(), seed))
+				return EXIT_FAILURE;
+
 	SeedList seeds = SMEMS::findSeeds(&read, &mtg, &fmdidx, inf);
+	cout << "found " << seeds.size() << " all smems seeds" << endl;
 	for(const SeedPair& seed : seeds)
 		if(!isValidSeed(genomeSeq, read.getSeq(), seed))
 			return EXIT_FAILURE;
+	cout << endl;
 }
 
 bool isValidSeed(const DNAseq& target, const DNAseq& query, const SeedPair& seed) {

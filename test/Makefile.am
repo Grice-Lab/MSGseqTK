@@ -36,6 +36,7 @@ FMDIndex_test \
 Genome_test \
 MetaGenomeAnno_test \
 SMEM_test \
+SeedChain_test \
 Alignment_test
 
 LIBDIVSUFSORT_PKG_NAME=libdivsufsort64
@@ -87,6 +88,14 @@ $(top_srcdir)/src/libsds/src/libsds.la \
 $(top_srcdir)/src/util/libEGUtil.a \
 $(top_srcdir)/src/util/UCSC/libEGUCSC.a
 
+SeedChain_test_SOURCES = SeedChain_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
+SeedChain_test_LDADD = \
+$(top_srcdir)/src/libMSGseqTK.a \
+$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+$(top_srcdir)/src/libsds/src/libsds.la \
+$(top_srcdir)/src/util/libEGUtil.a \
+$(top_srcdir)/src/util/UCSC/libEGUCSC.a
+
 Alignment_test_SOURCES = Alignment_test.cpp 
 Alignment_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
@@ -110,4 +119,5 @@ FMDIndex_test \
 Genome_test \
 MetaGenomeAnno_test \
 SMEM_test \
+SeedChain_test \
 Alignment_test

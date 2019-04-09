@@ -161,14 +161,12 @@ SeedList SMEM::getSeeds() const {
 
 SeedList SMEMS::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		double maxEvalue) {
-	const SMEMS& smems = findSMEMS(seq, mtg, fmdidx, maxEvalue); // get SMEMS
+	const SMEMS& smems = findAllSMEMS(seq, mtg, fmdidx, maxEvalue); // get SMEMS
 	/* get seeds */
 	SeedList allSeeds;
 	for(const SMEM& smem : smems) {
-		if(smem.evalue() <= maxEvalue) {
-			const SeedList& seeds = smem.getSeeds();
-			allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
-		}
+		const SeedList& seeds = smem.getSeeds();
+		allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
 	}
 	/* sort seeds in lexical order */
 	std::sort(allSeeds.begin(), allSeeds.end());

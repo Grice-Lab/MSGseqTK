@@ -126,20 +126,22 @@ public:
 	/* static methods */
 	/** get total indels between two seeds
 	 * @return  positive values indicates insertions, and negative values gives deletions
+	 * or INT64_MAX if both is not compatitable
 	 */
-	static int64_t numGaps(const SeedPair& lhs, const SeedPair& rhs) {
+	static int64_t nIndel(const SeedPair& lhs, const SeedPair& rhs) {
+		if(!isCompatitable(lhs, rhs))
+			return INT64_MAX;
 		return (rhs.from - lhs.to) - (rhs.start - lhs.end);
 	}
 
 	/** test whether two AlnSeeds are compatitable */
 	static bool isCompatitable(const SeedPair& lhs, const SeedPair& rhs) {
-		return lhs.to <= rhs.from && lhs.start <= rhs.end && lhs.tid == rhs.tid && (lhs.strand & rhs.strand) != 0;
+		return lhs.to <= rhs.from && lhs.end <= rhs.start && lhs.tid == rhs.tid && (lhs.strand & rhs.strand) != 0;
 	}
 
 	/** test whether two AlnSeeds are compatitable and ordered and with not too much indels */
 	static bool isCompatitable(const SeedPair& lhs, const SeedPair& rhs, int64_t maxIndel) {
-		return isCompatitable(lhs, rhs) &&
-				::abs(numGaps(lhs, rhs)) <= maxIndel;
+		return std::abs(nIndel(lhs, rhs)) <= maxIndel;
 	}
 
 	/** get the best (min) loglik of a SeedList */
