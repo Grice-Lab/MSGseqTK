@@ -326,7 +326,7 @@ int main(int argc, char* argv[]) {
 	size_t k = 0;
 	size_t nBlock = 0;
 	while(!mtg.empty()) {
-		blockSeq = dna::toBasic(mtg.topChrom().getBDSeq()) + blockSeq; // update seq
+		blockSeq = mtg.topChrom().getBDSeq() + blockSeq; // update seq
 		mtg.popChrom(); // pop the last chrom
 
 		nBlock++;

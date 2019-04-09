@@ -121,7 +121,7 @@ FMDIndex& FMDIndex::operator+=(const FMDIndex& other) {
 	/* build RA and interleaving bitvector */
 	BitStr32 bstr(N);
 #pragma omp parallel for
-	for(int64_t i = 0; i < C[0 + 1]; ++i) { // i-th pass of LF-mapping
+	for(int64_t i = 0; i < C[0 + 1]; ++i) { // i-th pass of LF-mapping on *this
 		int64_t j = i;
 		int64_t RA = other.C[0 + 1];
 		uint8_t b;
