@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <utility>
 #include <boost/lexical_cast.hpp>
 #include "MetaGenome.h"
 #include "StringUtils.h"
@@ -21,7 +22,7 @@ using std::pair;
 size_t MetaGenome::size() const {
 	size_t size = 0;
 	for(const Genome& genome : genomes)
-		size += genome.BDSize(); /* metagenome is bi-directional (fwd + rev) */
+		size += genome.size() * 2; /* metagenome is bi-directional (fwd + rev) */
 	return size;
 }
 
@@ -38,6 +39,13 @@ ostream& MetaGenome::save(ostream& out) const {
 	out.write((const char*) &NG, sizeof(size_t));
 	for(const Genome& genome : genomes)
 		genome.save(out);
+
+	/* save seqs */
+	const size_t NS = seqs.size();
+	out.write((const char*) &NS, sizeof(size_t));
+	for(const DNAseq& seq : seqs)
+		StringUtils::saveString(seq, out);
+
 	return out;
 }
 
@@ -48,23 +56,49 @@ istream& MetaGenome::load(istream& in) {
 	genomes.resize(NG);
 	for(size_t i = 0; i < NG; ++i)
 		genomes[i].load(in);
+
+	/* load seqs */
+	size_t NS = 0;
+	in.read((char*) &NS, sizeof(size_t));
+	seqs.resize(NS);
+	for(size_t i = 0; i < NS; ++i)
+		StringUtils::loadString(seqs[i], in);
+	assert(NS == numChroms());
+
 	/* update index */
 	updateIndex();
+
 	return in;
 }
 
+DNAseq MetaGenome::loadSeq(istream& in, size_t tid) const {
+	in.seekg(- getEndPos(tid) /* negative value */, std::ios_base::end);
+	DNAseq seq;
+	StringUtils::loadString(seq, in);
+	return seq;
+}
+
 MetaGenome& MetaGenome::operator+=(const MetaGenome& other) {
+	seqs.insert(seqs.end(), other.seqs.begin(), other.seqs.end());
 	genomes.insert(genomes.end(), other.genomes.begin(), other.genomes.end());
 	updateIndex();
 	return *this;
 }
 
 MetaGenome operator+(const MetaGenome& lhs, const MetaGenome& rhs) {
-	MetaGenome mtg;
-	mtg.genomes.insert(mtg.genomes.end(), lhs.genomes.begin(), lhs.genomes.end());
-	mtg.genomes.insert(mtg.genomes.end(), rhs.genomes.begin(), rhs.genomes.end());
-	mtg.updateIndex();
-	return mtg;
+	MetaGenome mtgM(lhs);
+	mtgM += rhs;
+	return mtgM;
+}
+
+void MetaGenome::updateSeq() {
+	seqs.clear();
+	for(Genome& genome : genomes) {
+		for(Genome::Chrom& chr : genome.chroms) {
+			seqs.push_back(std::move(chr.seq));
+			chr.clearSeq();
+		}
+	}
 }
 
 void MetaGenome::updateIndex() {
@@ -75,19 +109,33 @@ void MetaGenome::updateIndex() {
 	chromName2Idx.clear();
 	chromIdx2GenomeIdx.clear();
 	chromIdx2Nbefore.clear();
-	genomeIdx2Loc.clear();
+	chromIdx2endPos.clear();
+//	genomeIdx2Loc.clear();
 	chromIdx2Loc.clear();
+	const size_t NS = seqs.size();
 	const size_t NG = numGenomes();
 	const size_t NC = numChroms();
+	assert(NS == NC);
 	size_t gid = 0;
 	size_t cid = 0;
 	int64_t gStart = 0;
+	size_t endPos = 0; // distance to the end of the output/input
+	size_t L = 0; // total length of sequences
 	genomeIds.reserve(NG);
 	chromNames.reserve(NC);
-	genomeIdx2Loc.reserve(NG);
+//	genomeIdx2Loc.reserve(NG);
 	chromIdx2Loc.reserve(NC);
 	chromIdx2GenomeIdx.reserve(NC);
 	chromIdx2Nbefore.reserve(NC);
+	chromIdx2endPos.resize(NS); // allocate now since it is accessed backward
+
+	/* update genomeIdx2EndPos */
+	for(size_t i = NS; i > 0; --i) {
+		L += (seqs[i - 1].length() + 1) * 2;
+		endPos += sizeof(size_t) + seqs[i - 1].length() * sizeof(DNAseq::value_type); // both length and sequences are saved by StringUtils
+		chromIdx2endPos[i - 1] = endPos;
+	}
+
 	for(Genome& genome : genomes) {
 		int64_t cStart = 0;
 		size_t nid = 0; // # of chrom before in this genome
@@ -107,16 +155,26 @@ void MetaGenome::updateIndex() {
 			chromName2Idx[chr.name] = cid;
 			chromIdx2GenomeIdx.push_back(gid);
 			chromIdx2Nbefore.push_back(nid);
-			chromIdx2Loc.push_back(Loc(gStart + cStart, gStart + cStart + chr.BDSize())); // use BDseq
+			chromIdx2Loc.push_back(Loc(gStart + cStart, gStart + cStart + (chr.size() + 1) * 2)); // use BDseq
 			cid++;
 			nid++;
-			cStart += chr.BDSize(); // update cStart
+			cStart += (chr.size() + 1) * 2; // update cStart
 		}
-		assert(cStart == genome.BDSize());
-		genomeIdx2Loc.push_back(Loc(gStart, gStart + cStart));
+		assert(cStart == genome.size() * 2);
+//		genomeIdx2Loc.push_back(Loc(gStart, gStart + cStart));
 		gid++;
 		gStart += cStart;
 	}
+	assert(gStart == size());
+	assert(L == size());
+}
+
+DNAseq MetaGenome::getSeq() const {
+	DNAseq mtgSeq;
+	mtgSeq.reserve(size());
+	for(const DNAseq& seq : seqs)
+		mtgSeq += dna::toBasic(seq) + DNAalphabet::GAP_BASE + dna::revcom(dna::toBasic(seq)) + DNAalphabet::GAP_BASE;
+	return mtgSeq;
 }
 
 } /* namespace MSGseqTK */

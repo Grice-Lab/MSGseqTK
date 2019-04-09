@@ -195,12 +195,11 @@ public:
 	 * @param src  source
 	 * @param out  output
 	 * @param length  number of source to save
-	 * @return  whether saving was successful
+	 * @return  output stream
 	 */
 	template<typename T>
 	static ostream& saveString(const basic_string<T>& src, ostream& out, size_t length) {
-		out.write((const char*) src.c_str(), length * sizeof(T));
-		return out;
+		return out.write((const char*) src.c_str(), length * sizeof(T));
 	}
 
 	/**

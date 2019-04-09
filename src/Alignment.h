@@ -71,7 +71,7 @@ public:
 	/** construct an Alignment between a query, database and a SeedChain */
 	Alignment(const PrimarySeq* read, const PrimarySeq* rcRead, const MetaGenome& mtg,
 			const ScoreScheme* ss, const SeedChain& chain, uint8_t mapQ = INVALID_MAP_Q)
-	: read(read), rcRead(rcRead), tid(chain.getTid()), target(&mtg.getChrom(tid).getFwdSeq()),
+	: read(read), rcRead(rcRead), tid(chain.getTid()), target(&mtg.getSeq(tid)),
 	  qStrand(chain.getStrand()), tShift(mtg.getChromStart(tid)),
 			qFrom(0), qTo(read->length()), ss(ss), mapQ(mapQ)
 	{

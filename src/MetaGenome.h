@@ -31,7 +31,8 @@ using std::vector;
 using std::deque;
 
 /**
- * class representing a MetaGenome basic information
+ * class representing a MetaGenome,
+ * with its basic information and sequences stored in separately files
  */
 class MetaGenome {
 public:
@@ -40,12 +41,13 @@ public:
 	typedef map<string, size_t> CHROM_INDEX;  /* chrom name->idx map */
 	typedef vector<size_t> INDEX_MAP;  /* chrom idx->genome idx */
 	typedef vector<size_t> BEFORE_MAP; /* chrom idx-># chroms before */
-	typedef vector<Loc> GENOME_LOC; /* genome id->Loc map */
+	typedef vector<size_t> STREAMPOS_MAP; /* chrom idx->stream end-pos */
+//	typedef vector<Loc> GENOME_LOC; /* genome id->Loc map */
 	typedef vector<Loc> CHROM_LOC;  /* chromosome id->Loc map */
 
 	/* constructors */
 
-	/** get total size of this MetaGenome */
+	/** get bi-directional size of this MetaGenome */
 	size_t size() const;
 
 	/** test whether this MetaGnome is empty */
@@ -87,9 +89,9 @@ public:
 	}
 
 	/** get genomeIdx2Loc */
-	const GENOME_LOC& getGenomeIdx2Loc() const {
-		return genomeIdx2Loc;
-	}
+//	const GENOME_LOC& getGenomeIdx2Loc() const {
+//		return genomeIdx2Loc;
+//	}
 
 	/** get chromName2Loc */
 	const CHROM_LOC& getChromIdx2Loc() const {
@@ -174,6 +176,11 @@ public:
 		return getChromNbefore(chromIdx);
 	}
 
+	/** get end pos of a chrom index */
+	size_t getEndPos(size_t chromIdx) const {
+		return chromIdx2endPos[chromIdx];
+	}
+
 	/**
 	 * get the genome at given position
 	 */
@@ -184,28 +191,28 @@ public:
 	/**
 	 * get the Loc of i-th genome
 	 */
-	const Loc& getGenomeLoc(size_t i) const {
-		return genomeIdx2Loc[i];
-	}
+//	const Loc& getGenomeLoc(size_t i) const {
+//		return genomeIdx2Loc[i];
+//	}
 
 	/**
 	 * get the start of the i-th genome
 	 */
-	int64_t getGenomeStart(size_t i) const {
-		return getGenomeLoc(i).getStart();
-	}
+//	int64_t getGenomeStart(size_t i) const {
+//		return getGenomeLoc(i).getStart();
+//	}
 
 	/**
 	 * get the end of the i-th genome
 	 */
-	int64_t getGenomeEnd(size_t i) const {
-		return getGenomeLoc(i).getEnd();
-	}
+//	int64_t getGenomeEnd(size_t i) const {
+//		return getGenomeLoc(i).getEnd();
+//	}
 
 	/** get the length of the i-th genome, include fwd + rev */
-	int64_t getGenomeLen(size_t i) const {
-		return getGenomeLoc(i).length();
-	}
+//	int64_t getGenomeLen(size_t i) const {
+//		return getGenomeLoc(i).length();
+//	}
 
 	/**
 	 * get the Loc of i-th chrom
@@ -280,9 +287,9 @@ public:
 	/**
 	 * get the idx->Loc map for all genomes
 	 */
-	const GENOME_LOC& getGenomeLocs() const {
-		return genomeIdx2Loc;
-	}
+//	const GENOME_LOC& getGenomeLocs() const {
+//		return genomeIdx2Loc;
+//	}
 
 	/** get genome by index */
 	const Genome& getGenome(size_t i) const {
@@ -305,65 +312,96 @@ public:
 	}
 
 	/**
-	 * add a genome and its bi-directional seq at the end of this MetaGenome
+	 * add a genome at the end of this MetaGenome
 	 */
 	void addGenome(const Genome& genome) {
 		genomes.push_back(genome);
 	}
 
-	/** get the last/top genome, const version */
-	const Genome& topGenome() const {
-		return genomes.back();
-	}
-
-	/** get the last/top genome, non-const version */
-	Genome& topGenome() {
-		return genomes.back();
-	}
-
-	/** pop the last/top genome */
-	void popGenome() {
-		genomes.pop_back();
-	}
-
-	/** get the last/top chromsome, const version */
-	const Genome::Chrom& topChrom() const {
-		return genomes.back().chroms.back();
-	}
-
-	/** get the last/top chromsome, non-const version */
-	Genome::Chrom& topChrom() {
-		return genomes.back().chroms.back();
-	}
-
-	/** pop the last chorosome */
-	void popChrom() {
-		genomes.back().chroms.pop_back();
-		if(genomes.back().chroms.empty()) // no more chromsomes
-			genomes.pop_back();
-	}
+//	/** get the last/top genome, const version */
+//	const Genome& topGenome() const {
+//		return genomes.back();
+//	}
+//
+//	/** get the last/top genome, non-const version */
+//	Genome& topGenome() {
+//		return genomes.back();
+//	}
+//
+//	/** pop the last/top genome */
+//	void popGenome() {
+//		genomes.pop_back();
+//	}
+//
+//	/** get the last/top chromsome, const version */
+//	const Genome::Chrom& topChrom() const {
+//		return genomes.back().chroms.back();
+//	}
+//
+//	/** get the last/top chromsome, non-const version */
+//	Genome::Chrom& topChrom() {
+//		return genomes.back().chroms.back();
+//	}
+//
+//	/** pop the last chorosome */
+//	void popChrom() {
+//		genomes.back().chroms.pop_back();
+//		if(genomes.back().chroms.empty()) // no more chromsomes
+//			genomes.pop_back();
+//	}
 
 	/** get chromosome given chrIdx */
 	const Genome::Chrom& getChrom(size_t chrIdx) const {
 		return getGenome(getGenomeIndexByChromIdx(chrIdx)).getChrom(getChromNbefore(chrIdx));
 	}
 
-	/** get bi-directional genome seq by genome idx */
-	DNAseq getGenomeSeq(size_t genomeIdx) const {
-		return getGenome(genomeIdx).getBDSeq();
+	/** get chrom seq by tid */
+	const DNAseq& getSeq(size_t tid) const {
+		return seqs[tid];
 	}
 
-	/** save this object to binary output */
+	/** get concatenated bi-directional whole MetaGenome seq */
+	DNAseq getSeq() const;
+
+	/** save this object to binary outputs */
 	ostream& save(ostream& out) const;
 
-	/** load an object from binary input */
+	/** load an object from binary inputs */
 	istream& load(istream& in);
+
+	/** load a chrom seq from a saved binary input given tid */
+	DNAseq loadSeq(istream& in, size_t tid) const;
+
+	/**
+	 * load a chrom bi-directional seq from a saved binary input given tid
+	 * the loaded seq will be convert to basic-only bases so it is bi-directional
+	 */
+	DNAseq loadBDSeq(istream& in, size_t tid) const {
+		const DNAseq& seq = dna::toBasic(loadSeq(in, tid));
+		return seq + DNAalphabet::GAP_BASE + dna::revcom(seq) + DNAalphabet::GAP_BASE;
+	}
+
+	/** update MetaGenome */
+	void update() {
+		updateSeq();
+		updateIndex();
+	}
+
+	/**
+	 * update seq by moving seqs from Chrom into independent storage
+	 */
+	void updateSeq();
 
 	/**
 	 * update all index, should be called if any containing Genome/Chrom changes
 	 * it will rename genome ids and chrom names (with warnings), if non-unique ID/names found
 	 */
 	void updateIndex();
+
+	/** clear stored seq */
+	void clearSeq() {
+		seqs.clear();
+	}
 
 	/** merge this MetaGenome with another one,
 	 * with its name unchanged
@@ -380,13 +418,15 @@ public:
 	/* member fields */
 private:
 	vector<Genome> genomes;
+	vector<DNAseq> seqs; // chrom seqs stored at the end of the output
 	NAME_INDEX genomeIds; // all genome ids
 	NAME_INDEX chromNames; // all chrom names
 	GENOME_INDEX genomeId2Idx; // genome id -> idx
 	CHROM_INDEX chromName2Idx; // chrom name -> idx
 	INDEX_MAP chromIdx2GenomeIdx; // chrom idx -> genome idx
+	STREAMPOS_MAP chromIdx2endPos; // chrom idx -> stream pos relative to the end of binary output/input
 	BEFORE_MAP chromIdx2Nbefore; // chrom idx -> # chroms before this chrom in this genome
-	GENOME_LOC genomeIdx2Loc; // genome idx -> Loc on MetaGenome (including fwd + rev)
+//	GENOME_LOC genomeIdx2Loc; // genome idx -> Loc on MetaGenome (including fwd + rev)
 	CHROM_LOC chromIdx2Loc; // chrom idx -> Loc on MetaGenome (including fwd + rev)
 
 public:
@@ -410,12 +450,12 @@ inline size_t MetaGenome::getGenomeIndex(const string& genomeId) const {
 	return result != genomeId2Idx.end() ? result->second : -1;
 }
 
-inline size_t MetaGenome::getGenomeIndex(int64_t pos) const {
-	GENOME_LOC::const_iterator result = std::find_if(genomeIdx2Loc.begin(), genomeIdx2Loc.end(),
-			[=] (const GENOME_LOC::value_type& item) { return item.getStart() <= pos && pos < item.getEnd(); }
-	);
-	return result != genomeIdx2Loc.end() ? result - genomeIdx2Loc.begin() : -1;
-}
+//inline size_t MetaGenome::getGenomeIndex(int64_t pos) const {
+//	GENOME_LOC::const_iterator result = std::find_if(genomeIdx2Loc.begin(), genomeIdx2Loc.end(),
+//			[=] (const GENOME_LOC::value_type& item) { return item.getStart() <= pos && pos < item.getEnd(); }
+//	);
+//	return result != genomeIdx2Loc.end() ? result - genomeIdx2Loc.begin() : -1;
+//}
 
 inline size_t MetaGenome::getChromIndex(const string& chrName) const {
 	CHROM_INDEX::const_iterator result = chromName2Idx.find(chrName);

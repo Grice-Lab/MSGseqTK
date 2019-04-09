@@ -253,8 +253,11 @@ int main(int argc, char* argv[]) {
 			return EXIT_FAILURE;
 		}
 
+		/* reset */
 		mtgIn.close();
 		fmdidxIn.close();
+		mtgFn = dbName + METAGENOME_FILE_SUFFIX;
+		fmdidxFn = dbName + FMDINDEX_FILE_SUFFIX;
 	}
 
 	/* read all genomic files */
@@ -302,14 +305,12 @@ int main(int argc, char* argv[]) {
 	}
 
 	/* update final index */
-	infoLog << "Updating MetaGenome indices" << endl;
-	mtg.updateIndex();
+	infoLog << "Updating MetaGenome info" << endl;
+	mtg.update();
 	if(dbName == oldDBName && nProcessed == 0) {
 		infoLog << "No new genomes found, database not modified, quit updating" << endl;
 		return EXIT_SUCCESS;
 	}
-	const size_t mtgSize = mtg.size();
-	const size_t NG = mtg.numGenomes();
 
 	/* save MetaGenome */
 	saveProgInfo(mtgOut);
@@ -318,19 +319,34 @@ int main(int argc, char* argv[]) {
 		cerr << "Unable to save MetaGenome: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	infoLog << "MetaGenome of " << mtgSize << " bases saved to '" << mtgFn << "'" << endl;
+	mtgOut.close();
+	infoLog << "MetaGenome of " << mtg.size() << " bases saved to '" << mtgFn << "'" << endl;
+	mtg.clearSeq();
+
+	/* re-open MetaGenome saved file for dynamic sequence loading */
+	infoLog << "Lazy re-loading saved database '" << dbName << "'" << endl;
+	mtgIn.open(mtgFn.c_str(), ios_base::binary);
+	if(!mtgIn.is_open()) {
+		cerr << "Unable to re-open saved database file '" << mtgFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	loadProgInfo(mtgIn);
+	if(!mtgIn.bad())
+		mtg.load(mtgIn);
+	if(mtgIn.bad()) {
+		cerr << "Unable to re-load '" << mtgFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
 
 	infoLog << "Building FMD-index incrementally" << endl;
 	DNAseq blockSeq;
 	blockSeq.reserve(blockSize * MBP_UNIT);
 	size_t k = 0;
 	size_t nBlock = 0;
-	while(!mtg.empty()) {
-		blockSeq = mtg.topChrom().getBDSeq() + blockSeq; // update seq
-		mtg.popChrom(); // pop the last chrom
-
+	for(size_t i = mtg.numChroms(); i > 0; --i) {
+		blockSeq = mtg.loadBDSeq(mtgIn, i - 1) + blockSeq; // update seq
 		nBlock++;
-		bool isFirst = mtg.empty(); // flag whether the first genome
+		bool isFirst = i == 1; // flag whether the first chrom
 
 		/* process block, if large enough */
 		if(blockSeq.length() >= blockSize * MBP_UNIT || isFirst) { /* first genome or full block */
@@ -346,7 +362,7 @@ int main(int argc, char* argv[]) {
 			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;
 		}
 	}
-	assert(mtgSize == fmdidx.length());
+	assert(mtg.size() == fmdidx.length());
 
 	/* save FMDIndex */
 	saveProgInfo(fmdidxOut);
@@ -358,6 +374,6 @@ int main(int argc, char* argv[]) {
 	infoLog << "FMD-index saved to '" << fmdidxFn << "'" << endl;
 
 	if(!oldDBName.empty())
-		infoLog << "Database updated. Newly added # of genomes: " << nProcessed << " new size: " << mtgSize << endl;
-	infoLog << "Database built. Total # of genomes: " << NG << " size: " << mtgSize << endl;
+		infoLog << "Database updated. Newly added # of genomes: " << nProcessed << " new size: " << mtg.size() << endl;
+	infoLog << "Database built. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
 }

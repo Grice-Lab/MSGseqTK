@@ -21,27 +21,15 @@ const string Genome::REPLACEMENT_STR = ".";
 ostream& Genome::Chrom::save(ostream& out) const {
 	StringUtils::saveString(name, out);
 	StringUtils::saveString(seq, out);
+	out.write((const char*) &len, sizeof(size_t));
 	return out;
 }
 
 istream& Genome::Chrom::load(istream& in) {
 	StringUtils::loadString(name, in);
 	StringUtils::loadString(seq, in);
+	in.read((char*) &len, sizeof(size_t));
 	return in;
-}
-
-bool Genome::hasChrom(const string& chrName) const {
-	for(const Chrom& chr : chroms)
-		if(chr.name == chrName)
-			return true;
-	return false;
-}
-
-size_t Genome::getChromSize(const string& chrName) const {
-	for(const Chrom& chr : chroms)
-		if(chr.name == chrName)
-			return chr.size();
-	return 0;
 }
 
 size_t Genome::getChromIndex(int64_t loc) const {
@@ -76,18 +64,10 @@ istream& Genome::load(istream& in) {
 }
 
 size_t Genome::size() const {
-	size_t size = 0;
+	size_t len = 0;
 	for(const Chrom& chr : chroms)
-		size += chr.size();
-	return size;
-}
-
-DNAseq Genome::getBDSeq() const {
-	DNAseq seq;
-	seq.reserve(BDSize());
-	for(const Chrom& chr : chroms)
-		seq += chr.getBDSeq();
-	return seq;
+		len += chr.size();
+	return len + numChroms(); // include GAP_BASE of each chrom
 }
 
 string Genome::formatName(const string& name) {

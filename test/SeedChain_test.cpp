@@ -27,9 +27,9 @@ int main() {
 	genome.addChrom("chr2", chr2);
 	MetaGenome mtg;
 	mtg.addGenome(genome);
-	mtg.updateIndex();
+	mtg.update();
 
-	DNAseq genomeSeq = genome.getBDSeq();
+	DNAseq genomeSeq = mtg.getSeq();
 	genomeSeq.pop_back();
 	FMDIndex fmdidx = FMDIndex(genomeSeq, true);
 	assert(mtg.size() == fmdidx.length());

@@ -235,9 +235,11 @@ int main(int argc, char* argv[]) {
 	if(seqOut.is_complete()) {
 		infoLog << "Writing genome sequences" << endl;
 		SeqIO seqO(&seqOut, SeqIO::FASTA);
+		size_t tid = 0;
 		for(const Genome& genome : mtg.getGenomes()) {
 			for(const Genome::Chrom chr : genome.getChroms()) {
-				seqO.writeSeq(PrimarySeq(chr.seq, chr.name,
+				DNAseq chrSeq = mtg.getSeq(tid++);
+				seqO.writeSeq(PrimarySeq(chrSeq, chr.name,
 						"genomeId=" + genome.getId() + ";genomeName=" + genome.getName() + ";chromName=" + chr.name));
 			}
 		}

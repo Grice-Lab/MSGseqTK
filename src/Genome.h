@@ -38,35 +38,21 @@ public:
 		Chrom() = default;
 
 		/** construct from given values */
-		Chrom(const string& name, const DNAseq& seq) : name(name), seq(seq)
+		Chrom(const string& name, const DNAseq& seq) : name(name), seq(seq), len(seq.length())
 		{  }
 
 		/* member methods */
 		size_t size() const {
-			return seq.length();
-		}
-
-		size_t BDSize() const {
-			return size() * 2 + 2; // include gap after fwd and rev seq
+			return len;
 		}
 
 		bool empty() const {
-			return seq.empty();
+			return len == 0;
 		}
 
-		/** get fwdSeq */
-		const DNAseq& getFwdSeq() const {
-			return seq;
-		}
-
-		/** ret revSeq */
-		DNAseq getRevSeq() const {
-			return dna::revcom(seq);
-		}
-
-		/** get BD seq, which is guranteed to be bi-directional and symmetric */
-		DNAseq getBDSeq() const {
-			return dna::toBasic(seq) + DNAalphabet::GAP_BASE + dna::revcom(dna::toBasic(seq)) + DNAalphabet::GAP_BASE;
+		/** clear seq for storage */
+		void clearSeq() {
+			seq.clear();
 		}
 
 		/** save this Chrom to binary output */
@@ -81,6 +67,7 @@ public:
 		/* member fields */
 		string name;
 		DNAseq seq;
+		size_t len = 0; // original length of seq, since it will be moved away by the MetaGenome
 	};
 
 	/* constructors */
@@ -140,22 +127,8 @@ public:
 		return chroms[i];
 	}
 
-	/** test whether this chrom name exists */
-	bool hasChrom(const string& chrName) const;
-
-	/** get a single chromsome size, or 0 if not found */
-	size_t getChromSize(const string& chrName) const;
-
 	/** get the overall size of this genome */
 	size_t size() const;
-
-	/** get bi-directional size of this genome */
-	size_t BDSize() const {
-		return (size() + numChroms()) * 2;
-	}
-
-	/** get bi-directional seq of genome */
-	DNAseq getBDSeq() const;
 
 	/** add a new chrom object at the end */
 	void addChrom(const Chrom& chr) {
@@ -173,6 +146,12 @@ public:
 	 * @return  0-based relative order, or -1 if not exists
 	 */
 	size_t getChromIndex(int64_t i) const;
+
+	/** clear all chrom seqs to save storage */
+	void clearSeq() {
+		for(Chrom& chr : chroms)
+			chr.clearSeq();
+	}
 
 	/** save this object to binary output */
 	ostream& save(ostream& out) const;
