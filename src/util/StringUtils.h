@@ -174,7 +174,6 @@ public:
 		in.read((char*) buf, length * sizeof(T));
 		dest.assign(buf, length);
 		delete[] buf;
-
 		return in;
 	}
 
@@ -186,7 +185,7 @@ public:
 	 */
 	template<typename T>
 	static istream& loadString(basic_string<T>& dest, istream& in) {
-		size_t len;
+		size_t len = 0;
 		in.read((char*) &len, sizeof(size_t));
 		return loadString(dest, in, len);
 	}
