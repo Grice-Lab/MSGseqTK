@@ -171,8 +171,10 @@ public:
 	 */
 	template<typename T>
 	static istream& loadString(basic_string<T>& dest, istream& in, size_t length) {
-		dest.resize(length);
-		in.read((char*) &dest[0], length * sizeof(T));
+		T* buf = new T[length];
+		in.read((char*) buf, length * sizeof(T));
+		dest.assign(buf, length);
+		delete[] buf;
 		return in;
 	}
 
