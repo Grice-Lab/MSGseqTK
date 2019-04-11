@@ -22,6 +22,7 @@ using std::vector;
 using EGriceLab::libSDS::BitStr32;
 
 FMDIndex& FMDIndex::build(const DNAseq& seq) {
+	assert(seq.back() == DNAalphabet::GAP_BASE);
 	if(seq.length() > MAX_LENGTH)
 		throw std::length_error("DNAseq length exceeding the max allowed length");
 
@@ -34,7 +35,6 @@ FMDIndex& FMDIndex::build(const DNAseq& seq) {
 void FMDIndex::buildCounts(const DNAseq& seq) {
 	for(DNAseq::value_type b : seq)
 		B[b]++;
-	B[0]++; // count null terminal
 
 	/* calculate cumulative counts */
     int64_t S = 0;
@@ -183,7 +183,8 @@ DNAseq FMDIndex::getSeq() const {
 }
 
 void FMDIndex::buildBWT(const DNAseq& seq) {
-	const size_t N =  seq.length() + 1;
+	assert(seq.back() == DNAalphabet::GAP_BASE);
+	const size_t N = seq.length();
 	/* construct SA */
     int64_t* SA = new int64_t[N];
     int64_t errn = divsufsort((const uint8_t*) (seq.c_str()), (saidx_t*) SA, N);

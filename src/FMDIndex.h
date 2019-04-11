@@ -134,7 +134,7 @@ public:
 
 	/**
 	 * Build an FMDIndex from a combined seq, in which seq is always in the order of R0R0'R1R1', etc
-	 * @param seq pre-combined bidirectional seq
+	 * @param seq pre-combined bidirectional seq, must be null (GAP_BASE) terminated
 	 * @return a fresh allocated FMDIndex
 	 * @throw std::length_error if seq length is too long
 	 */
