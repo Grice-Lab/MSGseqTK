@@ -67,7 +67,7 @@ size_t Genome::size() const {
 	size_t len = 0;
 	for(const Chrom& chr : chroms)
 		len += chr.size();
-	return len + numChroms(); // include GAP_BASE of each chrom
+	return len;
 }
 
 string Genome::formatName(const string& name) {

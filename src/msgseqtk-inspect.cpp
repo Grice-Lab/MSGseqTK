@@ -209,7 +209,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	cout << "MetaGenome info: # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
+	cout << "MetaGenome info: # of genomes: " << mtg.numGenomes() << " size: " << mtg.BDSize() << endl;
 	cout << "FMD-index info: length: " << fmdidx.length() << endl;
 	cout << "Basic base count:"
 			<< " A: " << fmdidx.getBaseCount(DNAalphabet::A)

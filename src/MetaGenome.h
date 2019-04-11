@@ -47,8 +47,13 @@ public:
 
 	/* constructors */
 
-	/** get bi-directional size of this MetaGenome */
+	/** get size of this MetaGenome */
 	size_t size() const;
+
+	/** get bi-directional size of this MetaGenome */
+	size_t BDSize() const {
+		return (size() + numChroms()) * 2; // MetaGenome includes a BAP_BASE after each chromosome
+	}
 
 	/** test whether this MetaGnome is empty */
 	bool empty() const {
@@ -361,7 +366,7 @@ public:
 	}
 
 	/** get concatenated bi-directional whole MetaGenome seq */
-	DNAseq getSeq() const;
+	DNAseq getBDSeq() const;
 
 	/** save this object to binary outputs */
 	ostream& save(ostream& out) const;
@@ -369,15 +374,36 @@ public:
 	/** load an object from binary inputs */
 	istream& load(istream& in);
 
-	/** load a chrom seq from a saved binary input given tid */
-	DNAseq loadSeq(istream& in, size_t tid) const;
+	/** load a chrom seq from a rw binary stream for given tid */
+	DNAseq loadSeq(istream& in, size_t tid) const {
+		DNAseq seq;
+		in.seekg(- getEndPos(tid) /* negative value */, std::ios_base::end);
+		StringUtils::loadString(seq, in);
+		return seq;
+	}
+
+	/** load a chrom seq from a rw binary stream on current position */
+	DNAseq loadSeq(istream& in) const {
+		DNAseq seq;
+		StringUtils::loadString(seq, in);
+		return seq;
+	}
 
 	/**
-	 * load a chrom bi-directional seq from a saved binary input given tid
+	 * load a chrom bi-directional seq from an r/w binary input given tid
 	 * the loaded seq will be convert to basic-only bases so it is bi-directional
 	 */
 	DNAseq loadBDSeq(istream& in, size_t tid) const {
 		const DNAseq& seq = dna::toBasic(loadSeq(in, tid));
+		return seq + DNAalphabet::GAP_BASE + dna::revcom(seq) + DNAalphabet::GAP_BASE;
+	}
+
+	/**
+	 * load a chrom bi-directional seq from an r/w binary at current pos
+	 * the loaded seq will be convert to basic-only bases so it is bi-directional
+	 */
+	DNAseq loadBDSeq(istream& in) const {
+		const DNAseq& seq = dna::toBasic(loadSeq(in));
 		return seq + DNAalphabet::GAP_BASE + dna::revcom(seq) + DNAalphabet::GAP_BASE;
 	}
 

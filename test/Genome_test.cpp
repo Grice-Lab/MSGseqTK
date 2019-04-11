@@ -95,7 +95,7 @@ int main() {
 	mtg2.getGenome(0).setId("g1N");
 	mtg2.getGenome(1).setId("g2N");
 	MetaGenome mtg = mtg1 + mtg2;
-	if(mtg.size() != mtg1.size() + mtg1.size()) {
+	if(mtg.BDSize() != mtg1.BDSize() + mtg1.BDSize()) {
 		cerr << "Merged MetaGenome size doesn't match" << endl;
 		return EXIT_FAILURE;
 	}

@@ -24,6 +24,7 @@
  *      Author: zhengqi
  */
 
+#include <cstdio> // for EOF
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -49,8 +50,9 @@ using namespace EGriceLab;
 using namespace EGriceLab::MSGseqTK;
 
 static const int DEFAULT_NUM_THREADS = 1;
-static const int DEFAULT_BLOCK_SIZE = 2000;
-static const size_t MBP_UNIT = 1000000;
+static const size_t DEFAULT_BLOCK_SIZE = 2000;
+static const size_t BLOCK_UNIT = 1000000;
+static const double SIZE_FACTOR = 1.5;
 
 /**
  * Print introduction of this program
@@ -82,6 +84,17 @@ void printUsage(const string& progName) {
 		 << "            -h|--help            : print this message and exit" << endl;
 }
 
+/**
+ * build the FMD-index build in one general block, which should not exceeding the DEFAULT_BLOCK_SIZE
+ */
+void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx);
+
+/**
+ * build the FMD-index incrementally,
+ * it also use on-disk saved r/w MetaGenome file to further reduce RAM usage
+ */
+void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx, iostream& mtgIO, size_t blockSize = DEFAULT_BLOCK_SIZE * BLOCK_UNIT);
+
 int main(int argc, char* argv[]) {
 	/* variable declarations */
 	vector<string> genomeIds; // genome ids in original order
@@ -92,11 +105,12 @@ int main(int argc, char* argv[]) {
 	string listFn, mtgFn, fmdidxFn;
 
 	ifstream listIn, mtgIn, fmdidxIn;
+	fstream mtgOut; // read/write stream for lazy loading
+	ofstream fmdidxOut;
 
-	ofstream mtgOut, fmdidxOut;
 	const SeqIO::FORMAT fmt = SeqIO::FASTA; // always use fasta format
 
-	int blockSize = DEFAULT_BLOCK_SIZE;
+	size_t blockSize = DEFAULT_BLOCK_SIZE;
 	int nThreads = DEFAULT_NUM_THREADS;
 
 	/* parse options */
@@ -132,9 +146,11 @@ int main(int argc, char* argv[]) {
 		oldDBName = cmdOpts.getOpt("--update");
 
 	if(cmdOpts.hasOpt("-b"))
-		blockSize = ::atoi(cmdOpts.getOptStr("-b"));
+		blockSize = ::atol(cmdOpts.getOptStr("-b"));
 	if(cmdOpts.hasOpt("--block"))
-		blockSize = ::atoi(cmdOpts.getOptStr("--block"));
+		blockSize = ::atol(cmdOpts.getOptStr("--block"));
+
+	blockSize *= BLOCK_UNIT; // switch to bp unit
 
 #ifdef _OPENMP
 	if(cmdOpts.hasOpt("-p"))
@@ -203,7 +219,7 @@ int main(int argc, char* argv[]) {
 	mtgFn = dbName + METAGENOME_FILE_SUFFIX;
 	fmdidxFn = dbName + FMDINDEX_FILE_SUFFIX;
 
-	mtgOut.open(mtgFn.c_str(), ios_base::out | ios_base::binary);
+	mtgOut.open(mtgFn.c_str(), ios_base::in | ios_base::out | ios_base::binary);
 	if(!mtgOut.is_open()) {
 		cerr << "Unable to write to '" << mtgFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
@@ -319,50 +335,16 @@ int main(int argc, char* argv[]) {
 		cerr << "Unable to save MetaGenome: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	mtgOut.close();
-	infoLog << "MetaGenome of " << mtg.size() << " bases saved to '" << mtgFn << "'" << endl;
-	mtg.clearSeq();
+	infoLog << "MetaGenome of " << mtg.BDSize() << " bases saved to '" << mtgFn << "'" << endl;
 
-	/* re-open MetaGenome saved file for dynamic sequence loading */
-	infoLog << "Lazy re-loading saved database '" << dbName << "'" << endl;
-	mtgIn.open(mtgFn.c_str(), ios_base::binary);
-	if(!mtgIn.is_open()) {
-		cerr << "Unable to re-open saved database file '" << mtgFn << "': " << ::strerror(errno) << endl;
-		return EXIT_FAILURE;
+	/* build FMD-index */
+	if(mtg.BDSize() <= 0) // we can build the FMD-index in one step
+		buildFMDIndex(mtg, fmdidx);
+	else { // build the FMD-index incrementally
+		mtg.clearSeq(); // clear the seqs in the RAM
+		buildFMDIndex(mtg, fmdidx, mtgOut, blockSize);
 	}
-	loadProgInfo(mtgIn);
-	if(!mtgIn.bad())
-		mtg.load(mtgIn);
-	if(mtgIn.bad()) {
-		cerr << "Unable to re-load '" << mtgFn << "': " << ::strerror(errno) << endl;
-		return EXIT_FAILURE;
-	}
-
-	infoLog << "Building FMD-index incrementally" << endl;
-	DNAseq blockSeq;
-	blockSeq.reserve(blockSize * MBP_UNIT);
-	size_t k = 0;
-	size_t nBlock = 0;
-	for(size_t i = mtg.numChroms(); i > 0; --i) {
-		blockSeq = mtg.loadBDSeq(mtgIn, i - 1) + blockSeq; // update seq
-		nBlock++;
-		bool isFirst = i == 1; // flag whether the first chrom
-
-		/* process block, if large enough */
-		if(blockSeq.length() >= blockSize * MBP_UNIT || isFirst) { /* first genome or full block */
-			if(!isFirst)
-				infoLog << "Adding " << nBlock << " chroms in block " << ++k << " into FMD-index" << endl;
-			else
-				infoLog << "Adding " << nBlock << " chroms in block " << ++k << " into FMD-index and building final sampled Suffix-Array" << endl;
-			assert(blockSeq.back() == DNAalphabet::GAP_BASE);
-			blockSeq.pop_back(); // remove GAP_BASE terminal
-			fmdidx = FMDIndex(blockSeq, isFirst) + fmdidx; /* always use freshly built FMDIndex as lhs */
-			blockSeq.clear();
-			nBlock = 0;
-			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;
-		}
-	}
-	assert(mtg.size() == fmdidx.length());
+	assert(mtg.BDSize() == fmdidx.length());
 
 	/* save FMDIndex */
 	saveProgInfo(fmdidxOut);
@@ -374,6 +356,38 @@ int main(int argc, char* argv[]) {
 	infoLog << "FMD-index saved to '" << fmdidxFn << "'" << endl;
 
 	if(!oldDBName.empty())
-		infoLog << "Database updated. Newly added # of genomes: " << nProcessed << " new size: " << mtg.size() << endl;
-	infoLog << "Database built. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.size() << endl;
+		infoLog << "Database updated. Newly added # of genomes: " << nProcessed << " new size: " << mtg.BDSize() << endl;
+	infoLog << "Database built. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.BDSize() << endl;
+}
+
+void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx) {
+	infoLog << "Building FMD-index" << endl;
+	DNAseq mtgSeq = mtg.getBDSeq();
+	fmdidx = FMDIndex(mtgSeq); // use the metagenome bd-seq as a whole
+}
+
+void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx, iostream& mtgIO, size_t blockSize) {
+	infoLog << "Building FMD-index incrementally" << endl;
+	DNAseq blockSeq;
+	blockSeq.reserve(blockSize * SIZE_FACTOR);
+	size_t k = 0;
+	size_t nChroms = 0;
+	for(size_t i = mtg.numChroms(); i > 0; --i) {
+		blockSeq = mtg.loadBDSeq(mtgIO, i - 1) + blockSeq; // lazy loading from read/write output, seqs will be loaded in reserved-order
+		nChroms++;
+		bool isFirst = i == 1; // flag whether the first chrom
+
+		/* process block, if large enough */
+		if(blockSeq.length() >= blockSize * BLOCK_UNIT || isFirst) { /* first genome or full block */
+			if(!isFirst)
+				infoLog << "Adding " << nChroms << " chroms in block " << ++k << " into FMD-index" << endl;
+			else
+				infoLog << "Adding " << nChroms << " chroms in block " << ++k << " into FMD-index and building final sampled Suffix-Array" << endl;
+			assert(blockSeq.back() == DNAalphabet::GAP_BASE);
+			fmdidx = FMDIndex(blockSeq, isFirst) + fmdidx; /* always use freshly built FMDIndex as lhs */
+			blockSeq.clear();
+			nChroms = 0;
+			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;
+		}
+	}
 }

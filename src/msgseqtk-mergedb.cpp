@@ -171,7 +171,7 @@ int main(int argc, char* argv[]) {
 			infoLog << "Merging into new database and building final Suffix-Array" << endl;
 		mtg = mtgPart + mtg;
 		fmdidx = fmdidxPart + fmdidx;
-		assert(mtg.size() == fmdidx.length());
+		assert(mtg.BDSize() == fmdidx.length());
 		infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmdidx.length() << endl;
 	}
 

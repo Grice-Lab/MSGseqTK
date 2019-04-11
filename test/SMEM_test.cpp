@@ -27,10 +27,9 @@ int main() {
 	mtg.addGenome(genome);
 	mtg.update();
 
-	DNAseq genomeSeq = mtg.getSeq();
-	genomeSeq.pop_back();
+	DNAseq genomeSeq = mtg.getBDSeq();
 	FMDIndex fmdidx = FMDIndex(genomeSeq, true);
-	assert(mtg.size() == fmdidx.length());
+	assert(mtg.BDSize() == fmdidx.length());
 
 	PrimarySeq read("ACGTAGTA", "seq1");
 	cout << "SMEM search between genome:" << endl << genomeSeq << endl << "query:" << endl << read.getSeq() << endl;
