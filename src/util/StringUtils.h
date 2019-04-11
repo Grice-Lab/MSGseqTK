@@ -162,7 +162,8 @@ public:
 	static string removeEnd(const string& str, const string& pattern);
 
 	/**
-	 * load data from a binary input to given basic_string, override any old data
+	 * load data from a binary input to given basic_string, override any old data,
+	 * it will directly access the string memory since in C++11, strings are guaranteed to be stored linearly
 	 * @param dest  destination
 	 * @param in  input
 	 * @param number basic_string to load
@@ -170,10 +171,8 @@ public:
 	 */
 	template<typename T>
 	static istream& loadString(basic_string<T>& dest, istream& in, size_t length) {
-		T* buf = new T[length]; /* construct a temporary buffer */
-		in.read((char*) buf, length * sizeof(T));
-		dest.assign(buf, length);
-		delete[] buf;
+		dest.resize(length);
+		in.read((char*) &dest[0], length * sizeof(T));
 		return in;
 	}
 
