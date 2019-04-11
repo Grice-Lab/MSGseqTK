@@ -29,6 +29,7 @@ const saidx_t FMIndex::totalBases() const {
 }
 
 FMIndex& FMIndex::build(const DNAseq& seq) {
+	assert(seq.back() == DNAalphabet::GAP_BASE);
 	if(seq.length() > MAX_LENGTH)
 		throw std::length_error("DNAseq length exceeding the max allowed length");
 
@@ -41,7 +42,6 @@ FMIndex& FMIndex::build(const DNAseq& seq) {
 void FMIndex::buildCounts(const DNAseq& seq) {
 	for(DNAseq::value_type b : seq)
 		B[b]++;
-	B[0]++; // count terminal null
 
 	/* calculate cumulative counts (total counts smaller than this character) */
     saidx_t sum = 0;
@@ -182,7 +182,7 @@ DNAseq FMIndex::getSeq() const {
 }
 
 void FMIndex::buildBWT(const DNAseq& seq) {
-	const size_t N =  seq.length() + 1;
+	const size_t N =  seq.length();
 	/* construct SA */
     saidx_t* SA = new saidx_t[N];
     saidx_t errn = divsufsort((const sauchar_t*) (seq.c_str()), SA, N);

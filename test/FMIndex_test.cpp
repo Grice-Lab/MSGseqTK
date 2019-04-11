@@ -25,9 +25,9 @@ int main() {
 	vector<Loc> locs;
 
 	/* series operator+= tests */
-	DNAseq seq1 = dna::encode("CTAGCATAGAC");
+	DNAseq seq1 = dna::encode("CTAGCATAGACN");
 	cout << "seq1:" << endl << seq1 << endl;
-	seqM1 += seq1 + DNAalphabet::GAP_BASE;
+	seqM1 += seq1;
 	fmidx1 += FMIndex(seq1, true);
 	cout << "fmidx1.length(): " << fmidx1.length() << endl;
 	cout << "fmidx1.getBWT():" << endl << fmidx1.getBWT() << endl;
@@ -46,9 +46,9 @@ int main() {
 	if(!isValidLocs(seqM1, pat, fmidx1.locateAll(pat)))
 		return EXIT_FAILURE;
 
-	DNAseq seq2 = dna::encode("CTAGCATCGAC");
+	DNAseq seq2 = dna::encode("CTAGCATCGACN");
 	cout << "seq2:" << endl << seq2 << endl;
-	seqM1 += seq2 + DNAalphabet::GAP_BASE;
+	seqM1 += seq2;
 	fmidx1 += FMIndex(seq2);
 	cout << "fmidx1.length(): " << fmidx1.length() << endl;
 	cout << "fmidx1.getBWT():" << endl << fmidx1.getBWT() << endl;
@@ -67,9 +67,9 @@ int main() {
 	if(!isValidLocs(seqM1, pat, fmidx1.locateAll(pat)))
 		return EXIT_FAILURE;
 
-	DNAseq seq3 = dna::encode("CTAGCATGGAC");
+	DNAseq seq3 = dna::encode("CTAGCATGGACN");
 	cout << "seq3:" << endl << seq3 << endl;
-	seqM1 += seq3 + DNAalphabet::GAP_BASE;
+	seqM1 += seq3;
 	fmidx1 += FMIndex(seq3);
 	cout << "fmidx1.length(): " << fmidx1.length() << endl;
 	cout << "fmidx1.getBWT():" << endl << fmidx1.getBWT() << endl;
@@ -88,9 +88,9 @@ int main() {
 	if(!isValidLocs(seqM1, pat, fmidx1.locateAll(pat)))
 		return EXIT_FAILURE;
 
-	DNAseq seq4 = dna::encode("CTAGCATTGAC");
+	DNAseq seq4 = dna::encode("CTAGCATTGACN");
 	cout << "seq4:" << endl << seq4 << endl;
-	seqM1 += seq4 + DNAalphabet::GAP_BASE;
+	seqM1 += seq4;
 	fmidx1 += FMIndex(seq4);
 	cout << "fmidx1.length(): " << fmidx1.length() << endl;
 	cout << "fmidx1.getBWT():" << endl << fmidx1.getBWT() << endl;
@@ -110,9 +110,9 @@ int main() {
 		return EXIT_FAILURE;
 
 	/* series operator+ tests */
-	DNAseq seq5 = dna::encode("CTAGCAACTAG");
+	DNAseq seq5 = dna::encode("CTAGCAACTAGN");
 	cout << "seq5:" << endl << seq5 << endl;
-	seqM2 = seq5 + DNAalphabet::GAP_BASE + seqM2;
+	seqM2 = seq5 + seqM2;
 	fmidx2 = FMIndex(seq5, true) + fmidx2;
 	cout << "fmidx2.length(): " << fmidx2.length() << endl;
 	cout << "fmidx2.getBWT():" << endl << fmidx2.getBWT() << endl;
@@ -131,9 +131,9 @@ int main() {
 	if(!isValidLocs(seqM2, pat, fmidx2.locateAll(pat)))
 		return EXIT_FAILURE;
 
-	DNAseq seq6 = dna::encode("CTAGCACCTAG");
+	DNAseq seq6 = dna::encode("CTAGCACCTAGN");
 	cout << "seq6:" << endl << seq6 << endl;
-	seqM2 = seq6 + DNAalphabet::GAP_BASE + seqM2;
+	seqM2 = seq6 + seqM2;
 	fmidx2 = FMIndex(seq6) + fmidx2;
 	cout << "fmidx2.length(): " << fmidx2.length() << endl;
 	cout << "fmidx2.getBWT():" << endl << fmidx2.getBWT() << endl;
@@ -152,9 +152,9 @@ int main() {
 	if(!isValidLocs(seqM2, pat, fmidx2.locateAll(pat)))
 		return EXIT_FAILURE;
 
-	DNAseq seq7 = dna::encode("CTAGCAGCTAG");
+	DNAseq seq7 = dna::encode("CTAGCAGCTAGN");
 	cout << "seq7:" << endl << seq7 << endl;
-	seqM2 = seq7 + DNAalphabet::GAP_BASE + seqM2;
+	seqM2 = seq7 + seqM2;
 	fmidx2 = FMIndex(seq7) + fmidx2;
 	cout << "fmidx2.length(): " << fmidx2.length() << endl;
 	cout << "fmidx2.getBWT():" << endl << fmidx2.getBWT() << endl;
@@ -173,9 +173,9 @@ int main() {
 	if(!isValidLocs(seqM2, pat, fmidx2.locateAll(pat)))
 		return EXIT_FAILURE;
 
-	DNAseq seq8 = dna::encode("CTAGCATCTAG");
+	DNAseq seq8 = dna::encode("CTAGCATCTAGN");
 	cout << "seq8:" << endl << seq8 << endl;
-	seqM2 = seq8 + DNAalphabet::GAP_BASE + seqM2;
+	seqM2 = seq8 + seqM2;
 	fmidx2 = FMIndex(seq8) + fmidx2;
 	cout << "fmidx2.length(): " << fmidx2.length() << endl;
 	cout << "fmidx2.getBWT():" << endl << fmidx2.getBWT() << endl;
