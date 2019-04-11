@@ -52,7 +52,7 @@ using namespace EGriceLab::MSGseqTK;
 static const int DEFAULT_NUM_THREADS = 1;
 static const size_t DEFAULT_BLOCK_SIZE = 2000;
 static const size_t BLOCK_UNIT = 1000000;
-static const double SIZE_FACTOR = 1.5;
+static const double SIZE_FACTOR = 1.2; // allocate factor for block-wise incremental building
 
 /**
  * Print introduction of this program
@@ -338,7 +338,7 @@ int main(int argc, char* argv[]) {
 	infoLog << "MetaGenome of " << mtg.BDSize() << " bases saved to '" << mtgFn << "'" << endl;
 
 	/* build FMD-index */
-	if(mtg.BDSize() <= 0) // we can build the FMD-index in one step
+	if(mtg.BDSize() <= blockSize) // we can build the FMD-index in one step
 		buildFMDIndex(mtg, fmdidx);
 	else { // build the FMD-index incrementally
 		mtg.clearSeq(); // clear the seqs in the RAM
