@@ -93,7 +93,7 @@ public:
 
 	/**
 	 * get SeedPairs of this SMEM
-	 * @return  mapped seeds that always on FWD target strand up to MAX_NLOCS
+	 * @return  mapped seeds that always on FWD strand of target
 	 */
 	SeedList getSeeds() const;
 
@@ -177,7 +177,7 @@ private:
 
 public:
 	/* static fields */
-	static const size_t MAX_NLOCS = 256;
+	static const size_t MAX_NSEEDS = 256;
 	static const size_t MAX_NCHAINS = 256;
 
 	friend class SMEMS;

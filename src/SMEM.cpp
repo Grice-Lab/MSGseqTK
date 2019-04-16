@@ -142,18 +142,20 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 
 SeedList SMEM::getSeeds() const {
 	SeedList seeds;
-	const size_t N = std::min(MAX_NLOCS, static_cast<size_t>(size));
+	const size_t N = std::min<size_t>(MAX_NSEEDS, size);
 	seeds.reserve(N);
 	for(size_t i = 0; i < N; ++i) {
 		{
 			int64_t start = fmdidx->accessSA(fwdStart + i);
-			if(mtg->getStrand(start) == GLoc::FWD) // always only search loc on fwd tStrand
-				seeds.push_back(SeedPair(from, start, length(), mtg->getLocId(start), GLoc::FWD, loglik()));
+			int64_t tid = mtg->getLocId(start);
+			if(mtg->getStrand(tid, start) == GLoc::FWD) // always only search loc on fwd tStrand
+				seeds.push_back(SeedPair(from, mtg->getLoc(tid, start), length(), tid, GLoc::FWD, loglik()));
 		}
 		{
 			int64_t start = fmdidx->accessSA(revStart + i);
-			if(mtg->getStrand(start) == GLoc::FWD) // always only search loc on fwd tStrand
-				seeds.push_back(SeedPair(from, start, length(), mtg->getLocId(start), GLoc::REV, loglik()));
+			int64_t tid = mtg->getLocId(start);
+			if(mtg->getStrand(tid, start) == GLoc::FWD) // always only search loc on fwd tStrand
+				seeds.push_back(SeedPair(from, mtg->getLoc(tid, start), length(), tid, GLoc::REV, loglik()));
 		}
 	}
 	return seeds;

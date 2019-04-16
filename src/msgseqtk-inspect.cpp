@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
 	for(size_t tid = 0; tid < mtg.numChroms(); ++tid) {
 		string tname = mtg.getChromName(tid);
 		const Genome::Chrom& chr = mtg.getChrom(tid);
-		if(!(tname == chr.name && mtg.getChromLen(tid) == (chr.size() + 1) * 2)) {
+		if(!(tname == chr.name && mtg.getChromLoc(tid).length() == chr.size() + 1)) {
 			cerr << "Unmatched chrom record for tid: " << tid << endl;
 			return EXIT_FAILURE;
 		}

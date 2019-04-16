@@ -38,7 +38,7 @@ public:
 		Chrom() = default;
 
 		/** construct from given values */
-		Chrom(const string& name, const DNAseq& seq) : name(name), seq(seq), len(seq.length())
+		Chrom(const string& name, const DNAseq& seq) : name(name), len(seq.length()), seq(seq)
 		{  }
 
 		/* member methods */
@@ -48,11 +48,6 @@ public:
 
 		bool empty() const {
 			return len == 0;
-		}
-
-		/** clear seq for storage */
-		void clearSeq() {
-			seq.clear();
 		}
 
 		/** save this Chrom to binary output */
@@ -67,7 +62,7 @@ public:
 		/* member fields */
 		string name;
 		DNAseq seq;
-		size_t len = 0; // original length of seq, since it will be moved away by the MetaGenome
+		size_t len = 0; // orignal length of seq, since seq will be moved during database building
 	};
 
 	/* constructors */
@@ -80,14 +75,6 @@ public:
 
 	/** deligating construct from name only */
 	Genome(const string& name) : Genome(name, name)
-	{  }
-
-	/** construct a genome with given id, name and chromosomes */
-	Genome(const string& id, const string& name, const vector<Chrom>& chroms) : id(id), name(name), chroms(chroms)
-	{  }
-
-	/** deligating construct a genome with give name and chromosomes */
-	Genome(const string& name, const vector<Chrom>& chroms) : Genome(name, name, chroms)
 	{  }
 
 	/* member methods */
@@ -146,12 +133,6 @@ public:
 	 * @return  0-based relative order, or -1 if not exists
 	 */
 	size_t getChromIndex(int64_t i) const;
-
-	/** clear all chrom seqs to save storage */
-	void clearSeq() {
-		for(Chrom& chr : chroms)
-			chr.clearSeq();
-	}
 
 	/** save this object to binary output */
 	ostream& save(ostream& out) const;

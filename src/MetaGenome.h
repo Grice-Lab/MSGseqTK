@@ -39,20 +39,15 @@ public:
 	typedef vector<string> NAME_INDEX;    /* id->name vector */
 	typedef map<string, size_t> GENOME_INDEX; /* genome id->idx map */
 	typedef map<string, size_t> CHROM_INDEX;  /* chrom name->idx map */
-	typedef vector<size_t> INDEX_MAP;  /* chrom idx->genome idx */
-	typedef vector<size_t> BEFORE_MAP; /* chrom idx-># chroms before */
-	typedef vector<size_t> STREAMPOS_MAP; /* chrom idx->stream end-pos */
-//	typedef vector<Loc> GENOME_LOC; /* genome id->Loc map */
+	typedef vector<size_t> INDEX_MAP;  /* idx->id map */
 	typedef vector<Loc> CHROM_LOC;  /* chromosome id->Loc map */
 
-	/* constructors */
-
-	/** get size of this MetaGenome */
+	/** get size of this MetaGenome, including a GAP_BASE after each chrom */
 	size_t size() const;
 
 	/** get bi-directional size of this MetaGenome */
 	size_t BDSize() const {
-		return (size() + numChroms()) * 2; // MetaGenome includes a BAP_BASE after each chromosome
+		return size() * 2; // MetaGenome includes a BAP_BASE after each chromosome
 	}
 
 	/** test whether this MetaGnome is empty */
@@ -144,31 +139,34 @@ public:
 	size_t getChromIndex(const string& chrName) const;
 
 	/**
-	 * get the chromosome index of given position,
-	 * or -1 if not found
+	 * get tid by BD position
 	 */
-	size_t getChromIndex(int64_t pos) const;
+	size_t getLocId(int64_t pos) const;
 
-	/**
-	 * get a general id for given position,
-	 * alias to getChromIndex
-	 */
-	size_t getLocId(int64_t pos) const {
-		return getChromIndex(pos);
+	/** get loc on this MetaGenome with given tid and pos on FMD-index */
+	size_t getLoc(size_t tid, int64_t pos) const {
+		const Loc& tLoc = getChromBDLoc(tid);
+		assert(tLoc.getStart() <= pos && pos < tLoc.getEnd());
+		return getChromLoc(tid).getStart() + pos - tLoc.getStart();
 	}
 
-	/** get strand of given chrom index and position */
+	/** get loc on this Metagenome given BD pos*/
+	size_t getLoc(int64_t pos) const {
+		return getLoc(getLocId(pos), pos);
+	}
+
+	/** get strand of given chrom index and position seq */
 	GLoc::STRAND getStrand(size_t tid, int64_t pos) const {
-		assert(getChromFwdStart(tid) <= pos && pos < getChromEnd(tid));
-		return pos < getChromFwdEnd(tid) ? GLoc::FWD : GLoc::REV;
+		const Loc& tLoc = getChromBDLoc(tid);
+		assert(tLoc.getStart() <= pos && pos < tLoc.getEnd());
+		return pos < tLoc.getStart() + tLoc.length() / 2 ? GLoc::FWD : GLoc::REV;
 	}
 
 	/**
-	 * get the strand of given position
+	 * get the strand of given BD position
 	 */
 	GLoc::STRAND getStrand(int64_t pos) const {
-		assert(getChromIndex(pos) != -1);
-		return getStrand(getChromIndex(pos), pos);
+		return getStrand(getLocId(pos), pos);
 	}
 
 	/** get # chroms before given chrom index in its genome */
@@ -179,11 +177,6 @@ public:
 	/** get relative chromId of a chrom index, alias as getChromNbefore */
 	size_t getRelChromIndex(size_t chromIdx) const {
 		return getChromNbefore(chromIdx);
-	}
-
-	/** get end pos of a chrom index */
-	size_t getEndPos(size_t chromIdx) const {
-		return chromIdx2endPos[chromIdx];
 	}
 
 	/**
@@ -227,66 +220,10 @@ public:
 	}
 
 	/**
-	 * get the fwd Loc of i-th chrom
+	 * get the BD Loc of i-th chrom
 	 */
-	Loc getChromFwdLoc(size_t i) const {
-		return Loc(getChromFwdStart(i), getChromFwdEnd(i));
-	}
-
-	/**
-	 * get the rev Loc of i-th chrom
-	 */
-	Loc getChromRevLoc(size_t i) const {
-		return Loc(getChromRevStart(i), getChromRevEnd(i));
-	}
-
-	/**
-	 * get the start of the i-th chrom
-	 */
-	int64_t getChromStart(size_t i) const {
-		return getChromLoc(i).getStart();
-	}
-
-	/**
-	 * get the fwd start of the i-th chrom
-	 */
-	int64_t getChromFwdStart(size_t i) const {
-		return getChromStart(i);
-	}
-
-	/**
-	 * get the rev start of the i-th chrom
-	 */
-	int64_t getChromRevStart(size_t i) const {
-		return getChromStart(i) + getChromLen(i) / 2;
-	}
-
-	/**
-	 * get the end of the i-th chrom
-	 */
-	int64_t getChromEnd(size_t i) const {
-		return getChromLoc(i).getEnd();
-	}
-
-	/**
-	 * get the fwd end of the i-th chrom
-	 */
-	int64_t getChromFwdEnd(size_t i) const {
-		return getChromStart(i) + getChromLen(i) / 2;
-	}
-
-	/**
-	 * get the rev end of the i-th chrom
-	 */
-	int64_t getChromRevEnd(size_t i) const {
-		return getChromEnd(i);
-	}
-
-	/**
-	 * get the length of the i-th chrom, including fwd + rev
-	 */
-	int64_t getChromLen(size_t i) const {
-		return getChromLoc(i).length();
+	Loc getChromBDLoc(size_t i) const {
+		return chromIdx2BDLoc[i];
 	}
 
 	/**
@@ -360,13 +297,52 @@ public:
 		return getGenome(getGenomeIndexByChromIdx(chrIdx)).getChrom(getChromNbefore(chrIdx));
 	}
 
-	/** get chrom seq by tid */
-	const DNAseq& getSeq(size_t tid) const {
-		return seqs[tid];
+	/** get seq of the entire metagenome */
+	const DNAseq& getSeq() const {
+		return seq;
 	}
 
-	/** get concatenated bi-directional whole MetaGenome seq */
-	DNAseq getBDSeq() const;
+	/** get a chrom seq by tid */
+	DNAseq getSeq(size_t tid) const {
+		return seq.substr(getChromLoc(tid).getStart(), getChromLoc(tid).length() - 1);
+	}
+
+	/** get a block seq by tid range */
+	DNAseq getSeq(size_t tidStart, size_t tidEnd) const {
+		assert(tidStart < tidEnd);
+		return seq.substr(getChromLoc(tidStart).getStart(), getChromLoc(tidEnd - 1).getEnd() - getChromLoc(tidStart).getStart());
+	}
+
+	/** get bi-directional seq by tid */
+	DNAseq getBDSeq(size_t tid) const {
+		return getBDSeq(getSeq(tid));
+	}
+
+	/** get a BD block seq by tid range */
+	DNAseq getBDSeq(size_t tidStart, size_t tidEnd) const {
+		assert(tidStart < tidEnd);
+		DNAseq seq;
+		seq.reserve(getChromBDLoc(tidEnd - 1).getEnd() - getChromBDLoc(tidStart).getStart());
+		for(size_t tid = tidStart; tid < tidEnd; ++tid)
+			seq += getBDSeq(tid);
+		return seq;
+	}
+
+	/** get concatenated bi-directional seq of the entire MetaGenome */
+	DNAseq getBDSeq() const {
+		return getBDSeq(0, numChroms());
+	}
+
+	/** remove seq of tid, will invalid the tid unless remove backwards */
+	void removeSeq(size_t tid) {
+		seq.erase(getChromLoc(tid).getStart(), getChromLoc(tid).length());
+	}
+
+	/** remove a block */
+	void removeSeq(size_t tidStart, size_t tidEnd) {
+		assert(tidStart < tidEnd);
+		seq.erase(getChromLoc(tidStart).getStart(), getChromLoc(tidEnd - 1).getEnd() - getChromLoc(tidStart).getStart());
+	}
 
 	/** save this object to binary outputs */
 	ostream& save(ostream& out) const;
@@ -374,43 +350,10 @@ public:
 	/** load an object from binary inputs */
 	istream& load(istream& in);
 
-	/** load a chrom seq from a rw binary stream for given tid */
-	DNAseq loadSeq(istream& in, size_t tid) const {
-		DNAseq seq;
-		in.seekg(- getEndPos(tid) /* negative value */, std::ios_base::end);
-		StringUtils::loadString(seq, in);
-		return seq;
-	}
-
-	/** load a chrom seq from a rw binary stream on current position */
-	DNAseq loadSeq(istream& in) const {
-		DNAseq seq;
-		StringUtils::loadString(seq, in);
-		return seq;
-	}
-
-	/**
-	 * load a chrom bi-directional seq from an r/w binary input given tid
-	 * the loaded seq will be convert to basic-only bases so it is bi-directional
-	 */
-	DNAseq loadBDSeq(istream& in, size_t tid) const {
-		const DNAseq& seq = dna::toBasic(loadSeq(in, tid));
-		return seq + DNAalphabet::GAP_BASE + dna::revcom(seq) + DNAalphabet::GAP_BASE;
-	}
-
-	/**
-	 * load a chrom bi-directional seq from an r/w binary at current pos
-	 * the loaded seq will be convert to basic-only bases so it is bi-directional
-	 */
-	DNAseq loadBDSeq(istream& in) const {
-		const DNAseq& seq = dna::toBasic(loadSeq(in));
-		return seq + DNAalphabet::GAP_BASE + dna::revcom(seq) + DNAalphabet::GAP_BASE;
-	}
-
 	/** update MetaGenome */
 	void update() {
-		updateSeq();
 		updateIndex();
+		updateSeq();
 	}
 
 	/**
@@ -426,7 +369,7 @@ public:
 
 	/** clear stored seq */
 	void clearSeq() {
-		seqs.clear();
+		seq.clear();
 	}
 
 	/** merge this MetaGenome with another one,
@@ -444,16 +387,16 @@ public:
 	/* member fields */
 private:
 	vector<Genome> genomes;
-	vector<DNAseq> seqs; // chrom seqs stored at the end of the output
+	DNAseq seq; // conncatenated metagenome seq (forward strand only, each chrom separated by GAP_BASE
 	NAME_INDEX genomeIds; // all genome ids
 	NAME_INDEX chromNames; // all chrom names
 	GENOME_INDEX genomeId2Idx; // genome id -> idx
 	CHROM_INDEX chromName2Idx; // chrom name -> idx
 	INDEX_MAP chromIdx2GenomeIdx; // chrom idx -> genome idx
-	STREAMPOS_MAP chromIdx2endPos; // chrom idx -> stream pos relative to the end of binary output/input
-	BEFORE_MAP chromIdx2Nbefore; // chrom idx -> # chroms before this chrom in this genome
+	INDEX_MAP chromIdx2Nbefore; // chrom idx -> # chroms before this chrom in this genome
 //	GENOME_LOC genomeIdx2Loc; // genome idx -> Loc on MetaGenome (including fwd + rev)
-	CHROM_LOC chromIdx2Loc; // chrom idx -> Loc on MetaGenome (including fwd + rev)
+	CHROM_LOC chromIdx2Loc; // chrom idx -> Loc on MetaGenome
+	CHROM_LOC chromIdx2BDLoc; // chrom idx -> bi-directional Loc on MetaGenome
 
 public:
 	/* static methods */
@@ -461,10 +404,15 @@ public:
 	static string getChromId(const string& genomeId, const string& chrName) {
 		return genomeId + ":" + chrName;
 	}
+
+	/** get bi-directional seq for a given seq */
+	static DNAseq getBDSeq(const DNAseq& seq) {
+		return dna::toBasic(seq) + DNAalphabet::GAP_BASE + dna::revcom(dna::toBasic(seq)) + DNAalphabet::GAP_BASE;
+	}
 };
 
 inline bool operator==(const MetaGenome& lhs, const MetaGenome& rhs) {
-	return lhs.genomes == rhs.genomes; /* equal genomes guarantees equal index */
+	return lhs.genomes == rhs.genomes && lhs.seq == rhs.seq;
 }
 
 inline bool operator!=(const MetaGenome& lhs, const MetaGenome& rhs) {
@@ -488,11 +436,11 @@ inline size_t MetaGenome::getChromIndex(const string& chrName) const {
 	return result != chromName2Idx.end() ? result->second : -1;
 }
 
-inline size_t MetaGenome::getChromIndex(int64_t pos) const {
-	CHROM_LOC::const_iterator result = std::find_if(chromIdx2Loc.begin(), chromIdx2Loc.end(),
+inline size_t MetaGenome::getLocId(int64_t pos) const {
+	CHROM_LOC::const_iterator result = std::find_if(chromIdx2BDLoc.begin(), chromIdx2BDLoc.end(),
 			[=] (const CHROM_LOC::value_type& item) { return item.getStart() <= pos && pos < item.getEnd(); }
 	);
-	return result != chromIdx2Loc.end() ? result - chromIdx2Loc.begin() : -1;
+	return result != chromIdx2BDLoc.end() ? result - chromIdx2BDLoc.begin() : -1;
 }
 
 } /* namespace MSGseqTK */

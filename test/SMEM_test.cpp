@@ -27,8 +27,9 @@ int main() {
 	mtg.addGenome(genome);
 	mtg.update();
 
-	DNAseq genomeSeq = mtg.getBDSeq();
-	FMDIndex fmdidx = FMDIndex(genomeSeq, true);
+	const DNAseq& genomeSeq = mtg.getSeq();
+	FMDIndex fmdidx = FMDIndex(mtg.getBDSeq(), true);
+	cerr << "mtg.BDSize():" << mtg.BDSize() << " fmdidx.length():" << fmdidx.length() << endl;
 	assert(mtg.BDSize() == fmdidx.length());
 
 	PrimarySeq read("ACGTAGTA", "seq1");

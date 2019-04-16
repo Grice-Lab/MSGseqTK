@@ -74,6 +74,7 @@ int main() {
 	cout << "Genome tests passed" << endl;
 
 	/* part 2, MetaGenome test */
+	// rename genomes
 	out.str("");
 	MetaGenome mtg1, mtg2;
 	mtg1.addGenome(g1);

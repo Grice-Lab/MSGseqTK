@@ -52,7 +52,7 @@ using namespace EGriceLab::MSGseqTK;
 static const int DEFAULT_NUM_THREADS = 1;
 static const size_t DEFAULT_BLOCK_SIZE = 2000;
 static const size_t BLOCK_UNIT = 1000000;
-static const double SIZE_FACTOR = 1.2; // allocate factor for block-wise incremental building
+static const double SIZE_FACTOR = 1.25; // allocate factor for block-wise incremental building
 
 /**
  * Print introduction of this program
@@ -90,10 +90,9 @@ void printUsage(const string& progName) {
 void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx);
 
 /**
- * build the FMD-index incrementally,
- * it also use on-disk saved r/w MetaGenome file to further reduce RAM usage
+ * build the FMD-index incrementally, it will also shrink the MetaGenome on-the-fly to save RAM
  */
-void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx, iostream& mtgIO, size_t blockSize = DEFAULT_BLOCK_SIZE * BLOCK_UNIT);
+void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, iostream& mtgIO, size_t blockSize = DEFAULT_BLOCK_SIZE * BLOCK_UNIT);
 
 int main(int argc, char* argv[]) {
 	/* variable declarations */
@@ -340,10 +339,8 @@ int main(int argc, char* argv[]) {
 	/* build FMD-index */
 	if(mtg.BDSize() <= blockSize) // we can build the FMD-index in one step
 		buildFMDIndex(mtg, fmdidx);
-	else { // build the FMD-index incrementally
-		mtg.clearSeq(); // clear the seqs in the RAM
+	else // build the FMD-index incrementally
 		buildFMDIndex(mtg, fmdidx, mtgOut, blockSize);
-	}
 	assert(mtg.BDSize() == fmdidx.length());
 
 	/* save FMDIndex */
@@ -362,31 +359,32 @@ int main(int argc, char* argv[]) {
 
 void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx) {
 	infoLog << "Building FMD-index" << endl;
-	DNAseq mtgSeq = mtg.getBDSeq();
-	fmdidx = FMDIndex(mtgSeq); // use the metagenome bd-seq as a whole
+	fmdidx = FMDIndex(mtg.getBDSeq()); // use the metagenome bd-seq as a whole
 }
 
-void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx, iostream& mtgIO, size_t blockSize) {
+void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, iostream& mtgIO, size_t blockSize) {
 	infoLog << "Building FMD-index incrementally" << endl;
+	const size_t NC = mtg.numChroms();
 	DNAseq blockSeq;
 	blockSeq.reserve(blockSize * SIZE_FACTOR);
 	size_t k = 0;
-	size_t nChroms = 0;
-	for(size_t i = mtg.numChroms(); i > 0; --i) {
-		blockSeq = mtg.loadBDSeq(mtgIO, i - 1) + blockSeq; // lazy loading from read/write output, seqs will be loaded in reserved-order
-		nChroms++;
+	size_t n = 0;
+	for(size_t i = NC; i > 0; --i) {
+		blockSeq = mtg.getBDSeq(i - 1) + blockSeq; // lazy loading from read/write output, seqs will be loaded in reserved-order
+		mtg.removeSeq(i - 1);
+		n++;
 		bool isFirst = i == 1; // flag whether the first chrom
 
 		/* process block, if large enough */
-		if(blockSeq.length() >= blockSize * BLOCK_UNIT || isFirst) { /* first genome or full block */
+		if(blockSeq.length() >= blockSize || isFirst) { /* first genome or full block */
 			if(!isFirst)
-				infoLog << "Adding " << nChroms << " chroms in block " << ++k << " into FMD-index" << endl;
+				infoLog << "Adding " << n << " chroms in block " << ++k << " into FMD-index" << endl;
 			else
-				infoLog << "Adding " << nChroms << " chroms in block " << ++k << " into FMD-index and building final sampled Suffix-Array" << endl;
+				infoLog << "Adding " << n << " chroms in block " << ++k << " into FMD-index and building final sampled Suffix-Array" << endl;
 			assert(blockSeq.back() == DNAalphabet::GAP_BASE);
 			fmdidx = FMDIndex(blockSeq, isFirst) + fmdidx; /* always use freshly built FMDIndex as lhs */
 			blockSeq.clear();
-			nChroms = 0;
+			n = 0;
 			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;
 		}
 	}

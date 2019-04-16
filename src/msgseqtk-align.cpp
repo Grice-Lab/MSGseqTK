@@ -405,8 +405,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	map<string, uint32_t> targetLen;
-	for(size_t i = 0; i < mtg.getChromNames().size(); ++i)
-		targetLen[mtg.getChromName(i)] = mtg.getChromLen(i);
+	for(size_t i = 0; i < mtg.numChroms(); ++i)
+		targetLen[mtg.getChromName(i)] = mtg.getChrom(i).size();
 
 	BAMheader header(mtg.getChromNames(), targetLen);
 

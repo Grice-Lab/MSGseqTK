@@ -57,11 +57,11 @@ public:
 
 	/** construct an Alignment with all fields */
 	Alignment(const PrimarySeq* read, const PrimarySeq* rcRead, const DNAseq* target,
-			int32_t tid, GLoc::STRAND qStrand, int64_t tShift,
+			int32_t tid, GLoc::STRAND qStrand,
 			int64_t qFrom, int64_t qTo, int64_t tStart, int64_t tEnd,
 			const ScoreScheme* ss, uint8_t mapQ = INVALID_MAP_Q)
 	: read(read), rcRead(rcRead), target(target),
-	  tid(tid), qStrand(qStrand), tShift(tShift),
+	  tid(tid), qStrand(qStrand),
 	  qFrom(qFrom), qTo(qTo), tStart(tStart), tEnd(tEnd), ss(ss), mapQ(mapQ)
 	{
 		assert(qFrom == 0 && qTo == read->length()); // cannot accept hard-clipped query
@@ -71,11 +71,11 @@ public:
 	/** construct an Alignment between a query, database and a SeedChain */
 	Alignment(const PrimarySeq* read, const PrimarySeq* rcRead, const MetaGenome& mtg,
 			const ScoreScheme* ss, const SeedChain& chain, uint8_t mapQ = INVALID_MAP_Q)
-	: read(read), rcRead(rcRead), tid(chain.getTid()), target(&mtg.getSeq(tid)),
-	  qStrand(chain.getStrand()), tShift(mtg.getChromStart(tid)),
+	: read(read), rcRead(rcRead), tid(chain.getTid()), target(&mtg.getSeq()),
+	  qStrand(chain.getStrand()),
 			qFrom(0), qTo(read->length()), ss(ss), mapQ(mapQ)
 	{
-		init(mtg.getChromFwdStart(tid), mtg.getChromFwdEnd(tid), chain);
+		init(mtg.getChromLoc(tid).getStart(), mtg.getChromLoc(tid).getEnd(), chain);
 	}
 
 	/** construct an unmapped AlignmentSE with minimum fields */
@@ -155,10 +155,6 @@ public:
 
 	int32_t getTid() const {
 		return tid;
-	}
-
-	int64_t getShift() const {
-		return tShift;
 	}
 
 	int64_t getStart() const {
@@ -305,7 +301,6 @@ private:
 	int32_t tid = -1;  // target id, should be determined from the database
 	const DNAseq* target = nullptr;
 	GLoc::STRAND qStrand = GLoc::UNK; // query strand
-	int64_t tShift = 0; // target/chromsome shift relative to metagenome
 
 	int64_t qFrom = 0; // 0-based
 	int64_t qTo = 0; // 1-based
