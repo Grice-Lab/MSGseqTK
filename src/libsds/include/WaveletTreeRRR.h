@@ -158,13 +158,13 @@ private:
 		assert(bs.length() == n);
 
 		for (size_t i = 0; i < sym.length(); ++i) {
-			if(test(sym[i], level)) {
+			uIntType s = sym[i];
+			if(test(s, level)) {
 				bs.set(i + offset);
-				right.push_back(sym[i]);
+				right.push_back(s);
 			}
-			else {
-				left.push_back(sym[i]);
-			}
+			else
+				left.push_back(s);
 		}
 
 		/* build level recursevely */
