@@ -33,6 +33,7 @@ using std::vector;
 using std::array;
 using EGriceLab::libSDS::BitStr32;
 using EGriceLab::libSDS::BitSeqRRR;
+using EGriceLab::libSDS::Seq;
 using EGriceLab::libSDS::WaveletTreeRRR;
 
 /**
@@ -169,6 +170,12 @@ protected:
 	 * this version of buildSA is parallelized by openMP
 	 */
 	void buildSA(const int64_t* SA, const DNAseq& bwtSeq);
+
+	/** build interleaving BitVector for two FMD-index, use parallelization optionally */
+	static BitStr32 buildInterleavingBS(const FMDIndex& fmdidx1, const FMDIndex& fmdidx2);
+
+	/** merge two DNAseq by an interleaving bitvector, use parallelization optionally */
+	static DNAseq mergeBWT(const WaveletTreeRRR& bwt1, const WaveletTreeRRR& bwt2, const BitStr32& bstr);
 
 public:
 	/**
