@@ -30,6 +30,7 @@
 #include <string>
 #include <cstdlib>
 #include <algorithm>
+#include <utility>
 #include <cassert>
 #include <limits>
 #include <boost/algorithm/string.hpp> /* for boost string algorithms */
@@ -359,7 +360,7 @@ int main(int argc, char* argv[]) {
 
 void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx) {
 	infoLog << "Building FMD-index" << endl;
-	fmdidx = FMDIndex(mtg.getBDSeq()); // use the metagenome bd-seq as a whole
+	fmdidx = FMDIndex(mtg.getBDSeq()).clearBWT(); // build whole metagenome FMDIndex in one step
 }
 
 void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, iostream& mtgIO, size_t blockSize) {
@@ -370,22 +371,23 @@ void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, iostream& mtgIO, size_t bl
 	size_t k = 0;
 	size_t n = 0;
 	for(size_t i = NC; i > 0; --i) {
+		bool isFirst = i == 1;
 		blockSeq = mtg.getBDSeq(i - 1) + blockSeq; // lazy loading from read/write output, seqs will be loaded in reserved-order
 		mtg.removeSeq(i - 1);
 		n++;
-		bool isFirst = i == 1; // flag whether the first chrom
-
 		/* process block, if large enough */
-		if(blockSeq.length() >= blockSize || isFirst) { /* first genome or full block */
-			if(!isFirst)
-				infoLog << "Adding " << n << " chroms in block " << ++k << " into FMD-index" << endl;
-			else
-				infoLog << "Adding " << n << " chroms in block " << ++k << " into FMD-index and building final sampled Suffix-Array" << endl;
+		if(blockSeq.length() >= blockSize || isFirst) { /* first chrom or block is full */
+			infoLog << "Adding " << n << " chroms in block " << ++k << " into FMD-index" << endl;
 			assert(blockSeq.back() == DNAalphabet::GAP_BASE);
-			fmdidx = FMDIndex(blockSeq, isFirst) + fmdidx; /* always use freshly built FMDIndex as lhs */
-			blockSeq.clear();
+			fmdidx = FMDIndex(blockSeq, false) + fmdidx; /* prepend new FMDIndex, whose SA is never built */
+			if(!isFirst) // not the final FMDindex
+				fmdidx.clearBWT(); // clear RAM before next merge
+			blockSeq.clear(); // blockSeq is moved away, still need clear
 			n = 0;
 			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;
 		}
 	}
+	infoLog << "Building final Suffix-Array" << endl;
+	fmdidx.buildSA();
+	fmdidx.clearBWT();
 }

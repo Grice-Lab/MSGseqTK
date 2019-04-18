@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <cassert>
 #include <stdexcept>
+#include "StringUtils.h"
 #include "FMDIndex.h"
 
 #ifdef _OPENMP
@@ -21,18 +22,16 @@ namespace MSGseqTK {
 using std::vector;
 using EGriceLab::libSDS::BitStr32;
 
-FMDIndex& FMDIndex::build(const DNAseq& seq) {
+FMDIndex::FMDIndex(const DNAseq& seq, bool keepSA) {
 	assert(seq.back() == DNAalphabet::GAP_BASE);
 	if(seq.length() > MAX_LENGTH)
 		throw std::length_error("DNAseq length exceeding the max allowed length");
-
+	const size_t N = seq.length();
 	buildCounts(seq);
-	buildBWT(seq);
-
-	return *this;
+	buildBWT(seq, keepSA);
 }
 
-void FMDIndex::buildCounts(const DNAseq& seq) {
+FMDIndex& FMDIndex::buildCounts(const DNAseq& seq) {
 	for(DNAseq::value_type b : seq)
 		B[b]++;
 
@@ -50,6 +49,7 @@ void FMDIndex::buildCounts(const DNAseq& seq) {
     	std::cerr << "input seq does not allow IUPAC-extended bases" << std::endl;
     	abort();
     }
+    return *this;
 }
 
 bool FMDIndex::isBiDirectional() const {
@@ -62,31 +62,20 @@ bool FMDIndex::isBiDirectional() const {
 ostream& FMDIndex::save(ostream& out) const {
 	out.write((const char*) B.data(), B.size() * sizeof(BCarray_t::value_type));
 	out.write((const char*) C.data(), C.size() * sizeof(BCarray_t::value_type));
-	bwt.save(out);
-	out.write((const char*) &keepSA, sizeof(bool));
-	if(keepSA) {
-		size_t nSAsampled = SAsampled.size();
-		assert(nSAsampled == SAbit.numOnes());
-		out.write((const char*) &nSAsampled, sizeof(size_t));
-		out.write((const char*) SAsampled.data(), sizeof(int64_t) * nSAsampled);
-		SAbit.save(out);
-	}
+	StringUtils::saveString(bwt, out);
+	bwtRRR.save(out);
+	SAidx.save(out);
+	StringUtils::saveString(SAsampled, out);
 	return out;
 }
 
 istream& FMDIndex::load(istream& in) {
 	in.read((char*) B.data(), B.size() * sizeof(BCarray_t::value_type));
 	in.read((char*) C.data(), C.size() * sizeof(BCarray_t::value_type));
-	bwt.load(in);
-	in.read((char*) &keepSA, sizeof(bool));
-	if(keepSA) {
-		size_t nSAsampled;
-		in.read((char*) &nSAsampled, sizeof(size_t));
-		SAsampled.resize(nSAsampled);
-		in.read((char*) SAsampled.data(), sizeof(int64_t) * nSAsampled);
-		SAbit.load(in);
-		assert(nSAsampled == SAbit.numOnes());
-	}
+	StringUtils::loadString(bwt, in);
+	bwtRRR.load(in);
+	SAidx.load(in);
+	StringUtils::loadString(SAsampled, in);
 	return in;
 }
 
@@ -114,9 +103,9 @@ FMDIndex& FMDIndex::operator+=(const FMDIndex& other) {
 	}
 
 	BitStr32 bstrM = buildInterleavingBS(*this, other); // build interleaving bitvector
-	DNAseq bwtM = mergeBWT(this->bwt, other.bwt, bstrM); // merge BWT
+	bwt = mergeBWT(*this, other, bstrM); // update uncompressed BWT
 	bstrM.reset(); // clear RAM
-    bwt = WaveletTreeRRR(bwtM, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+    bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
 
 	/* merging counts after bwt updated */
 	for(int64_t i = 0; i <= DNAalphabet::NT16_MAX; ++i) {
@@ -124,12 +113,8 @@ FMDIndex& FMDIndex::operator+=(const FMDIndex& other) {
 		C[i] += other.C[i];
 	}
 
-    /* reset SA */
-	SAbit.reset();
-
-    if(keepSA)
-    	buildSA(bwtM);
-
+	/* reset SA but do not update */
+	clearSA();
 	return *this;
 }
 
@@ -137,7 +122,7 @@ DNAseq FMDIndex::getBWT() const {
 	DNAseq bwtSeq;
 	bwtSeq.reserve(length());
 	for(int64_t i = 0; i < length(); ++i)
-		bwtSeq.push_back(bwt.access(i));
+		bwtSeq.push_back(bwtRRR.access(i));
 	return bwtSeq;
 }
 
@@ -145,10 +130,10 @@ DNAseq FMDIndex::getSeq() const {
 	/* get Seq by LF-mapping transverse */
 	DNAseq seq;
 	seq.reserve(length());
-	for(int64_t i = 0; i < C[0 + 1]; ++i) { // i-th pass of LF-mapping
+	for(int64_t i = 0; i < B[0]; ++i) { // i-th pass of LF-mapping
 		seq.push_back(0);
-		uint8_t b;
-		for(int64_t j = i; (b = bwt.access(j)) != 0; j = LF(b, j) - 1 /* LF-mapping */)
+		nt16_t b;
+		for(int64_t j = i; (b = accessBWT(j)) != 0; j = LF(b, j) - 1 /* LF-mapping */)
 			seq.push_back(b);
 	}
 	assert(seq.length() == length());
@@ -156,116 +141,84 @@ DNAseq FMDIndex::getSeq() const {
 	return seq;
 }
 
-void FMDIndex::buildBWT(const DNAseq& seq) {
+FMDIndex& FMDIndex::buildBWT(const DNAseq& seq, bool keepSA) {
 	assert(seq.back() == DNAalphabet::GAP_BASE);
 	const size_t N = seq.length();
 	/* construct SA */
-    int64_t* SA = new int64_t[N];
-    int64_t errn = divsufsort((const uint8_t*) (seq.c_str()), (saidx_t*) SA, N);
+	int64_t* SA = new int64_t[N];
+    int64_t errn = divsufsort((const uint8_t*) seq.data(), (saidx_t*) SA, N);
 	if(errn != 0)
 		throw std::runtime_error("Error: Cannot build suffix-array on DNAseq");
 
-	/* build bwt and sample bitstr */
-	DNAseq bwtSeq;
-	bwtSeq.reserve(N);
-	for(int64_t* sa = SA; sa < SA + N; ++sa)
-		bwtSeq.push_back(*sa == 0 ? 0 : seq[*sa - 1]);
+	/* build uncompressed bwt */
+	bwt.resize(N);
+	for(size_t i = 0; i < N; ++i)
+		bwt[i] = SA[i] == 0 ? 0 : seq[SA[i] - 1];
 
-	/* construct BWTRRR */
-    bwt = WaveletTreeRRR(bwtSeq, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
+	/* build BWTRRR */
+    bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
 
-	if(keepSA)
-		buildSA(SA, bwtSeq);
-	delete[] SA;
+    /* optionally build SA */
+    if(keepSA)
+    	buildSA(SA);
+    return *this;
 }
 
-void FMDIndex::buildSA() {
-	assert(isInitiated());
+FMDIndex& FMDIndex::buildSA() {
 	const int64_t N = length();
-	/* build a BitStr in the 1st pass */
-	BitStr32 bstr(N);
-#pragma omp parallel for
-	for(int64_t i = 0; i < N; ++i) {
-		if(i % SA_SAMPLE_RATE == 0 || bwt.access(i) == 0) /* sample at all null characters */
-			bstr.set(i);
-	}
-	SAbit = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
-
-	/* build SAsampled in the 2nd pass */
-	SAsampled.resize(SAbit.numOnes()); /* sample at on bits */
-	int64_t k = N;
-	for(int64_t i = 0; i < C[0 + 1]; ++i) { // i-th pass of LF-mapping loop
-		int64_t j = i;
-		uint8_t b;
-		do {
-			b = bwt.access(j);
-			if(bstr.test(j))
-				SAsampled[SAbit.rank1(j) - 1] = k - 1;
-			j = LF(b, j) - 1; // LF-mapping
-			k--;
-		}
-		while(b != 0);
-	}
-	assert(k == 0);
-}
-
-void FMDIndex::buildSA(const DNAseq& bwtSeq) {
-	const int64_t N = length();
-	assert(bwtSeq.length() == N);
+	assert(bwt.length() == N);
 	/* build the bitstr by sampling bwtSeq */
 	BitStr32 bstr(N);
 	for(size_t i = 0; i < N; ++i)
-		if(i % SA_SAMPLE_RATE == 0 || bwtSeq[i] == 0) /* sample at all null characters */
+		if(i % SA_SAMPLE_RATE == 0 || bwt[i] == 0) /* sample at all null characters */
 			bstr.set(i);
-
-	SAbit = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
+	SAidx = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* update SAidx */
 
 	/* build SAsampled in the 2nd pass */
-	SAsampled.resize(SAbit.numOnes()); /* sample at on bits */
-	int64_t k = N; // position on seq, start from 1 after end
-	for(int64_t i = 0; i < C[0 + 1]; ++i) { // the i-th null segment
+	SAsampled.resize(SAidx.numOnes()); /* sample at on bits */
+	int64_t k = N; // position on seq, start from 1 pass SAsampled end
+	for(int64_t i = 0; i < B[0]; ++i) { // the i-th null segment
 		int64_t j = i;
-		uint8_t b;
+		nt16_t b;
 		do {
-			b = bwtSeq[j];
+			b = bwt[j];
 			if(bstr.test(j))
-				SAsampled[SAbit.rank1(j) - 1] = k - 1;
+				SAsampled[SAidx.rank1(j) - 1] = k - 1;
 			j = LF(b, j) - 1; // LF-mapping
 			k--;
 		}
 		while(b != 0);
 	}
 	assert(k == 0);
+	return *this;
 }
 
-void FMDIndex::buildSA(const int64_t* SA, const DNAseq& bwtSeq) {
+FMDIndex& FMDIndex::buildSA(const int64_t* SA) {
 	const int64_t N = length();
-	assert(bwtSeq.length() == N);
+	assert(bwt.length() == N);
 	/* build the bitstr by sampling SA direction */
 	BitStr32 bstr(N);
 	for(size_t i = 0; i < N; ++i)
-		if(i % SA_SAMPLE_RATE == 0 || bwtSeq[i] == 0) /* sample at all null characters */
+		if(i % SA_SAMPLE_RATE == 0 || bwt[i] == 0) /* sample at all null characters */
 			bstr.set(i);
-
-	SAbit = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
+	SAidx = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
 
 	/* build SAsampled in the 2nd pass */
-	SAsampled.resize(SAbit.numOnes()); /* sample at on bits */
+	SAsampled.resize(SAidx.numOnes()); /* sample at on bits */
 #pragma omp parallel for
-	for(int64_t i = 0; i < N; ++i) {
-		if(bstr.test(i)) {
-			SAsampled[SAbit.rank1(i) - 1] = SA[i]; // no lock needed since independent access guaranteed
-		}
-	}
+	for(int64_t i = 0; i < N; ++i)
+		if(bstr.test(i))
+			SAsampled[SAidx.rank1(i) - 1] = SA[i]; // no lock needed since independent access guaranteed
+	return *this;
 }
 
 int64_t FMDIndex::accessSA(int64_t i) const {
 	int64_t dist = 0;
-	while(!SAbit.access(i)) {
+	while(!SAidx.access(i)) {
 		i = LF(i) - 1; // backward LF-mapping
 		dist++;
 	}
-	return SAsampled[SAbit.rank1(i) - 1] + dist;
+	return SAsampled[SAidx.rank1(i) - 1] + dist;
 }
 
 vector<GLoc> FMDIndex::locateAllFwd(const DNAseq& pattern) const {
@@ -314,40 +267,7 @@ vector<GLoc> FMDIndex::locateAllRev(const DNAseq& pattern) const {
     return locs;
 }
 
-FMDIndex::FMDIndex(const BCarray_t& B, const BCarray_t& C, const DNAseq& bwtSeq, bool keepSA)
-: B(B), C(C), bwt(WaveletTreeRRR(bwtSeq, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE)), keepSA(keepSA)
-{
-	/* build SA using customized bitstr */
-	if(keepSA)
-		buildSA(bwtSeq);
-}
-
-FMDIndex operator+(const FMDIndex& lhs, const FMDIndex& rhs) {
-	if(!rhs.isInitiated())
-		return lhs;
-	if(!lhs.isInitiated())
-		return rhs;
-
-	const int64_t N1 = lhs.length();
-	const int64_t N2 = rhs.length();
-	const int64_t N = N1 + N2;
-	FMDIndex::BCarray_t BMerged;
-	FMDIndex::BCarray_t CMerged;
-
-	BitStr32 bstrM = FMDIndex::buildInterleavingBS(lhs, rhs); // build interleaving bitvector
-	DNAseq bwtM = FMDIndex::mergeBWT(lhs.bwt, rhs.bwt, bstrM); // merge BWT
-	bstrM.reset(); // clear RAM
-
-	/* merge counts */
-	for(int64_t i = 0; i <= DNAalphabet::NT16_MAX; ++i) {
-		BMerged[i] = lhs.B[i] + rhs.B[i];
-		CMerged[i] = lhs.C[i] + rhs.C[i];
-	}
-
-	return FMDIndex(BMerged, CMerged, bwtM, lhs.keepSA || rhs.keepSA /* keep SA if any of the two operands keepSA */);
-}
-
-int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, uint8_t b) const {
+int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 	if(!DNAalphabet::isBasic(b))
 		return 0;
 	int64_t pN; // fwd strand backExt
@@ -355,16 +275,16 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, uint8_t b) const {
 	qB.fill(0);
 	sB.fill(0);
 	/* calculate new p and s */
-	int64_t O = bwt.rank(b, p - 1);
+	int64_t O = bwtRRR.rank(b, p - 1);
 	pN = C[b] + O;
-	sB[b] = bwt.rank(b, p + s - 1) - O;
+	sB[b] = bwtRRR.rank(b, p + s - 1) - O;
 
 	/* update q if s changes */
 	if(sB[b] != s) {
-		sB[0] = bwt.rank(0, p + s - 1) - bwt.rank(0, p - 1);
+		sB[0] = bwtRRR.rank(0, p + s - 1) - bwtRRR.rank(0, p - 1);
 		for(nt16_t i = b + 1; i <= DNAalphabet::NT16_MAX; ++i) { // search from b + 1
 			if(DNAalphabet::isBasic(i))
-				sB[i] = bwt.rank(i, p + s - 1) - bwt.rank(i, p - 1);
+				sB[i] = bwtRRR.rank(i, p + s - 1) - bwtRRR.rank(i, p - 1);
 		}
 		/* new range of [q', q' + s' - 1] is a subrange of original [q, q + s] */
 		/* devide q + q + s */
@@ -381,45 +301,49 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, uint8_t b) const {
 	return s;
 }
 
-BitStr32 FMDIndex::buildInterleavingBS(const FMDIndex& fmdidx1, const FMDIndex& fmdidx2) {
-	const size_t N = fmdidx1.length() + fmdidx2.length();
+BitStr32 FMDIndex::buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs) {
+	const size_t N = lhs.length() + rhs.length();
 	BitStr32 bstrM(N);
 #pragma omp parallel for
-	for(int64_t i = 0; i < fmdidx1.C[0 + 1]; ++i) { // i-th pass LF-mapping on lhs
+	for(int64_t i = 0; i < lhs.B[0]; ++i) { // i-th pass LF-mapping on lhs
 		int64_t j = i;
-		int64_t RA = fmdidx2.C[0 + 1];
-		uint8_t b;
+		int64_t RA = rhs.B[0];
+		nt16_t b;
 		do {
 #pragma omp critical(WRITE_bstrM)
 			bstrM.set(j + RA);
-			b = fmdidx1.bwt.access(j);
+			b = lhs.accessBWT(j);
 			/* LF-mapping */
-			RA = fmdidx2.LF(b, RA - 1);
-			j = fmdidx1.LF(b, j) - 1;
+			RA = rhs.LF(b, RA - 1);
+			j = lhs.LF(b, j) - 1;
 		}
 		while(b != 0);
 	}
 	return bstrM;
 }
 
-DNAseq FMDIndex::mergeBWT(const WaveletTreeRRR& bwt1, const WaveletTreeRRR& bwt2, const BitStr32& bstr) {
-	const size_t N = bstr.length();
-	assert(N == bwt1.length() + bwt2.length());
-	DNAseq bwtM(N, 0);
+DNAseq FMDIndex::mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, const BitStr32& bstrM) {
+	const size_t N = lhs.length() + rhs.length();
+	assert(N == bstrM.length());
+	DNAseq bwtM(N, 0); // merged BWT
 #ifndef _OPENMP
 	for(size_t i = 0, j = 0, k = 0; k < N; ++k)
-		bwtM[k] = bstr.test(k) ? bwt1.access(i++) : bwt2.access(j++);
+		bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
 #else
-	int nThreads = omp_get_num_threads();
+	int nThreads = 1;
+#pragma omp parallel
+	{
+		nThreads = omp_get_num_threads();
+	}
 	if(nThreads == 1) { // no parallelzation needed
 		for(size_t i = 0, j = 0, k = 0; k < N; ++k)
-			bwtM[k] = bstr.test(k) ? bwt1.access(i++) : bwt2.access(j++);
+			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
 	}
 	else {
-		BitSeqRRR bs(bstr); // aux BitSeq for rank access
+		BitSeqRRR bsM(bstrM); // aux BitSeq for rank access
 #pragma omp parallel for
 		for(size_t k = 0; k < N; ++k)
-			bwtM[k] = bstr.test(k) ? bwt1.access(bs.rank1(k) - 1) : bwt2.access(bs.rank0(k) - 1);
+			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(bsM.rank1(k) - 1) : rhs.accessBWT(bsM.rank0(k) - 1);
 	}
 #endif
 	return bwtM;

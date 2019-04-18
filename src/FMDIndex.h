@@ -30,6 +30,7 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 using std::vector;
+using std::basic_string;
 using std::array;
 using EGriceLab::libSDS::BitStr32;
 using EGriceLab::libSDS::BitSeqRRR;
@@ -38,25 +39,68 @@ using EGriceLab::libSDS::WaveletTreeRRR;
 
 /**
  * FMD-index with bi-directinal search/extend methods
+ * a fully built FMD-index keeps the base counts, a WaveletTreeRRR compressed BWT,
+ * a BitSeqRRR compressed SA index and sampling,
+ * and optionall the uncompressed BWT, which is useful for faster SA build algorithm during database construction
  */
 class FMDIndex {
 public:
 	/* typedefs */
 	typedef array<int64_t, DNAalphabet::SIZE> BCarray_t; /* fixed array to store base counts */
-	typedef vector<int64_t> SArray_t; /* store sampled Suffix-Array in std::vector */
+//	typedef vector<int64_t> SArray_t; /* store sampled Suffix-Array in std::vector */
+	typedef basic_string<int64_t> SArray_t; /* store sampled Suffix-Array in std::vector */
 
 	/* constructors */
 	/** Default constructor */
 	FMDIndex() = default;
 
-	/** Construct an FMIndex from a given DNAseq */
-	explicit FMDIndex(const DNAseq& seq, bool keepSA = false)
-	: keepSA(keepSA) {
-		build(seq);
+	/** Construct an FMDIndex from a given DNAseq
+	 * it will build the counts and BWT,
+	 * and optionally build the SA (SAidx and SAsampled)
+	 */
+	explicit FMDIndex(const DNAseq& seq, bool keepSA = true);
+
+	/* member methods */
+	/** test whether contains uncompressed BWT */
+	bool hasBWT() const {
+		return !bwt.empty();
 	}
 
-	/** construct an FMIndex from pre-built values */
-	FMDIndex(const BCarray_t& B, const BCarray_t& C, const DNAseq& bwtSeq, bool keepSA = false);
+	/** test whether contains SA */
+	bool hasSA() const {
+		return !SAidx.empty();
+	}
+
+	/** get the encoded BWT of the original seq */
+	DNAseq getBWT() const;
+
+	/** clear uncompressed BWT */
+	FMDIndex& clearBWT() {
+		bwt.clear();
+		return *this;
+	}
+
+	/** clear SA */
+	FMDIndex& clearSA() {
+		SAidx.reset();
+		SAsampled.clear();
+		return *this;
+	}
+
+	/** get the original seq */
+	DNAseq getSeq() const;
+
+	/** access BWT at given position */
+	nt16_t accessBWT(int64_t i) const {
+		return hasBWT() ? bwt[i] : bwtRRR.access(i);
+	}
+
+	/*
+	 * Access SA at given position, either by directly searching the stored value or the next sampled value
+	 * @param i  0-based on SA
+	 * @return  0-based position on original seq
+	 */
+	int64_t accessSA(int64_t i) const;
 
 	/**
 	 * LF-mapping given position and character
@@ -64,8 +108,8 @@ public:
 	 * @param b  base/character for lookup
 	 * @return  1-based index on F column (original seq)
 	 */
-	int64_t LF(uint8_t b, int64_t i) const {
-		return C[b] + bwt.rank(b, i);
+	int64_t LF(nt16_t b, int64_t i) const {
+		return C[b] + bwtRRR.rank(b, i);
 	}
 
 	/**
@@ -74,12 +118,12 @@ public:
 	 * @return 1-based index on F column (original seq)
 	 */
 	int64_t LF(int64_t i) const {
-		return LF(bwt.access(i), i);
+		return LF(accessBWT(i), i);
 	}
 
 	/** test whether this RRFMIndex is initiated */
 	bool isInitiated() const {
-		return !bwt.empty();
+		return !bwtRRR.empty();
 	}
 
 	/** check whether this FMDIndex is bi-directional by checking counts of complement bases */
@@ -87,7 +131,7 @@ public:
 
 	/** get the length of this index */
 	int64_t length() const {
-		return bwt.length();
+		return bwtRRR.length();
 	}
 
 	/** get baseCount array of this index */
@@ -96,7 +140,7 @@ public:
 	}
 
 	/** get baseCount of given base in fwd seq */
-	int64_t getBaseCount(uint8_t b) const {
+	int64_t getBaseCount(nt16_t b) const {
 		return B[b];
 	}
 
@@ -111,7 +155,7 @@ public:
 	}
 
 	/** get cumulative base count of given base */
-	int64_t getCumCount(uint8_t b) const {
+	int64_t getCumCount(nt16_t b) const {
 		return C[b];
 	}
 
@@ -124,22 +168,14 @@ public:
 	 * get the frequency of a given base
 	 * @return  base frequency if is a basic base, or the mapped basic base frequency if is an IMPAC extension
 	 */
-	double getBaseFreq(uint8_t b) const {
+	double getBaseFreq(nt16_t b) const {
 		return static_cast<double>(getBaseCount(DNAalphabet::toBasic(b))) / length();
 	}
 
 	/** get loglik() of a given base as the log base-frequency */
-	double loglik(uint8_t b) const {
+	double loglik(nt16_t b) const {
 		return std::log(getBaseCount(DNAalphabet::toBasic(b))) - std::log(length());
 	}
-
-	/**
-	 * Build an FMDIndex from a combined seq, in which seq is always in the order of R0R0'R1R1', etc
-	 * @param seq pre-combined bidirectional seq, must be null (GAP_BASE) terminated
-	 * @return a fresh allocated FMDIndex
-	 * @throw std::length_error if seq length is too long
-	 */
-	FMDIndex& build(const DNAseq& seq);
 
 	/**
 	 * save raw object data to output
@@ -151,44 +187,21 @@ public:
 	 */
 	istream& load(istream& in);
 
-	/*
-	 * Access SA at given position, either by directly searching the stored value or the next sampled value
-	 * @param i  0-based on SA
-	 * @return  0-based position on original seq
-	 */
-	int64_t accessSA(int64_t i) const;
-
-	/** build SAbit and SAsampled from the internal BWT, where raw BWTseq not available */
-	void buildSA();
-
-protected:
-	/** build SAbit and SAsampled from a given raw BWTseq, which is available during merge operations */
-	void buildSA(const DNAseq& bwtSeq);
-
-	/**
-	 * build SAbit and SAsampled from given SA and raw BWTseq, which are available during direct construction
-	 * this version of buildSA is parallelized by openMP
-	 */
-	void buildSA(const int64_t* SA, const DNAseq& bwtSeq);
-
-	/** build interleaving BitVector for two FMD-index, use parallelization optionally */
-	static BitStr32 buildInterleavingBS(const FMDIndex& fmdidx1, const FMDIndex& fmdidx2);
-
-	/** merge two DNAseq by an interleaving bitvector, use parallelization optionally */
-	static DNAseq mergeBWT(const WaveletTreeRRR& bwt1, const WaveletTreeRRR& bwt2, const BitStr32& bstr);
+	/** build SAidx and SAsampled */
+	FMDIndex& buildSA();
 
 public:
 	/**
 	 * backward extension of a bi-interval [p, q, s]
 	 * @return  the new size as an indication of success or not
 	 */
-	int64_t backExt(int64_t& p, int64_t& q, int64_t& s, uint8_t b) const;
+	int64_t backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const;
 
 	/**
 	 * forward extension of a bi-interval [p, q, s]
 	 * @return  the new size as an indication of success or not
 	 */
-	int64_t fwdExt(int64_t& p, int64_t& q, int64_t& s, uint8_t b) const {
+	int64_t fwdExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 		return backExt(q, p, s, DNAalphabet::complement(b));
 	}
 
@@ -200,30 +213,10 @@ public:
 	/** merge this RRFMIndex with another index with only very little overhead memory
 	 * using the BWT-merge algorithm described in
 	 * Burrows-Wheeler transform for terabases, Jouni Sirén, 2016 Data Compression Conference
+	 * it does not update the SA (SAidx and SAsampled) automatically to save unnecessary update,
+	 * you will need to call buildSA() yourself
 	 */
 	FMDIndex& operator+=(const FMDIndex& other);
-
-	/** get the encoded BWT of the original seq */
-	DNAseq getBWT() const;
-
-	/** get the BWT string of the original seq */
-	string getBWTStr() const {
-		return dna::decode(getBWT());
-	}
-
-	/** get the original seq */
-	DNAseq getSeq() const;
-
-	bool hasSA() const {
-		return keepSA;
-	}
-
-	/** clear stored SA information, if any */
-	void clearSA() {
-		SAsampled.clear();
-		SAbit.reset();
-		keepSA = false;
-	}
 
 	/** locate all matches to given pattern */
 	vector<GLoc> locateAll(const DNAseq& pattern, GLoc::STRAND strand = GLoc::FWD) const {
@@ -252,31 +245,49 @@ public:
 	/* non-member functions */
 	friend FMDIndex operator+(const FMDIndex& lhs, const FMDIndex& rhs);
 
-private:
+protected:
+	/* helper methods */
 	/**
 	 * build alphabet counts from a DNAseq
 	 */
-	void buildCounts(const DNAseq& seq);
+	FMDIndex& buildCounts(const DNAseq& seq);
 
-	/** build BWT on the reversed string of seq */
-	void buildBWT(const DNAseq& seq);
+	/** build BWT uncompressed and compressed,
+	 * and optionally build the SA */
+	FMDIndex& buildBWT(const DNAseq& seq, bool keepSA = true);
 
-	static const int RRR_SAMPLE_RATE = 32; /* RRR sample rate for BWT */
-	static const int SA_SAMPLE_RATE = 32;  /* sample rate for SA */
+	/**
+	 * build SAidx and SAsampled with given internal SA, which are available during direct construction
+	 */
+	FMDIndex& buildSA(const int64_t* SA);
+
+	/** build interleaving BitVector for two FMD-index, use parallelization optionally */
+	static BitStr32 buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs);
+
+	/** merge two DNAseq by an interleaving bitvector, use parallelization optionally */
+	static DNAseq mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, const BitStr32& bstrM);
 
 	/* member fields */
 private:
 	BCarray_t B = { };  // combined base count
 	BCarray_t C = { };  // combined cumulative count
-	WaveletTreeRRR bwt; /* Wavelet-Tree transformed BWT string for combined seq */
-	bool keepSA = false; /* whether to keep SAidx and SAsampled during building */
-	BitSeqRRR SAbit; /* BitSeq index telling whether a SA was sampled */
+	DNAseq bwt; // uncompressed bwt
+	WaveletTreeRRR bwtRRR; /* Wavelet-Tree transformed BWT string for combined seq */
+	BitSeqRRR SAidx; /* BitSeq index telling whether a SA was sampled */
 	SArray_t SAsampled; /* sampled SA vector */
 
 	/* static member fields */
 public:
+	static const int RRR_SAMPLE_RATE = 32; /* RRR sample rate for BWT */
+	static const int SA_SAMPLE_RATE = 32;  /* sample rate for SA */
 	static const int64_t MAX_LENGTH = std::numeric_limits<int64_t>::max();
 };
+
+inline FMDIndex operator+(const FMDIndex& lhs, const FMDIndex& rhs) {
+	FMDIndex fmdidxM(lhs);
+	fmdidxM += rhs;
+	return fmdidxM;
+}
 
 } /* namespace MSGSeqClean */
 } /* namespace EGriceLab */

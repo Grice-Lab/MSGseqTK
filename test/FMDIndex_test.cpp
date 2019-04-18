@@ -28,7 +28,8 @@ int main() {
 	DNAseq seq1 = dna::encode("CTAGCATAGAC") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCATAGAC")) + DNAalphabet::GAP_BASE;
 	cout << "seq1:" << endl << seq1 << endl;
 	seqM1 += seq1;
-	fmdidx1 += FMDIndex(seq1, true);
+	fmdidx1 += FMDIndex(seq1);
+	fmdidx1.buildSA();
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
@@ -58,6 +59,7 @@ int main() {
 	cout << "seq2:" << endl << seq2 << endl;
 	seqM1 += seq2;
 	fmdidx1 += FMDIndex(seq2);
+	fmdidx1.buildSA();
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
@@ -87,6 +89,7 @@ int main() {
 	cout << "seq3:" << endl << seq3 << endl;
 	seqM1 += seq3;
 	fmdidx1 += FMDIndex(seq3);
+	fmdidx1.buildSA();
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
@@ -116,6 +119,7 @@ int main() {
 	cout << "seq4:" << endl << seq4 << endl;
 	seqM1 += seq4;
 	fmdidx1 += FMDIndex(seq4);
+	fmdidx1.buildSA();
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
@@ -145,7 +149,8 @@ int main() {
 	DNAseq seq5 = dna::encode("CTAGCAACTAG") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCAACTAG")) + DNAalphabet::GAP_BASE;
 	cout << "seq5:" << endl << seq5 << endl;
 	seqM2 = seq5 + seqM2;
-	fmdidx2 = FMDIndex(seq5, true) + fmdidx2;
+	fmdidx2 = FMDIndex(seq5) + fmdidx2;
+	fmdidx2.buildSA();
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
 	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl;
@@ -175,6 +180,7 @@ int main() {
 	cout << "seq6:" << endl << seq6 << endl;
 	seqM2 = seq6 + seqM2;
 	fmdidx2 = FMDIndex(seq6) + fmdidx2;
+	fmdidx2.buildSA();
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
 	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl;
@@ -204,6 +210,7 @@ int main() {
 	cout << "seq7:" << endl << seq7 << endl;
 	seqM2 = seq7 + seqM2;
 	fmdidx2 = FMDIndex(seq7) + fmdidx2;
+	fmdidx2.buildSA();
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
 	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl;
@@ -233,6 +240,7 @@ int main() {
 	cout << "seq8:" << endl << seq8 << endl;
 	seqM2 = seq8 + seqM2;
 	fmdidx2 = FMDIndex(seq8) + fmdidx2;
+	fmdidx2.buildSA();
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
 	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl;
@@ -262,6 +270,7 @@ int main() {
 	DNAseq seqM = seqM1 + seqM2 ;
 	cout << "seqM:" << endl << seqM << endl;
 	FMDIndex fmdidx = fmdidx1 + fmdidx2;
+	fmdidx.buildSA();
 	cout << "fmdidx.length(): " << fmdidx.length() << endl;
 	cout << "fmdidx.getBWT():" << endl << fmdidx.getBWT() << endl;
 	cout << "fmdidx.getSeq():" << endl << fmdidx.getSeq() << endl;
@@ -300,7 +309,7 @@ int main() {
 		cerr << "Failed to load fmdidxNew: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	if(fmdidxNew.getBWTStr() != fmdidx.getBWTStr()) {
+	if(fmdidxNew.getBWT() != fmdidx.getBWT()) {
 		cerr << "loaded fmdidx diffs from original copy" << endl;
 		return EXIT_FAILURE;
 	}
