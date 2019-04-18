@@ -14,7 +14,6 @@
 #include "PrimarySeq.h"
 #include "Loc.h"
 #include "GLoc.h"
-#include "FMIndex.h"
 #include "FMDIndex.h"
 #include "SeqIO.h"
 #include "SeedPair.h"

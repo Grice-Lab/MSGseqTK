@@ -31,7 +31,6 @@ check_PROGRAMS = \
 DNAseq_test \
 PrimarySeq_test \
 SeqIO_test \
-FMIndex_test \
 FMDIndex_test \
 Genome_test \
 MetaGenomeAnno_test \
@@ -52,13 +51,6 @@ $(top_srcdir)/src/libMSGseqTK.a
 SeqIO_test_SOURCES = SeqIO_test.cpp
 SeqIO_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
-$(top_srcdir)/src/util/libEGUtil.a
-
-FMIndex_test_SOURCES = FMIndex_test.cpp
-FMIndex_test_LDADD = \
-$(top_srcdir)/src/libMSGseqTK.a \
-$(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-$(top_srcdir)/src/libsds/src/libsds.la \
 $(top_srcdir)/src/util/libEGUtil.a
 
 FMDIndex_test_SOURCES = FMDIndex_test.cpp
@@ -114,7 +106,6 @@ TESTS = \
 DNAseq_test \
 PrimarySeq_test \
 SeqIO_test \
-FMIndex_test \
 FMDIndex_test \
 Genome_test \
 MetaGenomeAnno_test \

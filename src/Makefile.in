@@ -122,9 +122,9 @@ libMSGseqTK_a_LIBADD =
 am_libMSGseqTK_a_OBJECTS = DNAalphabet.$(OBJEXT) DNAseq.$(OBJEXT) \
 	QualStr.$(OBJEXT) PrimarySeq.$(OBJEXT) SeqIO.$(OBJEXT) \
 	Loc.$(OBJEXT) GLoc.$(OBJEXT) SMEM.$(OBJEXT) SeedPair.$(OBJEXT) \
-	SeedChain.$(OBJEXT) ScoreScheme.$(OBJEXT) FMIndex.$(OBJEXT) \
-	FMDIndex.$(OBJEXT) Genome.$(OBJEXT) MetaGenome.$(OBJEXT) \
-	MetaGenomeAnno.$(OBJEXT) Alignment.$(OBJEXT)
+	SeedChain.$(OBJEXT) ScoreScheme.$(OBJEXT) FMDIndex.$(OBJEXT) \
+	Genome.$(OBJEXT) MetaGenome.$(OBJEXT) MetaGenomeAnno.$(OBJEXT) \
+	Alignment.$(OBJEXT)
 libMSGseqTK_a_OBJECTS = $(am_libMSGseqTK_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -465,7 +465,6 @@ SMEM.cpp \
 SeedPair.cpp \
 SeedChain.cpp \
 ScoreScheme.cpp \
-FMIndex.cpp \
 FMDIndex.cpp \
 Genome.cpp \
 MetaGenome.cpp \
@@ -661,7 +660,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DNAalphabet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DNAseq.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FMDIndex.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FMIndex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GLoc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Genome.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Loc.Po@am__quote@

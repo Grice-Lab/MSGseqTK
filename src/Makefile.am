@@ -42,7 +42,6 @@ SMEM.cpp \
 SeedPair.cpp \
 SeedChain.cpp \
 ScoreScheme.cpp \
-FMIndex.cpp \
 FMDIndex.cpp \
 Genome.cpp \
 MetaGenome.cpp \
