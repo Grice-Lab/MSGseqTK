@@ -66,6 +66,7 @@ ostream& FMDIndex::save(ostream& out) const {
 	bwtRRR.save(out);
 	SAidx.save(out);
 	StringUtils::saveString(SAsampled, out);
+//	StringUtils::saveString(SAgap, out);
 	return out;
 }
 
@@ -76,6 +77,7 @@ istream& FMDIndex::load(istream& in) {
 	bwtRRR.load(in);
 	SAidx.load(in);
 	StringUtils::loadString(SAsampled, in);
+//	StringUtils::loadString(SAgap, in);
 	return in;
 }
 
@@ -166,22 +168,22 @@ FMDIndex& FMDIndex::buildBWT(const DNAseq& seq, bool keepSA) {
 
 FMDIndex& FMDIndex::buildSA() {
 	const int64_t N = length();
-	assert(bwt.length() == N);
 	/* build the bitstr by sampling bwtSeq */
 	BitStr32 bstr(N);
-	for(size_t i = 0; i < N; ++i)
+	for(size_t i = 0; i < N; ++i) {
 		if(i % SA_SAMPLE_RATE == 0 || bwt[i] == 0) /* sample at all null characters */
 			bstr.set(i);
+	}
 	SAidx = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* update SAidx */
 
 	/* build SAsampled in the 2nd pass */
 	SAsampled.resize(SAidx.numOnes()); /* sample at on bits */
-	int64_t k = N; // position on seq, start from 1 pass SAsampled end
+	int64_t k = N; // position on seq/SA, start from 1 pass SAsampled end
 	for(int64_t i = 0; i < B[0]; ++i) { // the i-th null segment
-		int64_t j = i;
+		int64_t j = i; // position on BWT
 		nt16_t b;
 		do {
-			b = bwt[j];
+			b = accessBWT(j);
 			if(bstr.test(j))
 				SAsampled[SAidx.rank1(j) - 1] = k - 1;
 			j = LF(b, j) - 1; // LF-mapping
@@ -198,17 +200,27 @@ FMDIndex& FMDIndex::buildSA(const int64_t* SA) {
 	assert(bwt.length() == N);
 	/* build the bitstr by sampling SA direction */
 	BitStr32 bstr(N);
-	for(size_t i = 0; i < N; ++i)
-		if(i % SA_SAMPLE_RATE == 0 || bwt[i] == 0) /* sample at all null characters */
+	SAsampled.clear();
+	SAsampled.reserve(N / SA_SAMPLE_RATE + B[0]); // enough to hold both peroid sampling and gaps
+	for(size_t i = 0; i < N; ++i) {
+		if(i % SA_SAMPLE_RATE == 0 || bwt[i] == 0) { /* sample at all null characters */
 			bstr.set(i);
+			SAsampled.push_back(SA[i]);
+		}
+	}
 	SAidx = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
 
-	/* build SAsampled in the 2nd pass */
-	SAsampled.resize(SAidx.numOnes()); /* sample at on bits */
-#pragma omp parallel for
-	for(int64_t i = 0; i < N; ++i)
-		if(bstr.test(i))
-			SAsampled[SAidx.rank1(i) - 1] = SA[i]; // no lock needed since independent access guaranteed
+//	/* build SAsampled and SAgap in the 2nd pass */
+//	SAsampled.clear();
+//	SAsampled.reserve(SAidx.numOnes()); /* sample at on bits */
+////#pragma omp parallel for
+//	for(int64_t i = 0; i < N; ++i) {
+//		if(bstr.test(i)) {
+//			SAsampled.push_back(SA[i]);
+//			SAsampled[SAidx.rank1(i) - 1] = SA[i]; // no lock needed since independent access guaranteed
+////			std::cerr << "rank1(i) - 1: " << SAidx.rank1(i) - 1 << " SA[i]: " << SA[i] << std::endl;
+//		}
+//	}
 	return *this;
 }
 
@@ -306,8 +318,8 @@ BitStr32 FMDIndex::buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs)
 	BitStr32 bstrM(N);
 #pragma omp parallel for
 	for(int64_t i = 0; i < lhs.B[0]; ++i) { // i-th pass LF-mapping on lhs
-		int64_t j = i;
-		int64_t RA = rhs.B[0];
+		int64_t j = i; // position on lhs.BWT
+		int64_t RA = rhs.B[0]; // position on rhs.BWT
 		nt16_t b;
 		do {
 #pragma omp critical(WRITE_bstrM)

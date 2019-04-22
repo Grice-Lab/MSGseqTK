@@ -48,7 +48,7 @@ public:
 	/* typedefs */
 	typedef array<int64_t, DNAalphabet::SIZE> BCarray_t; /* fixed array to store base counts */
 //	typedef vector<int64_t> SArray_t; /* store sampled Suffix-Array in std::vector */
-	typedef basic_string<int64_t> SArray_t; /* store sampled Suffix-Array in std::vector */
+	typedef basic_string<int64_t> SAarr_t; /* store sampled Suffix-Array values */
 
 	/* constructors */
 	/** Default constructor */
@@ -84,6 +84,7 @@ public:
 	FMDIndex& clearSA() {
 		SAidx.reset();
 		SAsampled.clear();
+//		SAgap.clear();
 		return *this;
 	}
 
@@ -274,7 +275,7 @@ private:
 	DNAseq bwt; // uncompressed bwt
 	WaveletTreeRRR bwtRRR; /* Wavelet-Tree transformed BWT string for combined seq */
 	BitSeqRRR SAidx; /* BitSeq index telling whether a SA was sampled */
-	SArray_t SAsampled; /* sampled SA vector */
+	SAarr_t SAsampled; /* sampled SA */
 
 	/* static member fields */
 public:
