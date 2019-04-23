@@ -71,11 +71,6 @@ public:
 		return !SAidx.empty();
 	}
 
-	/** test whether contains SAgap */
-	bool hasGap() const {
-		return !SAgap.empty();
-	}
-
 	/** get the encoded BWT of the original seq */
 	DNAseq getBWT() const;
 
@@ -286,7 +281,6 @@ private:
 	WaveletTreeRRR bwtRRR; /* Wavelet-Tree transformed BWT string for combined seq */
 	BitSeqRRR SAidx; /* BitSeq index telling whether a SA was sampled */
 	SAarr_t SAsampled; /* sampled SA */
-	SAarr_t SAgap; /* SA values on on GAP_BASE */
 
 	/* static member fields */
 public:
