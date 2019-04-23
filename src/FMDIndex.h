@@ -49,7 +49,6 @@ public:
 	typedef array<int64_t, DNAalphabet::SIZE> BCarray_t; /* fixed array to store base counts */
 //	typedef vector<int64_t> SArray_t; /* store sampled Suffix-Array in std::vector */
 	typedef basic_string<int64_t> SAarr_t; /* store sampled Suffix-Array values */
-	typedef basic_string<int64_t> GAParr_t; /* store sampled Suffix-Array values */
 
 	/* constructors */
 	/** Default constructor */
@@ -191,6 +190,9 @@ public:
 
 	/** build SAidx and SAsampled */
 	FMDIndex& buildSA();
+
+	/** build SAidx and SAsampled with pre-calculated gap locations */
+	FMDIndex& buildSA(const vector<size_t>& gapLoc);
 
 public:
 	/**

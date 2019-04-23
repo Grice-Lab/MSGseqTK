@@ -194,6 +194,37 @@ FMDIndex& FMDIndex::buildSA() {
 	return *this;
 }
 
+FMDIndex& FMDIndex::buildSA(const vector<size_t>& gapLoc) {
+	assert(gapLoc.size() == B[0]);
+	assert(gapLoc.back() == length() - 1); // last base must be a GAP_BASE
+	const int64_t N = length();
+	assert(bwt.length() == N);
+	/* build the bitstr by sampling bwtSeq */
+	BitStr32 bstr(N);
+	for(size_t i = 0; i < N; ++i) {
+		if(i % SA_SAMPLE_RATE == 0 || bwt[i] == 0) /* sample at all null characters */
+			bstr.set(i);
+	}
+	SAidx = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* update SAidx */
+
+	/* parallel build SAsampled in the 2nd pass */
+	SAsampled.resize(SAidx.numOnes()); /* sample at on bits */
+#pragma omp parallel for
+	for(int64_t i = 0; i < B[0]; ++i) { // the i-th null segment
+		int64_t j = i; // position on BWT
+		int64_t k = gapLoc[B[0] - i - 1]; // search is backward
+		nt16_t b;
+		do {
+			b = bwt[j];
+			if(bstr.test(j))
+				SAsampled[SAidx.rank1(j) - 1] = k--;
+			j = LF(b, j) - 1; // LF-mapping
+		}
+		while(b != 0);
+	}
+	return *this;
+}
+
 void FMDIndex::buildSA(const int64_t* SA) {
 	const int64_t N = length();
 	assert(bwt.length() == N);

@@ -350,6 +350,9 @@ public:
 		seq.erase(getChromLoc(tidStart).getStart(), getChromLoc(tidEnd - 1).getEnd() - getChromLoc(tidStart).getStart());
 	}
 
+	/** get gap location in the BDseq */
+	vector<size_t> getBDGapLoc() const;
+
 	/** save this object to binary outputs */
 	ostream& save(ostream& out) const;
 

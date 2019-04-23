@@ -33,6 +33,18 @@ size_t MetaGenome::numChroms() const {
 	return N;
 }
 
+vector<size_t> MetaGenome::getBDGapLoc() const {
+	vector<size_t> gapLoc;
+	gapLoc.reserve(numChroms() * 10); // estimated GAP per chrom
+	for(int64_t tid = 0; tid < numChroms(); ++tid) {
+		DNAseq seq = getBDSeq(tid);
+		for(size_t i = 0; i < seq.length(); ++i)
+			if(seq[i] == DNAalphabet::GAP_BASE)
+				gapLoc.push_back(i + getChromBDLoc(tid).getStart());
+	}
+	return gapLoc;
+}
+
 ostream& MetaGenome::save(ostream& out) const {
 	/* save basic info */
 	const size_t NG = numGenomes();

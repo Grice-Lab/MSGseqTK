@@ -373,7 +373,7 @@ void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, iostream& mtgIO, size_t bl
 		blockStart = i - 1; // update blockStart
 		/* process block, if large enough */
 		if(mtg.getChromBDLoc(blockStart, blockEnd).length() >= blockSize || blockStart == 0) { /* first chrom or block is full */
-			infoLog << "Adding " << (blockEnd - blockStart) << " chroms in block " << blockId << " into FMD-index" << endl;
+			infoLog << "Adding " << (blockEnd - blockStart) << " chroms in block " << ++blockId << " into FMD-index" << endl;
 			DNAseq blockSeq = mtg.getBDSeq(blockStart, blockEnd);
 			assert(blockSeq.back() == DNAalphabet::GAP_BASE);
 			fmdidx = FMDIndex(blockSeq, false) + fmdidx; /* prepend new FMDIndex, whose SA is never built */
@@ -381,11 +381,11 @@ void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, iostream& mtgIO, size_t bl
 				fmdidx.clearBWT(); // clear RAM before next merge
 			// clear block
 			blockEnd = blockStart;
-			blockId++;
 			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;
 		}
 	}
 	infoLog << "Building final Suffix-Array" << endl;
-	fmdidx.buildSA();
+	fmdidx.buildSA(mtg.getBDGapLoc());
+//	fmdidx.buildSA();
 	fmdidx.clearBWT();
 }
