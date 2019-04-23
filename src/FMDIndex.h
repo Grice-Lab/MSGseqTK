@@ -49,6 +49,7 @@ public:
 	typedef array<int64_t, DNAalphabet::SIZE> BCarray_t; /* fixed array to store base counts */
 //	typedef vector<int64_t> SArray_t; /* store sampled Suffix-Array in std::vector */
 	typedef basic_string<int64_t> SAarr_t; /* store sampled Suffix-Array values */
+	typedef basic_string<int64_t> GAParr_t; /* store sampled Suffix-Array values */
 
 	/* constructors */
 	/** Default constructor */
@@ -58,7 +59,7 @@ public:
 	 * it will build the counts and BWT,
 	 * and optionally build the SA (SAidx and SAsampled)
 	 */
-	explicit FMDIndex(const DNAseq& seq, bool keepSA = true, bool keepGap = false);
+	explicit FMDIndex(const DNAseq& seq, bool keepSA = true);
 
 	/* member methods */
 	/** test whether contains uncompressed BWT */
@@ -73,7 +74,7 @@ public:
 
 	/** test whether contains SAgap */
 	bool hasGap() const {
-		return !SAgap.empty();
+		return !gapLoc.empty();
 	}
 
 	/** get the encoded BWT of the original seq */
@@ -256,21 +257,22 @@ protected:
 	/**
 	 * build alphabet counts from a DNAseq
 	 */
-	FMDIndex& buildCounts(const DNAseq& seq);
+	void buildCounts(const DNAseq& seq);
 
 	/** build BWT uncompressed and compressed,
-	 * and optionally build the SA */
-	FMDIndex& buildBWT(const DNAseq& seq, bool keepSA = true, bool keepGap = false);
+	 * @return a newly allocated temporary SA (suffix array used during BWT build
+	 */
+	int64_t* buildBWT(const DNAseq& seq);
 
 	/**
 	 * build SAidx and SAsampled with given internal SA, which are available during direct construction
 	 */
-	FMDIndex& buildSA(const int64_t* SA);
+	void buildSA(const int64_t* SA);
 
 	/**
 	 * build SAgap, which is useful for parallel building of SA
 	 */
-	FMDIndex& buildGap(const int64_t* SA);
+	void buildGap(const DNAseq& seq);
 
 	/** build interleaving BitVector for two FMD-index, use parallelization optionally */
 	static BitStr32 buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs);
@@ -282,11 +284,11 @@ protected:
 private:
 	BCarray_t B = { };  // combined base count
 	BCarray_t C = { };  // combined cumulative count
+	GAParr_t gapLoc; /* gap loc on the original seq */
 	DNAseq bwt; // uncompressed bwt
 	WaveletTreeRRR bwtRRR; /* Wavelet-Tree transformed BWT string for combined seq */
 	BitSeqRRR SAidx; /* BitSeq index telling whether a SA was sampled */
 	SAarr_t SAsampled; /* sampled SA */
-	SAarr_t SAgap; /* SA values on on GAP_BASE */
 
 	/* static member fields */
 public:

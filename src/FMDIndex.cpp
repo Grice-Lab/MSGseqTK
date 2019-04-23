@@ -22,16 +22,20 @@ namespace MSGseqTK {
 using std::vector;
 using EGriceLab::libSDS::BitStr32;
 
-FMDIndex::FMDIndex(const DNAseq& seq, bool keepSA, bool keepGap) {
+FMDIndex::FMDIndex(const DNAseq& seq, bool keepSA) {
 	assert(seq.back() == DNAalphabet::GAP_BASE);
 	if(seq.length() > MAX_LENGTH)
 		throw std::length_error("DNAseq length exceeding the max allowed length");
 	const size_t N = seq.length();
-	buildCounts(seq);
-	buildBWT(seq, keepSA);
+	buildCounts(seq); // build count
+	buildGap(seq);
+	const int64_t* SA = buildBWT(seq); // build BWT
+	if(keepSA)
+		buildSA(SA);
+	delete[] SA; // delete temporary
 }
 
-FMDIndex& FMDIndex::buildCounts(const DNAseq& seq) {
+void FMDIndex::buildCounts(const DNAseq& seq) {
 	for(DNAseq::value_type b : seq)
 		B[b]++;
 
@@ -49,7 +53,6 @@ FMDIndex& FMDIndex::buildCounts(const DNAseq& seq) {
     	std::cerr << "input seq does not allow IUPAC-extended bases" << std::endl;
     	abort();
     }
-    return *this;
 }
 
 bool FMDIndex::isBiDirectional() const {
@@ -143,7 +146,7 @@ DNAseq FMDIndex::getSeq() const {
 	return seq;
 }
 
-FMDIndex& FMDIndex::buildBWT(const DNAseq& seq, bool keepSA, bool keepGap) {
+int64_t* FMDIndex::buildBWT(const DNAseq& seq) {
 	assert(seq.back() == DNAalphabet::GAP_BASE);
 	const size_t N = seq.length();
 	/* construct SA */
@@ -159,12 +162,7 @@ FMDIndex& FMDIndex::buildBWT(const DNAseq& seq, bool keepSA, bool keepGap) {
 
 	/* build BWTRRR */
     bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
-
-    /* optionally build SA */
-    if(keepSA)
-    	buildSA(SA);
-    delete[] SA;
-    return *this;
+    return SA;
 }
 
 FMDIndex& FMDIndex::buildSA() {
@@ -196,7 +194,7 @@ FMDIndex& FMDIndex::buildSA() {
 	return *this;
 }
 
-FMDIndex& FMDIndex::buildSA(const int64_t* SA) {
+void FMDIndex::buildSA(const int64_t* SA) {
 	const int64_t N = length();
 	assert(bwt.length() == N);
 	/* build the bitstr by sampling SA direction */
@@ -210,8 +208,16 @@ FMDIndex& FMDIndex::buildSA(const int64_t* SA) {
 		}
 	}
 	SAidx = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
+}
 
-	return *this;
+void FMDIndex::buildGap(const DNAseq& seq) {
+	const int64_t N = length();
+	assert(seq.length() == N);
+	gapLoc.clear();
+	gapLoc.reserve(B[0]);
+	for(size_t i = 0; i < N; ++i)
+		if(seq[i] == 0)
+			gapLoc.push_back(i);
 }
 
 int64_t FMDIndex::accessSA(int64_t i) const {
