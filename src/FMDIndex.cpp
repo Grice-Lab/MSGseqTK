@@ -209,7 +209,7 @@ FMDIndex& FMDIndex::buildSA(const vector<size_t>& gapLoc) {
 
 	/* parallel build SAsampled in the 2nd pass */
 	SAsampled.resize(SAidx.numOnes()); /* sample at on bits */
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic, 8)
 	for(int64_t i = 0; i < B[0]; ++i) { // the i-th null segment
 		int64_t j = i; // position on BWT
 		int64_t k = gapLoc[B[0] - i - 1]; // search is backward
@@ -333,7 +333,7 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 BitStr32 FMDIndex::buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs) {
 	const size_t N = lhs.length() + rhs.length();
 	BitStr32 bstrM(N);
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic, 8)
 	for(int64_t i = 0; i < lhs.B[0]; ++i) { // i-th pass LF-mapping on lhs
 		int64_t j = i; // position on lhs.BWT
 		int64_t RA = rhs.B[0]; // position on rhs.BWT
