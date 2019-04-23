@@ -28,7 +28,6 @@ FMDIndex::FMDIndex(const DNAseq& seq, bool keepSA) {
 		throw std::length_error("DNAseq length exceeding the max allowed length");
 	const size_t N = seq.length();
 	buildCounts(seq); // build count
-	buildGap(seq);
 	const int64_t* SA = buildBWT(seq); // build BWT
 	if(keepSA)
 		buildSA(SA);
@@ -167,6 +166,7 @@ int64_t* FMDIndex::buildBWT(const DNAseq& seq) {
 
 FMDIndex& FMDIndex::buildSA() {
 	const int64_t N = length();
+	assert(bwt.length() == N);
 	/* build the bitstr by sampling bwtSeq */
 	BitStr32 bstr(N);
 	for(size_t i = 0; i < N; ++i) {
@@ -182,7 +182,7 @@ FMDIndex& FMDIndex::buildSA() {
 		int64_t j = i; // position on BWT
 		nt16_t b;
 		do {
-			b = accessBWT(j);
+			b = bwt[j];
 			if(bstr.test(j))
 				SAsampled[SAidx.rank1(j) - 1] = k - 1;
 			j = LF(b, j) - 1; // LF-mapping

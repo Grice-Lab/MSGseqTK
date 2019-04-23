@@ -264,11 +264,6 @@ protected:
 	 */
 	void buildSA(const int64_t* SA);
 
-	/**
-	 * build SAgap, which is useful for parallel building of SA
-	 */
-	void buildGap(const DNAseq& seq);
-
 	/** build interleaving BitVector for two FMD-index, use parallelization optionally */
 	static BitStr32 buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs);
 
