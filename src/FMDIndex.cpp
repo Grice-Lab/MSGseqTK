@@ -22,7 +22,7 @@ namespace MSGseqTK {
 using std::vector;
 using EGriceLab::libSDS::BitStr32;
 
-FMDIndex::FMDIndex(const DNAseq& seq, bool keepSA) {
+FMDIndex::FMDIndex(const DNAseq& seq, bool keepSA, bool keepGap) {
 	assert(seq.back() == DNAalphabet::GAP_BASE);
 	if(seq.length() > MAX_LENGTH)
 		throw std::length_error("DNAseq length exceeding the max allowed length");
@@ -143,7 +143,7 @@ DNAseq FMDIndex::getSeq() const {
 	return seq;
 }
 
-FMDIndex& FMDIndex::buildBWT(const DNAseq& seq, bool keepSA) {
+FMDIndex& FMDIndex::buildBWT(const DNAseq& seq, bool keepSA, bool keepGap) {
 	assert(seq.back() == DNAalphabet::GAP_BASE);
 	const size_t N = seq.length();
 	/* construct SA */
@@ -163,6 +163,7 @@ FMDIndex& FMDIndex::buildBWT(const DNAseq& seq, bool keepSA) {
     /* optionally build SA */
     if(keepSA)
     	buildSA(SA);
+    delete[] SA;
     return *this;
 }
 

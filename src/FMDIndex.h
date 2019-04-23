@@ -58,7 +58,7 @@ public:
 	 * it will build the counts and BWT,
 	 * and optionally build the SA (SAidx and SAsampled)
 	 */
-	explicit FMDIndex(const DNAseq& seq, bool keepSA = true);
+	explicit FMDIndex(const DNAseq& seq, bool keepSA = true, bool keepGap = false);
 
 	/* member methods */
 	/** test whether contains uncompressed BWT */
@@ -69,6 +69,11 @@ public:
 	/** test whether contains SA */
 	bool hasSA() const {
 		return !SAidx.empty();
+	}
+
+	/** test whether contains SAgap */
+	bool hasGap() const {
+		return !SAgap.empty();
 	}
 
 	/** get the encoded BWT of the original seq */
@@ -255,12 +260,17 @@ protected:
 
 	/** build BWT uncompressed and compressed,
 	 * and optionally build the SA */
-	FMDIndex& buildBWT(const DNAseq& seq, bool keepSA = true);
+	FMDIndex& buildBWT(const DNAseq& seq, bool keepSA = true, bool keepGap = false);
 
 	/**
 	 * build SAidx and SAsampled with given internal SA, which are available during direct construction
 	 */
 	FMDIndex& buildSA(const int64_t* SA);
+
+	/**
+	 * build SAgap, which is useful for parallel building of SA
+	 */
+	FMDIndex& buildGap(const int64_t* SA);
 
 	/** build interleaving BitVector for two FMD-index, use parallelization optionally */
 	static BitStr32 buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs);
@@ -276,6 +286,7 @@ private:
 	WaveletTreeRRR bwtRRR; /* Wavelet-Tree transformed BWT string for combined seq */
 	BitSeqRRR SAidx; /* BitSeq index telling whether a SA was sampled */
 	SAarr_t SAsampled; /* sampled SA */
+	SAarr_t SAgap; /* SA values on on GAP_BASE */
 
 	/* static member fields */
 public:
