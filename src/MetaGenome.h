@@ -226,6 +226,12 @@ public:
 		return chromIdx2BDLoc[i];
 	}
 
+	/** get the BD Loc of a region */
+	Loc getChromBDLoc(size_t tidStart, size_t tidEnd) const {
+		assert(tidStart < tidEnd);
+		return Loc(chromIdx2BDLoc[tidStart].getStart(), chromIdx2BDLoc[tidEnd - 1].getEnd());
+	}
+
 	/**
 	 * get the idx->Loc map for all genomes
 	 */

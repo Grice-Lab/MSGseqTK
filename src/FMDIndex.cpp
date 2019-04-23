@@ -210,17 +210,6 @@ FMDIndex& FMDIndex::buildSA(const int64_t* SA) {
 	}
 	SAidx = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
 
-//	/* build SAsampled and SAgap in the 2nd pass */
-//	SAsampled.clear();
-//	SAsampled.reserve(SAidx.numOnes()); /* sample at on bits */
-////#pragma omp parallel for
-//	for(int64_t i = 0; i < N; ++i) {
-//		if(bstr.test(i)) {
-//			SAsampled.push_back(SA[i]);
-//			SAsampled[SAidx.rank1(i) - 1] = SA[i]; // no lock needed since independent access guaranteed
-////			std::cerr << "rank1(i) - 1: " << SAidx.rank1(i) - 1 << " SA[i]: " << SA[i] << std::endl;
-//		}
-//	}
 	return *this;
 }
 

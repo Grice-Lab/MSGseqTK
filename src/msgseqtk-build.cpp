@@ -366,24 +366,22 @@ void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx) {
 void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, iostream& mtgIO, size_t blockSize) {
 	infoLog << "Building FMD-index incrementally" << endl;
 	const size_t NC = mtg.numChroms();
-	DNAseq blockSeq;
-	blockSeq.reserve(blockSize * SIZE_FACTOR);
-	size_t k = 0;
-	size_t n = 0;
+	size_t blockId = 0;
+	size_t blockStart = 0; // block start index
+	size_t blockEnd = NC; // block end index
 	for(size_t i = NC; i > 0; --i) {
-		bool isFirst = i == 1;
-		blockSeq = mtg.getBDSeq(i - 1) + blockSeq; // lazy loading from read/write output, seqs will be loaded in reserved-order
-		mtg.removeSeq(i - 1);
-		n++;
+		blockStart = i - 1; // update blockStart
 		/* process block, if large enough */
-		if(blockSeq.length() >= blockSize || isFirst) { /* first chrom or block is full */
-			infoLog << "Adding " << n << " chroms in block " << ++k << " into FMD-index" << endl;
+		if(mtg.getChromBDLoc(blockStart, blockEnd).length() >= blockSize || blockStart == 0) { /* first chrom or block is full */
+			infoLog << "Adding " << (blockEnd - blockStart) << " chroms in block " << blockId << " into FMD-index" << endl;
+			DNAseq blockSeq = mtg.getBDSeq(blockStart, blockEnd);
 			assert(blockSeq.back() == DNAalphabet::GAP_BASE);
 			fmdidx = FMDIndex(blockSeq, false) + fmdidx; /* prepend new FMDIndex, whose SA is never built */
-			if(!isFirst) // not the final FMDindex
+			if(blockStart > 0) // not the final FMDindex
 				fmdidx.clearBWT(); // clear RAM before next merge
-			blockSeq.clear(); // blockSeq is moved away, still need clear
-			n = 0;
+			// clear block
+			blockEnd = blockStart;
+			blockId++;
 			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;
 		}
 	}
