@@ -511,6 +511,9 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 					else {
 						const PrimarySeq& rcRead = read.revcom();
 						debugLog << "id: " << read.getName() << endl;
+						debugLog << "get " << seeds.size() << " seeds" << endl;
+						for(const SeedPair& seed : seeds)
+							debugLog << seed << endl;
 						/* get alignments from SeedMatchList */
 						ALIGN_LIST alnList = Alignment::buildAlignments(&read, &rcRead, mtg, &ss,
 								SeedChain::getChains(seeds, read.length() * Alignment::MAX_INDEL_RATE));

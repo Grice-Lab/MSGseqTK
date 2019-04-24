@@ -58,9 +58,8 @@ bool isValidChain(const DNAseq& target, const DNAseq& query, const SeedChain& ch
 		}
 		// check seed matching
 		DNAseq tSeg = target.substr(seed->getStart(), seed->length());
-		DNAseq qSeg = query.substr(seed->getFrom(), seed->length());
-		if(seed->getStrand() == GLoc::REV)
-			dna::revcom(qSeg);
+		DNAseq qSeg = seed->getStrand() == GLoc::FWD ? query.substr(seed->getFrom(), seed->length()) :
+				dna::revcom(query).substr(seed->getFrom(), seed->length());
 		if(tSeg != qSeg) {
 			cerr << "Unmatched Seed between db: " << tSeg << " read: " << qSeg << endl;
 			return false;

@@ -51,9 +51,8 @@ int main() {
 
 bool isValidSeed(const DNAseq& target, const DNAseq& query, const SeedPair& seed) {
 	DNAseq tSeg = target.substr(seed.getStart(), seed.length());
-	DNAseq qSeg = query.substr(seed.getFrom(), seed.length());
-	if(seed.getStrand() == GLoc::REV)
-		dna::revcom(qSeg);
+	DNAseq qSeg = seed.getStrand() == GLoc::FWD ? query.substr(seed.getFrom(), seed.length()) :
+			dna::revcom(query).substr(seed.getFrom(), seed.length());
 	if(tSeg != qSeg) {
 		cerr << "Unmatched SMEM seq db: " << tSeg << " read: " << qSeg << endl;
 		return false;

@@ -155,7 +155,7 @@ SeedList SMEM::getSeeds() const {
 			int64_t start = fmdidx->accessSA(revStart + i);
 			int64_t tid = mtg->getLocId(start);
 			if(mtg->getStrand(tid, start) == GLoc::FWD) // always only search loc on fwd tStrand
-				seeds.push_back(SeedPair(from, mtg->getLoc(tid, start), length(), tid, GLoc::REV, loglik()));
+				seeds.push_back(SeedPair(seq->length() - to, mtg->getLoc(tid, start), length(), tid, GLoc::REV, loglik()));
 		}
 	}
 	return seeds;
