@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include "StringUtils.h"
 #include "FMDIndex.h"
+#include "BitSeqGGMN.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -21,6 +22,7 @@ namespace EGriceLab {
 namespace MSGseqTK {
 using std::vector;
 using EGriceLab::libSDS::BitStr32;
+using EGriceLab::libSDS::BitSeqGGMN; // useful for temporary and fast BitSeq solution
 
 FMDIndex::FMDIndex(const DNAseq& seq, bool keepSA) {
 	assert(seq.back() == DNAalphabet::GAP_BASE);
@@ -31,6 +33,8 @@ FMDIndex::FMDIndex(const DNAseq& seq, bool keepSA) {
 	const int64_t* SA = buildBWT(seq); // build BWT
 	if(keepSA)
 		buildSA(SA);
+	else
+		clearSA();
 	delete[] SA; // delete temporary
 }
 
@@ -106,9 +110,7 @@ FMDIndex& FMDIndex::operator+=(const FMDIndex& other) {
 		return *this;
 	}
 
-	BitStr32 bstrM = buildInterleavingBS(*this, other); // build interleaving bitvector
-	bwt = mergeBWT(*this, other, bstrM); // update uncompressed BWT
-	bstrM.reset(); // clear RAM
+	bwt = mergeBWT(*this, other, buildInterleavingBS(*this, other)); // update uncompressed BWT
     bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
 
 	/* merging counts after bwt updated */
@@ -155,9 +157,10 @@ int64_t* FMDIndex::buildBWT(const DNAseq& seq) {
 		throw std::runtime_error("Error: Cannot build suffix-array on DNAseq");
 
 	/* build uncompressed bwt */
-	bwt.resize(N);
-	for(size_t i = 0; i < N; ++i)
-		bwt[i] = SA[i] == 0 ? 0 : seq[SA[i] - 1];
+	bwt.clear();
+	bwt.reserve(N);
+	for(const int64_t* sa = SA; sa < SA + N; ++sa)
+		bwt.push_back(*sa == 0 ? 0 : seq[*sa - 1]);
 
 	/* build BWTRRR */
     bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
@@ -209,7 +212,7 @@ FMDIndex& FMDIndex::buildSA(const vector<size_t>& gapLoc) {
 
 	/* parallel build SAsampled in the 2nd pass */
 	SAsampled.resize(SAidx.numOnes()); /* sample at on bits */
-#pragma omp parallel for schedule(dynamic, 8)
+#pragma omp parallel for schedule(dynamic, 4)
 	for(int64_t i = 0; i < B[0]; ++i) { // the i-th null segment
 		int64_t j = i; // position on BWT
 		int64_t k = gapLoc[B[0] - i - 1]; // search is backward
@@ -333,7 +336,7 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 BitStr32 FMDIndex::buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs) {
 	const size_t N = lhs.length() + rhs.length();
 	BitStr32 bstrM(N);
-#pragma omp parallel for schedule(dynamic, 8)
+#pragma omp parallel for schedule(dynamic, 4)
 	for(int64_t i = 0; i < lhs.B[0]; ++i) { // i-th pass LF-mapping on lhs
 		int64_t j = i; // position on lhs.BWT
 		int64_t RA = rhs.B[0]; // position on rhs.BWT
@@ -364,15 +367,44 @@ DNAseq FMDIndex::mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, const BitStr
 	{
 		nThreads = omp_get_num_threads();
 	}
-	if(nThreads == 1) { // no parallelzation needed
+	if(1 == nThreads) { // no parallelzation needed
 		for(size_t i = 0, j = 0, k = 0; k < N; ++k)
 			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
 	}
 	else {
-		BitSeqRRR bsM(bstrM); // aux BitSeq for rank access
+		BitSeqGGMN bsM(bstrM);
 #pragma omp parallel for
-		for(size_t k = 0; k < N; ++k)
+		for(size_t k = 0; k < N; ++k) {
 			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(bsM.rank1(k) - 1) : rhs.accessBWT(bsM.rank0(k) - 1);
+		}
+	}
+#endif
+	return bwtM;
+}
+
+DNAseq FMDIndex::mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, BitStr32&& bstrM) {
+	const size_t N = lhs.length() + rhs.length();
+	assert(N == bstrM.length());
+	DNAseq bwtM(N, 0); // merged BWT
+#ifndef _OPENMP
+	for(size_t i = 0, j = 0, k = 0; k < N; ++k)
+		bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
+#else
+	int nThreads = 1;
+#pragma omp parallel
+	{
+		nThreads = omp_get_num_threads();
+	}
+	if(1 == nThreads) { // no parallelzation needed
+		for(size_t i = 0, j = 0, k = 0; k < N; ++k)
+			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
+	}
+	else {
+		BitSeqGGMN bsM(bstrM);
+#pragma omp parallel for
+		for(size_t k = 0; k < N; ++k) {
+			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(bsM.rank1(k) - 1) : rhs.accessBWT(bsM.rank0(k) - 1);
+		}
 	}
 #endif
 	return bwtM;

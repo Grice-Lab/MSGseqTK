@@ -52,7 +52,7 @@ using namespace EGriceLab::MSGseqTK;
 
 static const int DEFAULT_NUM_THREADS = 1;
 static const size_t DEFAULT_BLOCK_SIZE = 2000;
-static const size_t BLOCK_UNIT = 1000000;
+static const size_t BLOCK_UNIT = 1 << 20; // 1 MB in Byte
 static const double SIZE_FACTOR = 1.25; // allocate factor for block-wise incremental building
 
 /**
@@ -76,7 +76,7 @@ void printUsage(const string& progName) {
 		 << "Options:    -n  STR              : database name/prefix" << endl
 		 << "            -l  FILE             : tab-delimited genome list with 1st field unique genome IDs, 2nd filed genome names, 3nd field genomic sequence filenames; if provided, <SEQ-FILE> options are ignored" << ZLIB_SUPPORT << endl
 		 << "            -r|--update  STR     : update database based on this old DB, it can be the same name as -n, which will overwrite the old database" << endl
-		 << "            -b|--block  INT      : block size (in Mbp) for building FMD-index, larget block size will lead to faster but more memory usage algorithm [" << DEFAULT_BLOCK_SIZE << "]" << endl
+		 << "            -b|--block  INT      : block size (in MB) for building FMD-index, larget block size is faster but uses more memory [" << DEFAULT_BLOCK_SIZE << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing, only used in building SA and merging BWTs [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -318,6 +318,7 @@ int main(int argc, char* argv[]) {
 		/* add this genome */
 		mtg.addGenome(genome);
 		infoLog << "  genome " << genome.displayId() << " added" << endl;
+		nProcessed++;
 	}
 
 	/* update final index */
@@ -354,8 +355,10 @@ int main(int argc, char* argv[]) {
 	infoLog << "FMD-index saved to '" << fmdidxFn << "'" << endl;
 
 	if(!oldDBName.empty())
-		infoLog << "Database updated. Newly added # of genomes: " << nProcessed << " new size: " << mtg.BDSize() << endl;
-	infoLog << "Database built. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.BDSize() << endl;
+		infoLog << "Database updated. Newly added # of genomes: " << nProcessed <<
+		" Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.BDSize() << endl;
+	else
+		infoLog << "Database built. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.BDSize() << endl;
 }
 
 void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx) {
@@ -387,5 +390,5 @@ void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, iostream& mtgIO, size_t bl
 	infoLog << "Building final Suffix-Array" << endl;
 	fmdidx.buildSA(mtg.getBDGapLoc());
 //	fmdidx.buildSA();
-	fmdidx.clearBWT();
+	fmdidx.clearBWT(); // clear uncompressed BWT
 }
