@@ -215,6 +215,7 @@ inline void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
 	build_level(bstrs, src, 0);
 
 	/* build the BitSeqs from BitStrs */
+	bseqs.clear();
 	bseqs.reserve(height);
 	for(const BitStr32& bs : bstrs)
 		bseqs.push_back(BitSeqRRR(bs, sample_rate));
