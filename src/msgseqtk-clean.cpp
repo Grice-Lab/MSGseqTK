@@ -325,7 +325,7 @@ int main(int argc, char* argv[]) {
 	SeqIO revO(dynamic_cast<ostream*>(&revOut), fmt);
 
 	/* load data */
-	infoLog << "Loading reference MetaGenome info ..." << endl;
+	infoLog << "Loading reference MetaGenome ..." << endl;
 	loadProgInfo(refMtgIn);
 	if(!refMtgIn.bad())
 		refMtg.load(refMtgIn);
@@ -342,7 +342,7 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	infoLog << "Loading background MetaGenome info ..." << endl;
+	infoLog << "Loading background MetaGenome ..." << endl;
 	loadProgInfo(bgMtgIn);
 	if(!bgMtgIn.bad())
 		bgMtg.load(bgMtgIn);

@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
 	/* load MetaGenome */
 	MetaGenome mtg;
 
-	infoLog << "Loading MetaGenome info in database '" << dbName << "'" << endl;
+	infoLog << "Loading MetaGenome in database '" << dbName << "'" << endl;
 	mtgFn = dbName + METAGENOME_FILE_SUFFIX;
 
 	mtgIn.open(mtgFn.c_str(), ios_base::binary);

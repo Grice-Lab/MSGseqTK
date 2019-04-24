@@ -322,7 +322,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	/* update final index */
-	infoLog << "Updating MetaGenome info" << endl;
+	infoLog << "Updating MetaGenome" << endl;
 	mtg.update();
 	if(dbName == oldDBName && nProcessed == 0) {
 		infoLog << "No new genomes found, database not modified, quit updating" << endl;

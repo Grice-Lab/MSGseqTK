@@ -386,7 +386,7 @@ int main(int argc, char* argv[]) {
 	SAMfile out(outFn, mode);
 
 	/* load data */
-	infoLog << "Loading MetaGenome info ..." << endl;
+	infoLog << "Loading MetaGenome ..." << endl;
 	loadProgInfo(mtgIn);
 	if(!mtgIn.bad())
 		mtg.load(mtgIn);
