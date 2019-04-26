@@ -386,13 +386,11 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 				{
 					const string& id = read.getName();
 					const string& desc = read.getDesc();
-					SMEMS refSmems = SMEMS::findSMEMS(&read, &refMtg, &refFmdidx, infV);
-					SMEMS bgSmems = SMEMS::findSMEMS(&read, &bgMtg, &bgFmdidx, infV);
-					debugLog << "refSmems.size(): " << refSmems.size() << endl;
-					debugLog << "bgSmems.size(): " << bgSmems.size() << endl;
+					SMEMS refSmems = SMEMS::findSMEMS(&read, &refMtg, &refFmdidx, maxEvalue);
+					SMEMS bgSmems = SMEMS::findSMEMS(&read, &bgMtg, &bgFmdidx, maxEvalue);
 
-					double refLoglik = refSmems.bestLoglik();
-					double bgLoglik = bgSmems.bestLoglik();
+					double refLoglik = refSmems.loglik();
+					double bgLoglik = bgSmems.loglik();
 					double lod = - refLoglik + bgLoglik;
 					if(lod >= minLod)
 #pragma omp critical(writeSeq)
@@ -425,8 +423,8 @@ int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 					const string& desc = fwdRead.getDesc();
 					SMEMS_PE refMemsPE = SMEMS::findSMEMS_PE(&fwdRead, &revRead, &refMtg, &refFmdidx, maxEvalue);
 					SMEMS_PE bgMemsPE = SMEMS::findSMEMS_PE(&fwdRead, &revRead, &bgMtg, &bgFmdidx, maxEvalue);
-					double refLoglik = SMEMS::bestLoglik(refMemsPE);
-					double bgLoglik = SMEMS::bestLoglik(bgMemsPE);
+					double refLoglik = SMEMS::loglik(refMemsPE);
+					double bgLoglik = SMEMS::loglik(bgMemsPE);
 					double lod = - refLoglik + bgLoglik;
 					if(lod >= minLod) {
 #pragma omp critical(writeSeq)
