@@ -37,6 +37,7 @@ using namespace EGriceLab::MSGseqTK;
 //static const int DEFAULT_STRAND = 3;
 static const int DEFAULT_NUM_THREADS = 1;
 static const int DEFAULT_MAX_REPORT = 1;
+static const double DEFAULT_MAX_LOD10 = 3; // 1000 fold
 static const double DEFAULT_BEST_FRAC = 0.85;
 static const int DEFAULT_MIN_INSERT = 0;
 static const int DEFAULT_MAX_INSERT = 750;
@@ -76,7 +77,8 @@ void printUsage(const string& progName) {
 		 << "            --mis-match  DBL     : penalty for mis-matches [" << ScoreScheme::DEFAULT_MISMATCH_PENALTY << "]" << endl
 		 << "            --gap-open  DBL      : penalty for (affine) gap opening [" << ScoreScheme::DEFAULT_GAP_OPEN_PENALTY << "]" << endl
 		 << "            --gap-ext  DBL       : penalty for (affine) gap extension [" << ScoreScheme::DEFAULT_GAP_EXT_PENALTY << "]" << endl
-		 << "            --max-mems  INT      : maximum # of different loc/MEMS to check for a read/pair [" << Alignment::MAX_ALIGN << "]" << endl
+//		 << "            --max-seeds  INT     : maximum # of seeds to check for a read/pair [" << Alignment::MAX_ALIGN << "]" << endl
+		 << "            --max-lod10  DBL     : maximum log10-odds allowed for a lower ranking seed-chain to be considered [" << SeedChain::DEFAULT_MAX_LOD10 << "]" << endl
 		 << "            -k/--max-report  INT : maximum loci to consider for a read/pair, set to 0 to report all candidate alignments [" << DEFAULT_MAX_REPORT << "]" << endl
 		 << "            -f--best-frac        : minimum score as a fraction of the highest alignment score of all candidates to consider for full evaluation [" << DEFAULT_BEST_FRAC << "]" << endl
 		 << "Paired-end:" << endl
@@ -103,7 +105,7 @@ void printUsage(const string& progName) {
  */
 int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 		SeqIO& seqI, SAMfile& out, double maxEvalue,
-		uint32_t maxSeedMatches, double bestFrac, uint32_t maxReport);
+		double maxLod10, double bestFrac, uint32_t maxReport);
 
 /**
  * main function to process paired-ended reads
@@ -111,7 +113,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
  */
 int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 		SeqIO& fwdI, SeqIO& revI, SAMfile& out, double maxEvalue,
-		uint32_t maxSeedMatches, double bestFrac, uint32_t maxReport,
+		double maxLod10, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap);
 
@@ -144,7 +146,8 @@ int main(int argc, char* argv[]) {
 //	double maxIndelRate = DEFAULT_INDEL_RATE;
 	int nThreads = DEFAULT_NUM_THREADS;
 
-	uint32_t maxSeedMatches = Alignment::MAX_ALIGN;
+//	uint32_t maxSeeds = Alignment::MAX_ALIGN;
+	double maxLod10 = DEFAULT_MAX_LOD10;
 	uint32_t maxReport = DEFAULT_MAX_REPORT;
 	double bestFrac = DEFAULT_BEST_FRAC;
 
@@ -222,9 +225,12 @@ int main(int argc, char* argv[]) {
 		}
 		ss.setGapEPenalty(op);
 	}
+//
+//	if(cmdOpts.hasOpt("--max-seeds"))
+//		maxSeeds = ::atoi(cmdOpts.getOptStr("--max-seeds"));
 
-	if(cmdOpts.hasOpt("--max-mems"))
-		maxSeedMatches = ::atoi(cmdOpts.getOptStr("--max-mems"));
+	if(cmdOpts.hasOpt("--max-lod10"))
+		maxLod10 = ::atof(cmdOpts.getOptStr("--max-lod10"));
 
 	if(cmdOpts.hasOpt("-k"))
 		maxReport = ::atoi(cmdOpts.getOptStr("-k"));
@@ -277,9 +283,14 @@ int main(int argc, char* argv[]) {
 		cerr << "-o must be specified" << endl;
 		return EXIT_FAILURE;
 	}
+//
+//	if(!(maxSeeds > 0)) {
+//		cerr << "--max-seeds must be positive" << endl;
+//		return EXIT_FAILURE;
+//	}
 
-	if(!(maxSeedMatches > 0)) {
-		cerr << "--max-mems must be positive" << endl;
+	if(!(maxLod10 >= 0)) {
+		cerr << "--max-lod10 must be non-negative" << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -418,9 +429,9 @@ int main(int argc, char* argv[]) {
 
 	/* main processing */
 	if(!isPaired)
-		return main_SE(mtg, fmdidx, fwdI, out, maxEvalue, maxSeedMatches, bestFrac, maxReport);
+		return main_SE(mtg, fmdidx, fwdI, out, maxEvalue, maxLod10, bestFrac, maxReport);
 	else
-		return main_PE(mtg, fmdidx, fwdI, revI, out, maxEvalue, maxSeedMatches, bestFrac, maxReport,
+		return main_PE(mtg, fmdidx, fwdI, revI, out, maxEvalue, maxLod10, bestFrac, maxReport,
 				minIns, maxIns, noMixed, noDiscordant, noTailOver, noContain, noOverlap);
 }
 
@@ -489,7 +500,7 @@ int output(const PrimarySeq& fwdRead, const PrimarySeq& revRead, SAMfile& out) {
 
 int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 		SeqIO& seqI, SAMfile& out, double maxEvalue,
-		uint32_t maxSeedMatches, double bestFrac, uint32_t maxReport) {
+		double maxLod10, double bestFrac, uint32_t maxReport) {
 	infoLog << "Aligning input reads" << endl;
 	/* search MEMS for each read */
 #pragma omp parallel
@@ -510,23 +521,16 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 					}
 					else {
 						const PrimarySeq& rcRead = read.revcom();
-						debugLog << "id: " << read.getName() << endl;
-						debugLog << "get " << seeds.size() << " seeds" << endl;
-						for(const SeedPair& seed : seeds)
-							debugLog << seed << endl;
+						/* get SeedChains */
+						ChainList chains = SeedChain::getChains(seeds, read.length() * Alignment::MAX_INDEL_RATE);
+						SeedChain::filterChains(chains, maxLod10);
 						/* get alignments from SeedMatchList */
 						ALIGN_LIST alnList = Alignment::buildAlignments(&read, &rcRead, mtg, &ss,
 								SeedChain::getChains(seeds, read.length() * Alignment::MAX_INDEL_RATE));
-						debugLog << "get " << alnList.size() << " potential alignments" << endl;
 						/* filter alignments */
 						Alignment::filter(alnList, bestFrac);
-						debugLog << "get " << alnList.size() << " best aligns" << endl;
 						/* evaluate alignments */
 						Alignment::evaluate(alnList);
-						for(const Alignment& aln : alnList) {
-							debugLog << "cigar:" << BAM::decodeCigar(aln.getAlnCigar())
-							<< " aln.loglik10():" << aln.log10lik() << endl;
-						}
 						/* calculate mapQ for alignments */
 						Alignment::calcMapQ(alnList);
 						/* sort alignments */
@@ -544,7 +548,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 
 int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 		SeqIO& fwdI, SeqIO& revI, SAMfile& out, double maxEvalue,
-		uint32_t maxSeedMatches, double bestFrac, uint32_t maxReport,
+		double maxLod10, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap) {
 	infoLog << "Aligning paired-end reads" << endl;

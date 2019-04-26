@@ -26,6 +26,7 @@ typedef pair<ChainList, ChainList> ChainListPE;
 
 /**
  * a SeedChain IS A SeedList that is colinearly ordered and compatitable
+ * one SeedChain roughly represent an Alignment, although not be unique
  */
 class SeedChain : public SeedList {
 public:
@@ -63,6 +64,10 @@ public:
 	/** get overall loglik */
 	double loglik() const;
 
+	double log10lik() const {
+		return loglik() / std::log(10);
+	}
+
 	/** get overal length */
 	int64_t length() const;
 
@@ -87,6 +92,33 @@ public:
 	 * input SeedList will be ordered and grouped into chains using DFS algorithm
 	 */
 	static ChainList getChains(const SeedList& inputSeeds, int64_t maxIndel);
+
+	/** test whether one chain containing another */
+	static bool containing(const SeedChain& lhs, const SeedChain& rhs) {
+		return lhs.getTid() == rhs.getTid() && (lhs.getStrand() & rhs.getStrand()) != 0 &&
+				lhs.getStart() <= rhs.getStart() && lhs.getEnd() >= rhs.getEnd();
+	}
+
+	/** test whether one chain is contained by another */
+	static bool contained(const SeedChain& lhs, const SeedChain& rhs) {
+		return containing(rhs, lhs);
+	}
+
+	/** test whether two chain is overlapping */
+	static bool overlap(const SeedChain& lhs, const SeedChain& rhs) {
+		return lhs.getTid() == rhs.getTid() && (lhs.getStrand() & rhs.getStrand()) != 0 &&
+				lhs.getStart() < rhs.getEnd() && lhs.getEnd() > rhs.getStart();
+	}
+
+	/** filter a ChainList by removing smaller chains that are contained in a larger chain
+	 * and with pvalue smaller than a given proportion of the larger one
+	 * filtered chains will be ordered by their loglik()
+	 * @param maxLod10  max log10lik difference between the smaller chain and the better chain
+	 */
+	static ChainList& filterChains(ChainList& chains, double maxLod10 = DEFAULT_MAX_LOD10);
+
+	/* static member fields */
+	static const double DEFAULT_MAX_LOD10;
 };
 
 } /* namespace MSGseqTK */

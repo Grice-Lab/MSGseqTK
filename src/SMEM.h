@@ -270,9 +270,9 @@ public:
 		return SeedListPE(findSeeds(fwdSeq, mtg, fmdidx, maxEvalue), findSeeds(revSeq, mtg, fmdidx, maxEvalue));
 	}
 
-	/** get bestLoglik for SMEMS_PE */
-	static double bestLoglik(const SMEMS_PE& smemsPE) {
-		return std::min(smemsPE.first.bestLoglik(), smemsPE.second.bestLoglik());
+	/** get loglik for SMEMS_PE */
+	static double loglik(const SMEMS_PE& smemsPE) {
+		return smemsPE.first.loglik() + smemsPE.second.loglik();
 	}
 
 	/* static fields */

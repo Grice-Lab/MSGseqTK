@@ -54,6 +54,10 @@ public:
 		return logP;
 	}
 
+	double log10lik() const {
+		return loglik() / std::log(10);
+	}
+
 	double pvalue() const {
 		return std::exp(loglik());
 	}
