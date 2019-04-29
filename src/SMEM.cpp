@@ -20,8 +20,8 @@ SMEM& SMEM::evaluate() {
 	return *this;
 }
 
-SMEM SMEM::findSMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		int64_t& from, int64_t& to) {
+SMEM SMEM::findSMEMfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+		int64_t from, int64_t& to) {
 	const size_t L = seq->length();
 	assert(from < L);
 	to = from + 1;
@@ -31,22 +31,35 @@ SMEM SMEM::findSMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex
 
 	/* init */
 	SMEM smem(seq, mtg, fmdidx, from, to, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
-	assert(smem.size > 0 && smem.to <= L);
+	SMEM smem0;
+//	assert(smem.size > 0 && smem.to <= L);
 	/* forward extension */
-	for(SMEM smem1 = smem; smem.to < L; smem = smem1) {
-		smem1 = static_cast<const SMEM&>(smem).fwdExt();
-		if(smem1.size <= 0)
-			break;
+	for(smem0 = smem; smem.to <= L && smem.size > 0; smem.fwdExt()) {
+		smem0 = smem; // update smem
 	}
-	to = smem.to;
+	to = smem0.to;
+	return smem0;
+}
+
+SMEM SMEM::findSMEMrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+		int64_t& from, int64_t to) {
+	const size_t L = seq->length();
+	assert(to <= L);
+	from = to - 1;
+	nt16_t b = seq->getBase(to - 1);
+	if(!DNAalphabet::isBasic(b)) // first base is non-basic, no-matches
+		return SMEM(); // return an empty SMEM
+
+	/* init */
+	SMEM smem(seq, mtg, fmdidx, from, to, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
+	SMEM smem0;
+//	assert(smem1.size > 0 && smem1.to > 0);
 	/* backward extension */
-	for(SMEM smem1 = smem; smem.from > 0; smem = smem1) {
-		smem1 = static_cast<const SMEM&>(smem).backExt();
-		if(smem1.size <= 0)
-			break;
+	for(smem0 = smem; smem.from >= 0 && smem.size > 0; smem.backExt()) {
+		smem0 = smem; // update smem
 	}
-	from = smem.from;
-	return smem;
+	from = smem0.from;
+	return smem0;
 }
 
 SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
@@ -113,13 +126,24 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	return match;
 }
 
-SMEMS SMEMS::findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+SMEMS SMEMS::findSMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		double maxEvalue) {
+	const int64_t L = seq->length();
 	SMEMS smems;
-	SMEM smem;
-	for(int64_t from = 0, to = 1; from < seq->length(); from = smem.evalue() <= maxEvalue ? to + 1 /* good SMEMS */ : to /* bad SMEMS */) {
-		// get longest SMEM  at current position
-		smem = SMEM::findSMEM(seq, mtg, fmdidx, from, to);
+	for(int64_t from = 0, to = 1; from < L && to <= L; from = to + 1) {
+		SMEM smem = SMEM::findSMEMfwd(seq, mtg, fmdidx, from, to);
+		if(smem.evalue() <= maxEvalue)
+			smems.push_back(smem);
+	}
+	return smems;
+}
+
+SMEMS SMEMS::findSMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+		double maxEvalue) {
+	const int64_t L = seq->length();
+	SMEMS smems;
+	for(int64_t from = L - 1, to = L; from >= 0 && to > 0; to = from - 1) {
+		SMEM smem = SMEM::findSMEMrev(seq, mtg, fmdidx, from, to);
 		if(smem.evalue() <= maxEvalue)
 			smems.push_back(smem);
 	}

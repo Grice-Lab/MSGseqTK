@@ -158,10 +158,25 @@ protected:
 
 	/* static methods */
 	/**
-	 * find one longest SMEM of a given seq starting at given position relative to seq by forward/backward extensions
+	 * find one longest SMEM of a given seq starting at given position relative to seq by forward or backward extension
 	 */
 	static SMEM findSMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t& from, int64_t& to);
+			int64_t& from, int64_t& to, GLoc::STRAND dir = GLoc::FWD) {
+		return dir == GLoc::FWD ? findSMEMfwd(seq, mtg, fmdidx, from, to) :
+				findSMEMrev(seq, mtg, fmdidx, from, to);
+	}
+
+	/**
+	 * find one longest SMEM of a given seq starting at given position relative to seq by forward extension
+	 */
+	static SMEM findSMEMfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			int64_t from, int64_t& to);
+
+	/**
+	 * find one longest SMEM of a given seq starting at given position relative to seq by backward extension
+	 */
+	static SMEM findSMEMrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			int64_t& from, int64_t to);
 
 private:
 	/* member fields */
@@ -233,6 +248,21 @@ public:
 	 * find longest SMEMS of a given seq using step-wise forward/backward searches with required evalue threshold
 	 */
 	static SMEMS findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			double maxEvalue = DEFAULT_MAX_EVALUE, GLoc::STRAND dir = GLoc::FWD) {
+		return dir == GLoc::FWD ? findSMEMSfwd(seq, mtg, fmdidx, maxEvalue) :
+				findSMEMSrev(seq, mtg, fmdidx, maxEvalue);
+	}
+
+	/**
+	 * find longest SMEMS of a given seq using step-wise backward searches with required evalue threshold
+	 */
+	static SMEMS findSMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			double maxEvalue = DEFAULT_MAX_EVALUE);
+
+	/**
+	 * find longest SMEMS of a given seq using step-wise forward searches with required evalue threshold
+	 */
+	static SMEMS findSMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			double maxEvalue = DEFAULT_MAX_EVALUE);
 
 	/**
