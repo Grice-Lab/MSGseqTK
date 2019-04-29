@@ -78,7 +78,7 @@ public:
 	}
 
 	double evalue() const {
-		return fmdidx->length() * pvalue();
+		return fmdidx != nullptr ? fmdidx->length() * pvalue() : 0;
 	}
 
 	/** get length of this SMEM */

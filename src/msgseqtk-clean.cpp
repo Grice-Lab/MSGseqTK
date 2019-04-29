@@ -388,7 +388,6 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 					const string& desc = read.getDesc();
 					SMEMS refSmems = SMEMS::findSMEMS(&read, &refMtg, &refFmdidx, maxEvalue);
 					SMEMS bgSmems = SMEMS::findSMEMS(&read, &bgMtg, &bgFmdidx, maxEvalue);
-
 					double refLoglik = refSmems.loglik();
 					double bgLoglik = bgSmems.loglik();
 					double lod = - refLoglik + bgLoglik;

@@ -55,7 +55,7 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	assert(from < L);
 	SMEMS curr, prev, match;
 
-	to = from;
+	to = from + 1;
 	nt16_t b = seq->getBase(from);
 	if(!DNAalphabet::isBasic(b)) // first base is non-basic, no-matches
 		return curr;
@@ -117,7 +117,7 @@ SMEMS SMEMS::findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIn
 		double maxEvalue) {
 	SMEMS smems;
 	SMEM smem;
-	for(int64_t from = 0, to = 0; from < seq->length(); from = smem.evalue() <= maxEvalue ? to + 1 /* good SMEMS */ : to /* bad SMEMS */) {
+	for(int64_t from = 0, to = 1; from < seq->length(); from = smem.evalue() <= maxEvalue ? to + 1 /* good SMEMS */ : to /* bad SMEMS */) {
 		// get longest SMEM  at current position
 		smem = SMEM::findSMEM(seq, mtg, fmdidx, from, to);
 		if(smem.evalue() <= maxEvalue)
