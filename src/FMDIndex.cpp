@@ -301,7 +301,7 @@ vector<GLoc> FMDIndex::locateAllRev(const DNAseq& pattern) const {
 
 int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 	if(!DNAalphabet::isBasic(b))
-		return 0;
+		return (s = 0);
 	int64_t pN; // fwd strand backExt
 	BCarray_t qB, sB;
 	qB.fill(0);

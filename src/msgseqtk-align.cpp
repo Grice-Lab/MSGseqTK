@@ -442,8 +442,6 @@ int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport) {
 	/* export BAM records */
 	size_t numReport = maxReport == 0 ? alnList.size() : std::min((size_t) maxReport, alnList.size());
 	/* generate BAM records first, which does not need locks or openMP critical pragma */
-	vector<BAM> bamList;
-	bamList.reserve(numReport);
 	for(size_t i = 0; i < numReport; ++i) {
 		const Alignment& aln = alnList[i];
 		/* add a newly constructed BAM */
@@ -457,12 +455,8 @@ int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport) {
 		/* set customized aux tags */
 		bamAln.setAux(ALIGNMENT_LOG10LIK_TAG, aln.getLog10P());
 		bamAln.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, aln.getPostP());
-		bamList.push_back(std::move(bamAln));
-	}
-	/* write all BAM records in a critical block */
-#pragma omp critical(BAM_OUTPUT)
-	for(const BAM& bamAln: bamList)
 		out.write(bamAln);
+	}
 	return numReport;
 }
 
@@ -470,9 +464,6 @@ int output(const PAIR_LIST& pairList, SAMfile& out, uint32_t maxReport) {
 	/* export BAM records */
 	size_t numReport = maxReport == 0 ? pairList.size() : std::min<size_t>(maxReport, pairList.size());
 	/* generate BAM records lists first, which does not need locks or openMP critical */
-	vector<BAM> fwdBamList, revBamList;
-	fwdBamList.reserve(numReport);
-	revBamList.reserve(numReport);
 	for(size_t i = 0; i < numReport; ++i) {
 		const AlignmentPE& pair = pairList[i];
 		/* add newly constructed BAM */
@@ -494,14 +485,8 @@ int output(const PAIR_LIST& pairList, SAMfile& out, uint32_t maxReport) {
 		fwdBam.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, pair.postP);
 		revBam.setAux(ALIGNMENT_LOG10LIK_TAG, pair.log10lik());
 		revBam.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, pair.postP);
-		fwdBamList.push_back(std::move(fwdBam));
-		revBamList.push_back(std::move(revBam));
-	}
-	/* write BAM */
-#pragma omp critical(BAM_OUTPUT)
-	for(size_t i = 0; i < numReport; ++i) {
-		out.write(fwdBamList[i]);
-		out.write(revBamList[i]);
+		out.write(fwdBam);
+		out.write(revBam);
 	}
 	return numReport;
 }
@@ -554,6 +539,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 						/* sort alignments */
 						Alignment::sort(alnList);
 						/* output alignments */
+#pragma omp critical(BAM_OUTPUT)
 						output(alnList, out, maxReport);
 					} /* end task */
 				} /* end each read */
@@ -624,6 +610,7 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 							/* sort pairs */
 							AlignmentPE::sort(pairList);
 							/* output pairs */
+#pragma omp critical(BAM_OUTPUT)
 							output(pairList, out, maxReport);
 						}
 						else if(!noMixed) { /* pair-end matching failed, try unpaired */

@@ -80,15 +80,17 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	SMEM smem0;
 	/* forward extension */
 	for(smem0 = smem; smem.to <= L; smem.fwdExt()) {
+		to = smem0.to;
 		if(smem.size != smem0.size) // a different BD interval found
 			curr.push_back(smem0);
-		if(smem.to == L) // end found
+		if(smem.to == L) { // end found
 			curr.push_back(smem);
+			break;
+		}
 		if(smem.size <= 0)
 			break;
 		/* update */
 		smem0 = smem;
-		to = smem0.to;
 	}
 
 	/* backward extension of each findings */
@@ -96,6 +98,7 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	std::swap(curr, prev);
 	for(SMEM& smem : prev) {
 		for(smem0 = smem; smem.from >= 0; smem.backExt()) {
+			from = std::min(from, smem0.from);
 			if(smem.size != smem0.size && smemIdx.count(Loc(smem0.from, smem0.to)) == 0) { // a new different BD interval found
 				curr.push_back(smem0);
 				smemIdx.insert(Loc(smem0.from, smem0.to));
@@ -103,12 +106,12 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 			if(smem.from == 0 && smemIdx.count(Loc(smem.from, smem.to)) == 0) { // a new begin found
 				curr.push_back(smem);
 				smemIdx.insert(Loc(smem.from, smem.to));
+				break;
 			}
 			if(smem.size <= 0)
 				break;
 			/* update */
 			smem0 = smem;
-			from = std::min(from, smem0.from);
 		}
 	}
 	// update from

@@ -584,6 +584,12 @@ inline void Alignment::calculateScores(int64_t from, int64_t to, int64_t start, 
 
 inline void Alignment::calculateScores(const SeedPair& pair) {
 	assert(isInitiated());
+	if(!(qFrom <= pair.getFrom() && pair.getTo() <= qTo && tStart <= pair.getStart() && pair.getEnd() <= tEnd)) {
+		std::cerr << "id: " << read->getName() << " qFrom: " << qFrom << " pair.from: " << pair.getFrom() <<
+				" qTo: " << qTo << " pair.to: " << pair.getTo() <<
+				" tStart: " << tStart << " pair.start: " << pair.getStart() <<
+				" tEnd: " << tEnd << " pair.end: " << pair.getEnd() << std::endl;
+	}
 	assert(qFrom <= pair.getFrom() && pair.getTo() <= qTo && tStart <= pair.getStart() && pair.getEnd() <= tEnd);
 	for(int32_t k = 0; k < pair.length(); ++k) {
 		int32_t i = pair.getFrom() + k - qFrom + 1;
