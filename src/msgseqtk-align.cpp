@@ -117,6 +117,9 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap);
 
+/** get BAM records from ALIGN_LIST */
+vector<BAM> getBAMRecords(const ALIGN_LIST& alnList);
+
 /**
  * report and output evaluated Alignments
  * @return # of alignments written
@@ -438,9 +441,12 @@ int main(int argc, char* argv[]) {
 int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport) {
 	/* export BAM records */
 	size_t numReport = maxReport == 0 ? alnList.size() : std::min((size_t) maxReport, alnList.size());
+	/* generate BAM records first, which does not need locks or openMP critical pragma */
+	vector<BAM> bamList;
+	bamList.reserve(numReport);
 	for(size_t i = 0; i < numReport; ++i) {
 		const Alignment& aln = alnList[i];
-		/* construct BAM */
+		/* add a newly constructed BAM */
 		BAM bamAln = aln.exportBAM();
 		/* set additional flags only available at output */
 		bamAln.setSecondaryFlag(i > 0);
@@ -451,39 +457,51 @@ int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport) {
 		/* set customized aux tags */
 		bamAln.setAux(ALIGNMENT_LOG10LIK_TAG, aln.getLog10P());
 		bamAln.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, aln.getPostP());
-		/* write BAM */
-		out.write(bamAln);
+		bamList.push_back(std::move(bamAln));
 	}
+	/* write all BAM records in a critical block */
+#pragma omp critical(BAM_OUTPUT)
+	for(const BAM& bamAln: bamList)
+		out.write(bamAln);
 	return numReport;
 }
 
 int output(const PAIR_LIST& pairList, SAMfile& out, uint32_t maxReport) {
 	/* export BAM records */
-	size_t numReport = maxReport == 0 ? pairList.size() : std::min((size_t) maxReport, pairList.size());
+	size_t numReport = maxReport == 0 ? pairList.size() : std::min<size_t>(maxReport, pairList.size());
+	/* generate BAM records lists first, which does not need locks or openMP critical */
+	vector<BAM> fwdBamList, revBamList;
+	fwdBamList.reserve(numReport);
+	revBamList.reserve(numReport);
 	for(size_t i = 0; i < numReport; ++i) {
 		const AlignmentPE& pair = pairList[i];
-		/* construct BAM */
-		BAM bamFwd = pair.exportFwdBAM();
-		BAM bamRev = pair.exportRevBAM();
+		/* add newly constructed BAM */
+		BAM fwdBam = pair.exportFwdBAM();
+		BAM revBam = pair.exportRevBAM();
 		/* set additional flags only available at output */
-		bamFwd.setSecondaryFlag(i > 0);
-		bamRev.setSecondaryFlag(i > 0);
+		fwdBam.setSecondaryFlag(i > 0);
+		revBam.setSecondaryFlag(i > 0);
 		/* set standard aux tags */
-		bamFwd.setAux(NUM_REPORTED_ALIGNMENT_TAG, numReport);
-		bamFwd.setAux(NUM_TOTAL_ALIGNMENT_TAG, pairList.size());
-		bamFwd.setAux(MISMATCH_POSITION_TAG, pair.fwdAln->getAlnMDTag());
+		fwdBam.setAux(NUM_REPORTED_ALIGNMENT_TAG, numReport);
+		fwdBam.setAux(NUM_TOTAL_ALIGNMENT_TAG, pairList.size());
+		fwdBam.setAux(MISMATCH_POSITION_TAG, pair.fwdAln->getAlnMDTag());
 
-		bamRev.setAux(NUM_REPORTED_ALIGNMENT_TAG, numReport);
-		bamRev.setAux(NUM_TOTAL_ALIGNMENT_TAG, pairList.size());
-		bamRev.setAux(MISMATCH_POSITION_TAG, pair.revAln->getAlnMDTag());
+		revBam.setAux(NUM_REPORTED_ALIGNMENT_TAG, numReport);
+		revBam.setAux(NUM_TOTAL_ALIGNMENT_TAG, pairList.size());
+		revBam.setAux(MISMATCH_POSITION_TAG, pair.revAln->getAlnMDTag());
 		/* set customized aux tags */
-		bamFwd.setAux(ALIGNMENT_LOG10LIK_TAG, pair.log10lik());
-		bamFwd.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, pair.postP);
-		bamRev.setAux(ALIGNMENT_LOG10LIK_TAG, pair.log10lik());
-		bamRev.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, pair.postP);
-		/* write BAM */
-		out.write(bamFwd);
-		out.write(bamRev);
+		fwdBam.setAux(ALIGNMENT_LOG10LIK_TAG, pair.log10lik());
+		fwdBam.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, pair.postP);
+		revBam.setAux(ALIGNMENT_LOG10LIK_TAG, pair.log10lik());
+		revBam.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, pair.postP);
+		fwdBamList.push_back(std::move(fwdBam));
+		revBamList.push_back(std::move(revBam));
+	}
+	/* write BAM */
+#pragma omp critical(BAM_OUTPUT)
+	for(size_t i = 0; i < numReport; ++i) {
+		out.write(fwdBamList[i]);
+		out.write(revBamList[i]);
 	}
 	return numReport;
 }
@@ -536,7 +554,6 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 						/* sort alignments */
 						Alignment::sort(alnList);
 						/* output alignments */
-#pragma omp critical(BAM_OUTPUT)
 						output(alnList, out, maxReport);
 					} /* end task */
 				} /* end each read */
@@ -580,6 +597,13 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 					else {
 						PrimarySeq rcFwdRead = static_cast<const PrimarySeq&>(fwdRead).revcom();
 						PrimarySeq rcRevRead = static_cast<const PrimarySeq&>(revRead).revcom();
+						/* get chains from seeds */
+						ChainList fwdChains = SeedChain::getChains(seedsPE.first,  fwdRead.length() * Alignment::MAX_INDEL_RATE);
+						ChainList revChains = SeedChain::getChains(seedsPE.second, fwdRead.length() * Alignment::MAX_INDEL_RATE);
+						/* filter chains */
+						SeedChain::filterChains(fwdChains, maxLod10);
+						SeedChain::filterChains(revChains, maxLod10);
+						/* get alignments */
 						ALIGN_LIST fwdAlnList = Alignment::buildAlignments(&fwdRead, &rcFwdRead, mtg, &ss,
 								SeedChain::getChains(seedsPE.first,  fwdRead.length() * Alignment::MAX_INDEL_RATE));
 						ALIGN_LIST revAlnList = Alignment::buildAlignments(&revRead, &rcRevRead, mtg, &ss,
@@ -600,7 +624,6 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 							/* sort pairs */
 							AlignmentPE::sort(pairList);
 							/* output pairs */
-#pragma omp critical(BAM_OUTPUT)
 							output(pairList, out, maxReport);
 						}
 						else if(!noMixed) { /* pair-end matching failed, try unpaired */
@@ -611,7 +634,6 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 								/* sort alignments */
 								Alignment::sort(fwdAlnList);
 								/* output alignments */
-#pragma omp critical(BAM_OUTPUT)
 								output(fwdAlnList, out, maxReport);
 							}
 							if(!revAlnList.empty()) {
@@ -621,7 +643,6 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 								/* sort alignments */
 								Alignment::sort(revAlnList);
 								/* output alignments */
-#pragma omp critical(BAM_OUTPUT)
 								output(revAlnList, out, maxReport);
 							}
 						}

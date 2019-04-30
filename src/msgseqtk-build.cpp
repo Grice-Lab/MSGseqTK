@@ -53,7 +53,6 @@ using namespace EGriceLab::MSGseqTK;
 static const int DEFAULT_NUM_THREADS = 1;
 static const size_t DEFAULT_BLOCK_SIZE = 2000;
 static const size_t BLOCK_UNIT = 1 << 20; // 1 MB in Byte
-static const double SIZE_FACTOR = 1.25; // allocate factor for block-wise incremental building
 
 /**
  * Print introduction of this program

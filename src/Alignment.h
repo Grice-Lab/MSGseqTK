@@ -19,6 +19,7 @@
 #include <cmath>
 #include <algorithm>
 #include <regex> // C++11
+#include <utility>
 #include "MSGseqTKConst.h"
 #include "PrimarySeq.h"
 #include "QualStr.h"
@@ -37,11 +38,15 @@ using std::istream;
 using std::ostream;
 using EGriceLab::SAMtools::BAM;
 using std::vector;
+using std::pair;
 
 class Alignment; // forward declaration
 class AlignmentPE; // forward declaration
 typedef vector<Alignment> ALIGN_LIST;
 typedef vector<AlignmentPE> PAIR_LIST;
+typedef vector<BAM> BAM_LIST;
+typedef pair<BAM, BAM> BAMPAIR;
+typedef vector<BAMPAIR> BAMPAIR_LIST;
 
 /**
  * an alignment region of between a single-end read/query and a database/target using a seed chain
@@ -454,7 +459,7 @@ public:
 
 	/** export rev BAM */
 	BAM exportRevBAM() const {
-		BAM revBam = fwdAln->exportBAM();
+		BAM revBam = revAln->exportBAM();
 		// update paired-end info
 		revBam.setMapQ(mapQ);
 		revBam.setISize(isize);

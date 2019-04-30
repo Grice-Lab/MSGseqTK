@@ -34,7 +34,6 @@ int64_t SeedChain::length() const {
 }
 
 ChainList SeedChain::getChains(const SeedList& inputSeeds, int64_t maxIndel) {
-	assert(!inputSeeds.empty());
 	const size_t N = inputSeeds.size();
 	vector<bool> seedIdx(N);
 	ChainList outputChains;
@@ -42,7 +41,6 @@ ChainList SeedChain::getChains(const SeedList& inputSeeds, int64_t maxIndel) {
 		vector<size_t> chainIdx; // chain index for this DFS search
 		dfsSeeds(inputSeeds, i, outputChains, chainIdx, seedIdx, maxIndel);
 	}
-	assert(!outputChains.empty());
 	return outputChains;
 }
 

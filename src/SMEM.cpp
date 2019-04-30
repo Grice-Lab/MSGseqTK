@@ -5,12 +5,14 @@
  *      Author: zhengqi
  */
 #include <cassert>
+#include <unordered_set>
 #include "MSGseqTKConst.h"
 #include "SMEM.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
 
+using std::unordered_set;
 const double SMEMS::DEFAULT_MAX_EVALUE = 0.01;
 
 SMEM& SMEM::evaluate() {
@@ -66,64 +68,51 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 		int64_t& from, int64_t& to) {
 	const size_t L = seq->length();
 	assert(from < L);
-	SMEMS curr, prev, match;
+	SMEMS curr, prev;
 
 	to = from + 1;
 	nt16_t b = seq->getBase(from);
 	if(!DNAalphabet::isBasic(b)) // first base is non-basic, no-matches
 		return curr;
 
-	/* set init SMEM */
+	/* init SMEM */
 	SMEM smem(seq, mtg, fmdidx, from, from + 1, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
-	SMEM smem0 = smem;
+	SMEM smem0;
 	/* forward extension */
-	while(smem.to <= L) {
-		if(smem.to == L) {
+	for(smem0 = smem; smem.to <= L; smem.fwdExt()) {
+		if(smem.size != smem0.size) // a different BD interval found
 			curr.push_back(smem0);
+		if(smem.to == L) // end found
+			curr.push_back(smem);
+		if(smem.size <= 0)
 			break;
-		}
-		else {
-			smem = static_cast<const SMEM&>(smem0).fwdExt();
-			if(smem.size != smem0.size) // a different [p, q, s] Bi-directional interval found
+		/* update */
+		smem0 = smem;
+		to = smem0.to;
+	}
+
+	/* backward extension of each findings */
+	unordered_set<Loc> smemIdx; // a hash index for whether a SMEM has been seen (based only on from and to)
+	std::swap(curr, prev);
+	for(SMEM& smem : prev) {
+		for(smem0 = smem; smem.from >= 0; smem.backExt()) {
+			if(smem.size != smem0.size && smemIdx.count(Loc(smem0.from, smem0.to)) == 0) { // a new different BD interval found
 				curr.push_back(smem0);
+				smemIdx.insert(Loc(smem0.from, smem0.to));
+			}
+			if(smem.from == 0 && smemIdx.count(Loc(smem.from, smem.to)) == 0) { // a new begin found
+				curr.push_back(smem);
+				smemIdx.insert(Loc(smem.from, smem.to));
+			}
 			if(smem.size <= 0)
 				break;
-			// updates
+			/* update */
 			smem0 = smem;
+			from = std::min(from, smem0.from);
 		}
 	}
-	// update to
-	to = smem0.to;
-
-	/* backward extension */
-	if(from == 0) {
-		match = curr; // back-ext not possible
-	}
-	else {
-		std::swap(curr, prev);
-		size_t i0 = L;
-		int64_t i;
-		for(i = from - 1; i >= -1; --i) {
-			curr.clear();
-			int64_t s1 = -1;
-			for(SMEMS::const_reverse_iterator smem0 = prev.rbegin(); smem0 != prev.rend(); ++smem0) { // search from the back/largest SMEM
-				SMEM smem = smem0->backExt();
-				if((smem.size <= 0 || i == -1) && curr.empty() && i < i0) {
-					match.push_back(*smem0);
-					i0 = i;
-				}
-				if(smem.size > 0 && s1 != smem.size) {
-					curr.push_back(smem);
-					s1 = smem.size;
-				}
-			}
-			if(curr.empty())
-				break;
-			std::swap(curr, prev);
-		}
-		from = i + 1; // update from
-	}
-	return match;
+	// update from
+	return curr;
 }
 
 SMEMS SMEMS::findSMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
@@ -153,13 +142,10 @@ SMEMS SMEMS::findSMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		double maxEvalue) {
 	SMEMS allSmems;
-	double bestE = inf;
-	for(int64_t from = 0, to = 0; from < seq->length(); from = bestE <= maxEvalue ? to + 1 /* good SMEMS */ : to /* bad SMEMS */) {
+	for(int64_t from = 0, to = 0; from < seq->length(); from = to + 1) {
 		// get SMEM list at current position
-		SMEMS smems = SMEMS::findAllSMEMS(seq, mtg, fmdidx, from, to);
-		smems.filter(maxEvalue);
+		SMEMS smems = SMEMS::findAllSMEMS(seq, mtg, fmdidx, from, to).filter(maxEvalue);
 		allSmems.insert(allSmems.end(), smems.begin(), smems.end());
-		bestE = std::min(bestE, smems.bestEvalue()); // update bestE
 	}
 	return allSmems;
 }
