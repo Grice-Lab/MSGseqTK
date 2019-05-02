@@ -31,6 +31,7 @@ const string ALIGNMENT_POSTERIOR_PROB_TAG = "XP";
 
 Alignment& Alignment::init(int64_t chrStart, int64_t chrEnd, const SeedChain& chain) {
 	// set up tStart and tEnd
+	tShift = chrStart;
 	tStart = std::max<int64_t>(chrStart, chain.getStart() - (1 + MAX_INDEL_RATE) * (chain.getFrom() - qFrom));
 	tEnd = std::min<int64_t>(chrEnd, chain.getEnd() + (1 + MAX_INDEL_RATE) * (qTo - chain.getTo()));
 	init();
@@ -269,7 +270,7 @@ Alignment& Alignment::evaluate() {
 	const QualStr& qual = qStrand == GLoc::FWD ? read->getQual() : rcRead->getQual();
 	/* process 5' soft-clips, if any */
 	for(int64_t i = qFrom; i < alnFrom; ++i)
-		log10P += qual[i] / quality::PHRED_SCALE - (ss->getClipPenalty() - ss->getMismatchPenalty()); // use additional penalty as the difference between mismatch and clip
+		log10P += - ss->getClipPenalty();
 
 	for(int64_t k = 0, i = alnFrom, j = alnStart; k < alnPath.length(); ++k) { /* k on alnPath, i on query, j on target */
 		state_str::value_type s = alnPath[k];
@@ -301,9 +302,8 @@ Alignment& Alignment::evaluate() {
 	}
 
 	/* process 3' soft-clips, if any */
-	for(int64_t i = alnTo; i < qTo; ++i) {
-		log10P += qual[i] / quality::PHRED_SCALE - (ss->getClipPenalty() - ss->getMismatchPenalty()); // use additional penalty as the difference between mismatch and clip
-	}
+	for(int64_t i = alnTo; i < qTo; ++i)
+		log10P += - ss->getClipPenalty();
 	return *this;
 }
 

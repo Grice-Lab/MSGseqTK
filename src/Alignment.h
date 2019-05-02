@@ -64,10 +64,11 @@ public:
 	Alignment(const PrimarySeq* read, const PrimarySeq* rcRead, const DNAseq* target,
 			int32_t tid, GLoc::STRAND qStrand,
 			int64_t qFrom, int64_t qTo, int64_t tStart, int64_t tEnd,
-			const ScoreScheme* ss, uint8_t mapQ = INVALID_MAP_Q)
+			const ScoreScheme* ss, int64_t tShift = 0, uint8_t mapQ = INVALID_MAP_Q)
 	: read(read), rcRead(rcRead), target(target),
 	  tid(tid), qStrand(qStrand),
-	  qFrom(qFrom), qTo(qTo), tStart(tStart), tEnd(tEnd), ss(ss), mapQ(mapQ)
+	  qFrom(qFrom), qTo(qTo), tStart(tStart), tEnd(tEnd),
+	  ss(ss), tShift(tShift), mapQ(mapQ)
 	{
 		assert(qFrom == 0 && qTo == read->length()); // cannot accept hard-clipped query
 		init();
@@ -76,9 +77,9 @@ public:
 	/** construct an Alignment between a query, database and a SeedChain */
 	Alignment(const PrimarySeq* read, const PrimarySeq* rcRead, const MetaGenome& mtg,
 			const ScoreScheme* ss, const SeedChain& chain, uint8_t mapQ = INVALID_MAP_Q)
-	: read(read), rcRead(rcRead), tid(chain.getTid()), target(&mtg.getSeq()),
-	  qStrand(chain.getStrand()),
-			qFrom(0), qTo(read->length()), ss(ss), mapQ(mapQ)
+	: read(read), rcRead(rcRead), target(&mtg.getSeq()),
+	  tid(chain.getTid()), qStrand(chain.getStrand()),
+	  qFrom(0), qTo(read->length()), ss(ss), mapQ(mapQ)
 	{
 		init(mtg.getChromLoc(tid).getStart(), mtg.getChromLoc(tid).getEnd(), chain);
 	}
@@ -295,7 +296,7 @@ public:
 	 */
 	BAM exportBAM() const {
 		const PrimarySeq* query = qStrand == GLoc::FWD ? read : rcRead;
-		return BAM(query->getName(), getFlag(), tid, alnStart, mapQ, getAlnCigar(), getQLen(),
+		return BAM(query->getName(), getFlag(), tid, alnStart - tShift, mapQ, getAlnCigar(), getQLen(),
 				dna::nt16Encode(query->getSeq()), query->getQual());
 	}
 
@@ -313,7 +314,7 @@ private:
 	int64_t tEnd = 0; // 1-based
 
 	const ScoreScheme* ss = nullptr;
-
+	int64_t tShift = 0; // chrStart for this Alignment
 	uint8_t mapQ = INVALID_MAP_Q;
 
 	MatrixXd M; // (qLen + 1) * (tLen + 1) DP-matrix to store scores that x[i] is aligned to y[j]
@@ -556,14 +557,14 @@ inline void Alignment::calculateScores(int64_t from, int64_t to, int64_t start, 
 	assert(isInitiated());
 	assert(qFrom <= from && to <= qTo);
 	assert(tStart <= start && end <= tEnd);
+	double o = -ss->openGapPenalty();
+	double e = -ss->extGapPenalty();
 	const DNAseq& query = qStrand == GLoc::FWD ? read->getSeq() : rcRead->getSeq();
-	for(int64_t q = from; q < to; ++q) {
+	for(int64_t q = from; q <= to && q < qTo; ++q) {
 		int32_t i = q - qFrom + 1; // relative to score matrices
-		for(int64_t t = start; t < end; ++t) {
+		for(int64_t t = start; t <= end && t < tEnd; ++t) {
 			int32_t j = t - tStart + 1; // relative to score matrices
 			double s = ss->getScore(query[q], (*target)[t]);
-			double o = -ss->openGapPenalty();
-			double e = -ss->extGapPenalty();
 			M(i,j) = std::max({
 				M(i-1,j-1) + s,
 				D(i-1,j-1) + s,
@@ -584,17 +585,14 @@ inline void Alignment::calculateScores(int64_t from, int64_t to, int64_t start, 
 
 inline void Alignment::calculateScores(const SeedPair& pair) {
 	assert(isInitiated());
-	if(!(qFrom <= pair.getFrom() && pair.getTo() <= qTo && tStart <= pair.getStart() && pair.getEnd() <= tEnd)) {
-		std::cerr << "id: " << read->getName() << " qFrom: " << qFrom << " pair.from: " << pair.getFrom() <<
-				" qTo: " << qTo << " pair.to: " << pair.getTo() <<
-				" tStart: " << tStart << " pair.start: " << pair.getStart() <<
-				" tEnd: " << tEnd << " pair.end: " << pair.getEnd() << std::endl;
-	}
 	assert(qFrom <= pair.getFrom() && pair.getTo() <= qTo && tStart <= pair.getStart() && pair.getEnd() <= tEnd);
+	double o = -ss->openGapPenalty();
+	double e = -ss->extGapPenalty();
+	const DNAseq& query = qStrand == GLoc::FWD ? read->getSeq() : rcRead->getSeq();
 	for(int32_t k = 0; k < pair.length(); ++k) {
 		int32_t i = pair.getFrom() + k - qFrom + 1;
 		int32_t j = pair.getStart() + k - tStart + 1;
-		double s = ss->getMatchScore();
+		double s = ss->getScore(query[pair.getFrom() + k], (*target)[pair.getStart() + k]);
 		if(k == 0) {
 			M(i,j) = std::max({
 				M(i-1,j-1) + s,
@@ -603,8 +601,24 @@ inline void Alignment::calculateScores(const SeedPair& pair) {
 				0.0
 			});
 		}
-		else
+		else {
 			M(i,j) = M(i-1,j-1) + s;
+		}
+	}
+	// process one pass seed
+//	calculateScores(pair.getTo() - 1, pair.getTo(), pair.getEnd() - 1, pair.getEnd());
+	// process one row pass pair, if exist
+	double s = ss->getMatchScore();
+	int64_t i = pair.getTo() - qFrom + 1;
+	int64_t j = pair.getEnd() - tStart + 1;
+	if(i <= getQLen() && j <= getTLen())
+		M(i,j) = M(i-1,j-1) + s;
+	if(i <= getQLen()) {
+		I.row(i) = M.row(i - 1).array() + o;
+	}
+	// process one column pass pair, if exist
+	if(j <= getTLen()) {
+		D.col(j) = M.col(j - 1).array() + o;
 	}
 }
 
