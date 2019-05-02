@@ -13,7 +13,7 @@ namespace EGriceLab {
 namespace MSGseqTK {
 
 using std::unordered_set;
-const double SMEMS::DEFAULT_MAX_EVALUE = 0.01;
+const double SMEMS::DEFAULT_MAX_EVALUE = 0.001;
 
 SMEM& SMEM::evaluate() {
 	logP = 0;

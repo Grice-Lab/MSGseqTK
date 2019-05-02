@@ -17,8 +17,6 @@ namespace MSGseqTK {
 using std::vector;
 using std::stack;
 
-const double SeedChain::DEFAULT_MAX_LOD10 = 4;
-
 double SeedChain::loglik() const {
 	double ll = 0;
 	for(const SeedPair& seed : *this)
@@ -67,22 +65,22 @@ void SeedChain::dfsSeeds(const SeedList& inputSeeds, size_t i, ChainList& output
 	chainIdx.pop_back();
 }
 
-ChainList& SeedChain::filterChains(ChainList& chains, double maxLod10) {
-	const size_t N = chains.size();
-	if(N <= 1)
+ChainList& SeedChain::filter(ChainList& chains) {
+	if(chains.size() <= 1)
 		return chains;
 	/* sort chains by loglik, so bad chains near the end */
 	std::sort(chains.begin(), chains.end(),
 			[](const SeedChain& lhs, const SeedChain& rhs) { return lhs.loglik() < rhs.loglik(); });
-
-	for(size_t i = N; i > 0; --i) { // search backward
-		for(size_t j = i - 1; j > 0; --j) {
-			if(contained(chains[i - 1], chains[j - 1]) && chains[i - 1].log10lik() - chains[j - 1].log10lik() > maxLod10) { // a redundant chain
-				chains.erase(chains.begin() + i - 1);
+	/* filter chained smaller chains */
+	for(ChainList::const_reverse_iterator i = chains.rbegin(); i < chains.rend() - 1; ++i) { // search backward
+		for(ChainList::const_reverse_iterator j = i + 1; j < chains.rend(); ++j) {
+			if(contained(*i, *j)) { // a redundant chain
+				chains.erase(i.base() - 1);
 				break;
 			}
 		}
 	}
+	assert(!chains.empty());
 	return chains;
 }
 

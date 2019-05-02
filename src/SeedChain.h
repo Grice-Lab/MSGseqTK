@@ -95,7 +95,7 @@ public:
 
 	/** test whether one chain containing another */
 	static bool containing(const SeedChain& lhs, const SeedChain& rhs) {
-		return lhs.getTid() == rhs.getTid() && (lhs.getStrand() & rhs.getStrand()) != 0 &&
+		return  lhs.getFrom() <= rhs.getFrom() && lhs.getTo() >= rhs.getTo() &&
 				lhs.getStart() <= rhs.getStart() && lhs.getEnd() >= rhs.getEnd();
 	}
 
@@ -110,15 +110,11 @@ public:
 				lhs.getStart() < rhs.getEnd() && lhs.getEnd() > rhs.getStart();
 	}
 
-	/** filter a ChainList by removing smaller chains that are contained in a larger chain
-	 * and with pvalue smaller than a given proportion of the larger one
+	/** filter a ChainList by removing chains with significant smaller log10lik()
+	 * and smaller chains that are contained in a larger chain
 	 * filtered chains will be ordered by their loglik()
-	 * @param maxLod10  max log10lik difference between the smaller chain and the better chain
 	 */
-	static ChainList& filterChains(ChainList& chains, double maxLod10 = DEFAULT_MAX_LOD10);
-
-	/* static member fields */
-	static const double DEFAULT_MAX_LOD10;
+	static ChainList& filter(ChainList& chains);
 };
 
 } /* namespace MSGseqTK */
