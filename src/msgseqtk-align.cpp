@@ -77,7 +77,6 @@ void printUsage(const string& progName) {
 		 << "            --gap-open  DBL      : penalty for (affine) gap opening [" << ScoreScheme::DEFAULT_GAP_OPEN_PENALTY << "]" << endl
 		 << "            --gap-ext  DBL       : penalty for (affine) gap extension [" << ScoreScheme::DEFAULT_GAP_EXT_PENALTY << "]" << endl
 //		 << "            --max-seeds  INT     : maximum # of seeds to check for a read/pair [" << Alignment::MAX_ALIGN << "]" << endl
-		 << "            --max-lod10  DBL     : maximum log10-odds allowed for a lower ranking seed-chain to be considered [" << SeedChain::DEFAULT_MAX_LOD10 << "]" << endl
 		 << "            -k/--max-report  INT : maximum loci to consider for a read/pair, set to 0 to report all candidate alignments [" << DEFAULT_MAX_REPORT << "]" << endl
 		 << "            -f--best-frac        : minimum score as a fraction of the highest alignment score of all candidates to consider for full evaluation [" << DEFAULT_BEST_FRAC << "]" << endl
 		 << "Paired-end:" << endl

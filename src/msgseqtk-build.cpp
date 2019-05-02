@@ -92,7 +92,7 @@ void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx);
 /**
  * build the FMD-index incrementally, it will also shrink the MetaGenome on-the-fly to save RAM
  */
-void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, iostream& mtgIO, size_t blockSize = DEFAULT_BLOCK_SIZE * BLOCK_UNIT);
+void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize);
 
 int main(int argc, char* argv[]) {
 	/* variable declarations */
@@ -104,8 +104,7 @@ int main(int argc, char* argv[]) {
 	string listFn, mtgFn, fmdidxFn;
 
 	ifstream listIn, mtgIn, fmdidxIn;
-	fstream mtgOut; // read/write stream for lazy loading
-	ofstream fmdidxOut;
+	ofstream mtgOut, fmdidxOut;
 
 	const SeqIO::FORMAT fmt = SeqIO::FASTA; // always use fasta format
 
@@ -218,13 +217,13 @@ int main(int argc, char* argv[]) {
 	mtgFn = dbName + METAGENOME_FILE_SUFFIX;
 	fmdidxFn = dbName + FMDINDEX_FILE_SUFFIX;
 
-	mtgOut.open(mtgFn.c_str(), ios_base::in | ios_base::out | ios_base::binary);
+	mtgOut.open(mtgFn.c_str(), ios_base::binary);
 	if(!mtgOut.is_open()) {
 		cerr << "Unable to write to '" << mtgFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
-	fmdidxOut.open(fmdidxFn.c_str(), ios_base::out | ios_base::binary);
+	fmdidxOut.open(fmdidxFn.c_str(), ios_base::binary);
 	if(!fmdidxOut.is_open()) {
 		cerr << "Unable to write to '" << fmdidxFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
@@ -341,7 +340,7 @@ int main(int argc, char* argv[]) {
 	if(mtg.BDSize() <= blockSize) // we can build the FMD-index in one step
 		buildFMDIndex(mtg, fmdidx);
 	else // build the FMD-index incrementally
-		buildFMDIndex(mtg, fmdidx, mtgOut, blockSize);
+		buildFMDIndex(mtg, fmdidx, blockSize);
 	assert(mtg.BDSize() == fmdidx.length());
 
 	/* save FMDIndex */
@@ -365,7 +364,7 @@ void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx) {
 	fmdidx = FMDIndex(mtg.getBDSeq()).clearBWT(); // build whole metagenome FMDIndex in one step
 }
 
-void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, iostream& mtgIO, size_t blockSize) {
+void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize) {
 	infoLog << "Building FMD-index incrementally" << endl;
 	const size_t NC = mtg.numChroms();
 	size_t blockId = 0;

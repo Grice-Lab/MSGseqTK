@@ -557,6 +557,7 @@ inline void Alignment::calculateScores(int64_t from, int64_t to, int64_t start, 
 	assert(isInitiated());
 	assert(qFrom <= from && to <= qTo);
 	assert(tStart <= start && end <= tEnd);
+
 	double o = -ss->openGapPenalty();
 	double e = -ss->extGapPenalty();
 	const DNAseq& query = qStrand == GLoc::FWD ? read->getSeq() : rcRead->getSeq();

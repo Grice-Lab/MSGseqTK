@@ -41,7 +41,8 @@ Alignment& Alignment::init(int64_t chrStart, int64_t chrEnd, const SeedChain& ch
 Alignment& Alignment::calculateScores(const SeedChain& chain) {
 	assert(!chain.empty());
 	/* DP at 5', if any */
-	calculateScores(qFrom, chain.getFrom(), tStart, chain.getStart());
+	if(qFrom < chain.getFrom() && tStart < chain.getStart())
+		calculateScores(qFrom, chain.getFrom(), tStart, chain.getStart());
 	for(SeedChain::const_iterator seed = chain.begin(); seed < chain.end(); ++seed) {
 		/* DP within this seed */
 		calculateScores(*seed);
@@ -50,11 +51,11 @@ Alignment& Alignment::calculateScores(const SeedChain& chain) {
 			calculateScores(seed->getTo(), (seed + 1)->getFrom(), seed->getEnd(), (seed + 1)->getStart());
 	}
 	/* DP at 3', if any */
-	calculateScores(chain.getTo(), qTo, chain.getEnd(), tEnd); /* could be empty loop */
+	if(chain.getTo() < qTo && chain.getEnd() < tEnd)
+		calculateScores(chain.getTo(), qTo, chain.getEnd(), tEnd); /* could be empty loop */
 	alnScore = M.maxCoeff(&alnTo, &alnEnd); // determine aign 3' and score simultaneously
 	alnTo += qFrom;
 	alnEnd += tStart;
-
 	assert(alnTo > 0 && alnEnd > 0);
 	return *this;
 }
