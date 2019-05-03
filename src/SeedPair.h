@@ -145,7 +145,7 @@ public:
 
 	/** test whether two AlnSeeds are compatitable and ordered and with not too much indels */
 	static bool isCompatitable(const SeedPair& lhs, const SeedPair& rhs, int64_t maxIndel) {
-		return std::abs(nIndel(lhs, rhs)) <= maxIndel;
+		return isCompatitable(lhs, rhs) && std::abs(nIndel(lhs, rhs)) <= maxIndel;
 	}
 
 	/** get the best (min) loglik of a SeedList */

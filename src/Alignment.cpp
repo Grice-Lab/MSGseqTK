@@ -52,7 +52,7 @@ Alignment& Alignment::calculateScores(const SeedChain& chain) {
 	}
 	/* DP at 3', if any */
 	if(chain.getTo() < qTo && chain.getEnd() < tEnd)
-		calculateScores(chain.getTo(), qTo, chain.getEnd(), tEnd); /* could be empty loop */
+		calculateScores(chain.getTo(), qTo, chain.getEnd(), tEnd);
 	alnScore = M.maxCoeff(&alnTo, &alnEnd); // determine aign 3' and score simultaneously
 	alnTo += qFrom;
 	alnEnd += tStart;

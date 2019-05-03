@@ -589,11 +589,11 @@ inline void Alignment::calculateScores(const SeedPair& pair) {
 	assert(qFrom <= pair.getFrom() && pair.getTo() <= qTo && tStart <= pair.getStart() && pair.getEnd() <= tEnd);
 	double o = -ss->openGapPenalty();
 	double e = -ss->extGapPenalty();
+	double s = ss->getMatchScore();
 	const DNAseq& query = qStrand == GLoc::FWD ? read->getSeq() : rcRead->getSeq();
 	for(int32_t k = 0; k < pair.length(); ++k) {
 		int32_t i = pair.getFrom() + k - qFrom + 1;
 		int32_t j = pair.getStart() + k - tStart + 1;
-		double s = ss->getScore(query[pair.getFrom() + k], (*target)[pair.getStart() + k]);
 		if(k == 0) {
 			M(i,j) = std::max({
 				M(i-1,j-1) + s,
@@ -606,10 +606,7 @@ inline void Alignment::calculateScores(const SeedPair& pair) {
 			M(i,j) = M(i-1,j-1) + s;
 		}
 	}
-	// process one pass seed
-//	calculateScores(pair.getTo() - 1, pair.getTo(), pair.getEnd() - 1, pair.getEnd());
 	// process one row pass pair, if exist
-	double s = ss->getMatchScore();
 	int64_t i = pair.getTo() - qFrom + 1;
 	int64_t j = pair.getEnd() - tStart + 1;
 	if(i <= getQLen() && j <= getTLen())
