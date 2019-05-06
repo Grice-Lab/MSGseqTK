@@ -37,7 +37,7 @@ int main() {
 	cout << "SMEM search between genome:" << endl << genomeSeq << endl << "seq1:" << endl << read.getSeq() << endl;
 	SeedList seeds = SMEMS::findSeeds(&read, &mtg, &fmdidx, 4);
 	cout << "found " << seeds.size() << " seeds:" << endl;
-	ChainList chains = SeedChain::getChains(seeds, read.length() * 0.15);
+	ChainList chains = SeedChain::getChains(seeds, read.length() * 0.2, read.length() * 0.1);
 	cout << "found " << chains.size() << " chains" << endl;
 	for(const SeedChain& chain : chains) {
 		cout << "chain size: " << chain.size() << " seeds: ";
@@ -52,7 +52,7 @@ int main() {
 bool isValidChain(const DNAseq& target, const DNAseq& query, const SeedChain& chain) {
 	for(SeedChain::const_iterator seed = chain.begin(); seed != chain.end(); ++seed) {
 		// check seed compatitability
-		if(seed < chain.end() - 1 && !SeedPair::isCompatitable(*seed, *(seed+1), query.length() * 0.15)) {
+		if(seed < chain.end() - 1 && !SeedPair::isCompatitable(*seed, *(seed+1))) {
 			cerr << "Incompatitable seeds found between " << *seed << " and " << *(seed+1) << endl;
 			return false;
 		}

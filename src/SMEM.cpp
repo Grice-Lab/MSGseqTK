@@ -81,12 +81,12 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	/* forward extension */
 	for(smem0 = smem; smem.to <= L; smem.fwdExt()) {
 		to = smem0.to;
-		if(smem.size != smem0.size) // a different BD interval found
-			curr.push_back(smem0);
-		if(smem.to == L) { // end found
+		if(smem.to == L && smem.size > 0) { // end found
 			curr.push_back(smem);
 			break;
 		}
+		if(smem.size != smem0.size) // a different BD interval found
+			curr.push_back(smem0);
 		if(smem.size <= 0)
 			break;
 		/* update */
@@ -99,14 +99,14 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	for(SMEM& smem : prev) {
 		for(smem0 = smem; smem.from >= 0; smem.backExt()) {
 			from = std::min(from, smem0.from);
-			if(smem.size != smem0.size && smemIdx.count(Loc(smem0.from, smem0.to)) == 0) { // a new different BD interval found
-				curr.push_back(smem0);
-				smemIdx.insert(Loc(smem0.from, smem0.to));
-			}
-			if(smem.from == 0 && smemIdx.count(Loc(smem.from, smem.to)) == 0) { // a new begin found
+			if(smem.from == 0 && smem.size > 0 && smemIdx.count(Loc(smem.from, smem.to)) == 0) { // a new begin found
 				curr.push_back(smem);
 				smemIdx.insert(Loc(smem.from, smem.to));
 				break;
+			}
+			if(smem.size != smem0.size && smemIdx.count(Loc(smem0.from, smem0.to)) == 0) { // a new different BD interval found
+				curr.push_back(smem0);
+				smemIdx.insert(Loc(smem0.from, smem0.to));
 			}
 			if(smem.size <= 0)
 				break;
@@ -159,16 +159,20 @@ SeedList SMEM::getSeeds() const {
 	seeds.reserve(N);
 	for(size_t i = 0; i < N; ++i) {
 		{
-			int64_t start = fmdidx->accessSA(fwdStart + i);
-			int64_t tid = mtg->getLocId(start);
-			if(mtg->getStrand(tid, start) == GLoc::FWD) // always only search loc on fwd tStrand
-				seeds.push_back(SeedPair(from, mtg->getLoc(tid, start), length(), tid, GLoc::FWD, loglik()));
+			int64_t bdStart = fmdidx->accessSA(fwdStart + i);
+			int64_t tid = mtg->getLocId(bdStart);
+			int64_t start = mtg->getLoc(tid, bdStart);
+			if(mtg->getStrand(tid, bdStart) == GLoc::FWD && start + length() <= mtg->getChromLoc(tid).getEnd()) { // always only search loc on fwd tStrand {
+				seeds.push_back(SeedPair(from, start, length(), tid, GLoc::FWD, loglik()));
+			}
 		}
 		{
-			int64_t start = fmdidx->accessSA(revStart + i);
-			int64_t tid = mtg->getLocId(start);
-			if(mtg->getStrand(tid, start) == GLoc::FWD) // always only search loc on fwd tStrand
-				seeds.push_back(SeedPair(seq->length() - to, mtg->getLoc(tid, start), length(), tid, GLoc::REV, loglik()));
+			int64_t bdStart = fmdidx->accessSA(revStart + i);
+			int64_t tid = mtg->getLocId(bdStart);
+			int64_t start = mtg->getLoc(tid, bdStart);
+			if(mtg->getStrand(tid, bdStart) == GLoc::FWD && start + length() <= mtg->getChromLoc(tid).getEnd()) { // always only search loc on fwd tStrand
+				seeds.push_back(SeedPair(seq->length() - to, start, length(), tid, GLoc::REV, loglik()));
+			}
 		}
 	}
 	return seeds;

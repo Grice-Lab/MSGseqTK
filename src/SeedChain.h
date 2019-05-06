@@ -83,7 +83,7 @@ private:
 	 * it recursively calls itself on newly unvisited seed, or return and append to the output list
 	 */
 	static void dfsSeeds(const SeedList& inputSeeds, size_t i, ChainList& outputChains,
-			vector<size_t>& chainIdx, vector<bool>& seedIdx, int64_t maxIndel);
+			vector<size_t>& chainIdx, vector<bool>& seedIdx, int64_t maxMismatch, int64_t maxIndel);
 
 public:
 	/* static methods */
@@ -91,7 +91,7 @@ public:
 	 * construct a SeedChain using an raw ordered SeedList, given maxIndels allowed
 	 * input SeedList will be ordered and grouped into chains using DFS algorithm
 	 */
-	static ChainList getChains(const SeedList& inputSeeds, int64_t maxIndel);
+	static ChainList getChains(const SeedList& inputSeeds, int64_t maxMismatch, int64_t maxIndel);
 
 	/** test whether one chain containing another */
 	static bool containing(const SeedChain& lhs, const SeedChain& rhs) {

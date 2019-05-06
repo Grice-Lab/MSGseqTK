@@ -19,8 +19,8 @@ namespace EGriceLab {
 namespace MSGseqTK {
 using namespace Eigen;
 
-const double Alignment::DEFAULT_INDEL_RATE = 0.02;
-const double Alignment::MAX_INDEL_RATE = 0.15;
+const double Alignment::MAX_MISMATCH_RATE = 0.2;
+const double Alignment::MAX_INDEL_RATE = 0.1;
 const string Alignment::STATES = BAM_CIGAR_STR;
 const double Alignment::DEFAULT_SCORE_REL_EPSILON = 0.85;
 const std::regex Alignment::MDTAG_LEADING_PATTERN = std::regex("^\\d+");
@@ -62,7 +62,6 @@ Alignment& Alignment::calculateScores(const SeedChain& chain) {
 
 Alignment& Alignment::backTrace() {
 	assert(alnScore != infV);
-//	cerr << "qname: " << qname << " tid: " << tid << " alnFrom: " << alnFrom << " alnTo: " << alnTo << " alnStart: " << alnStart << " alnEnd: " << alnEnd << endl;
 	alnPath.clear();
 	alnPath.reserve(getQLen() + getTLen()); /* most time enough for back-trace */
 	int64_t i = alnTo - qFrom; // 1-based
@@ -95,12 +94,6 @@ Alignment& Alignment::backTrace() {
 	alnStart = tStart + j;
 	assert(!alnPath.empty() && alnPath.front() == BAM_CMATCH && alnPath.back() == BAM_CMATCH);
 	std::reverse(alnPath.begin(), alnPath.end()); // reverse alnPath
-//	if(!(alnPath.front() == BAM_CMATCH && alnPath.back() == BAM_CMATCH)) {
-//		fprintf(stderr, "alnFrom: %d alnTo: %d alnStart: %d alnEnd: %d alnScore %g alnCigar: %s\nquery:  %s\ntarget: %s\n",
-//				alnFrom, alnTo, alnStart, alnEnd, alnScore, BAM::decodeCigar(getAlnCigar()).c_str(),
-//				query->toString().c_str(), target->toString().c_str());
-//		std::cerr << "M: " << std::endl << M << std::endl;
-//	}
 	return *this;
 }
 

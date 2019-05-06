@@ -336,7 +336,7 @@ public:
 	/* static fileds */
 	static const uint8_t INVALID_MAP_Q = 0xff;
 	static const uint32_t MAX_ALIGN = UINT16_MAX;
-	static const double DEFAULT_INDEL_RATE;
+	static const double MAX_MISMATCH_RATE;
 	static const double MAX_INDEL_RATE;
 	static const string STATES; // human readable STATES
 	static const double DEFAULT_SCORE_REL_EPSILON; // default relative min score comparing to best score

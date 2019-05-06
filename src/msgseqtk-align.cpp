@@ -15,6 +15,7 @@
 #include <iostream>
 #include <ctime>
 #include <cstdlib>
+#include <cmath>
 #include <boost/iostreams/filtering_stream.hpp> /* basic boost streams */
 #include <boost/iostreams/device/file.hpp> /* file sink and source */
 #include <boost/iostreams/filter/zlib.hpp> /* for zlib support */
@@ -512,9 +513,12 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 						output(read, out);
 					}
 					else {
+						const int64_t L = read.length();
+						const int64_t maxMismatch = std::ceil(L * Alignment::MAX_MISMATCH_RATE);
+						const int64_t maxIndel = std::ceil(L * Alignment::MAX_INDEL_RATE);
 						const PrimarySeq& rcRead = read.revcom();
 						/* get SeedChains */
-						ChainList chains = SeedChain::getChains(seeds, read.length() * Alignment::MAX_INDEL_RATE);
+						ChainList chains = SeedChain::getChains(seeds, maxMismatch, maxIndel);
 						/* filter chains */
 						SeedChain::filter(chains);
 						/* get alignments from SeedMatchList */
@@ -570,19 +574,23 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 						output(fwdRead, revRead, out);
 					}
 					else {
+						const int64_t fwdL = fwdRead.length();
+						const int64_t revL = revRead.length();
+						const int64_t fwdMaxMismatch = std::ceil(fwdL * Alignment::MAX_MISMATCH_RATE);
+						const int64_t fwdMaxIndel = std::ceil(fwdL * Alignment::MAX_INDEL_RATE);
+						const int64_t revMaxMismatch = std::ceil(revL * Alignment::MAX_MISMATCH_RATE);
+						const int64_t revMaxIndel = std::ceil(revL * Alignment::MAX_INDEL_RATE);
 						PrimarySeq rcFwdRead = static_cast<const PrimarySeq&>(fwdRead).revcom();
 						PrimarySeq rcRevRead = static_cast<const PrimarySeq&>(revRead).revcom();
 						/* get chains from seeds */
-						ChainList fwdChains = SeedChain::getChains(seedsPE.first,  fwdRead.length() * Alignment::MAX_INDEL_RATE);
-						ChainList revChains = SeedChain::getChains(seedsPE.second, fwdRead.length() * Alignment::MAX_INDEL_RATE);
+						ChainList fwdChains = SeedChain::getChains(seedsPE.first, fwdMaxMismatch, fwdMaxIndel);
+						ChainList revChains = SeedChain::getChains(seedsPE.second, revMaxMismatch, revMaxIndel);
 						/* filter chains */
 						SeedChain::filter(fwdChains);
 						SeedChain::filter(revChains);
 						/* get alignments */
-						ALIGN_LIST fwdAlnList = Alignment::buildAlignments(&fwdRead, &rcFwdRead, mtg, &ss,
-								SeedChain::getChains(seedsPE.first,  fwdRead.length() * Alignment::MAX_INDEL_RATE));
-						ALIGN_LIST revAlnList = Alignment::buildAlignments(&revRead, &rcRevRead, mtg, &ss,
-								SeedChain::getChains(seedsPE.second, fwdRead.length() * Alignment::MAX_INDEL_RATE));
+						ALIGN_LIST fwdAlnList = Alignment::buildAlignments(&fwdRead, &rcFwdRead, mtg, &ss, fwdChains);
+						ALIGN_LIST revAlnList = Alignment::buildAlignments(&revRead, &rcRevRead, mtg, &ss, revChains);
 						/* filter alignments */
 						Alignment::filter(fwdAlnList, bestFrac);
 						Alignment::filter(revAlnList, bestFrac);

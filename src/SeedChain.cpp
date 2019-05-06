@@ -31,28 +31,29 @@ int64_t SeedChain::length() const {
 	return len;
 }
 
-ChainList SeedChain::getChains(const SeedList& inputSeeds, int64_t maxIndel) {
+ChainList SeedChain::getChains(const SeedList& inputSeeds, int64_t maxMismatch, int64_t maxIndel) {
 	const size_t N = inputSeeds.size();
 	vector<bool> seedIdx(N);
 	ChainList outputChains;
 	for(size_t i = 0; i < N; ++i) {
 		vector<size_t> chainIdx; // chain index for this DFS search
-		dfsSeeds(inputSeeds, i, outputChains, chainIdx, seedIdx, maxIndel);
+		dfsSeeds(inputSeeds, i, outputChains, chainIdx, seedIdx, maxMismatch, maxIndel);
 	}
 	return outputChains;
 }
 
 void SeedChain::dfsSeeds(const SeedList& inputSeeds, size_t i, ChainList& outputChains,
-		vector<size_t>& chainIdx, vector<bool>& seedIdx, int64_t maxIndel) {
+		vector<size_t>& chainIdx, vector<bool>& seedIdx, int64_t maxMismatch, int64_t maxIndel) {
 	if(seedIdx[i]) // already checked
 		return;
 	chainIdx.push_back(i);
 	seedIdx[i] = true;
 	bool isLeaf = true;
 	for(size_t j = i + 1; j < inputSeeds.size(); ++j) {
-		if(!seedIdx[j] && SeedPair::isCompatitable(inputSeeds[i], inputSeeds[j], maxIndel)) { // a compatitable child
+		if(!seedIdx[j] && SeedPair::nMismatch(inputSeeds[i], inputSeeds[j]) <= maxMismatch &&
+				std::abs(SeedPair::nIndel(inputSeeds[i], inputSeeds[j])) <= maxIndel) { // a compatitable child
 			isLeaf = false;
-			dfsSeeds(inputSeeds, j, outputChains, chainIdx, seedIdx, maxIndel);
+			dfsSeeds(inputSeeds, j, outputChains, chainIdx, seedIdx, maxMismatch, maxIndel);
 		}
 	}
 	if(isLeaf) { // no more child seed found, leaf reached

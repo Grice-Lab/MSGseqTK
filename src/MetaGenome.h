@@ -141,7 +141,7 @@ public:
 	/**
 	 * get tid by BD position
 	 */
-	size_t getLocId(int64_t pos) const;
+	int64_t getLocId(int64_t pos) const;
 
 	/** get loc on this MetaGenome with given tid and pos on FMD-index */
 	size_t getLoc(size_t tid, int64_t pos) const {
@@ -445,7 +445,7 @@ inline size_t MetaGenome::getChromIndex(const string& chrName) const {
 	return result != chromName2Idx.end() ? result->second : -1;
 }
 
-inline size_t MetaGenome::getLocId(int64_t pos) const {
+inline int64_t MetaGenome::getLocId(int64_t pos) const {
 	CHROM_LOC::const_iterator result = std::find_if(chromIdx2BDLoc.begin(), chromIdx2BDLoc.end(),
 			[=] (const CHROM_LOC::value_type& item) { return item.getStart() <= pos && pos < item.getEnd(); }
 	);
