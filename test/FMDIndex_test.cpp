@@ -28,7 +28,7 @@ int main() {
 	DNAseq seq1 = dna::encode("CTAGCATAGAC") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCATAGAC")) + DNAalphabet::GAP_BASE;
 	cout << "seq1:" << endl << seq1 << endl;
 	seqM1 += seq1;
-	fmdidx1 += FMDIndex(seq1);
+	fmdidx1 += FMDIndex(seq1, false);
 	fmdidx1.buildSA();
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
@@ -58,7 +58,7 @@ int main() {
 	DNAseq seq2 = dna::encode("CTAGCATCGAC") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCATCGAC")) + DNAalphabet::GAP_BASE;
 	cout << "seq2:" << endl << seq2 << endl;
 	seqM1 += seq2;
-	fmdidx1 += FMDIndex(seq2);
+	fmdidx1 += FMDIndex(seq2, false);
 	fmdidx1.buildSA();
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
@@ -88,7 +88,7 @@ int main() {
 	DNAseq seq3 = dna::encode("CTAGCATGGAC") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCATGGAC")) + DNAalphabet::GAP_BASE;
 	cout << "seq3:" << endl << seq3 << endl;
 	seqM1 += seq3;
-	fmdidx1 += FMDIndex(seq3);
+	fmdidx1 += FMDIndex(seq3, false);
 	fmdidx1.buildSA();
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
@@ -118,7 +118,7 @@ int main() {
 	DNAseq seq4 = dna::encode("CTAGCATTGAC") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCATTGAC")) + DNAalphabet::GAP_BASE;
 	cout << "seq4:" << endl << seq4 << endl;
 	seqM1 += seq4;
-	fmdidx1 += FMDIndex(seq4);
+	fmdidx1 += FMDIndex(seq4, false);
 	fmdidx1.buildSA();
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
@@ -149,7 +149,7 @@ int main() {
 	DNAseq seq5 = dna::encode("CTAGCAACTAG") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCAACTAG")) + DNAalphabet::GAP_BASE;
 	cout << "seq5:" << endl << seq5 << endl;
 	seqM2 = seq5 + seqM2;
-	fmdidx2 = FMDIndex(seq5) + fmdidx2;
+	fmdidx2 = FMDIndex(seq5, false) + fmdidx2;
 	fmdidx2.buildSA();
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
@@ -179,7 +179,7 @@ int main() {
 	DNAseq seq6 = dna::encode("CTAGCACCTAG") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCACCTAG")) + DNAalphabet::GAP_BASE;
 	cout << "seq6:" << endl << seq6 << endl;
 	seqM2 = seq6 + seqM2;
-	fmdidx2 = FMDIndex(seq6) + fmdidx2;
+	fmdidx2 = FMDIndex(seq6, false) + fmdidx2;
 	fmdidx2.buildSA();
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
@@ -209,7 +209,7 @@ int main() {
 	DNAseq seq7 = dna::encode("CTAGCAGCTAC") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCAGCTAC")) + DNAalphabet::GAP_BASE;
 	cout << "seq7:" << endl << seq7 << endl;
 	seqM2 = seq7 + seqM2;
-	fmdidx2 = FMDIndex(seq7) + fmdidx2;
+	fmdidx2 = FMDIndex(seq7, false) + fmdidx2;
 	fmdidx2.buildSA();
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
@@ -239,7 +239,7 @@ int main() {
 	DNAseq seq8 = dna::encode("CTAGCATCTAC") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCATCTAC")) + DNAalphabet::GAP_BASE;
 	cout << "seq8:" << endl << seq8 << endl;
 	seqM2 = seq8 + seqM2;
-	fmdidx2 = FMDIndex(seq8) + fmdidx2;
+	fmdidx2 = FMDIndex(seq8, false) + fmdidx2;
 	fmdidx2.buildSA();
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;

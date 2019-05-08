@@ -122,7 +122,7 @@ public:
 	 * @return  updated SMEM
 	 */
 	SMEM& backExt() {
-		fmdidx->backExt(fwdStart, revStart, size, seq->getBase(from - 1));
+		fmdidx->backExt(fwdStart, revStart, size, from > 0 ? seq->getBase(from - 1) : DNAalphabet::GAP_BASE);
 		backEvaluate();
 		from--;
 		return *this;
@@ -146,13 +146,15 @@ public:
 protected:
 	/** forward evaluation during forward extension */
 	SMEM& fwdEvaluate() {
+		assert(to <= seq->length());
 		logP += fmdidx->loglik(seq->getBase(to));
 		return *this;
 	}
 
 	/** backward evaluation during backward extension */
 	SMEM& backEvaluate() {
-		logP += fmdidx->loglik(seq->getBase(from - 1));
+		assert(from >= 0);
+		logP += from > 0 ? fmdidx->loglik(seq->getBase(from - 1)) : fmdidx->loglik(DNAalphabet::GAP_BASE);
 		return *this;
 	}
 

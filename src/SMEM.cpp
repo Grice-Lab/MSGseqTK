@@ -79,16 +79,12 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	SMEM smem(seq, mtg, fmdidx, from, from + 1, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
 	SMEM smem0;
 	/* forward extension */
-	for(smem0 = smem; smem.to <= L; smem.fwdExt()) {
+	for(smem0 = smem; smem0.size > 0 && smem.to <= L; smem.fwdExt()) {
 		to = smem0.to;
-		if(smem.to == L && smem.size > 0) { // end found
-			curr.push_back(smem);
-			break;
-		}
 		if(smem.size != smem0.size) // a different BD interval found
 			curr.push_back(smem0);
-		if(smem.size <= 0)
-			break;
+		if(smem.to == L && smem.size > 0) // end found
+			curr.push_back(smem);
 		/* update */
 		smem0 = smem;
 	}
@@ -97,19 +93,16 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	unordered_set<Loc> smemIdx; // a hash index for whether a SMEM has been seen (based only on from and to)
 	std::swap(curr, prev);
 	for(SMEM& smem : prev) {
-		for(smem0 = smem; smem.from >= 0; smem.backExt()) {
+		for(smem0 = smem; smem0.size > 0 && smem.from >= 0; smem.backExt()) {
 			from = std::min(from, smem0.from);
-			if(smem.from == 0 && smem.size > 0 && smemIdx.count(Loc(smem.from, smem.to)) == 0) { // a new begin found
-				curr.push_back(smem);
-				smemIdx.insert(Loc(smem.from, smem.to));
-				break;
-			}
 			if(smem.size != smem0.size && smemIdx.count(Loc(smem0.from, smem0.to)) == 0) { // a new different BD interval found
 				curr.push_back(smem0);
 				smemIdx.insert(Loc(smem0.from, smem0.to));
 			}
-			if(smem.size <= 0)
-				break;
+			if(smem.from == 0 && smem.size > 0 && smemIdx.count(Loc(smem.from, smem.to)) == 0) { // a new begin found
+				curr.push_back(smem);
+				smemIdx.insert(Loc(smem.from, smem.to));
+			}
 			/* update */
 			smem0 = smem;
 		}
@@ -162,7 +155,7 @@ SeedList SMEM::getSeeds() const {
 			int64_t bdStart = fmdidx->accessSA(fwdStart + i);
 			int64_t tid = mtg->getLocId(bdStart);
 			int64_t start = mtg->getLoc(tid, bdStart);
-			if(mtg->getStrand(tid, bdStart) == GLoc::FWD && start + length() <= mtg->getChromLoc(tid).getEnd()) { // always only search loc on fwd tStrand {
+			if(mtg->getStrand(tid, bdStart) == GLoc::FWD) { // always only search loc on fwd tStrand
 				seeds.push_back(SeedPair(from, start, length(), tid, GLoc::FWD, loglik()));
 			}
 		}
@@ -170,7 +163,7 @@ SeedList SMEM::getSeeds() const {
 			int64_t bdStart = fmdidx->accessSA(revStart + i);
 			int64_t tid = mtg->getLocId(bdStart);
 			int64_t start = mtg->getLoc(tid, bdStart);
-			if(mtg->getStrand(tid, bdStart) == GLoc::FWD && start + length() <= mtg->getChromLoc(tid).getEnd()) { // always only search loc on fwd tStrand
+			if(mtg->getStrand(tid, bdStart) == GLoc::FWD) { // always only search loc on fwd tStrand
 				seeds.push_back(SeedPair(seq->length() - to, start, length(), tid, GLoc::REV, loglik()));
 			}
 		}
