@@ -36,10 +36,26 @@ int main() {
 	cout << "seqM1:" << endl << seqM1 << endl;
 	if(fmdidx1.getSeq() != seqM1)
 		return EXIT_FAILURE;
+	{
+		FMDIndex fmd1(seqM1);
+		if(fmdidx1.getBWT() != fmd1.getBWT()) {
+			std::cerr << "Unmatched merged BWT and single BWT" << std::endl <<
+					fmdidx1.getBWT() << endl << fmd1.getBWT() << endl;
+			return EXIT_FAILURE;
+		}
+	}
 	count1 = fmdidx1.count(pat);
 	cout << "found " << count1 << " of " << pat << " in " << seqM1 << endl;
 	if(count1 != 1)
 		return EXIT_FAILURE;
+	{
+		FMDIndex fmd1(seqM1);
+		if(fmdidx1.getBWT() != fmd1.getBWT()) {
+			std::cerr << "Unmatched merged BWT and single BWT" << std::endl <<
+					fmdidx1.getBWT() << endl << fmd1.getBWT() << endl;
+			return EXIT_FAILURE;
+		}
+	}
 	locs = fmdidx1.locateAll(pat, GLoc::FWD);
 	cout << "All fwd loc:";
 	for(const GLoc& loc : locs)
@@ -66,10 +82,26 @@ int main() {
 	cout << "seqM1:" << endl << seqM1 << endl;
 	if(fmdidx1.getSeq() != seqM1)
 		return EXIT_FAILURE;
+	{
+		FMDIndex fmd1(seqM1);
+		if(fmdidx1.getBWT() != fmd1.getBWT()) {
+			std::cerr << "Unmatched merged BWT and single BWT" << std::endl <<
+					fmdidx1.getBWT() << endl << fmd1.getBWT() << endl;
+			return EXIT_FAILURE;
+		}
+	}
 	count1 = fmdidx1.count(pat);
 	cout << "found " << count1 << " of " << pat << " in " << seqM1 << endl;
 	if(count1 != 2)
 		return EXIT_FAILURE;
+	{
+		FMDIndex fmd1(seqM1);
+		if(fmdidx1.getBWT() != fmd1.getBWT()) {
+			std::cerr << "Unmatched merged BWT and single BWT" << std::endl <<
+					fmdidx1.getBWT() << endl << fmd1.getBWT() << endl;
+			return EXIT_FAILURE;
+		}
+	}
 	locs = fmdidx1.locateAll(pat);
 	cout << "All fwd loc:";
 	for(const GLoc& loc : locs)
@@ -96,10 +128,19 @@ int main() {
 	cout << "seqM1:" << endl << seqM1 << endl;
 	if(fmdidx1.getSeq() != seqM1)
 		return EXIT_FAILURE;
+	{
+		FMDIndex fmd1(seqM1);
+		if(fmdidx1.getBWT() != fmd1.getBWT()) {
+			std::cerr << "Unmatched merged BWT and single BWT" << std::endl <<
+					fmdidx1.getBWT() << endl << fmd1.getBWT() << endl;
+			return EXIT_FAILURE;
+		}
+	}
 	count1 = fmdidx1.count(pat);
 	cout << "found " << count1 << " of " << pat << " in " << seqM1 << endl;
 	if(count1 != 3)
 		return EXIT_FAILURE;
+
 	locs = fmdidx1.locateAll(pat);
 	cout << "All fwd loc:";
 	for(const GLoc& loc : locs)
@@ -126,6 +167,14 @@ int main() {
 	cout << "seqM1:" << endl << seqM1 << endl;
 	if(fmdidx1.getSeq() != seqM1)
 		return EXIT_FAILURE;
+	{
+		FMDIndex fmd1(seqM1);
+		if(fmdidx1.getBWT() != fmd1.getBWT()) {
+			std::cerr << "Unmatched merged BWT and single BWT" << std::endl <<
+					fmdidx1.getBWT() << endl << fmd1.getBWT() << endl;
+			return EXIT_FAILURE;
+		}
+	}
 	count1 = fmdidx1.count(pat);
 	cout << "found " << count1 << " of " << pat << " in " << seqM1 << endl;
 	if(count1 != 4)
@@ -157,6 +206,14 @@ int main() {
 	cout << "seqM2:" << endl << seqM2 << endl;
 	if(fmdidx2.getSeq() != seqM2)
 		return EXIT_FAILURE;
+	{
+		FMDIndex fmd2(seqM2);
+		if(fmdidx2.getBWT() != fmd2.getBWT()) {
+			std::cerr << "Unmatched merged BWT and single BWT" << std::endl <<
+					fmdidx2.getBWT() << endl << fmd2.getBWT() << endl;
+			return EXIT_FAILURE;
+		}
+	}
 	count2 = fmdidx2.count(pat);
 	cout << "found " << count2 << " of " << pat << " in " << seqM2 << endl;
 	if(count2 != 1)
@@ -187,6 +244,16 @@ int main() {
 	cout << "seqM2:" << endl << seqM2 << endl;
 	if(fmdidx2.getSeq() != seqM2)
 		return EXIT_FAILURE;
+	if(fmdidx2.getSeq() != seqM2)
+		return EXIT_FAILURE;
+	{
+		FMDIndex fmd2(seqM2);
+		if(fmdidx2.getBWT() != fmd2.getBWT()) {
+			std::cerr << "Unmatched merged BWT and single BWT" << std::endl <<
+					fmdidx2.getBWT() << endl << fmd2.getBWT() << endl;
+			return EXIT_FAILURE;
+		}
+	}
 	count2 = fmdidx2.count(pat);
 	cout << "found " << count2 << " of " << pat << " in " << seqM2 << endl;
 	if(count2 != 2)
@@ -217,6 +284,16 @@ int main() {
 	cout << "seqM2:" << endl << seqM2 << endl;
 	if(fmdidx2.getSeq() != seqM2)
 		return EXIT_FAILURE;
+	if(fmdidx2.getSeq() != seqM2)
+		return EXIT_FAILURE;
+	{
+		FMDIndex fmd2(seqM2);
+		if(fmdidx2.getBWT() != fmd2.getBWT()) {
+			std::cerr << "Unmatched merged BWT and single BWT" << std::endl <<
+					fmdidx2.getBWT() << endl << fmd2.getBWT() << endl;
+			return EXIT_FAILURE;
+		}
+	}
 	count2 = fmdidx2.count(pat);
 	cout << "found " << count2 << " of " << pat << " in " << seqM2 << endl;
 	if(count2 != 3)
@@ -247,6 +324,16 @@ int main() {
 	cout << "seqM2:" << endl << seqM2 << endl;
 	if(fmdidx2.getSeq() != seqM2)
 		return EXIT_FAILURE;
+	if(fmdidx2.getSeq() != seqM2)
+		return EXIT_FAILURE;
+	{
+		FMDIndex fmd2(seqM2);
+		if(fmdidx2.getBWT() != fmd2.getBWT()) {
+			std::cerr << "Unmatched merged BWT and single BWT" << std::endl <<
+					fmdidx2.getBWT() << endl << fmd2.getBWT() << endl;
+			return EXIT_FAILURE;
+		}
+	}
 	count2 = fmdidx2.count(pat);
 	cout << "found " << count2 << " of " << pat << " in " << seqM2 << endl;
 	if(count2 != 4)
@@ -277,6 +364,16 @@ int main() {
 	saidx_t count = fmdidx.count(pat);
 	if(fmdidx.getSeq() != seqM)
 		return EXIT_FAILURE;
+	if(fmdidx2.getSeq() != seqM2)
+		return EXIT_FAILURE;
+	{
+		FMDIndex fmd(seqM);
+		if(fmdidx.getBWT() != fmd.getBWT()) {
+			std::cerr << "Unmatched merged BWT and single BWT" << std::endl <<
+					fmdidx.getBWT() << endl << fmd.getBWT() << endl;
+			return EXIT_FAILURE;
+		}
+	}
 	cout << "found " << count << " of " << pat << " in " << seqM << endl;
 	if(count != count1 + count2)
 		return EXIT_FAILURE;

@@ -180,18 +180,19 @@ FMDIndex& FMDIndex::buildSA() {
 
 	/* build SAsampled in the 2nd pass */
 	SAsampled.resize(SAidx.numOnes()); /* sample at on bits */
-	int64_t k = N; // position on seq/SA, start from 1 pass SAsampled end
+	int64_t k = N; // position on seq/SA, start from 1 pass SA end
 	for(int64_t i = 0; i < B[0]; ++i) { // the i-th null segment
 		int64_t j = i; // position on BWT
 		nt16_t b;
 		do {
 			b = bwt[j];
+//			std::cerr << "i: " << i << " j: " << j << " k: " << k << " b: " << DNAalphabet::decode(b) << std::endl;
 			if(bstr.test(j))
 				SAsampled[SAidx.rank1(j) - 1] = k - 1;
 			j = LF(b, j) - 1; // LF-mapping
 			k--;
 		}
-		while(b != 0);
+		while(b != 0 && k > 0);
 	}
 	assert(k == 0);
 	return *this;
@@ -360,27 +361,27 @@ DNAseq FMDIndex::mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, const BitStr
 	const size_t N = lhs.length() + rhs.length();
 	assert(N == bstrM.length());
 	DNAseq bwtM(N, 0); // merged BWT
-#ifndef _OPENMP
+//#ifndef _OPENMP
 	for(size_t i = 0, j = 0, k = 0; k < N; ++k)
 		bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
-#else
-	int nThreads = 1;
-#pragma omp parallel
-	{
-		nThreads = omp_get_num_threads();
-	}
-	if(1 == nThreads) { // no parallelzation needed
-		for(size_t i = 0, j = 0, k = 0; k < N; ++k)
-			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
-	}
-	else {
-		BitSeqGGMN bsM(bstrM);
-#pragma omp parallel for
-		for(size_t k = 0; k < N; ++k) {
-			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(bsM.rank1(k) - 1) : rhs.accessBWT(bsM.rank0(k) - 1);
-		}
-	}
-#endif
+//#else
+//	int nThreads = 1;
+//#pragma omp parallel
+//	{
+//		nThreads = omp_get_num_threads();
+//	}
+//	if(1 == nThreads) { // no parallelzation needed
+//		for(size_t i = 0, j = 0, k = 0; k < N; ++k)
+//			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
+//	}
+//	else {
+//		BitSeqGGMN bsM(bstrM);
+//#pragma omp parallel for
+//		for(size_t k = 0; k < N; ++k) {
+//			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(bsM.rank1(k) - 1) : rhs.accessBWT(bsM.rank0(k) - 1);
+//		}
+//	}
+//#endif
 	return bwtM;
 }
 
@@ -388,27 +389,27 @@ DNAseq FMDIndex::mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, BitStr32&& b
 	const size_t N = lhs.length() + rhs.length();
 	assert(N == bstrM.length());
 	DNAseq bwtM(N, 0); // merged BWT
-#ifndef _OPENMP
+//#ifndef _OPENMP
 	for(size_t i = 0, j = 0, k = 0; k < N; ++k)
 		bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
-#else
-	int nThreads = 1;
-#pragma omp parallel
-	{
-		nThreads = omp_get_num_threads();
-	}
-	if(1 == nThreads) { // no parallelzation needed
-		for(size_t i = 0, j = 0, k = 0; k < N; ++k)
-			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
-	}
-	else {
-		BitSeqGGMN bsM(bstrM);
-#pragma omp parallel for
-		for(size_t k = 0; k < N; ++k) {
-			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(bsM.rank1(k) - 1) : rhs.accessBWT(bsM.rank0(k) - 1);
-		}
-	}
-#endif
+//#else
+//	int nThreads = 1;
+//#pragma omp parallel
+//	{
+//		nThreads = omp_get_num_threads();
+//	}
+//	if(1 == nThreads) { // no parallelzation needed
+//		for(size_t i = 0, j = 0, k = 0; k < N; ++k)
+//			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
+//	}
+//	else {
+//		BitSeqGGMN bsM(bstrM);
+//#pragma omp parallel for
+//		for(size_t k = 0; k < N; ++k) {
+//			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(bsM.rank1(k) - 1) : rhs.accessBWT(bsM.rank0(k) - 1);
+//		}
+//	}
+//#endif
 	return bwtM;
 }
 
