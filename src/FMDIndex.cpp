@@ -170,6 +170,21 @@ int64_t* FMDIndex::buildBWT(const DNAseq& seq) {
 FMDIndex& FMDIndex::buildSA() {
 	const int64_t N = length();
 	assert(bwt.length() == N);
+//	int64_t* SA = new int64_t[N];
+//	int64_t k = N; // position on seq/SA, start from 1 pass SA end
+//	for(int64_t i = 0; i < B[0]; ++i) { // the i-th null segment
+//		nt16_t b = bwt[i];
+//		SA[i] = --k;
+//		for(int64_t j = i; b != 0; b = bwt[j]) {
+////			std::cerr << "i: " << i << " j: " << j << " k: " << k << std::endl;
+//			j = LF(b, j) - 1; // LF-mapping
+//			SA[j] = --k;
+//		}
+//	}
+//	assert(k == 0);
+//	buildSA(SA);
+//	delete[] SA;
+
 	/* build the bitstr by sampling bwtSeq */
 	BitStr32 bstr(N);
 	for(size_t i = 0; i < N; ++i) {
@@ -182,17 +197,15 @@ FMDIndex& FMDIndex::buildSA() {
 	SAsampled.resize(SAidx.numOnes()); /* sample at on bits */
 	int64_t k = N; // position on seq/SA, start from 1 pass SA end
 	for(int64_t i = 0; i < B[0]; ++i) { // the i-th null segment
-		int64_t j = i; // position on BWT
-		nt16_t b;
-		do {
-			b = bwt[j];
-//			std::cerr << "i: " << i << " j: " << j << " k: " << k << " b: " << DNAalphabet::decode(b) << std::endl;
+		nt16_t b = bwt[i];
+		SAsampled[SAidx.rank1(i) - 1] = --k; // always sample at null
+		for(int64_t j = i; b != 0; b = bwt[j]) {
+			//	std::cerr << "i: " << i << " j: " << j << " k: " << k << " b: " << DNAalphabet::decode(b) << std::endl;
+			j = LF(b, j) - 1; // LF-mapping
 			if(bstr.test(j))
 				SAsampled[SAidx.rank1(j) - 1] = k - 1;
-			j = LF(b, j) - 1; // LF-mapping
 			k--;
 		}
-		while(b != 0 && k > 0);
 	}
 	assert(k == 0);
 	return *this;
@@ -217,14 +230,13 @@ FMDIndex& FMDIndex::buildSA(const vector<size_t>& gapLoc) {
 	for(int64_t i = 0; i < B[0]; ++i) { // the i-th null segment
 		int64_t j = i; // position on BWT
 		int64_t k = gapLoc[B[0] - i - 1]; // search is backward
-		nt16_t b;
-		do {
-			b = bwt[j];
+		nt16_t b = bwt[i];
+		SAsampled[SAidx.rank1(i) - 1] = k--;
+		for(int64_t j = i; b != 0; b = bwt[j]) {
+			j = LF(b, j) - 1; // LF-mapping
 			if(bstr.test(j))
 				SAsampled[SAidx.rank1(j) - 1] = k--;
-			j = LF(b, j) - 1; // LF-mapping
 		}
-		while(b != 0);
 	}
 	return *this;
 }
@@ -342,17 +354,16 @@ BitStr32 FMDIndex::buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs)
 #pragma omp parallel for schedule(dynamic, 4)
 	for(int64_t i = 0; i < lhs.B[0]; ++i) { // i-th pass LF-mapping on lhs
 		int64_t j = i; // position on lhs.BWT
+		nt16_t b = lhs.accessBWT(i);
 		int64_t RA = rhs.B[0]; // position on rhs.BWT
-		nt16_t b;
-		do {
+#pragma omp critical(WRITE_bstrM)
+		bstrM.set(i + RA);
+		for(int64_t j = i; b != 0; b = lhs.accessBWT(j)) {
+			j = lhs.LF(b, j) - 1; // LF-mapping
+			RA = rhs.LF(b, RA - 1);
 #pragma omp critical(WRITE_bstrM)
 			bstrM.set(j + RA);
-			b = lhs.accessBWT(j);
-			/* LF-mapping */
-			RA = rhs.LF(b, RA - 1);
-			j = lhs.LF(b, j) - 1;
 		}
-		while(b != 0);
 	}
 	return bstrM;
 }

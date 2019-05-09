@@ -33,7 +33,8 @@ int main() {
 	assert(mtg.BDSize() == fmdidx.length());
 
 	PrimarySeq read("ACGTAGTA", "seq1");
-	cout << "SMEM search between genome:" << endl << genomeSeq << endl << "query:" << endl << read.getSeq() << endl;
+	cout << "SMEM search between genome:" << endl << genomeSeq << endl <<
+			"bdSeq:" << endl << mtg.getBDSeq() << endl << "query:" << endl << read.getSeq() << endl;
 	SMEMS smems = SMEMS::findSMEMS(&read, &mtg, &fmdidx, inf);
 	cout << "found " << smems.size() << " smems" << endl;
 	for(const SMEM& smem : smems)

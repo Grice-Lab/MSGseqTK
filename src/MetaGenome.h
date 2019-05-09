@@ -143,11 +143,11 @@ public:
 	 */
 	int64_t getLocId(int64_t pos) const;
 
-	/** get loc on this MetaGenome with given tid and pos on FMD-index */
-	size_t getLoc(size_t tid, int64_t pos) const {
+	/** get loc on this MetaGenome with given tid and BDLoc index */
+	size_t getLoc(size_t tid, int64_t bdPos) const {
 		const Loc& tLoc = getChromBDLoc(tid);
-		assert(tLoc.getStart() <= pos && pos < tLoc.getEnd());
-		return getChromLoc(tid).getStart() + pos - tLoc.getStart();
+		assert(tLoc.getStart() <= bdPos && bdPos < tLoc.getEnd());
+		return getChromLoc(tid).getStart() + bdPos - tLoc.getStart();
 	}
 
 	/** get loc on this Metagenome given BD pos*/
@@ -157,9 +157,10 @@ public:
 
 	/** get strand of given chrom index and position seq */
 	GLoc::STRAND getStrand(size_t tid, int64_t pos) const {
-		const Loc& tLoc = getChromBDLoc(tid);
-		assert(tLoc.getStart() <= pos && pos < tLoc.getEnd());
-		return pos < tLoc.getStart() + tLoc.length() / 2 ? GLoc::FWD : GLoc::REV;
+		const Loc& bdLoc = getChromBDLoc(tid);
+		assert(bdLoc.getStart() <= pos && pos < bdLoc.getEnd());
+		assert(bdLoc.length() % 2 == 0);
+		return pos < bdLoc.getStart() + bdLoc.length() / 2 ? GLoc::FWD : GLoc::REV;
 	}
 
 	/**
