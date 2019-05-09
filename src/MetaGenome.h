@@ -42,12 +42,12 @@ public:
 	typedef vector<size_t> INDEX_MAP;  /* idx->id map */
 	typedef vector<Loc> CHROM_LOC;  /* chromosome id->Loc map */
 
-	/** get size of this MetaGenome, including a GAP_BASE after each chrom */
+	/** get size of this MetaGenome, include GAP_BASE flanking each chrom */
 	size_t size() const;
 
-	/** get bi-directional size of this MetaGenome */
+	/** get bi-directional size of this MetaGenome, including GAP_BASE flanking every fwd/rev chrom */
 	size_t BDSize() const {
-		return size() * 2; // MetaGenome includes a BAP_BASE after each chromosome
+		return size() * 2;
 	}
 
 	/** test whether this MetaGnome is empty */
@@ -144,10 +144,13 @@ public:
 	int64_t getLocId(int64_t pos) const;
 
 	/** get loc on this MetaGenome with given tid and BDLoc index */
-	size_t getLoc(size_t tid, int64_t bdPos) const {
+	size_t getLoc(size_t tid, int64_t pos) const {
 		const Loc& tLoc = getChromBDLoc(tid);
-		assert(tLoc.getStart() <= bdPos && bdPos < tLoc.getEnd());
-		return getChromLoc(tid).getStart() + bdPos - tLoc.getStart();
+		assert(tLoc.getStart() <= pos && pos < tLoc.getEnd());
+		if(getStrand(tid, pos) == GLoc::FWD)
+			return getChromLoc(tid).getStart() + pos - tLoc.getStart(); // dist from fwd start to pos
+		else
+			return getChromLoc(tid).getStart() + tLoc.getEnd() - pos - 1; // dist from rev end to pos
 	}
 
 	/** get loc on this Metagenome given BD pos*/
@@ -311,7 +314,7 @@ public:
 
 	/** get a chrom seq by tid */
 	DNAseq getSeq(size_t tid) const {
-		return seq.substr(getChromLoc(tid).getStart(), getChromLoc(tid).length() - 1);
+		return seq.substr(getChromLoc(tid).getStart(), getChromLoc(tid).length());
 	}
 
 	/** get a block seq by tid range */
@@ -417,7 +420,7 @@ public:
 
 	/** get bi-directional seq for a given seq */
 	static DNAseq getBDSeq(const DNAseq& seq) {
-		return dna::toBasic(seq) + DNAalphabet::GAP_BASE + dna::revcom(dna::toBasic(seq)) + DNAalphabet::GAP_BASE;
+		return dna::toBasic(seq) + dna::revcom(dna::toBasic(seq));
 	}
 };
 

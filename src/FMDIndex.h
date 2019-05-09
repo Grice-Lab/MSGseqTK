@@ -190,9 +190,6 @@ public:
 	/** build SAidx and SAsampled */
 	FMDIndex& buildSA();
 
-	/** build SAidx and SAsampled with pre-calculated gap locations */
-	FMDIndex& buildSA(const vector<size_t>& gapLoc);
-
 public:
 	/**
 	 * backward extension of a bi-interval [p, q, s]

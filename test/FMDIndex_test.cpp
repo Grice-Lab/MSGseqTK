@@ -9,6 +9,7 @@
 #include <sstream>
 #include <cstring>
 #include "FMDIndex.h"
+#include "MetaGenome.h"
 
 using namespace std;
 using namespace EGriceLab::MSGseqTK;
@@ -25,17 +26,17 @@ int main() {
 	vector<GLoc> locs;
 
 	/* series operator+= tests */
-	DNAseq seq1 = dna::encode("CTAGCATAGAC") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCATAGAC")) + DNAalphabet::GAP_BASE;
+	DNAseq seq1 = MetaGenome::getBDSeq(dna::encode("NCTAGCATAGACN"));
 	seqM1 += seq1;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	fmdidx1 += FMDIndex(seq1, false);
-	fmdidx1.buildSA();
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
 	cout << "seqM1:" << endl << seqM1 << endl;
-	if(fmdidx1.getSeq() != seqM1)
-		return EXIT_FAILURE;
+	assert(fmdidx1.getSeq() == seqM1);
+	assert(fmdidx1.getBWT() == FMDIndex(seqM1).getBWT());
+	fmdidx1.buildSA();
 	count1 = fmdidx1.count(pat);
 	cout << "found " << count1 << " of " << pat << " in " << seqM1 << endl;
 	if(count1 != 1)
@@ -55,17 +56,17 @@ int main() {
 	if(!isValidLocs(seqM1, pat, locs))
 		return EXIT_FAILURE;
 
-	DNAseq seq2 = dna::encode("CTAGCATCGAC") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCATCGAC")) + DNAalphabet::GAP_BASE;
+	DNAseq seq2 = MetaGenome::getBDSeq(dna::encode("NCTAGCATCGACN"));
 	seqM1 += seq2;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	fmdidx1 += FMDIndex(seq2, false);
-	fmdidx1.buildSA();
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
 	cout << "seqM1:" << endl << seqM1 << endl;
-	if(fmdidx1.getSeq() != seqM1)
-		return EXIT_FAILURE;
+	assert(fmdidx1.getSeq() == seqM1);
+	assert(fmdidx1.getBWT() == FMDIndex(seqM1).getBWT());
+	fmdidx1.buildSA();
 	count1 = fmdidx1.count(pat);
 	cout << "found " << count1 << " of " << pat << " in " << seqM1 << endl;
 	if(count1 != 2)
@@ -85,7 +86,7 @@ int main() {
 	if(!isValidLocs(seqM1, pat, locs))
 		return EXIT_FAILURE;
 
-	DNAseq seq3 = dna::encode("CTAGCATGGAC") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCATGGAC")) + DNAalphabet::GAP_BASE;
+	DNAseq seq3 = MetaGenome::getBDSeq(dna::encode("NCTAGCATGGACN"));
 	seqM1 += seq3;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	fmdidx1 += FMDIndex(seq3, false);
@@ -94,8 +95,8 @@ int main() {
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
 	cout << "seqM1:" << endl << seqM1 << endl;
-	if(fmdidx1.getSeq() != seqM1)
-		return EXIT_FAILURE;
+	assert(fmdidx1.getSeq() == seqM1);
+	assert(fmdidx1.getBWT() == FMDIndex(seqM1).getBWT());
 	count1 = fmdidx1.count(pat);
 	cout << "found " << count1 << " of " << pat << " in " << seqM1 << endl;
 	if(count1 != 3)
@@ -116,7 +117,7 @@ int main() {
 	if(!isValidLocs(seqM1, pat, locs))
 		return EXIT_FAILURE;
 
-	DNAseq seq4 = dna::encode("CTAGCATTGAC") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCATTGAC")) + DNAalphabet::GAP_BASE;
+	DNAseq seq4 = MetaGenome::getBDSeq(dna::encode("NCTAGCATTGACN"));
 	seqM1 += seq4;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	fmdidx1 += FMDIndex(seq4, false);
@@ -125,8 +126,8 @@ int main() {
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
 	cout << "seqM1:" << endl << seqM1 << endl;
-	if(fmdidx1.getSeq() != seqM1)
-		return EXIT_FAILURE;
+	assert(fmdidx1.getSeq() == seqM1);
+	assert(fmdidx1.getBWT() == FMDIndex(seqM1).getBWT());
 	count1 = fmdidx1.count(pat);
 	cout << "found " << count1 << " of " << pat << " in " << seqM1 << endl;
 	if(count1 != 4)
@@ -147,7 +148,7 @@ int main() {
 		return EXIT_FAILURE;
 
 	/* series operator+ tests */
-	DNAseq seq5 = dna::encode("CTAGCAACTAG") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCAACTAG")) + DNAalphabet::GAP_BASE;
+	DNAseq seq5 = MetaGenome::getBDSeq(dna::encode("NCTAGCAACTAGN"));
 	seqM2 = seq5 + seqM2;
 	cout << "seqM2:" << endl << seqM2 << endl;
 	fmdidx2 = FMDIndex(seq5, false) + fmdidx2;
@@ -156,8 +157,8 @@ int main() {
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
 	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl;
 	cout << "seqM2:" << endl << seqM2 << endl;
-	if(fmdidx2.getSeq() != seqM2)
-		return EXIT_FAILURE;
+	assert(fmdidx2.getSeq() == seqM2);
+	assert(fmdidx2.getBWT() == FMDIndex(seqM2).getBWT());
 	count2 = fmdidx2.count(pat);
 	cout << "found " << count2 << " of " << pat << " in " << seqM2 << endl;
 	if(count2 != 1)
@@ -177,7 +178,7 @@ int main() {
 	if(!isValidLocs(seqM2, pat, locs))
 		return EXIT_FAILURE;
 
-	DNAseq seq6 = dna::encode("CTAGCACCTAG") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCACCTAG")) + DNAalphabet::GAP_BASE;
+	DNAseq seq6 = MetaGenome::getBDSeq(dna::encode("NCTAGCACCTAGN"));
 	seqM2 = seq6 + seqM2;
 	cout << "seqM2:" << endl << seqM2 << endl;
 	fmdidx2 = FMDIndex(seq6, false) + fmdidx2;
@@ -186,10 +187,8 @@ int main() {
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
 	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl;
 	cout << "seqM2:" << endl << seqM2 << endl;
-	if(fmdidx2.getSeq() != seqM2)
-		return EXIT_FAILURE;
-	if(fmdidx2.getSeq() != seqM2)
-		return EXIT_FAILURE;
+	assert(fmdidx2.getSeq() == seqM2);
+	assert(fmdidx2.getBWT() == FMDIndex(seqM2).getBWT());
 	count2 = fmdidx2.count(pat);
 	cout << "found " << count2 << " of " << pat << " in " << seqM2 << endl;
 	if(count2 != 2)
@@ -209,7 +208,7 @@ int main() {
 	if(!isValidLocs(seqM2, pat, locs))
 		return EXIT_FAILURE;
 
-	DNAseq seq7 = dna::encode("CTAGCAGCTAC") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCAGCTAC")) + DNAalphabet::GAP_BASE;
+	DNAseq seq7 = MetaGenome::getBDSeq(dna::encode("NCTAGCAGCTACN"));
 	seqM2 = seq7 + seqM2;
 	cout << "seqM2:" << endl << seqM2 << endl;
 	fmdidx2 = FMDIndex(seq7, false) + fmdidx2;
@@ -218,10 +217,8 @@ int main() {
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
 	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl;
 	cout << "seqM2:" << endl << seqM2 << endl;
-	if(fmdidx2.getSeq() != seqM2)
-		return EXIT_FAILURE;
-	if(fmdidx2.getSeq() != seqM2)
-		return EXIT_FAILURE;
+	assert(fmdidx2.getSeq() == seqM2);
+	assert(fmdidx2.getBWT() == FMDIndex(seqM2).getBWT());
 	count2 = fmdidx2.count(pat);
 	cout << "found " << count2 << " of " << pat << " in " << seqM2 << endl;
 	if(count2 != 3)
@@ -241,7 +238,7 @@ int main() {
 	if(!isValidLocs(seqM2, pat, locs))
 		return EXIT_FAILURE;
 
-	DNAseq seq8 = dna::encode("CTAGCATCTAC") + DNAalphabet::GAP_BASE + dna::revcom(dna::encode("CTAGCATCTAC")) + DNAalphabet::GAP_BASE;
+	DNAseq seq8 = MetaGenome::getBDSeq(dna::encode("NCTAGCATCTACN"));
 	seqM2 = seq8 + seqM2;
 	cout << "seqM2:" << endl << seqM2 << endl;
 	fmdidx2 = FMDIndex(seq8, false) + fmdidx2;
@@ -250,10 +247,8 @@ int main() {
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
 	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl;
 	cout << "seqM2:" << endl << seqM2 << endl;
-	if(fmdidx2.getSeq() != seqM2)
-		return EXIT_FAILURE;
-	if(fmdidx2.getSeq() != seqM2)
-		return EXIT_FAILURE;
+	assert(fmdidx2.getSeq() == seqM2);
+	assert(fmdidx2.getBWT() == FMDIndex(seqM2).getBWT());
 	count2 = fmdidx2.count(pat);
 	cout << "found " << count2 << " of " << pat << " in " << seqM2 << endl;
 	if(count2 != 4)
@@ -282,10 +277,8 @@ int main() {
 	cout << "fmdidx.getBWT():" << endl << fmdidx.getBWT() << endl;
 	cout << "fmdidx.getSeq():" << endl << fmdidx.getSeq() << endl;
 	saidx_t count = fmdidx.count(pat);
-	if(fmdidx.getSeq() != seqM)
-		return EXIT_FAILURE;
-	if(fmdidx2.getSeq() != seqM2)
-		return EXIT_FAILURE;
+	assert(fmdidx.getSeq() == seqM);
+	assert(fmdidx.getBWT() == FMDIndex(seqM).getBWT());
 	cout << "found " << count << " of " << pat << " in " << seqM << endl;
 	if(count != count1 + count2)
 		return EXIT_FAILURE;
