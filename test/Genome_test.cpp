@@ -16,17 +16,22 @@ using namespace EGriceLab::MSGseqTK;
 
 int main() {
 	/* part 1, Genome test */
+	DNAseq mtgSeq;
 	DNAseq chr1_1 = dna::encode("ATCGNatcgnTCGANtcgan");
 	DNAseq chr1_2 = dna::encode("TCGANtcganATCGNatcgn");
 	Genome g1("g1", "Staphylococcus aureus");
 	g1.addChrom("chr1_1", chr1_1);
 	g1.addChrom("chr1_2", chr1_2);
+	mtgSeq += MetaGenome::getBDSeq(chr1_1);
+	mtgSeq += MetaGenome::getBDSeq(chr1_2);
 
 	DNAseq chr2_1 = dna::encode("AAAAANgggggNCCCCCNtttttn");
 	DNAseq chr2_2 = dna::encode("TTTTTNcccccNGGGGGNaaaaan");
 	Genome g2("g2", "Homo sapiens");
 	g2.addChrom("chr2_1", chr2_1);
 	g2.addChrom("chr2_2", chr2_2);
+	mtgSeq += MetaGenome::getBDSeq(chr2_1);
+	mtgSeq += MetaGenome::getBDSeq(chr2_2);
 
 	ostringstream out;
 	g1.save(out);
@@ -93,6 +98,16 @@ int main() {
 		return EXIT_FAILURE;
 	}
 
+	if(mtg1.getBDSeq() != mtgSeq) {
+		cerr << "Metagenome sequence of mtg1 doesn't not match" << endl;
+		return EXIT_FAILURE;
+	}
+
+	if(mtg2.getBDSeq() != mtgSeq) {
+		cerr << "Metagenome sequence of mtg2 doesn't not match" << endl;
+		return EXIT_FAILURE;
+	}
+
 	mtg2.getGenome(0).setId("g1N");
 	mtg2.getGenome(1).setId("g2N");
 	MetaGenome mtg = mtg1 + mtg2;
@@ -117,6 +132,6 @@ int main() {
 		cerr << "loaded MetaGenome mtg differs from original copy" << endl;
 		return EXIT_FAILURE;
 	}
-	cout << "MetaGenome tests passed" << endl;
 
+	cout << "MetaGenome tests passed" << endl;
 }
