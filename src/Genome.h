@@ -38,16 +38,16 @@ public:
 		Chrom() = default;
 
 		/** construct from given values */
-		Chrom(const string& name, const DNAseq& seq) : name(name), len(seq.length()), seq(seq)
+		Chrom(const string& name, const DNAseq& seq) : name(name), seq(seq)
 		{  }
 
 		/* member methods */
 		size_t size() const {
-			return len;
+			return seq.length();
 		}
 
 		bool empty() const {
-			return len == 0;
+			return seq.empty();
 		}
 
 		/** save this Chrom to binary output */
@@ -62,7 +62,6 @@ public:
 		/* member fields */
 		string name;
 		DNAseq seq;
-		size_t len = 0; // orignal length of seq, since seq will be moved during database building
 	};
 
 	/* constructors */
@@ -111,6 +110,11 @@ public:
 
 	/** get chromosome by index */
 	const Chrom& getChrom(size_t i) const {
+		return chroms[i];
+	}
+
+	/** get chromosome by index, non-const version */
+	Chrom& getChrom(size_t i) {
 		return chroms[i];
 	}
 

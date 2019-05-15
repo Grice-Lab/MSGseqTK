@@ -21,14 +21,12 @@ const string Genome::REPLACEMENT_STR = ".";
 ostream& Genome::Chrom::save(ostream& out) const {
 	StringUtils::saveString(name, out);
 	StringUtils::saveString(seq, out);
-	out.write((const char*) &len, sizeof(size_t));
 	return out;
 }
 
 istream& Genome::Chrom::load(istream& in) {
 	StringUtils::loadString(name, in);
 	StringUtils::loadString(seq, in);
-	in.read((char*) &len, sizeof(size_t));
 	return in;
 }
 

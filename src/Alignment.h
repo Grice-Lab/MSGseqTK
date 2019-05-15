@@ -64,11 +64,10 @@ public:
 	Alignment(const PrimarySeq* read, const PrimarySeq* rcRead, const DNAseq* target,
 			int32_t tid, GLoc::STRAND qStrand,
 			int64_t qFrom, int64_t qTo, int64_t tStart, int64_t tEnd,
-			const ScoreScheme* ss, int64_t tShift = 0, uint8_t mapQ = INVALID_MAP_Q)
-	: read(read), rcRead(rcRead), target(target),
-	  tid(tid), qStrand(qStrand),
+			const ScoreScheme* ss, uint8_t mapQ = INVALID_MAP_Q)
+	: read(read), rcRead(rcRead), tid(tid), target(target), qStrand(qStrand),
 	  qFrom(qFrom), qTo(qTo), tStart(tStart), tEnd(tEnd),
-	  ss(ss), tShift(tShift), mapQ(mapQ)
+	  ss(ss), mapQ(mapQ)
 	{
 		assert(qFrom == 0 && qTo == read->length()); // cannot accept hard-clipped query
 		init();
@@ -77,11 +76,10 @@ public:
 	/** construct an Alignment between a query, database and a SeedChain */
 	Alignment(const PrimarySeq* read, const PrimarySeq* rcRead, const MetaGenome& mtg,
 			const ScoreScheme* ss, const SeedChain& chain, uint8_t mapQ = INVALID_MAP_Q)
-	: read(read), rcRead(rcRead), target(&mtg.getSeq()),
-	  tid(chain.getTid()), qStrand(chain.getStrand()),
+	: read(read), rcRead(rcRead), tid(chain.getTid()), target(&mtg.getSeq(tid)), qStrand(chain.getStrand()),
 	  qFrom(0), qTo(read->length()), ss(ss), mapQ(mapQ)
 	{
-		init(mtg.getChromLoc(tid).getStart(), mtg.getChromLoc(tid).getEnd(), chain);
+		init(mtg.getChromLength(tid), chain);
 	}
 
 	/** construct an unmapped AlignmentSE with minimum fields */
@@ -175,8 +173,8 @@ public:
 	/** init Alignment with current values */
 	Alignment& init();
 
-	/** init Alignment with given MetaGenome and SeedChain */
-	Alignment& init(int64_t chrStart, int64_t chrEnd, const SeedChain& chain);
+	/** init Alignment with known chrom length and SeedChain */
+	Alignment& init(int64_t chrLen, const SeedChain& chain);
 
 	/** clear all scores to save storage (for copying/moving) */
 	Alignment& clearScores();
@@ -296,7 +294,7 @@ public:
 	 */
 	BAM exportBAM() const {
 		const PrimarySeq* query = qStrand == GLoc::FWD ? read : rcRead;
-		return BAM(query->getName(), getFlag(), tid, alnStart - tShift, mapQ, getAlnCigar(), getQLen(),
+		return BAM(query->getName(), getFlag(), tid, alnStart, mapQ, getAlnCigar(), getQLen(),
 				dna::nt16Encode(query->getSeq()), query->getQual());
 	}
 
@@ -314,7 +312,6 @@ private:
 	int64_t tEnd = 0; // 1-based
 
 	const ScoreScheme* ss = nullptr;
-	int64_t tShift = 0; // chrStart for this Alignment
 	uint8_t mapQ = INVALID_MAP_Q;
 
 	MatrixXd M; // (qLen + 1) * (tLen + 1) DP-matrix to store scores that x[i] is aligned to y[j]

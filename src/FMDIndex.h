@@ -71,6 +71,11 @@ public:
 		return !SAidx.empty();
 	}
 
+	/** get number of gap bases */
+	int64_t numGaps() const {
+		return B[0];
+	}
+
 	/** get the encoded BWT of the original seq */
 	DNAseq getBWT() const;
 

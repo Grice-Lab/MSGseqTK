@@ -18,7 +18,6 @@ using namespace EGriceLab::MSGseqTK;
 static bool isValidSeed(const DNAseq& target, const DNAseq& query, const SeedPair& seed);
 
 int main() {
-	FMDIndex fmdidx;
 	const DNAseq chr1_1 = dna::encode("ACGTCGTAGTACTACGNACGTCGTAGTACTACG");
 	const DNAseq chr1_2 = chr1_1;
 	Genome g1("g1");
@@ -26,8 +25,12 @@ int main() {
 	g1.addChrom("chr1_2", chr1_2);
 	MetaGenome mtg1;
 	mtg1.addGenome(g1);
-	mtg1.update();
-	fmdidx += FMDIndex(mtg1.getBDSeq(), false);
+	mtg1.updateIndex();
+	FMDIndex fmdidx1(mtg1.getBDSeq(), true);
+	fmdidx1.clearBWT();
+	cerr << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
+	cerr << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl << "mtg1.getBDSeq():" << endl << mtg1.getBDSeq() << endl;
+	assert(fmdidx1.getSeq() == mtg1.getBDSeq());
 
 	const DNAseq chr2_1 = dna::encode("ACGTCGTAGTACTACGNACGTCGTAGTACTACG");
 	const DNAseq chr2_2 = chr2_1;
@@ -36,16 +39,25 @@ int main() {
 	g2.addChrom("chr2_2", chr2_2);
 	MetaGenome mtg2;
 	mtg2.addGenome(g2);
-	mtg2.update();
-	fmdidx += FMDIndex(mtg2.getBDSeq(), false);
+	mtg2.updateIndex();
+	FMDIndex fmdidx2(mtg1.getBDSeq(), true);
+	fmdidx2.clearBWT();
+	cerr << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
+	cerr << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl << "mtg2.getBDSeq():" << endl << mtg2.getBDSeq() << endl;
+	assert(fmdidx2.getSeq() == mtg2.getBDSeq());
 
 	MetaGenome mtg = mtg1 + mtg2;
-	cerr << "bdSeq:" << endl << mtg.getBDSeq() << endl;
+	FMDIndex fmdidx = fmdidx1 + fmdidx2;
 //	FMDIndex fmdidx = FMDIndex(mtg.getBDSeq(), true);
 	fmdidx.buildSA();
+	fmdidx.clearBWT();
+	cerr << "fmdidx.getBWT():" << endl << fmdidx.getBWT() << endl;
+	cerr << "fmdidx.getSeq():" << endl << fmdidx.getSeq() << endl << "mtg.getBDSeq():" << endl << mtg.getBDSeq() << endl;
+	assert(fmdidx.getSeq() == mtg.getBDSeq());
 
 	const DNAseq& genomeSeq = mtg.getSeq();
-	assert(mtg.BDSize() == fmdidx.length());
+	cerr << "fmdidx.getSeq():" << endl << fmdidx.getSeq() << endl;
+//	assert(mtg.BDSize() == fmdidx.length());
 
 	PrimarySeq read("ACGTAGTA", "seq1");
 	SMEMS smems = SMEMS::findSMEMS(&read, &mtg, &fmdidx, inf);

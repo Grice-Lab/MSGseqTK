@@ -37,9 +37,10 @@ FMDIndex::FMDIndex(const DNAseq& seq, bool keepSA) {
 }
 
 void FMDIndex::buildCounts(const DNAseq& seq) {
-	assert(seq.back() == 0);
-	for(DNAseq::value_type b : seq)
-		B[b]++;
+	const int64_t N = seq.back() == 0 ? seq.length() : seq.length() + 1;
+	for(const DNAseq::value_type* b = seq.data(); b < seq.data() + N; ++b) // one pass seq always null
+		B[*b]++;
+	assert(numGaps() == 1);
 
 	/* calculate cumulative counts */
     int64_t S = 0;
@@ -139,22 +140,24 @@ DNAseq FMDIndex::getSeq() const {
 	DNAseq seq;
 	seq.reserve(L);
 	for(int64_t i = 0; i < B[0]; ++i) { // i-th pass of LF-mapping
-		nt16_t b = 0;
-		seq.push_back(b);
-		for(int64_t j = i; (b = accessBWT(j)) != 0; j = LF(b, j) - 1 /* LF-mapping */)
+		if(i != 0) // intermediate gaps
+			seq.push_back(DNAalphabet::N);
+		nt16_t b = accessBWT(i);
+		for(int64_t j = i; b != 0; b = accessBWT(j)) {
 			seq.push_back(b);
+			j = LF(b, j) - 1; // LF-mapping
+		}
 	}
-	assert(seq.length() == L);
+//	assert(seq.length() == L);
 	std::reverse(seq.begin(), seq.end()); // LF-transverse is on reverse (suffix) order
 	return seq;
 }
 
 int64_t* FMDIndex::buildBWT(const DNAseq& seq) {
-	assert(seq.back() == DNAalphabet::GAP_BASE);
-	const size_t N = seq.length(); // include null terminal
+	const size_t N = seq.back() == 0 ? seq.length() : seq.length() + 1;
 	/* construct SA */
 	int64_t* SA = new int64_t[N];
-    int64_t errn = divsufsort((const uint8_t*) seq.data(), (saidx_t*) SA, N);
+    int64_t errn = divsufsort((const uint8_t*) seq.data(), (saidx_t*) SA, N); // string.data include null terminal
 	if(errn != 0)
 		throw std::runtime_error("Error: Cannot build suffix-array on DNAseq");
 
@@ -202,11 +205,9 @@ FMDIndex& FMDIndex::buildSA() {
 	for(int64_t i = 0; i < B[0]; ++i) { // i-th pass of LF-mapping
 		nt16_t b = bwt[i];
 		SA[i] = --k;
-		std::cerr << "i: " << i << " k: " << k << " b: " << DNAalphabet::decode(b) << std::endl;
 		for(int64_t j = i; b != 0; b = bwt[j]) {
 			j = LF(b, j) - 1; // LF-mapping
 			SA[j] = --k;
-			std::cerr << "i: " << i << " j: " << j << " k: " << k << " b: " << DNAalphabet::decode(b) << std::endl;
 		}
 	}
 	assert(k == 0);
@@ -253,7 +254,6 @@ void FMDIndex::buildSA(const int64_t* SA) {
 	SAsampled.clear();
 	SAsampled.reserve(N / SA_SAMPLE_RATE + B[0]); // enough to hold both peroid sampling and gaps
 	for(size_t i = 0; i < N; ++i) {
-		std::cerr << "i: " << i << " SA: " << SA[i] << std::endl;
 		if(i % SA_SAMPLE_RATE == 0 || bwt[i] == 0) { /* sample at all null characters */
 			bstr.set(i);
 			SAsampled.push_back(SA[i]);

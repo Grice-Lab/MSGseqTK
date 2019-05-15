@@ -52,8 +52,6 @@ ostream& MetaGenome::save(ostream& out) const {
 	out.write((const char*) &NG, sizeof(size_t));
 	for(const Genome& genome : genomes)
 		genome.save(out);
-	/* save seq */
-	StringUtils::saveString(seq, out);
 	return out;
 }
 
@@ -64,8 +62,6 @@ istream& MetaGenome::load(istream& in) {
 	genomes.resize(NG);
 	for(size_t i = 0; i < NG; ++i)
 		genomes[i].load(in);
-	/* load seq */
-	StringUtils::loadString(seq, in);
 	/* update index */
 	updateIndex();
 	return in;
@@ -73,7 +69,6 @@ istream& MetaGenome::load(istream& in) {
 
 MetaGenome& MetaGenome::operator+=(const MetaGenome& other) {
 	genomes.insert(genomes.end(), other.genomes.begin(), other.genomes.end());
-	seq += other.seq;
 	updateIndex();
 	return *this;
 }
@@ -82,16 +77,6 @@ MetaGenome operator+(const MetaGenome& lhs, const MetaGenome& rhs) {
 	MetaGenome mtgM(lhs);
 	mtgM += rhs;
 	return mtgM;
-}
-
-void MetaGenome::updateSeq() {
-	seq.clear();
-	for(Genome& genome : genomes) {
-		for(Genome::Chrom& chr : genome.chroms) {
-			seq += std::move(chr.seq) + DNAalphabet::GAP_BASE; // include a gap terminal
-			chr.seq.clear();
-		}
-	}
 }
 
 void MetaGenome::updateIndex() {

@@ -29,11 +29,10 @@ const string MISMATCH_POSITION_TAG = "MD";
 const string ALIGNMENT_LOG10LIK_TAG = "XH";
 const string ALIGNMENT_POSTERIOR_PROB_TAG = "XP";
 
-Alignment& Alignment::init(int64_t chrStart, int64_t chrEnd, const SeedChain& chain) {
+Alignment& Alignment::init(int64_t chrLen, const SeedChain& chain) {
 	// set up tStart and tEnd
-	tShift = chrStart;
-	tStart = std::max<int64_t>(chrStart, chain.getStart() - (1 + MAX_INDEL_RATE) * (chain.getFrom() - qFrom));
-	tEnd = std::min<int64_t>(chrEnd, chain.getEnd() + (1 + MAX_INDEL_RATE) * (qTo - chain.getTo()));
+	tStart = std::max<int64_t>(0, chain.getStart() - (1 + MAX_INDEL_RATE) * (chain.getFrom() - qFrom));
+	tEnd = std::min<int64_t>(chrLen, chain.getEnd() + (1 + MAX_INDEL_RATE) * (qTo - chain.getTo()));
 	init();
 	return *this;
 }
