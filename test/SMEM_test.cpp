@@ -18,23 +18,36 @@ using namespace EGriceLab::MSGseqTK;
 static bool isValidSeed(const DNAseq& target, const DNAseq& query, const SeedPair& seed);
 
 int main() {
-	const DNAseq chr1 = dna::encode("ACGTCGTAGTACTACGNACGTCGTAGTACTACG");
-	const DNAseq chr2 = chr1;
-	Genome genome("db");
-	genome.addChrom("chr1", chr1);
-	genome.addChrom("chr2", chr2);
-	MetaGenome mtg;
-	mtg.addGenome(genome);
-	mtg.update();
+	FMDIndex fmdidx;
+	const DNAseq chr1_1 = dna::encode("ACGTCGTAGTACTACGNACGTCGTAGTACTACG");
+	const DNAseq chr1_2 = chr1_1;
+	Genome g1("g1");
+	g1.addChrom("chr1_1", chr1_1);
+	g1.addChrom("chr1_2", chr1_2);
+	MetaGenome mtg1;
+	mtg1.addGenome(g1);
+	mtg1.update();
+	fmdidx += FMDIndex(mtg1.getBDSeq(), false);
+
+	const DNAseq chr2_1 = dna::encode("ACGTCGTAGTACTACGNACGTCGTAGTACTACG");
+	const DNAseq chr2_2 = chr2_1;
+	Genome g2("g2");
+	g2.addChrom("chr2_1", chr2_1);
+	g2.addChrom("chr2_2", chr2_2);
+	MetaGenome mtg2;
+	mtg2.addGenome(g2);
+	mtg2.update();
+	fmdidx += FMDIndex(mtg2.getBDSeq(), false);
+
+	MetaGenome mtg = mtg1 + mtg2;
+	cerr << "bdSeq:" << endl << mtg.getBDSeq() << endl;
+//	FMDIndex fmdidx = FMDIndex(mtg.getBDSeq(), true);
+	fmdidx.buildSA();
 
 	const DNAseq& genomeSeq = mtg.getSeq();
-	FMDIndex fmdidx = FMDIndex(mtg.getBDSeq(), true);
-	cerr << "mtg.BDSize():" << mtg.BDSize() << " fmdidx.length():" << fmdidx.length() << endl;
 	assert(mtg.BDSize() == fmdidx.length());
 
 	PrimarySeq read("ACGTAGTA", "seq1");
-	cout << "SMEM search between genome:" << endl << genomeSeq << endl <<
-			"bdSeq:" << endl << mtg.getBDSeq() << endl << "query:" << endl << read.getSeq() << endl;
 	SMEMS smems = SMEMS::findSMEMS(&read, &mtg, &fmdidx, inf);
 	cout << "found " << smems.size() << " smems" << endl;
 	for(const SMEM& smem : smems)
@@ -55,7 +68,9 @@ bool isValidSeed(const DNAseq& target, const DNAseq& query, const SeedPair& seed
 	DNAseq qSeg = seed.getStrand() == GLoc::FWD ? query.substr(seed.getFrom(), seed.length()) :
 			dna::revcom(query).substr(seed.getFrom(), seed.length());
 	if(tSeg != qSeg) {
-		cerr << "Unmatched SMEM seq db: " << tSeg << " read: " << qSeg << endl;
+		cerr << "Unmatched seed: " << seed << " between target:" << endl <<
+				target << endl << "query:" << endl << query << endl <<
+				"tSeg: " << tSeg << " qSeg: " << qSeg << endl;
 		return false;
 	}
 	return true;

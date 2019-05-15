@@ -35,7 +35,7 @@ public:
 	typedef array<int, 256> int_map; /* base/symbol map whose value type is (small) int */
 	/* nested enum and types */
 	enum Base
-	{ N = 0, A = 1, C = 2, G = 4, T = 8,
+	{   A = 1, C = 2, G = 4, T = 8,
 		U = T,
 		R = A | G, // R is A or G
 		Y = C | T, // Y is C or T
@@ -46,15 +46,15 @@ public:
 		B = C | G | T, // B is C or G or T
 		D = A | G | T, // D is A or G or T
 		H = A | C | T, // H is A or C or T
-		V = A | C | G // V is A or C or G
+		V = A | C | G, // V is A or C or G
+		N = A | C | G | T // any base
 	};
 	static const nt16_t GAP_BASE = 0;
 	static const nt16_t NT16_MIN = 1;
-	static const nt16_t NT16_MAX = 0xE;
+	static const nt16_t NT16_MAX = 0xF;
 	static const nt16_t SIZE = NT16_MAX + 1;
 	static const nt16_t BASIC_SIZE = 4; /* A, C, G, T */
-	static const char GAP_SYM = '-'; /* IUPAC gap */
-	static const char GAP_ALT = '.'; /* IUPAC alternative gap */
+	static const char GAP_SYM = '$';
 	static const uint32_t NT16_LOWER_MASK = 0xf;
 	static const uint32_t NT16_UPPER_MASK = 0xf << 4;
 
@@ -127,7 +127,7 @@ public:
 
 	/** test whether a symbol is a gap base */
 	static bool isGap(char s) {
-		return s == GAP_SYM || s == GAP_ALT;
+		return s == GAP_SYM;
 	}
 
 	/** test whether a base is basic base */

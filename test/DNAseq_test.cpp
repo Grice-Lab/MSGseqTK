@@ -14,11 +14,11 @@ using std::endl;
 using namespace EGriceLab::MSGseqTK;
 
 int main() {
-	DNAseq src1 = dna::encode("ATCGNTCGANNNNNNNNNNNatcgntcga");
+	DNAseq src1 = dna::encode("ATCGNTCGA-----------atcgNtcga");
 	cout << "src1:" << endl << src1 << endl;
 	DNAseq dest1 = src1;
 	dna::removeGaps(dest1);
-	if(dest1 != dna::encode("ATCGTCGAatcgtcga")) {
+	if(dest1 != dna::encode("ATCGNTCGAatcgntcga")) {
 		cerr << "src1 gaps are not properly removed" << endl;
 		return EXIT_FAILURE;
 	}

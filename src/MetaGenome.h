@@ -145,12 +145,11 @@ public:
 
 	/** get loc on this MetaGenome with given tid and BDLoc index */
 	size_t getLoc(size_t tid, int64_t pos) const {
-		const Loc& tLoc = getChromBDLoc(tid);
-		assert(tLoc.getStart() <= pos && pos < tLoc.getEnd());
+		assert(getChromBDStart(tid) <= pos && pos < getChromBDEnd(tid));
 		if(getStrand(tid, pos) == GLoc::FWD)
-			return getChromLoc(tid).getStart() + pos - tLoc.getStart(); // dist from fwd start to pos
+			return getChromStart(tid) + pos - getChromBDStart(tid); // dist from fwd start to pos
 		else
-			return getChromLoc(tid).getStart() + tLoc.getEnd() - pos - 1; // dist from rev end to pos
+			return getChromStart(tid) + getChromBDEnd(tid) - pos - 1; // dist from rev end to pos
 	}
 
 	/** get loc on this Metagenome given BD pos*/
@@ -223,11 +222,41 @@ public:
 		return chromIdx2Loc[i];
 	}
 
+	/** get start of i-th chrom */
+	int64_t getChromStart(size_t i) const {
+		return getChromLoc(i).getStart();
+	}
+
+	/** get end of i-th chrom */
+	int64_t getChromEnd(size_t i) const {
+		return getChromLoc(i).getEnd();
+	}
+
+	/** get length of i-th chrom */
+	int64_t getChromLength(size_t i) const {
+		return getChromLoc(i).length();
+	}
+
 	/**
 	 * get the BD Loc of i-th chrom
 	 */
 	Loc getChromBDLoc(size_t i) const {
 		return chromIdx2BDLoc[i];
+	}
+
+	/** get bdStart of i-th chrom */
+	int64_t getChromBDStart(size_t i) const {
+		return getChromBDLoc(i).getStart();
+	}
+
+	/** get bdEnd of i-th chrom */
+	int64_t getChromBDEnd(size_t i) const {
+		return getChromBDLoc(i).getEnd();
+	}
+
+	/** get bd length of i-th chrom */
+	int64_t getChromBDLength(size_t i) const {
+		return getChromBDLoc(i).length();
 	}
 
 	/** get the BD Loc of a region */
@@ -314,7 +343,7 @@ public:
 
 	/** get a chrom seq by tid */
 	DNAseq getSeq(size_t tid) const {
-		return seq.substr(getChromLoc(tid).getStart(), getChromLoc(tid).length());
+		return seq.substr(getChromStart(tid), getChromLength(tid) - 1);
 	}
 
 	/** get a block seq by tid range */
@@ -332,7 +361,7 @@ public:
 	DNAseq getBDSeq(size_t tidStart, size_t tidEnd) const {
 		assert(tidStart < tidEnd);
 		DNAseq seq;
-		seq.reserve(getChromBDLoc(tidEnd - 1).getEnd() - getChromBDLoc(tidStart).getStart());
+		seq.reserve(getChromBDEnd(tidEnd - 1) - getChromBDStart(tidStart));
 		for(size_t tid = tidStart; tid < tidEnd; ++tid)
 			seq += getBDSeq(tid);
 		return seq;
@@ -345,13 +374,13 @@ public:
 
 	/** remove seq of tid, will invalid the tid unless remove backwards */
 	void removeSeq(size_t tid) {
-		seq.erase(getChromLoc(tid).getStart(), getChromLoc(tid).length());
+		seq.erase(getChromStart(tid), getChromLength(tid));
 	}
 
 	/** remove a block */
 	void removeSeq(size_t tidStart, size_t tidEnd) {
 		assert(tidStart < tidEnd);
-		seq.erase(getChromLoc(tidStart).getStart(), getChromLoc(tidEnd - 1).getEnd() - getChromLoc(tidStart).getStart());
+		seq.erase(getChromStart(tidStart), getChromEnd(tidEnd - 1) - getChromStart(tidStart));
 	}
 
 	/** get gap location in the BDseq */
@@ -420,7 +449,8 @@ public:
 
 	/** get bi-directional seq for a given seq */
 	static DNAseq getBDSeq(const DNAseq& seq) {
-		return dna::toBasic(seq) + dna::revcom(dna::toBasic(seq));
+		const DNAseq& bdSeq = dna::toBasic(seq);
+		return bdSeq + DNAalphabet::GAP_BASE + dna::revcom(bdSeq) + DNAalphabet::GAP_BASE;
 	}
 };
 

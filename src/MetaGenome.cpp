@@ -22,7 +22,7 @@ using std::pair;
 size_t MetaGenome::size() const {
 	size_t size = 0;
 	for(const Genome& genome : genomes)
-		size += genome.size() + genome.numChroms() * 2;
+		size += genome.size() + genome.numChroms(); // include null terminal
 	return size;
 }
 
@@ -38,7 +38,7 @@ vector<size_t> MetaGenome::getBDGapLoc() const {
 	gapLoc.reserve(numChroms() * 16); // estimated GAP per chrom
 	for(int64_t tid = 0; tid < numChroms(); ++tid) {
 		const DNAseq& chrSeq = getBDSeq(tid);
-		int64_t chrStart = getChromBDLoc(tid).getStart();
+		int64_t chrStart = getChromBDStart(tid);
 		for(size_t i = 0; i < chrSeq.length(); ++i)
 			if(DNAalphabet::isGap(chrSeq[i]))
 				gapLoc.push_back(i + chrStart);
@@ -88,7 +88,7 @@ void MetaGenome::updateSeq() {
 	seq.clear();
 	for(Genome& genome : genomes) {
 		for(Genome::Chrom& chr : genome.chroms) {
-			seq += DNAalphabet::GAP_BASE + std::move(chr.seq) + DNAalphabet::GAP_BASE;
+			seq += std::move(chr.seq) + DNAalphabet::GAP_BASE; // include a gap terminal
 			chr.seq.clear();
 		}
 	}
@@ -139,15 +139,15 @@ void MetaGenome::updateIndex() {
 			chromName2Idx[chr.name] = cid;
 			chromIdx2GenomeIdx.push_back(gid);
 			chromIdx2Nbefore.push_back(nid);
-			chromIdx2Loc.push_back(Loc(gStart + cStart, gStart + cStart + chr.size() + 2)); // with GAP_BASE at start and end of each chrom
-			chromIdx2BDLoc.push_back(Loc(gStart2 + cStart2, gStart2 + cStart2 + (chr.size() + 2) * 2)); // GAP_BASE at start and end for both forward and revcom
+			chromIdx2Loc.push_back(Loc(gStart + cStart, gStart + cStart + chr.size() + 1)); // include null terminal
+			chromIdx2BDLoc.push_back(Loc(gStart2 + cStart2, gStart2 + cStart2 + (chr.size() + 1) * 2)); // include null terminal
 			cid++;
 			nid++;
-			cStart += chr.size() + 2;
-			cStart2 += (chr.size() + 2) * 2;
+			cStart += chr.size() + 1;
+			cStart2 += (chr.size() + 1) * 2;
 		}
-		assert(cStart == genome.size() + genome.numChroms() * 2);
-		assert(cStart2 == (genome.size() + genome.numChroms()) * 4);
+		assert(cStart == genome.size() + genome.numChroms());
+		assert(cStart2 == (genome.size() + genome.numChroms()) * 2);
 //		genomeIdx2Loc.push_back(Loc(gStart, gStart + cStart));
 		gid++;
 		gStart += cStart;

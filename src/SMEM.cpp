@@ -81,6 +81,9 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	/* forward extension */
 	for(smem0 = smem; smem0.size > 0 && smem.to <= L; smem.fwdExt()) {
 		to = smem0.to;
+		std::cerr << "fwd ext from: " << smem.from << " to: " << smem.to <<
+				" fwdStart: " << smem.fwdStart << " revStart: " << smem.revStart << " size: " << smem.size <<
+				" loglik: " << smem.loglik() << std::endl;
 		if(smem.size != smem0.size) // a different BD interval found
 			curr.push_back(smem0);
 		if(smem.to == L && smem.size > 0) // end found
@@ -95,6 +98,9 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	for(SMEM& smem : prev) {
 		for(smem0 = smem; smem0.size > 0 && smem.from >= 0; smem.backExt()) {
 			from = std::min(from, smem0.from);
+			std::cerr << "rev ext from: " << smem.from << " to: " << smem.to <<
+					" fwdStart: " << smem.fwdStart << " revStart: " << smem.revStart << " size: " << smem.size <<
+					" loglik: " << smem.loglik() << std::endl;
 			if(smem.size != smem0.size && smemIdx.count(Loc(smem0.from, smem0.to)) == 0) { // a new different BD interval found
 				curr.push_back(smem0);
 				smemIdx.insert(Loc(smem0.from, smem0.to));
@@ -150,23 +156,21 @@ SeedList SMEM::getSeeds() const {
 	SeedList seeds;
 	const size_t N = std::min<size_t>(MAX_NSEEDS, size);
 	seeds.reserve(N);
-	std::cerr << seq->getName() << std::endl;
 	for(size_t i = 0; i < N; ++i) {
 		{
 			int64_t bdStart = fmdidx->accessSA(fwdStart + i);
 			int64_t tid = mtg->getLocId(bdStart);
 			int64_t start = mtg->getLoc(tid, bdStart);
-//			assert(tid == mtg->getLocId(bdStart + length()));
+			assert(tid == mtg->getLocId(bdStart + length()));
 			if(mtg->getStrand(tid, bdStart) == GLoc::FWD) { // always only search loc on fwd tStrand
-				std::cerr << "nChrom: " << mtg->numChroms() << std::endl;
-				std::cerr << "fwd i: " << i << " tid: " << tid << " chrLoc: " << mtg->getChromLoc(tid) << " chrBDLoc: " << mtg->getChromBDLoc(tid) <<
-						" from: " << from << " to: " << to << " seqLen: " << seq->length() <<
-						" bdStart: " << bdStart << " bdEnd: " << bdStart + length() <<
-						" start: " << start << " end: " << start + length() << " tLen: " << mtg->getSeq().length() << std::endl;
-				DNAseq q = seq->getSeq().substr(from, length());
-				DNAseq t = mtg->getSeq().substr(start, length());
-				std::cerr << q << std::endl << t << std::endl;
-				assert(q == t);
+//				std::cerr << "fwd id: " << seq->getName() << " N: " << N << " i: " << i << " tid: " << tid << " chrLoc: " << mtg->getChromLoc(tid) << " chrBDLoc: " << mtg->getChromBDLoc(tid) <<
+//						" from: " << from << " to: " << to << " seqLen: " << seq->length() <<
+//						" bdStart: " << bdStart << " bdEnd: " << bdStart + length() <<
+//						" start: " << start << " end: " << start + length() << " tLen: " << mtg->getSeq(tid).length() << std::endl;
+//				DNAseq q = seq->getSeq().substr(from, length());
+//				DNAseq t = mtg->getSeq().substr(start, length());
+//				std::cerr << q << std::endl << t << std::endl;
+//				assert(q == t);
 				seeds.push_back(SeedPair(from, start, length(), tid, GLoc::FWD, loglik()));
 			}
 		}
@@ -175,16 +179,15 @@ SeedList SMEM::getSeeds() const {
 			int64_t tid = mtg->getLocId(bdStart);
 			int64_t start = mtg->getLoc(tid, bdStart);
 			if(mtg->getStrand(tid, bdStart) == GLoc::FWD) { // always only search loc on fwd tStrand
-				std::cerr << "nChrom: " << mtg->numChroms() << std::endl;
-	//			assert(tid == mtg->getLocId(bdStart + length()));
-				std::cerr << "rev i: " << i << " tid: " << tid << " chrLoc: " << mtg->getChromLoc(tid) << " chrBDLoc: " << mtg->getChromBDLoc(tid) <<
-						" from: " << from << " to: " << to << " seqLen: " << seq->length() <<
-						" bdStart: " << bdStart << " bdEnd: " << bdStart + length() <<
-						" start: " << start << " end: " << start + length() << " tLen: " << mtg->getSeq().length() << std::endl;
-				DNAseq q = dna::revcom(seq->getSeq().substr(from, length()));
-				DNAseq t = mtg->getSeq().substr(start, length());
-				std::cerr << q << std::endl << t << std::endl;
-				assert(q == t);
+				assert(tid == mtg->getLocId(bdStart + length()));
+//				std::cerr << "rev id: " << seq->getName() << " N: " << N << " i: " << i << " tid: " << tid << " chrLoc: " << mtg->getChromLoc(tid) << " chrBDLoc: " << mtg->getChromBDLoc(tid) <<
+//						" from: " << from << " to: " << to << " seqLen: " << seq->length() <<
+//						" bdStart: " << bdStart << " bdEnd: " << bdStart + length() <<
+//						" start: " << start << " end: " << start + length() << " tLen: " << mtg->getSeq().length() << std::endl;
+//				DNAseq q = dna::revcom(seq->getSeq().substr(from, length()));
+//				DNAseq t = mtg->getSeq().substr(start, length());
+//				std::cerr << q << std::endl << t << std::endl;
+//				assert(q == t);
 				seeds.push_back(SeedPair(seq->length() - to, start, length(), tid, GLoc::REV, loglik()));
 			}
 		}

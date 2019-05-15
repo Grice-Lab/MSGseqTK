@@ -146,10 +146,10 @@ public:
 
 	/** get baseCount of basic bases (A,T,C,G) */
 	int64_t getBasicBaseCount() const {
-		return B[DNAalphabet::A] + B[DNAalphabet::C] + B[DNAalphabet::G] + B[DNAalphabet::T];
+		return B[DNAalphabet::A] + B[DNAalphabet::C] + B[DNAalphabet::G] + B[DNAalphabet::T] + B[DNAalphabet::N];
 	}
 
-	/** get baseCount of extended/ambigous bases (IUPAC non-A,T,C,G and non-gap) */
+	/** get baseCount of extended/ambigous bases (IUPAC non-A,T,C,G,N and non-gap) */
 	int64_t getExtBaseCount() const {
 		return getCumCount(DNAalphabet::NT16_MAX) - getBasicBaseCount() - B[0];
 	}
@@ -189,6 +189,9 @@ public:
 
 	/** build SAidx and SAsampled */
 	FMDIndex& buildSA();
+
+	/** build SAidx and SAsampled with pre-calculated gap locations */
+	FMDIndex& buildSA(const vector<size_t>& gapLoc);
 
 public:
 	/**

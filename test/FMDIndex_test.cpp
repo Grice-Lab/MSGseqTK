@@ -26,7 +26,7 @@ int main() {
 	vector<GLoc> locs;
 
 	/* series operator+= tests */
-	DNAseq seq1 = MetaGenome::getBDSeq(dna::encode("NCTAGCATAGACN"));
+	DNAseq seq1 = MetaGenome::getBDSeq(dna::encode("CTAGCATAGAC"));
 	seqM1 += seq1;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	fmdidx1 += FMDIndex(seq1, false);
@@ -35,7 +35,6 @@ int main() {
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	assert(fmdidx1.getSeq() == seqM1);
-	assert(fmdidx1.getBWT() == FMDIndex(seqM1).getBWT());
 	fmdidx1.buildSA();
 	count1 = fmdidx1.count(pat);
 	cout << "found " << count1 << " of " << pat << " in " << seqM1 << endl;
@@ -56,7 +55,7 @@ int main() {
 	if(!isValidLocs(seqM1, pat, locs))
 		return EXIT_FAILURE;
 
-	DNAseq seq2 = MetaGenome::getBDSeq(dna::encode("NCTAGCATCGACN"));
+	DNAseq seq2 = MetaGenome::getBDSeq(dna::encode("CTAGCATCGAC"));
 	seqM1 += seq2;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	fmdidx1 += FMDIndex(seq2, false);
@@ -65,7 +64,6 @@ int main() {
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	assert(fmdidx1.getSeq() == seqM1);
-	assert(fmdidx1.getBWT() == FMDIndex(seqM1).getBWT());
 	fmdidx1.buildSA();
 	count1 = fmdidx1.count(pat);
 	cout << "found " << count1 << " of " << pat << " in " << seqM1 << endl;
@@ -86,7 +84,7 @@ int main() {
 	if(!isValidLocs(seqM1, pat, locs))
 		return EXIT_FAILURE;
 
-	DNAseq seq3 = MetaGenome::getBDSeq(dna::encode("NCTAGCATGGACN"));
+	DNAseq seq3 = MetaGenome::getBDSeq(dna::encode("CTAGCATGGAC"));
 	seqM1 += seq3;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	fmdidx1 += FMDIndex(seq3, false);
@@ -96,7 +94,6 @@ int main() {
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	assert(fmdidx1.getSeq() == seqM1);
-	assert(fmdidx1.getBWT() == FMDIndex(seqM1).getBWT());
 	count1 = fmdidx1.count(pat);
 	cout << "found " << count1 << " of " << pat << " in " << seqM1 << endl;
 	if(count1 != 3)
@@ -117,7 +114,7 @@ int main() {
 	if(!isValidLocs(seqM1, pat, locs))
 		return EXIT_FAILURE;
 
-	DNAseq seq4 = MetaGenome::getBDSeq(dna::encode("NCTAGCATTGACN"));
+	DNAseq seq4 = MetaGenome::getBDSeq(dna::encode("CTAGCATTGAC"));
 	seqM1 += seq4;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	fmdidx1 += FMDIndex(seq4, false);
@@ -127,7 +124,6 @@ int main() {
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	assert(fmdidx1.getSeq() == seqM1);
-	assert(fmdidx1.getBWT() == FMDIndex(seqM1).getBWT());
 	count1 = fmdidx1.count(pat);
 	cout << "found " << count1 << " of " << pat << " in " << seqM1 << endl;
 	if(count1 != 4)
@@ -148,7 +144,7 @@ int main() {
 		return EXIT_FAILURE;
 
 	/* series operator+ tests */
-	DNAseq seq5 = MetaGenome::getBDSeq(dna::encode("NCTAGCAACTAGN"));
+	DNAseq seq5 = MetaGenome::getBDSeq(dna::encode("CTAGCAACTAG"));
 	seqM2 = seq5 + seqM2;
 	cout << "seqM2:" << endl << seqM2 << endl;
 	fmdidx2 = FMDIndex(seq5, false) + fmdidx2;
@@ -158,7 +154,6 @@ int main() {
 	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl;
 	cout << "seqM2:" << endl << seqM2 << endl;
 	assert(fmdidx2.getSeq() == seqM2);
-	assert(fmdidx2.getBWT() == FMDIndex(seqM2).getBWT());
 	count2 = fmdidx2.count(pat);
 	cout << "found " << count2 << " of " << pat << " in " << seqM2 << endl;
 	if(count2 != 1)
@@ -178,17 +173,16 @@ int main() {
 	if(!isValidLocs(seqM2, pat, locs))
 		return EXIT_FAILURE;
 
-	DNAseq seq6 = MetaGenome::getBDSeq(dna::encode("NCTAGCACCTAGN"));
+	DNAseq seq6 = MetaGenome::getBDSeq(dna::encode("CTAGCACCTAG"));
 	seqM2 = seq6 + seqM2;
 	cout << "seqM2:" << endl << seqM2 << endl;
 	fmdidx2 = FMDIndex(seq6, false) + fmdidx2;
-	fmdidx2.buildSA();
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
 	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl;
 	cout << "seqM2:" << endl << seqM2 << endl;
 	assert(fmdidx2.getSeq() == seqM2);
-	assert(fmdidx2.getBWT() == FMDIndex(seqM2).getBWT());
+	fmdidx2.buildSA();
 	count2 = fmdidx2.count(pat);
 	cout << "found " << count2 << " of " << pat << " in " << seqM2 << endl;
 	if(count2 != 2)
@@ -208,17 +202,16 @@ int main() {
 	if(!isValidLocs(seqM2, pat, locs))
 		return EXIT_FAILURE;
 
-	DNAseq seq7 = MetaGenome::getBDSeq(dna::encode("NCTAGCAGCTACN"));
+	DNAseq seq7 = MetaGenome::getBDSeq(dna::encode("CTAGCAGCTAC"));
 	seqM2 = seq7 + seqM2;
 	cout << "seqM2:" << endl << seqM2 << endl;
 	fmdidx2 = FMDIndex(seq7, false) + fmdidx2;
-	fmdidx2.buildSA();
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
 	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl;
 	cout << "seqM2:" << endl << seqM2 << endl;
 	assert(fmdidx2.getSeq() == seqM2);
-	assert(fmdidx2.getBWT() == FMDIndex(seqM2).getBWT());
+	fmdidx2.buildSA();
 	count2 = fmdidx2.count(pat);
 	cout << "found " << count2 << " of " << pat << " in " << seqM2 << endl;
 	if(count2 != 3)
@@ -238,17 +231,16 @@ int main() {
 	if(!isValidLocs(seqM2, pat, locs))
 		return EXIT_FAILURE;
 
-	DNAseq seq8 = MetaGenome::getBDSeq(dna::encode("NCTAGCATCTACN"));
+	DNAseq seq8 = MetaGenome::getBDSeq(dna::encode("CTAGCATCTAC"));
 	seqM2 = seq8 + seqM2;
 	cout << "seqM2:" << endl << seqM2 << endl;
 	fmdidx2 = FMDIndex(seq8, false) + fmdidx2;
-	fmdidx2.buildSA();
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
 	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl;
 	cout << "seqM2:" << endl << seqM2 << endl;
 	assert(fmdidx2.getSeq() == seqM2);
-	assert(fmdidx2.getBWT() == FMDIndex(seqM2).getBWT());
+	fmdidx2.buildSA();
 	count2 = fmdidx2.count(pat);
 	cout << "found " << count2 << " of " << pat << " in " << seqM2 << endl;
 	if(count2 != 4)
@@ -272,13 +264,12 @@ int main() {
 	DNAseq seqM = seqM1 + seqM2 ;
 	cout << "seqM:" << endl << seqM << endl;
 	FMDIndex fmdidx = fmdidx1 + fmdidx2;
-	fmdidx.buildSA();
 	cout << "fmdidx.length(): " << fmdidx.length() << endl;
 	cout << "fmdidx.getBWT():" << endl << fmdidx.getBWT() << endl;
 	cout << "fmdidx.getSeq():" << endl << fmdidx.getSeq() << endl;
 	saidx_t count = fmdidx.count(pat);
 	assert(fmdidx.getSeq() == seqM);
-	assert(fmdidx.getBWT() == FMDIndex(seqM).getBWT());
+	fmdidx.buildSA();
 	cout << "found " << count << " of " << pat << " in " << seqM << endl;
 	if(count != count1 + count2)
 		return EXIT_FAILURE;

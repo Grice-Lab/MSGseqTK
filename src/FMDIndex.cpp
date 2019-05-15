@@ -25,10 +25,8 @@ using EGriceLab::libSDS::BitStr32;
 using EGriceLab::libSDS::BitSeqGGMN; // useful for temporary and fast BitSeq solution
 
 FMDIndex::FMDIndex(const DNAseq& seq, bool keepSA) {
-	assert(seq.back() == DNAalphabet::GAP_BASE);
 	if(seq.length() > MAX_LENGTH)
 		throw std::length_error("DNAseq length exceeding the max allowed length");
-	const size_t N = seq.length();
 	buildCounts(seq); // build count
 	const int64_t* SA = buildBWT(seq); // build BWT
 	if(keepSA)
@@ -39,6 +37,7 @@ FMDIndex::FMDIndex(const DNAseq& seq, bool keepSA) {
 }
 
 void FMDIndex::buildCounts(const DNAseq& seq) {
+	assert(seq.back() == 0);
 	for(DNAseq::value_type b : seq)
 		B[b]++;
 
@@ -125,6 +124,8 @@ FMDIndex& FMDIndex::operator+=(const FMDIndex& other) {
 }
 
 DNAseq FMDIndex::getBWT() const {
+	if(hasBWT())
+		return bwt;
 	DNAseq bwtSeq;
 	bwtSeq.reserve(length());
 	for(int64_t i = 0; i < length(); ++i)
@@ -137,20 +138,20 @@ DNAseq FMDIndex::getSeq() const {
 	const int64_t L = length();
 	DNAseq seq;
 	seq.reserve(L);
-	nt16_t b = 0;
-	seq.push_back(b);
-	for(int64_t i = 0; seq.length() < L; i = LF(b, i) - 1) /* LF-mapping */ {
-		b = accessBWT(i);
+	for(int64_t i = 0; i < B[0]; ++i) { // i-th pass of LF-mapping
+		nt16_t b = 0;
 		seq.push_back(b);
+		for(int64_t j = i; (b = accessBWT(j)) != 0; j = LF(b, j) - 1 /* LF-mapping */)
+			seq.push_back(b);
 	}
-//	assert(seq.length() == length());
+	assert(seq.length() == L);
 	std::reverse(seq.begin(), seq.end()); // LF-transverse is on reverse (suffix) order
 	return seq;
 }
 
 int64_t* FMDIndex::buildBWT(const DNAseq& seq) {
 	assert(seq.back() == DNAalphabet::GAP_BASE);
-	const size_t N = seq.length();
+	const size_t N = seq.length(); // include null terminal
 	/* construct SA */
 	int64_t* SA = new int64_t[N];
     int64_t errn = divsufsort((const uint8_t*) seq.data(), (saidx_t*) SA, N);
@@ -173,6 +174,53 @@ FMDIndex& FMDIndex::buildSA() {
 	assert(bwt.length() == N);
 
 	/* build the bitstr by sampling bwtSeq */
+//	BitStr32 bstr(N);
+//	for(size_t i = 0; i < N; ++i) {
+//		if(i % SA_SAMPLE_RATE == 0 || bwt[i] == 0) /* sample at all null characters */
+//			bstr.set(i);
+//	}
+//	SAidx = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* update SAidx */
+//
+//	/* build SAsampled in the 2nd pass */
+//	SAsampled.resize(SAidx.numOnes()); /* sample at on bits */
+//	int64_t k = 0; // position on SA
+//	for(int64_t i = 0; i < B[0]; ++i) { // the i-th null segment
+//		nt16_t b = bwt[i];
+//		SAsampled[SAidx.rank1(i) - 1] = N - i; // SA[i] is always null and sampled
+//		for(int64_t j = i; b != 0; b = bwt[j]) {
+//			//	std::cerr << "i: " << i << " j: " << j << " k: " << k << " b: " << DNAalphabet::decode(b) << std::endl;
+//			j = LF(b, j) - 1; // LF-mapping
+//			if(bstr.test(k))
+//				SAsampled[SAidx.rank1(k) - 1] = j;
+//			k++;
+//		}
+//	}
+//	assert(k == N);
+
+	int64_t* SA = new int64_t[N];
+	int64_t k = N; // position on SA, start from 1 pass SA end
+	for(int64_t i = 0; i < B[0]; ++i) { // i-th pass of LF-mapping
+		nt16_t b = bwt[i];
+		SA[i] = --k;
+		std::cerr << "i: " << i << " k: " << k << " b: " << DNAalphabet::decode(b) << std::endl;
+		for(int64_t j = i; b != 0; b = bwt[j]) {
+			j = LF(b, j) - 1; // LF-mapping
+			SA[j] = --k;
+			std::cerr << "i: " << i << " j: " << j << " k: " << k << " b: " << DNAalphabet::decode(b) << std::endl;
+		}
+	}
+	assert(k == 0);
+	buildSA(SA);
+	delete[] SA;
+	return *this;
+}
+
+FMDIndex& FMDIndex::buildSA(const vector<size_t>& gapLoc) {
+	assert(gapLoc.size() == B[0]);
+	assert(gapLoc.back() == length() - 1); // last base must be a GAP_BASE
+	const int64_t N = length();
+	assert(bwt.length() == N);
+	/* build the bitstr by sampling bwtSeq */
 	BitStr32 bstr(N);
 	for(size_t i = 0; i < N; ++i) {
 		if(i % SA_SAMPLE_RATE == 0 || bwt[i] == 0) /* sample at all null characters */
@@ -180,15 +228,19 @@ FMDIndex& FMDIndex::buildSA() {
 	}
 	SAidx = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* update SAidx */
 
-	/* build SAsampled in the 2nd pass */
+	/* parallel build SAsampled in the 2nd pass */
 	SAsampled.resize(SAidx.numOnes()); /* sample at on bits */
-	nt16_t b;
-	for(int64_t k = N - 1, i = 0; k >= 0; i = LF(b, i) - 1 /* LF-mapping */) {
-		b = bwt[i];
-		if(bstr.test(i))
-			SAsampled[SAidx.rank1(i) - 1] = k;
-		k--;
-//		std::cerr << "n: " << n << " i: " << i << " k: " << k << " b: " << DNAalphabet::decode(b) << std::endl;
+#pragma omp parallel for schedule(dynamic, 4)
+	for(int64_t i = 0; i < B[0]; ++i) { // the i-th null segment
+		int64_t j = i; // position on BWT
+		int64_t k = gapLoc[B[0] - i - 1]; // search is backward
+		nt16_t b = bwt[i];
+		SAsampled[SAidx.rank1(i) - 1] = k--;
+		for(int64_t j = i; b != 0; b = bwt[j]) {
+			j = LF(b, j) - 1; // LF-mapping
+			if(bstr.test(j))
+				SAsampled[SAidx.rank1(j) - 1] = k--;
+		}
 	}
 	return *this;
 }
@@ -201,6 +253,7 @@ void FMDIndex::buildSA(const int64_t* SA) {
 	SAsampled.clear();
 	SAsampled.reserve(N / SA_SAMPLE_RATE + B[0]); // enough to hold both peroid sampling and gaps
 	for(size_t i = 0; i < N; ++i) {
+		std::cerr << "i: " << i << " SA: " << SA[i] << std::endl;
 		if(i % SA_SAMPLE_RATE == 0 || bwt[i] == 0) { /* sample at all null characters */
 			bstr.set(i);
 			SAsampled.push_back(SA[i]);
@@ -256,10 +309,8 @@ vector<GLoc> FMDIndex::locateAllRev(const DNAseq& pattern) const {
 	int64_t s = C[b + 1] - C[b];
 
 	/* backward search */
-    for(int64_t i = L - 1; i > 0 && backExt(p, q, s, pattern[i - 1]) > 0; --i) {
-    	std::cerr << "L: " << L << " i: " << i << " p: " << p << " q: " << q << " s: " << s << " b: " << DNAalphabet::decode(pattern[i - 1]) << std::endl;
+    for(int64_t i = L - 1; i > 0 && backExt(p, q, s, pattern[i - 1]) > 0; --i)
     	continue;
-    }
 
     for(int64_t j = q; j < q + s; ++j) { // locate rev locs
     	int64_t start = accessSA(j);
@@ -307,14 +358,19 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 BitStr32 FMDIndex::buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs) {
 	const size_t N = lhs.length() + rhs.length();
 	BitStr32 bstrM(N);
-	nt16_t b;
-	int64_t RA = rhs.B[0];
-	bstrM.set(0 + RA);
-	for(int64_t n = 0, i = 0; n < lhs.length(); i = lhs.LF(b, i) - 1 /* LF-mapping */) {
-		b = lhs.accessBWT(i);
-		RA = rhs.LF(b, RA - 1); // position on rhs.BWT
+#pragma omp parallel for schedule(dynamic, 4)
+	for(int64_t i = 0; i < lhs.B[0]; ++i) { // i-th pass LF-mapping on lhs
+		int64_t j = i; // position on lhs.BWT
+		nt16_t b = lhs.accessBWT(i);
+		int64_t RA = rhs.B[0]; // position on rhs.BWT
+#pragma omp critical(WRITE_bstrM)
 		bstrM.set(i + RA);
-		n++;
+		for(int64_t j = i, k = 0; b != 0; b = lhs.accessBWT(j)) {
+			j = lhs.LF(b, j) - 1; // LF-mapping on lhs
+			RA = rhs.LF(b, RA - 1); // LF-mapping on rhs
+#pragma omp critical(WRITE_bstrM)
+			bstrM.set(j + RA);
+		}
 	}
 	return bstrM;
 }
