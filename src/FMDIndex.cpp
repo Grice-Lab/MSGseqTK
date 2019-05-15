@@ -177,42 +177,27 @@ FMDIndex& FMDIndex::buildSA() {
 	assert(bwt.length() == N);
 
 	/* build the bitstr by sampling bwtSeq */
-//	BitStr32 bstr(N);
-//	for(size_t i = 0; i < N; ++i) {
-//		if(i % SA_SAMPLE_RATE == 0 || bwt[i] == 0) /* sample at all null characters */
-//			bstr.set(i);
-//	}
-//	SAidx = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* update SAidx */
-//
-//	/* build SAsampled in the 2nd pass */
-//	SAsampled.resize(SAidx.numOnes()); /* sample at on bits */
-//	int64_t k = 0; // position on SA
-//	for(int64_t i = 0; i < B[0]; ++i) { // the i-th null segment
-//		nt16_t b = bwt[i];
-//		SAsampled[SAidx.rank1(i) - 1] = N - i; // SA[i] is always null and sampled
-//		for(int64_t j = i; b != 0; b = bwt[j]) {
-//			//	std::cerr << "i: " << i << " j: " << j << " k: " << k << " b: " << DNAalphabet::decode(b) << std::endl;
-//			j = LF(b, j) - 1; // LF-mapping
-//			if(bstr.test(k))
-//				SAsampled[SAidx.rank1(k) - 1] = j;
-//			k++;
-//		}
-//	}
-//	assert(k == N);
+	BitStr32 bstr(N);
+	for(size_t i = 0; i < N; ++i) {
+		if(i % SA_SAMPLE_RATE == 0 || bwt[i] == 0) /* sample at all null characters */
+			bstr.set(i);
+	}
+	SAidx = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* update SAidx */
 
-	int64_t* SA = new int64_t[N];
-	int64_t k = N; // position on SA, start from 1 pass SA end
-	for(int64_t i = 0; i < B[0]; ++i) { // i-th pass of LF-mapping
+	/* build SAsampled in the 2nd pass */
+	SAsampled.resize(SAidx.numOnes()); /* sample at on bits */
+	int64_t k = N; // position on SA
+	for(int64_t i = 0; i < numGaps(); ++i) { // the i-th null segment
 		nt16_t b = bwt[i];
-		SA[i] = --k;
+		SAsampled[SAidx.rank1(i) - 1] = --k; // SA[i] is always null and sampled
 		for(int64_t j = i; b != 0; b = bwt[j]) {
 			j = LF(b, j) - 1; // LF-mapping
-			SA[j] = --k;
+			if(bstr.test(j))
+				SAsampled[SAidx.rank1(j) - 1] = k - 1;
+			k--;
 		}
 	}
 	assert(k == 0);
-	buildSA(SA);
-	delete[] SA;
 	return *this;
 }
 
