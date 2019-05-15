@@ -400,9 +400,6 @@ public:
 		clearSeq(0, numChroms());
 	}
 
-	/** get gap location in the BDseq */
-	vector<size_t> getBDGapLoc() const;
-
 	/** save this object to binary outputs */
 	ostream& save(ostream& out) const;
 

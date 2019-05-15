@@ -201,9 +201,9 @@ FMDIndex& FMDIndex::buildSA() {
 	return *this;
 }
 
-FMDIndex& FMDIndex::buildSA(const vector<size_t>& gapLoc) {
-	assert(gapLoc.size() == B[0]);
-	assert(gapLoc.back() == length() - 1); // last base must be a GAP_BASE
+FMDIndex& FMDIndex::buildSA(const vector<int64_t>& gapLocs) {
+	assert(gapLocs.size() == numGaps());
+	assert(gapLocs.front() == length()); // last gap must at end of database
 	const int64_t N = length();
 	assert(bwt.length() == N);
 	/* build the bitstr by sampling bwtSeq */
@@ -217,16 +217,18 @@ FMDIndex& FMDIndex::buildSA(const vector<size_t>& gapLoc) {
 	/* parallel build SAsampled in the 2nd pass */
 	SAsampled.resize(SAidx.numOnes()); /* sample at on bits */
 #pragma omp parallel for schedule(dynamic, 4)
-	for(int64_t i = 0; i < B[0]; ++i) { // the i-th null segment
+	for(int64_t i = 0; i < numGaps(); ++i) { // the i-th null segment
 		int64_t j = i; // position on BWT
-		int64_t k = gapLoc[B[0] - i - 1]; // search is backward
+		int64_t k = gapLocs[i]; // k is one-based
 		nt16_t b = bwt[i];
-		SAsampled[SAidx.rank1(i) - 1] = k--;
+		SAsampled[SAidx.rank1(i) - 1] = --k;
 		for(int64_t j = i; b != 0; b = bwt[j]) {
 			j = LF(b, j) - 1; // LF-mapping
 			if(bstr.test(j))
-				SAsampled[SAidx.rank1(j) - 1] = k--;
+				SAsampled[SAidx.rank1(j) - 1] = k - 1;
+			k--;
 		}
+		assert(k == 0 || k == gapLocs[i + 1]);
 	}
 	return *this;
 }
