@@ -68,9 +68,9 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 		int64_t& from, int64_t& to) {
 	const size_t L = seq->length();
 	assert(from < L);
+	to = from + 1;
 	SMEMS curr, prev;
 
-	to = from + 1;
 	nt16_t b = seq->getBase(from);
 	if(!DNAalphabet::isBasic(b)) // first base is non-basic, no-matches
 		return curr;
@@ -79,35 +79,42 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	SMEM smem(seq, mtg, fmdidx, from, from + 1, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
 	SMEM smem0;
 	/* forward extension */
-	for(smem0 = smem; smem0.size > 0 && smem.to <= L; smem.fwdExt()) {
-		to = smem0.to;
+	for(smem0 = smem; smem0.to <= L; smem.fwdExt()) {
+		std::cerr << "fwdExting " << smem << std::endl;
+		if(smem.to == L) { // end found
+			curr.push_back(smem);
+			smem0 = smem;
+			break;
+		}
 		if(smem.size != smem0.size) // a different BD interval found
 			curr.push_back(smem0);
-		if(smem.to == L && smem.size > 0) // end found
-			curr.push_back(smem);
-		/* update */
-		smem0 = smem;
+		if(smem.size == 0)
+			break;
+		smem0 = smem; // update
 	}
+	to = smem0.to; // update to
+	std::reverse(curr.begin(), curr.end()); // put longest SMEM first
 
-	/* backward extension of each findings */
-	unordered_set<Loc> smemIdx; // a hash index for whether a SMEM has been seen (based only on from and to)
+	/* backward extension */
 	std::swap(curr, prev);
+	unordered_set<Loc> seen;
 	for(SMEM& smem : prev) {
-		for(smem0 = smem; smem0.size > 0 && smem.from >= 0; smem.backExt()) {
-			from = std::min(from, smem0.from);
-			if(smem.size != smem0.size && smemIdx.count(Loc(smem0.from, smem0.to)) == 0) { // a new different BD interval found
-				curr.push_back(smem0);
-				smemIdx.insert(Loc(smem0.from, smem0.to));
-			}
-			if(smem.from == 0 && smem.size > 0 && smemIdx.count(Loc(smem.from, smem.to)) == 0) { // a new begin found
+		std::cerr << "found fwd SMEM " << smem << std::endl;
+		for(smem0 = smem; smem0.from >= 0; smem.backExt()) {
+			std::cerr << "backExting " << smem << std::endl;
+			if(smem.from == 0) { // begin found
 				curr.push_back(smem);
-				smemIdx.insert(Loc(smem.from, smem.to));
+				smem0 = smem;
+				break;
 			}
-			/* update */
-			smem0 = smem;
+			if(smem.size != smem0.size) // a different found
+				curr.push_back(smem0);
+			if(smem.size == 0)
+				break;
+			smem0 = smem; // update
 		}
+		from = std::min(from, smem0.from);
 	}
-	// update from
 	return curr;
 }
 
@@ -157,14 +164,14 @@ SeedList SMEM::getSeeds() const {
 			int64_t start = mtg->getLoc(tid, bdStart);
 			assert(tid == mtg->getTid(bdStart + length()));
 			if(mtg->getStrand(tid, bdStart) == GLoc::FWD) { // always only search loc on fwd tStrand
-//				std::cerr << "fwd id: " << seq->getName() << " N: " << N << " i: " << i << " tid: " << tid << " chrLoc: " << mtg->getChromLoc(tid) << " chrBDLoc: " << mtg->getChromBDLoc(tid) <<
-//						" from: " << from << " to: " << to << " seqLen: " << seq->length() <<
-//						" bdStart: " << bdStart << " bdEnd: " << bdStart + length() <<
-//						" start: " << start << " end: " << start + length() << " tLen: " << mtg->getSeq(tid).length() << std::endl;
-//				DNAseq q = seq->getSeq().substr(from, length());
-//				DNAseq t = mtg->getSeq().substr(start, length());
-//				std::cerr << q << std::endl << t << std::endl;
-//				assert(q == t);
+				std::cerr << "fwd id: " << seq->getName() << " N: " << N << " i: " << i << " tid: " << tid << " chrLoc: " << mtg->getChromLoc(tid) << " chrBDLoc: " << mtg->getChromBDLoc(tid) <<
+						" from: " << from << " to: " << to << " seqLen: " << seq->length() <<
+						" bdStart: " << bdStart << " bdEnd: " << bdStart + length() <<
+						" start: " << start << " end: " << start + length() << " tLen: " << mtg->getSeq(tid).length() << std::endl;
+				DNAseq q = seq->getSeq().substr(from, length());
+				DNAseq t = mtg->getSeq().substr(start, length());
+				std::cerr << q << std::endl << t << std::endl;
+				assert(q == t);
 				seeds.push_back(SeedPair(from, start, length(), tid, GLoc::FWD, loglik()));
 			}
 		}
@@ -174,14 +181,14 @@ SeedList SMEM::getSeeds() const {
 			int64_t start = mtg->getLoc(tid, bdStart);
 			if(mtg->getStrand(tid, bdStart) == GLoc::FWD) { // always only search loc on fwd tStrand
 				assert(tid == mtg->getTid(bdStart + length()));
-//				std::cerr << "rev id: " << seq->getName() << " N: " << N << " i: " << i << " tid: " << tid << " chrLoc: " << mtg->getChromLoc(tid) << " chrBDLoc: " << mtg->getChromBDLoc(tid) <<
-//						" from: " << from << " to: " << to << " seqLen: " << seq->length() <<
-//						" bdStart: " << bdStart << " bdEnd: " << bdStart + length() <<
-//						" start: " << start << " end: " << start + length() << " tLen: " << mtg->getSeq().length() << std::endl;
-//				DNAseq q = dna::revcom(seq->getSeq().substr(from, length()));
-//				DNAseq t = mtg->getSeq().substr(start, length());
-//				std::cerr << q << std::endl << t << std::endl;
-//				assert(q == t);
+				std::cerr << "rev id: " << seq->getName() << " N: " << N << " i: " << i << " tid: " << tid << " chrLoc: " << mtg->getChromLoc(tid) << " chrBDLoc: " << mtg->getChromBDLoc(tid) <<
+						" from: " << from << " to: " << to << " seqLen: " << seq->length() <<
+						" bdStart: " << bdStart << " bdEnd: " << bdStart + length() <<
+						" start: " << start << " end: " << start + length() << " tLen: " << mtg->getSeq().length() << std::endl;
+				DNAseq q = dna::revcom(seq->getSeq().substr(from, length()));
+				DNAseq t = mtg->getSeq().substr(start, length());
+				std::cerr << q << std::endl << t << std::endl;
+				assert(q == t);
 				seeds.push_back(SeedPair(seq->length() - to, start, length(), tid, GLoc::REV, loglik()));
 			}
 		}

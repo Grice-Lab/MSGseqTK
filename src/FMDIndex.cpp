@@ -320,8 +320,8 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 	pN = C[b] + O;
 	sB[b] = bwtRRR.rank(b, p + s - 1) - O;
 
-	/* update q if s changes */
-	if(sB[b] != s) {
+	/* update q */
+//	if(sB[b] != s) {
 		sB[0] = bwtRRR.rank(0, p + s - 1) - bwtRRR.rank(0, p - 1);
 		for(nt16_t i = b + 1; i <= DNAalphabet::NT16_MAX; ++i) { // search from b + 1
 			if(DNAalphabet::isBasic(i))
@@ -334,7 +334,7 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 		for(nt16_t i = DNAalphabet::T; i > b; --i) // only need to search till b + 1
 			qB[i - 1] = qB[i] + sB[i];
 		q = qB[b];
-	}
+//	}
 
 	/* update p and s */
 	p = pN;

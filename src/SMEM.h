@@ -69,6 +69,14 @@ public:
 		return size;
 	}
 
+	int64_t getFwdStart() const {
+		return getFwdStart();
+	}
+
+	int64_t getRevStart() const {
+		return getRevStart();
+	}
+
 	double loglik() const {
 		return logP;
 	}
@@ -198,6 +206,13 @@ public:
 	static const size_t MAX_NCHAINS = 256;
 
 	friend class SMEMS;
+
+	/* non-member functions */
+	/** formated output */
+	friend ostream& operator<<(ostream& out, const SMEM& smem);
+
+	/** relationship operator */
+	friend bool operator==(const SMEM& lhs, const SMEM& rhs);
 };
 
 class SMEMS;
@@ -311,7 +326,40 @@ public:
 	static const double DEFAULT_MAX_EVALUE;
 };
 
+inline ostream& operator<<(ostream& out, const SMEM& smem) {
+	out << smem.from << "-" << smem.to << ":" << smem.size << ":" << smem.fwdStart << ":" << smem.revStart << ":" << smem.logP << std::endl;
+	return out;
+}
+
+inline bool operator==(const SMEM& lhs, const SMEM& rhs) {
+	return lhs.seq == rhs.seq && lhs.mtg == rhs.mtg && lhs.fmdidx == rhs.fmdidx &&
+			lhs.from == rhs.from && lhs.to == rhs.to && lhs.size == rhs.size &&
+			lhs.fwdStart == rhs.fwdStart && lhs.revStart == rhs.revStart;
+}
+
 } /* namespace MSGseqTK */
 } /* namespace EGriceLab */
+
+namespace std {
+
+/** template specialization for customized hash function in std namespace */
+template<>
+class hash<EGriceLab::MSGseqTK::SMEM> {
+public:
+  size_t operator() (const EGriceLab::MSGseqTK::SMEM& smem) const {
+	size_t res = 0;
+	res ^= reinterpret_cast<uintptr_t>(smem.getSeq()) + 0x9e3779b9 + (res << 6) + (res >> 2);
+	res ^= reinterpret_cast<uintptr_t>(smem.getMtg()) + 0x9e3779b9 + (res << 6) + (res >> 2);
+	res ^= reinterpret_cast<uintptr_t>(smem.getFmdidx()) + 0x9e3779b9 + (res << 6) + (res >> 2);
+	res ^= smem.getFrom() + 0x9e3779b9 + (res << 6) + (res >> 2);
+	res ^= smem.getTo() + 0x9e3779b9 + (res << 6) + (res >> 2);
+	res ^= smem.getSize() + 0x9e3779b9 + (res << 6) + (res >> 2);
+	res ^= smem.getFwdStart() + 0x9e3779b9 + (res << 6) + (res >> 2);
+	res ^= smem.getRevStart() + 0x9e3779b9 + (res << 6) + (res >> 2);
+	return res;
+  }
+};
+
+} /* namespace std */
 
 #endif /* SSMEM_H_ */

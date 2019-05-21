@@ -583,6 +583,8 @@ inline void Alignment::calculateScores(int64_t from, int64_t to, int64_t start, 
 
 inline void Alignment::calculateScores(const SeedPair& pair) {
 	assert(isInitiated());
+//	std::cerr << "qSeq: " << read->getSeq() << std::endl;
+//	std::cerr << "qFrom: " << qFrom << " qTo: " << qTo << " tStart: " << tStart << " tEnd: " << tEnd << " pair: " << pair << std::endl;
 	assert(qFrom <= pair.getFrom() && pair.getTo() <= qTo && tStart <= pair.getStart() && pair.getEnd() <= tEnd);
 	double o = -ss->openGapPenalty();
 	double e = -ss->extGapPenalty();

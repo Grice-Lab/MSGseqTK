@@ -33,6 +33,7 @@ Alignment& Alignment::init(int64_t chrLen, const SeedChain& chain) {
 	// set up tStart and tEnd
 	tStart = std::max<int64_t>(0, chain.getStart() - (1 + MAX_INDEL_RATE) * (chain.getFrom() - qFrom));
 	tEnd = std::min<int64_t>(chrLen, chain.getEnd() + (1 + MAX_INDEL_RATE) * (qTo - chain.getTo()));
+	std::cerr << "tStart: " << tStart << " tEnd: " << tEnd << " chrLen: " << chrLen << std::endl;
 	init();
 	return *this;
 }
