@@ -54,7 +54,6 @@ int main() {
 		return EXIT_FAILURE;
 
 	DNAseq seq2 = MetaGenome::getBDSeq(dna::encode("GTAGCATCGAG"));
-	seqM1.push_back(DNAalphabet::N);
 	seqM1 += seq2;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	fmdidx1 += FMDIndex(seq2, false);
@@ -82,7 +81,6 @@ int main() {
 		return EXIT_FAILURE;
 
 	DNAseq seq3 = MetaGenome::getBDSeq(dna::encode("GTAGCATGGAG"));
-	seqM1.push_back(DNAalphabet::N);
 	seqM1 += seq3;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	fmdidx1 += FMDIndex(seq3, false);
@@ -111,7 +109,6 @@ int main() {
 		return EXIT_FAILURE;
 
 	DNAseq seq4 = MetaGenome::getBDSeq(dna::encode("GTAGCATTGAG"));
-	seqM1.push_back(DNAalphabet::N);
 	seqM1 += seq4;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	fmdidx1 += FMDIndex(seq4, false);
@@ -167,7 +164,7 @@ int main() {
 		return EXIT_FAILURE;
 
 	DNAseq seq6 = MetaGenome::getBDSeq(dna::encode("GTAGCACCTAG"));
-	seqM2 = seq6 + (nt16_t) DNAalphabet::N + seqM2;
+	seqM2 = seq6 + seqM2;
 	cout << "seqM2:" << endl << seqM2 << endl;
 	fmdidx2 = FMDIndex(seq6, false) + fmdidx2;
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
@@ -194,7 +191,7 @@ int main() {
 		return EXIT_FAILURE;
 
 	DNAseq seq7 = MetaGenome::getBDSeq(dna::encode("GTAGCAGCTAC"));
-	seqM2 = seq7 + (nt16_t) DNAalphabet::N + seqM2;
+	seqM2 = seq7 + seqM2;
 	cout << "seqM2:" << endl << seqM2 << endl;
 	fmdidx2 = FMDIndex(seq7, false) + fmdidx2;
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
@@ -221,7 +218,7 @@ int main() {
 		return EXIT_FAILURE;
 
 	DNAseq seq8 = MetaGenome::getBDSeq(dna::encode("GTAGCATCTAC"));
-	seqM2 = seq8 + (nt16_t) DNAalphabet::N + seqM2;
+	seqM2 = seq8 + seqM2;
 	cout << "seqM2:" << endl << seqM2 << endl;
 	fmdidx2 = FMDIndex(seq8, false) + fmdidx2;
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
@@ -248,7 +245,7 @@ int main() {
 		return EXIT_FAILURE;
 
 	/* hierarchical merge test */
-	DNAseq seqM = seqM1 + (nt16_t) DNAalphabet::N + seqM2;
+	DNAseq seqM = seqM1 + seqM2;
 	cout << "seqM:" << endl << seqM << endl;
 	FMDIndex fmdidx = fmdidx1 + fmdidx2;
 	cout << "fmdidx.length(): " << fmdidx.length() << endl;

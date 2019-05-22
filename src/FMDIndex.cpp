@@ -37,14 +37,15 @@ FMDIndex::FMDIndex(const DNAseq& seq, bool keepSA) {
 }
 
 void FMDIndex::buildCounts(const DNAseq& seq) {
-	const int64_t N = seq.back() == 0 ? seq.length() : seq.length() + 1;
-	for(const DNAseq::value_type* b = seq.data(); b < seq.data() + N; ++b) // one pass seq always null
-		B[*b]++;
+	assert(seq.back() == 0);
+	const int64_t N = seq.length();
+	for(nt16_t b : seq) // one pass seq always null
+		B[b]++;
 	assert(numGaps() == 1);
 
 	/* calculate cumulative counts */
     int64_t S = 0;
-    for(nt16_t i = 0; i < DNAalphabet::SIZE; ++i) {
+    for(nt16_t i = 0; i <= DNAalphabet::SIZE; ++i) {
     	C[i] = S;
     	S += B[i];
     }
@@ -72,7 +73,6 @@ ostream& FMDIndex::save(ostream& out) const {
 	bwtRRR.save(out);
 	SAidx.save(out);
 	StringUtils::saveString(SAsampled, out);
-//	StringUtils::saveString(SAgap, out);
 	return out;
 }
 
@@ -83,7 +83,6 @@ istream& FMDIndex::load(istream& in) {
 	bwtRRR.load(in);
 	SAidx.load(in);
 	StringUtils::loadString(SAsampled, in);
-//	StringUtils::loadString(SAgap, in);
 	return in;
 }
 
@@ -140,8 +139,7 @@ DNAseq FMDIndex::getSeq() const {
 	DNAseq seq;
 	seq.reserve(L);
 	for(int64_t i = 0; i < B[0]; ++i) { // i-th pass of LF-mapping
-		if(i != 0) // intermediate gaps
-			seq.push_back(DNAalphabet::N);
+		seq.push_back(0);
 		nt16_t b = accessBWT(i);
 		for(int64_t j = i; b != 0; b = accessBWT(j)) {
 			seq.push_back(b);
@@ -154,10 +152,11 @@ DNAseq FMDIndex::getSeq() const {
 }
 
 int64_t* FMDIndex::buildBWT(const DNAseq& seq) {
-	const size_t N = seq.back() == 0 ? seq.length() : seq.length() + 1;
+	assert(seq.back() == 0);
+	const size_t N = seq.length();
 	/* construct SA */
 	int64_t* SA = new int64_t[N];
-    int64_t errn = divsufsort((const uint8_t*) seq.data(), (saidx_t*) SA, N); // string.data include null terminal
+    int64_t errn = divsufsort((const uint8_t*) seq.c_str(), (saidx_t*) SA, N); // string.c_str guarantee a null terminal
 	if(errn != 0)
 		throw std::runtime_error("Error: Cannot build suffix-array on DNAseq");
 
@@ -239,7 +238,7 @@ void FMDIndex::buildSA(const int64_t* SA) {
 	/* build the bitstr by sampling SA direction */
 	BitStr32 bstr(N);
 	SAsampled.clear();
-	SAsampled.reserve(N / SA_SAMPLE_RATE + B[0]); // enough to hold both peroid sampling and gaps
+	SAsampled.reserve(N / SA_SAMPLE_RATE + numGaps()); // enough to hold both peroid sampling and gaps
 	for(size_t i = 0; i < N; ++i) {
 		if(i % SA_SAMPLE_RATE == 0 || bwt[i] == 0) { /* sample at all null characters */
 			bstr.set(i);
@@ -265,7 +264,7 @@ vector<GLoc> FMDIndex::locateAllFwd(const DNAseq& pattern) const {
 		return locs;
 
 	nt16_t b = pattern.front();
-	if(!DNAalphabet::isBasic(b))
+	if(DNAalphabet::isAmbiguous(b))
 		return locs;
 	int64_t p = C[b];
 	int64_t q = C[DNAalphabet::complement(b)];
@@ -289,7 +288,7 @@ vector<GLoc> FMDIndex::locateAllRev(const DNAseq& pattern) const {
 		return locs;
 
 	nt16_t b = pattern.back();
-	if(!DNAalphabet::isBasic(b))
+	if(DNAalphabet::isAmbiguous(b))
 		return locs;
 	int64_t p = C[b];
 	int64_t q = C[DNAalphabet::complement(b)];
@@ -307,7 +306,7 @@ vector<GLoc> FMDIndex::locateAllRev(const DNAseq& pattern) const {
 }
 
 int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
-	if(!DNAalphabet::isBasic(b)) {
+	if(DNAalphabet::isAmbiguous(b)) {
 		s = 0;
 		return s;
 	}
@@ -321,7 +320,7 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 	sB[b] = bwtRRR.rank(b, p + s - 1) - O;
 
 	/* update q */
-//	if(sB[b] != s) {
+	if(sB[b] != s) {
 		sB[0] = bwtRRR.rank(0, p + s - 1) - bwtRRR.rank(0, p - 1);
 		for(nt16_t i = b + 1; i <= DNAalphabet::NT16_MAX; ++i) { // search from b + 1
 			if(DNAalphabet::isBasic(i))
@@ -334,7 +333,7 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 		for(nt16_t i = DNAalphabet::T; i > b; --i) // only need to search till b + 1
 			qB[i - 1] = qB[i] + sB[i];
 		q = qB[b];
-//	}
+	}
 
 	/* update p and s */
 	p = pN;

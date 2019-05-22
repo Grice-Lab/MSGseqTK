@@ -111,8 +111,8 @@ void MetaGenome::updateIndex() {
 			chromName2Idx[chr.name] = cid;
 			chromIdx2GenomeIdx.push_back(gid);
 			chromIdx2Nbefore.push_back(nid);
-			chromIdx2Loc.push_back(Loc(gStart + cStart, gStart + cStart + chr.size() + 1)); // include null terminal
-			chromIdx2BDLoc.push_back(Loc(gStart2 + cStart2, gStart2 + cStart2 + (chr.size() + 1) * 2)); // include null terminal
+			chromIdx2Loc.push_back(Loc(gStart + cStart, gStart + cStart + chr.size() + 1)); // include N terminal
+			chromIdx2BDLoc.push_back(Loc(gStart2 + cStart2, gStart2 + cStart2 + (chr.size() + 1) * 2)); // include N terminal
 			cid++;
 			nid++;
 			cStart += chr.size() + 1;

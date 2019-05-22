@@ -46,7 +46,7 @@ using EGriceLab::libSDS::WaveletTreeRRR;
 class FMDIndex {
 public:
 	/* typedefs */
-	typedef array<int64_t, DNAalphabet::SIZE> BCarray_t; /* fixed array to store base counts */
+	typedef array<int64_t, 256> BCarray_t; /* fixed array to store base counts */
 //	typedef vector<int64_t> SArray_t; /* store sampled Suffix-Array in std::vector */
 	typedef basic_string<int64_t> SAarr_t; /* store sampled Suffix-Array values */
 

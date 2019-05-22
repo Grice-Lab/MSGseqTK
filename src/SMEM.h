@@ -130,7 +130,7 @@ public:
 	 * @return  updated SMEM
 	 */
 	SMEM& backExt() {
-		fmdidx->backExt(fwdStart, revStart, size, from > 0 ? seq->getBase(from - 1) : DNAalphabet::GAP_BASE);
+		fmdidx->backExt(fwdStart, revStart, size, seq->getBase(from - 1));
 		backEvaluate();
 		from--;
 		return *this;

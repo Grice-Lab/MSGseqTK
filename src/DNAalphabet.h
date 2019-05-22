@@ -130,10 +130,25 @@ public:
 		return s == GAP_SYM;
 	}
 
+	/** test whether a base is ambiguous */
+	static bool isAmbiguous(nt16_t b) {
+		switch(b) {
+		case A: case C: case G: case T:
+			return false;
+		default:
+			return true;
+		}
+	}
+
+	/** test whether a symbol is ambiguous */
+	static bool isAmbiguous(char s) {
+		return isAmbiguous(encode(s));
+	}
+
 	/** test whether a base is basic base */
 	static bool isBasic(nt16_t b) {
 		switch(b) {
-		case A: case C: case G: case T:
+		case A: case C: case G: case T: case N:
 			return true;
 		default:
 			return false;
