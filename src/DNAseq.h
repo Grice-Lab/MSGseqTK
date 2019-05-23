@@ -122,8 +122,6 @@ DNAseq toBasic(const DNAseq& seq) {
 	return toBasic(bSeq);
 }
 
-DNAseq& removeGaps(DNAseq& seq);
-
 /** encode a DNAseq from seqStr */
 DNAseq encode(const string& seqStr);
 

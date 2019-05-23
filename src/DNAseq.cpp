@@ -13,11 +13,6 @@ namespace EGriceLab {
 namespace MSGseqTK {
 namespace dna {
 
-DNAseq& removeGaps(DNAseq& seq) {
-	seq.erase(std::remove(seq.begin(), seq.end(), DNAalphabet::GAP_BASE), seq.end());
-	return seq;
-}
-
 DNAseq encode(const string& seqStr) {
 	DNAseq seq;
 	seq.reserve(seqStr.length());

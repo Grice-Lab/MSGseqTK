@@ -84,11 +84,11 @@ int main() {
 	seqM1 += seq3;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	fmdidx1 += FMDIndex(seq3, false);
-	fmdidx1.buildSA();
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
 	cout << "seqM1:" << endl << seqM1 << endl;
+	fmdidx1.buildSA();
 	assert(fmdidx1.getSeq() == seqM1);
 	count1 = fmdidx1.count(pat);
 	cout << "found " << count1 << " of " << pat << " in " << seqM1 << endl;
@@ -112,12 +112,12 @@ int main() {
 	seqM1 += seq4;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	fmdidx1 += FMDIndex(seq4, false);
-	fmdidx1.buildSA();
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
 	cout << "seqM1:" << endl << seqM1 << endl;
 	assert(fmdidx1.getSeq() == seqM1);
+	fmdidx1.buildSA();
 	count1 = fmdidx1.count(pat);
 	cout << "found " << count1 << " of " << pat << " in " << seqM1 << endl;
 	locs = fmdidx1.locateAll(pat);

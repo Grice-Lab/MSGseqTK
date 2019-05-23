@@ -369,14 +369,11 @@ public:
 	/** get a BD block seq by tid range */
 	DNAseq getBDSeq(size_t start, size_t end) const {
 		assert(start < end);
-		DNAseq bdSeq;
-		bdSeq.reserve(getChromBDEnd(end - 1) - getChromBDStart(start));
-		for(size_t tid = start; tid < end; ++tid) {
-			const DNAseq& seq = dna::toBasic(getSeq(tid));
-			bdSeq += seq + (nt16_t) DNAalphabet::N + dna::revcom(seq) + (nt16_t) DNAalphabet::N;
-		}
-		bdSeq.back() = DNAalphabet::GAP_BASE;
-		return bdSeq;
+		DNAseq seq;
+		seq.reserve(getChromBDEnd(end - 1) - getChromBDStart(start));
+		for(size_t tid = start; tid < end; ++tid)
+			seq += getBDSeq(tid);
+		return seq;
 	}
 
 	/** get concatenated bi-directional seq of the entire MetaGenome */
@@ -449,7 +446,7 @@ public:
 	 */
 	static DNAseq getBDSeq(const DNAseq& seq) {
 		const DNAseq& bdSeq = dna::toBasic(seq);
-		return bdSeq + (nt16_t) DNAalphabet::N + dna::revcom(bdSeq) + DNAalphabet::GAP_BASE;
+		return bdSeq + DNAalphabet::GAP_BASE + dna::revcom(bdSeq) + DNAalphabet::GAP_BASE;
 	}
 };
 

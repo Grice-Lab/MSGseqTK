@@ -49,6 +49,8 @@ public:
 	typedef array<int64_t, 256> BCarray_t; /* fixed array to store base counts */
 //	typedef vector<int64_t> SArray_t; /* store sampled Suffix-Array in std::vector */
 	typedef basic_string<int64_t> SAarr_t; /* store sampled Suffix-Array values */
+	typedef basic_string<int64_t> GAParr_t; /* store gap SA values */
+	typedef basic_string<int64_t> GAPidx_t; /* store gap order (relative to numGaps()) */
 
 	/* constructors */
 	/** Default constructor */
@@ -195,9 +197,6 @@ public:
 	/** build SAidx and SAsampled */
 	FMDIndex& buildSA();
 
-	/** build SAidx and SAsampled with pre-calculated gap locations (1-based) on reversed order */
-	FMDIndex& buildSA(const vector<int64_t>& gapLocs);
-
 public:
 	/**
 	 * backward extension of a bi-interval [p, q, s]
@@ -265,6 +264,9 @@ protected:
 	 */
 	int64_t* buildBWT(const DNAseq& seq);
 
+	/** build GAP SA and index */
+	void buildGap(const int64_t* SA);
+
 	/**
 	 * build SAidx and SAsampled with given internal SA, which are available during direct construction
 	 */
@@ -279,12 +281,16 @@ protected:
 	/** merge two DNAseq by an interleaving bitvector, use parallelization optionally, bstrM will be moved */
 	static DNAseq mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, BitStr32&& bstrM);
 
+	/** merge two gapSA by prepending the rhs to the lhs with a shift */
+	static GAParr_t mergeGap(const FMDIndex& lhs, const FMDIndex& rhs);
+
 	/* member fields */
 private:
 	BCarray_t B = { };  // combined base count
 	BCarray_t C = { };  // combined cumulative count
 	DNAseq bwt; // uncompressed bwt
 	WaveletTreeRRR bwtRRR; /* Wavelet-Tree transformed BWT string for combined seq */
+	GAParr_t gapSA; /* SA values for gaps */
 	BitSeqRRR SAidx; /* BitSeq index telling whether a SA was sampled */
 	SAarr_t SAsampled; /* sampled SA */
 

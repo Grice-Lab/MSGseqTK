@@ -371,7 +371,6 @@ void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize) {
 	size_t blockId = 0;
 	size_t blockStart = 0; // block start index
 	size_t blockEnd = NC; // block end index
-	vector<int64_t> gapLocs; // gap loc of each block on MetaGenome
 	for(size_t i = NC; i > 0; --i) {
 		blockStart = i - 1; // update blockStart
 		/* process block, if large enough */
@@ -382,7 +381,6 @@ void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize) {
 			fmdidx = FMDIndex(blockSeq, false) + fmdidx; /* prepend new FMDIndex, whose SA is never built */
 			if(blockStart > 0) // not the final FMDindex
 				fmdidx.clearBWT(); // clear RAM before next merge
-			gapLocs.push_back(mtg.getChromBDEnd(blockEnd - 1));
 			// clear seq to save RAM
 			mtg.clearSeq(blockStart, blockEnd);
 			// update
@@ -391,7 +389,7 @@ void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize) {
 		}
 	}
 	infoLog << "Building final Suffix-Array" << endl;
-//	fmdidx.buildSA();
-	fmdidx.buildSA(gapLocs);
+	fmdidx.buildSA();
+//	fmdidx.buildSA(gapLocs);
 	fmdidx.clearBWT(); // clear uncompressed BWT
 }

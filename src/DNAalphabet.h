@@ -47,11 +47,11 @@ public:
 		D = A | G | T, // D is A or G or T
 		H = A | C | T, // H is A or C or T
 		V = A | C | G, // V is A or C or G
-		N = A | C | G | T // any base
+		N = 0 // N is GAP instead of ambiguous
 	};
 	static const nt16_t GAP_BASE = 0;
 	static const nt16_t NT16_MIN = 1;
-	static const nt16_t NT16_MAX = 0xF;
+	static const nt16_t NT16_MAX = 0xE;
 	static const nt16_t SIZE = NT16_MAX + 1;
 	static const nt16_t BASIC_SIZE = 4; /* A, C, G, T */
 	static const char GAP_SYM = '$';
@@ -132,23 +132,18 @@ public:
 
 	/** test whether a base is ambiguous */
 	static bool isAmbiguous(nt16_t b) {
-		switch(b) {
-		case A: case C: case G: case T:
-			return false;
-		default:
-			return true;
-		}
+		return !isBasic(b);
 	}
 
 	/** test whether a symbol is ambiguous */
 	static bool isAmbiguous(char s) {
-		return isAmbiguous(encode(s));
+		return !isBasic(s);
 	}
 
 	/** test whether a base is basic base */
 	static bool isBasic(nt16_t b) {
 		switch(b) {
-		case A: case C: case G: case T: case N:
+		case A: case C: case G: case T:
 			return true;
 		default:
 			return false;

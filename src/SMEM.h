@@ -211,7 +211,8 @@ public:
 	/** formated output */
 	friend ostream& operator<<(ostream& out, const SMEM& smem);
 
-	/** relationship operator */
+	/** relationship operators */
+	friend bool operator<(const SMEM& lhs, const SMEM& rhs);
 	friend bool operator==(const SMEM& lhs, const SMEM& rhs);
 };
 
@@ -331,10 +332,32 @@ inline ostream& operator<<(ostream& out, const SMEM& smem) {
 	return out;
 }
 
+inline bool operator<(const SMEM& lhs, const SMEM& rhs) {
+	assert(lhs.seq == rhs.seq && lhs.mtg == rhs.mtg && lhs.fmdidx == rhs.fmdidx);
+	/* from and to determine all other values including size, fwdStart, revStart */
+	return lhs.from != rhs.from ? lhs.from < rhs.from : lhs.to < rhs.to;
+}
+
 inline bool operator==(const SMEM& lhs, const SMEM& rhs) {
-	return lhs.seq == rhs.seq && lhs.mtg == rhs.mtg && lhs.fmdidx == rhs.fmdidx &&
-			lhs.from == rhs.from && lhs.to == rhs.to && lhs.size == rhs.size &&
-			lhs.fwdStart == rhs.fwdStart && lhs.revStart == rhs.revStart;
+	assert(lhs.seq == rhs.seq && lhs.mtg == rhs.mtg && lhs.fmdidx == rhs.fmdidx);
+	/* from and to determine all other values including size, fwdStart, revStart */
+	return lhs.from == rhs.from && lhs.to == rhs.to;
+}
+
+inline bool operator!=(const SMEM& lhs, const SMEM& rhs) {
+	return !(lhs == rhs);
+}
+
+inline bool operator<=(const SMEM& lhs, const SMEM& rhs) {
+	return lhs < rhs || lhs == rhs;
+}
+
+inline bool operator>(const SMEM& lhs, const SMEM& rhs) {
+	return rhs < lhs;
+}
+
+inline bool operator>=(const SMEM& lhs, const SMEM& rhs) {
+	return !(lhs < rhs);
 }
 
 } /* namespace MSGseqTK */
