@@ -15,6 +15,7 @@
 #include <iterator>
 #include <algorithm>
 #include "MetaGenome.h"
+#include "ProgEnv.h"
 #include "GFF.h"
 
 namespace EGriceLab {
@@ -27,88 +28,9 @@ using std::vector;
 using UCSC::GFF;
 
 /**
- * class for MetaGenome annotations
+ * class providing static methods for MetaGenome annotation
  */
 class MetaGenomeAnno {
-public:
-	typedef map<string, vector<GFF>> GENOME_ANNOMAP; // per-genome annos
-	typedef map<string, vector<GFF>> CHROM_ANNOMAP;  // per-chrom annos
-	/* constructors */
-	/** default constructor */
-	MetaGenomeAnno() = default;
-
-	/** construct MetaGenomeAnno from MetaGenome, and add genome-level annos */
-	explicit MetaGenomeAnno(const MetaGenome& mtg);
-
-	/** get total number of annotated genomes */
-	size_t numAnnotatedGenomes() const {
-		return genomeAnnos.size();
-	}
-
-	/** get total number of annotated chromosomes */
-	size_t numAnnotatedChroms() const {
-		return chromAnnos.size();
-	}
-
-	/** get total number of annotations */
-	size_t numAnnotations() const;
-
-	/** add a Genome to this annotation, create associated per-genome annotations */
-	void addGenome(const Genome& genome);
-
-	/** add a new genome-level GFF annotation */
-	void addGenomeAnno(const string& id, const GFF& gff) {
-		genomeAnnos[id].push_back(gff);
-	}
-
-	/**
-	 * add a new chrom-level GFF annotations
-	 * @param chrId  a unique id for a chrom
-	 */
-	void addChromAnno(const string& chrId, const GFF& gff) {
-		chromAnnos[chrId].push_back(gff);
-	}
-
-	/** save this object to binary output */
-	ostream& save(ostream& out) const;
-
-	/** load an object from binary input */
-	istream& load(istream& in);
-
-	/** write annotations to GFF text output for given genome */
-	ostream& write(ostream& out, const Genome& genome) const;
-
-	/** read annotations and associated genome from GFF text input for given genomeId */
-	istream& read(istream& in, const Genome& gnome, GFF::Version ver = ANNO_VER);
-
-	/** write all annotations to GFF text output */
-	ostream& write(ostream& out, const MetaGenome& mtg) const;
-
-	/** read all GFF annotations from GFF text input */
-	istream& read(istream& in, const MetaGenome& mtg);
-
-	/**
-	 * merge this MetaGenomeAnno with another one,
-	 * with its name unchanged
-	 */
-	MetaGenomeAnno& operator+=(const MetaGenomeAnno& other);
-
-	/* non-member operators */
-	/** concate two MetaGenomes and return a new copy */
-	friend MetaGenomeAnno operator+(const MetaGenomeAnno& lhs, const MetaGenomeAnno& rhs) {
-		MetaGenomeAnno annoMerged(lhs);
-		annoMerged += rhs;
-		return annoMerged;
-	}
-
-	/** relational operators */
-	friend bool operator==(const MetaGenomeAnno& lhs, const MetaGenomeAnno& rhs);
-
-	/* member fields */
-private:
-	GENOME_ANNOMAP genomeAnnos; // genome id->vector<GFF>
-	CHROM_ANNOMAP chromAnnos;   // chrom id (genomeId.chrName)->vector<GFF>
-
 public:
 	/* static member fields */
 	static const GFF::Version ANNO_VER = GFF::GFF3;
@@ -127,7 +49,7 @@ public:
 	}
 
 	/**
-	 * write GFF header comments
+	 * write metagenome GFF header
 	 */
 	static ostream& writeGFFHeader(ostream& out, const string& dbName, GFF::Version ver = GFF::GFF3);
 
@@ -136,28 +58,42 @@ public:
 	 */
 	static istream& readGFFHeader(istream& in, string& dbName, GFF::Version& ver);
 
-	/** read given genome info from comment */
+	/** read genome from comment */
 	static istream& readStartComment(istream& in, Genome& genome);
 
-	/** write start comment of given genome anno to text GFF output */
+	/** write genome to GFF comment */
 	static ostream& writeStartComment(ostream& out, const Genome& genome);
 
-	/** write end comment of this genome anno to text GFF output */
+	/** write genome end comment */
 	static ostream& writeEndComment(ostream& out);
+
+	/** get a genome GFF annotation */
+	static GFF getAnno(const Genome& genome) {
+		return GFF(genome.id, progName, "genome", 1, genome.size(),
+				GFF::INVALID_SCORE, GFF::DEFAULT_STRAND, GFF::INVALID_FRAME,
+				GFF::attr_map { { "ID", genome.id }, { "Name", genome.name }});
+	}
+
+	/** get a chrom GFF annotation record */
+	static GFF getAnno(const Genome& genome, const Genome::Chrom& chr) {
+		return GFF(chr.name, progName, "chromosome", 1, chr.size(),
+				GFF::INVALID_SCORE, GFF::DEFAULT_STRAND, GFF::INVALID_FRAME,
+				GFF::attr_map {
+			{ "ID", MetaGenome::getChromId(genome.id, chr.name) },
+			{ "Name", chr.name },
+			{ "Parent", genome.id }
+		});
+	}
+
+	/** read in all GFF records from text input in given GFF version */
+	static vector<GFF> read(istream& in, GFF::Version ver);
+
+	/**
+	 * write genome annotations including both genome-level and any auxilary GFF records
+	 * @return  # of GFF records written
+	 */
+	static size_t writeGenomeAnnos(ostream& out, const Genome& genome, const vector<GFF>& gffRecords);
 };
-
-inline MetaGenomeAnno::MetaGenomeAnno(const MetaGenome& mtg) {
-	for(const Genome& genome : mtg.getGenomes())
-		addGenome(genome);
-}
-
-inline bool operator==(const MetaGenomeAnno& lhs, const MetaGenomeAnno& rhs) {
-	return lhs.genomeAnnos == rhs.genomeAnnos && lhs.chromAnnos == rhs.chromAnnos;
-}
-
-inline bool operator!=(const MetaGenomeAnno& lhs, const MetaGenomeAnno& rhs) {
-	return !(lhs == rhs);
-}
 
 } /* namespace MSGseqTK */
 } /* namespace EGriceLab */

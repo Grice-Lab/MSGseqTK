@@ -151,8 +151,8 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	/* construct basic MetaGenomeAnno */
-	MetaGenomeAnno mta(mtg);
+	MetaGenomeAnno::writeGFFHeader(gffOut, dbName, MetaGenomeAnno::ANNO_VER);
+	size_t nTotal = 0;
 
 	/* process each genome GFF file, if exists */
 	for(const Genome& genome : mtg.getGenomes()) {
@@ -191,20 +191,14 @@ int main(int argc, char* argv[]) {
 		if(extVer == GFF::UNK)
 			warningLog << "Unable to guess GFF version from filename '" << gffFn << "', trying reading its content" << endl;
 
-		mta.read(gffIn, genome, extVer);
-		if(gffIn.bad()) {
-			cerr << "Failed to read GFF file '" << gffFn << "' :" << ::strerror(errno) << endl;
-			return EXIT_FAILURE;
-		}
+		/* read in all annotations in this external GFF file */
+		std::vector<GFF> gffRecords = MetaGenomeAnno::read(gffIn, extVer);
+		infoLog << "Read in " << gffRecords.size() << " external GFF annotations" << endl;
+		/* write genome annotations */
+		size_t n = MetaGenomeAnno::writeGenomeAnnos(gffOut, genome, gffRecords);
+		nTotal += n;
+		infoLog << "Wrote " << n << " GFF annotations for " << genome.displayId() << endl;
 	} /* end each genome */
 
-	/* output */
-	infoLog << "Writing database annotations ..." << endl;
-	MetaGenomeAnno::writeGFFHeader(gffOut, dbName, MetaGenomeAnno::ANNO_VER);
-	mta.write(gffOut, mtg);
-	if(gffOut.bad()) {
-		cerr << "Unable to write GFF annotation: " << ::strerror(errno) << endl;
-		return EXIT_FAILURE;
-	}
-	infoLog << "Database annotation written into '" << gffOutFn << "'" << endl;
+	infoLog << "Total of " << nTotal << " GFF records written into '" << gffOutFn << "'" << endl;
 }

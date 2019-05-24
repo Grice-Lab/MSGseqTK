@@ -61,8 +61,6 @@ void printUsage(const string& progName) {
 		 << "DB-NAME    STR                   : database name/prefix" << endl
 		 << "Options:    -l  FILE             : write the genome names included in this database to FILE" << endl
 		 << "            -s  FILE             : write the genome sequences in this database to FILE" << ZLIB_SUPPORT << endl
-		 << "            -a|--anno  FLAG      : also inspect the database annotation GFF file, if exists" << endl
-		 << "            -g|--gff  FILE       : use FILE instead of the default filename for the annotation GFF file" << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
 		 << "            -h|--help            : print this message and exit" << endl;
@@ -71,8 +69,8 @@ void printUsage(const string& progName) {
 int main(int argc, char* argv[]) {
 	/* variable declarations */
 	string dbName;
-	string listFn, seqFn, mtgFn, fmdidxFn, gffFn;
-	ifstream mtgIn, fmdidxIn, gffIn;
+	string listFn, seqFn, mtgFn, fmdidxFn;
+	ifstream mtgIn, fmdidxIn;
 	ofstream listOut;
 	boost::iostreams::filtering_ostream seqOut;
 
@@ -102,14 +100,6 @@ int main(int argc, char* argv[]) {
 	if(cmdOpts.hasOpt("-s"))
 		seqFn = cmdOpts.getOpt("-s");
 
-	if(cmdOpts.hasOpt("-a") || cmdOpts.hasOpt("--anno"))
-		gffFn = MetaGenomeAnno::getDBAnnoFn(dbName);
-
-	if(cmdOpts.hasOpt("-g"))
-		gffFn = cmdOpts.getOpt("-g");
-	if(cmdOpts.hasOpt("--gff"))
-		gffFn = cmdOpts.getOpt("--gff");
-
 	if(cmdOpts.hasOpt("-v"))
 		INCREASE_LEVEL(cmdOpts.getOpt("-v").length());
 
@@ -129,14 +119,6 @@ int main(int argc, char* argv[]) {
 	if(!fmdidxIn.is_open()) {
 		cerr << "Unable to open '" << fmdidxFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
-	}
-
-	if(!gffFn.empty()) {
-		gffIn.open(gffFn.c_str());
-		if(!gffIn.is_open()) {
-			cerr << "Unable to open '" << gffFn << "': " << ::strerror(errno) << endl;
-			return EXIT_FAILURE;
-		}
 	}
 
 	/* open outputs */
@@ -182,23 +164,6 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	if(gffIn.is_open()) {
-		infoLog << "Loading MetaGenome annotation ..." << endl;
-		string db;
-		GFF::Version ver;
-		MetaGenomeAnno::readGFFHeader(gffIn, db, ver);
-		if(!(db == dbName && ver == GFF::GFF3)) {
-			cerr << "Content from database annotation file '" << gffFn << " doesn't match its name" << endl;
-			return EXIT_FAILURE;
-		}
-
-		mta.read(gffIn, mtg);
-		if(gffIn.bad()) {
-			cerr << "Unable to read MetaGenome annotation: " << ::strerror(errno) << endl;
-			return EXIT_FAILURE;
-		}
-	}
-
 	infoLog << "Checking MetaGenome indices ..." << endl;
 	for(size_t tid = 0; tid < mtg.numChroms(); ++tid) {
 		string tname = mtg.getChromName(tid);
@@ -217,12 +182,6 @@ int main(int argc, char* argv[]) {
 			<< " G: " << fmdidx.getBaseCount(DNAalphabet::G)
 			<< " T: " << fmdidx.getBaseCount(DNAalphabet::T)
 			<< endl;
-
-	if(gffIn.is_open()) {
-		cout << "# of annotated genomes: " << mta.numAnnotatedGenomes() << endl <<
-				"# of annotated chroms: " << mta.numAnnotatedChroms() << endl <<
-				"# of total annotations: " << mta.numAnnotations() << endl;
-	}
 
 	/* if -l requested */
 	if(listOut.is_open()) {

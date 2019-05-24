@@ -33,7 +33,6 @@ PrimarySeq_test \
 SeqIO_test \
 FMDIndex_test \
 Genome_test \
-MetaGenomeAnno_test \
 SMEM_test \
 SeedChain_test \
 Alignment_test
@@ -62,12 +61,6 @@ $(top_srcdir)/src/util/libEGUtil.a
 
 Genome_test_SOURCES = Genome_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
 Genome_test_LDADD = \
-$(top_srcdir)/src/libMSGseqTK.a \
-$(top_srcdir)/src/util/libEGUtil.a \
-$(top_srcdir)/src/util/UCSC/libEGUCSC.a
-
-MetaGenomeAnno_test_SOURCES = MetaGenomeAnno_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
-MetaGenomeAnno_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/util/libEGUtil.a \
 $(top_srcdir)/src/util/UCSC/libEGUCSC.a
@@ -108,7 +101,6 @@ PrimarySeq_test \
 SeqIO_test \
 FMDIndex_test \
 Genome_test \
-MetaGenomeAnno_test \
 SMEM_test \
 SeedChain_test \
 Alignment_test

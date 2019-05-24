@@ -17,113 +17,33 @@ using namespace std;
 const string MetaGenomeAnno::GENOME_START_TAG = "##genome";
 const string MetaGenomeAnno::GENOME_END_TAG = "##end-genome";
 
-size_t MetaGenomeAnno::numAnnotations() const {
-	size_t N = 0;
-	for(const GENOME_ANNOMAP::value_type& entry : genomeAnnos)
-		N += entry.second.size();
-	for(const CHROM_ANNOMAP::value_type& entry : chromAnnos)
-		N += entry.second.size();
-	return N;
-}
-
-void MetaGenomeAnno::addGenome(const Genome& genome) {
-	/* add a genome-level annotation */
-	addGenomeAnno(genome.id, GFF(genome.id, progName, "genome",
-			1, genome.size(), GFF::INVALID_SCORE, '.', GFF::INVALID_FRAME,
-			GFF::attr_map { {"ID", genome.id}, {"Name", Genome::formatName(genome.name)} }));
-
-	for(const Genome::Chrom& chr : genome.chroms) {
-		string chrId = MetaGenome::getChromId(genome.id, chr.name);
-		addChromAnno(chrId, GFF(chr.name, progName, "chromosome",
-				1, chr.size(), GFF::INVALID_SCORE, '.', GFF::INVALID_FRAME,
-				GFF::attr_map { {"ID", chrId}, {"Name", chr.name}, {"Parent", genome.id} }));
-	}
-}
-
-ostream& MetaGenomeAnno::save(ostream& out) const {
-	/* write annotations */
-	const size_t NG = numAnnotatedGenomes();
-	const size_t NC = numAnnotatedChroms();
-	out.write((const char*) &NG, sizeof(size_t));
-	out.write((const char*) &NC, sizeof(size_t));
-
-	for(const GENOME_ANNOMAP::value_type& entry : genomeAnnos) {
-		StringUtils::saveString(entry.first, out);
-		const size_t NA = entry.second.size();
-		out.write((const char*) &NA, sizeof(size_t));
-		for(const GFF& gff : entry.second)
-			gff.save(out);
-	}
-
-	for(const CHROM_ANNOMAP::value_type& entry : chromAnnos) {
-		StringUtils::saveString(entry.first, out);
-		const size_t NA = entry.second.size();
-		out.write((const char*) &NA, sizeof(size_t));
-		for(const GFF& gff : entry.second)
-			gff.save(out);
-	}
-
-	return out;
-}
-
-istream& MetaGenomeAnno::load(istream& in) {
-	/* load annotations */
-	size_t NG = 0;
-	size_t NC = 0;
-	in.read((char*) &NG, sizeof(size_t));
-	in.read((char*) &NC, sizeof(size_t));
-
-	for(size_t i = 0; i < NG; ++i) {
-		GENOME_ANNOMAP::key_type key;
-		StringUtils::loadString(key, in);
-		size_t NA = 0;
-		in.read((char*) &NA, sizeof(size_t));
-		genomeAnnos[key].resize(NA); // default construct
-		for(size_t i = 0; i < NA; ++i)
-			genomeAnnos[key][i].load(in);
-	}
-
-	for(size_t i = 0; i < NC; ++i) {
-		CHROM_ANNOMAP::key_type key;
-		StringUtils::loadString(key, in);
-		size_t NA = 0;
-		in.read((char*) &NA, sizeof(size_t));
-		chromAnnos[key].resize(NA); // default construct
-		for(size_t i = 0; i < NA; ++i)
-			chromAnnos[key][i].load(in);
-	}
-
-	return in;
-}
-
-ostream& MetaGenomeAnno::write(ostream& out, const Genome& genome) const {
+size_t MetaGenomeAnno::writeGenomeAnnos(ostream& out, const Genome& genome, const vector<GFF>& gffRecords) {
+	size_t n = 0;
 	/* start per-genome comment */
 	writeStartComment(out, genome);
 
-	/* write genome-level annotations, if any */
-	if(genomeAnnos.count(genome.id) > 0) {
-		for(const GFF& genomeGff : genomeAnnos.at(genome.id))
-			out << genomeGff << endl;
-	}
+	/* write genome annotation */
+	out << getAnno(genome) << endl;
+	n++;
 
-	/* write chrom-level annotations, if any */
-	for(const Genome::Chrom& chr : genome.chroms) {
-		string chrId = MetaGenome::getChromId(genome.id, chr.name);
-		if(chromAnnos.count(chrId) > 0) {
-			for(const GFF& chrGff : chromAnnos.at(chrId))
-				out << chrGff << endl;
-		}
-	}
+	/* write chrom annotations */
+	for(const Genome::Chrom& chr : genome.chroms)
+		out << getAnno(genome, chr) << endl;
+	n += genome.numChroms();
 
-	/* end per-genome comment */
+	/* write auxilary annotations */
+	for(const GFF& gff : gffRecords)
+		out << gff << endl;
+	n += gffRecords.size();
+
+	/* end comment */
 	writeEndComment(out);
-	return out;
+	return n;
 }
 
-istream& MetaGenomeAnno::read(istream& in, const Genome& genome, GFF::Version ver) {
+vector<GFF> MetaGenomeAnno::read(istream& in, GFF::Version ver) {
 	string line;
-	GFF gffRecord;
-	Genome gffGenome;
+	vector<GFF> gffRecords;
 	while(std::getline(in, line)) {
 		if(line.empty())
 			continue;
@@ -136,16 +56,6 @@ istream& MetaGenomeAnno::read(istream& in, const Genome& genome, GFF::Version ve
 				ver = GFF::GTF;
 				debugLog << "  GFF version determined by embedded comment" << endl;
 			}
-			else if(StringUtils::startsWith(line, GENOME_START_TAG)) {
-				readStartComment(in, gffGenome);
-				if(!(gffGenome.id == genome.id && gffGenome.name == genome.name)) {
-					warningLog << "  GFF file content doesn't match given genome information" << endl;
-					in.setstate(std::ios_base::badbit);
-					break;
-				}
-			}
-			else if(StringUtils::startsWith(line, GENOME_END_TAG))
-				break;
 			else
 				continue;
 		}
@@ -157,48 +67,14 @@ istream& MetaGenomeAnno::read(istream& in, const Genome& genome, GFF::Version ve
 				break;;
 			}
 			istringstream iss(line);
-			if(gffRecord.read(iss, ver).bad())
-				break;
-			if(gffRecord.getSource() == progName) // genome-level anno
-				addGenomeAnno(genome.id, gffRecord);
+			GFF gff;
+			if(gff.read(iss, ver).bad())
+				continue;
 			else
-				addChromAnno(MetaGenome::getChromId(genome.id, gffRecord.getSeqname()), gffRecord);
+				gffRecords.push_back(gff);
 		}
 	}
-
-	return in;
-}
-
-ostream& MetaGenomeAnno::write(ostream& out, const MetaGenome& mtg) const {
-	/* write genome annotations */
-	for(const Genome& genome : mtg.getGenomes())
-		write(out, genome);
-	return out;
-}
-
-istream& MetaGenomeAnno::read(istream& in, const MetaGenome& mtg) {
-	string line;
-	Genome genome;
-	while(std::getline(in, line)) {
-		if(line.empty())
-			continue;
-		else if(line.front() == GFF::COMMENT_CHAR) {
-			if(StringUtils::startsWith(line, GENOME_START_TAG)) { /* a new section of genome */
-				istringstream iss(line);
-				readStartComment(iss, genome);
-				if(!mtg.hasGenome(genome.id)) {
-					cerr << "Error: GFF file contains genome " << genome.displayId() << " that is not found in the MetaGenome" << endl;
-					in.setstate(std::ios_base::badbit);
-					break;
-				}
-				debugLog << "Reading GFF annotation for " << genome.displayId() << endl;
-				read(in, genome); // read till next genome
-			}
-		}
-		else
-			continue;
-	}
-	return in;
+	return gffRecords;
 }
 
 ostream& MetaGenomeAnno::writeGFFHeader(ostream& out, const string& dbName, GFF::Version ver) {
@@ -244,10 +120,6 @@ ostream& MetaGenomeAnno::writeStartComment(ostream& out, const Genome& genome) {
 ostream& MetaGenomeAnno::writeEndComment(ostream& out) {
 	out << GENOME_END_TAG << endl;
 	return out;
-}
-
-MetaGenomeAnno& MetaGenomeAnno::operator+=(const MetaGenomeAnno& other) {
-	return *this;
 }
 
 } /* namespace MSGseqTK */
