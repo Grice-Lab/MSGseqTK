@@ -107,6 +107,7 @@ public:
 
 	/**
 	 * forward extend this SMEM at current end
+	 * forward extension can be one pass the seq end, which guarenteed a null base
 	 * @return  updated SMEM
 	 */
 	SMEM& fwdExt() {
@@ -127,10 +128,11 @@ public:
 
 	/**
 	 * backward extend this SMEM at current start
+	 * backward extension can be one pass seq start, which will be a null
 	 * @return  updated SMEM
 	 */
 	SMEM& backExt() {
-		fmdidx->backExt(fwdStart, revStart, size, seq->getBase(from - 1));
+		fmdidx->backExt(fwdStart, revStart, size, from > 0 ? seq->getBase(from - 1) : 0);
 		backEvaluate();
 		from--;
 		return *this;
@@ -289,8 +291,15 @@ public:
 	static SMEMS findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t& from, int64_t& to);
 
+	/** get from of an SMEMS */
+	static int64_t getFrom(const SMEMS& smems);
+
+	/** get to of an SMEMS */
+	static int64_t getTo(const SMEMS& smems);
+
 	/**
 	 * find all SMEMS of a given seq using step-wise forward/backward searches
+	 * @return unique list of valid SMEMS sorted by their coordinates
 	 */
 	static SMEMS findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			double maxEvalue = DEFAULT_MAX_EVALUE);
@@ -328,7 +337,7 @@ public:
 };
 
 inline ostream& operator<<(ostream& out, const SMEM& smem) {
-	out << smem.from << "-" << smem.to << ":" << smem.size << ":" << smem.fwdStart << ":" << smem.revStart << ":" << smem.logP << std::endl;
+	out << smem.from << "-" << smem.to << ":" << smem.size << ":" << smem.fwdStart << ":" << smem.revStart << ":" << smem.logP;
 	return out;
 }
 

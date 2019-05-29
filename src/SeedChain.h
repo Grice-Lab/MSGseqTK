@@ -95,7 +95,7 @@ public:
 
 	/** test whether one chain containing another */
 	static bool containing(const SeedChain& lhs, const SeedChain& rhs) {
-		return  lhs.getFrom() <= rhs.getFrom() && lhs.getTo() >= rhs.getTo() &&
+		return  lhs.getTid() == rhs.getTid() &&
 				lhs.getStart() <= rhs.getStart() && lhs.getEnd() >= rhs.getEnd();
 	}
 

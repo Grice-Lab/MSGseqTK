@@ -5,6 +5,7 @@
  *      Author: zhengqi
  */
 #include <cassert>
+#include <unordered_set>
 #include "MSGseqTKConst.h"
 #include "SMEM.h"
 
@@ -75,46 +76,43 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	SMEM smem(seq, mtg, fmdidx, from, from + 1, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
 	SMEM smem0;
 	/* forward extension */
-	for(smem0 = smem; smem0.to <= L; smem0 = smem) {
-		if(smem.to == L) { // end found
-			curr.push_back(smem);
-			to = L;
-			break;
-		}
+	for(smem0 = smem; smem.size > 0; smem0 = smem) {
 		smem.fwdExt();
 		if(smem.size != smem0.size) // a different BD interval found
 			curr.push_back(smem0);
-		if(smem.size == 0) {
-			to = smem0.to;
-			break;
-		}
 	}
-	std::reverse(curr.begin(), curr.end()); // put longest SMEM first
-	if(from == 0)
-		return curr;
+	to = getTo(curr); // update to
 
-	/* backward extension */
-	std::swap(curr, prev);
-	for(SMEM& smem : prev) { // use copies of original SMEM
-		for(smem0 = smem; smem.from >= 0; smem0 = smem) {
-			if(smem.from == 0) {
-				curr.push_back(smem);
-				from = 0;
-				break;
-			}
-			smem.backExt();
-			if(smem.size != smem0.size) // a different found
-				curr.push_back(smem0);
-			if(smem.size == 0) { // failed
-				from = std::min(from, smem0.from);
-				break;
+	/* backward extension, if necessary */
+	if(from > 0) {
+		std::swap(curr, prev);
+		for(SMEM& smem : prev) {
+			for(smem0 = smem; smem.size > 0; smem0 = smem) {
+				smem.backExt();
+				if(smem.size != smem0.size) // a different found
+					curr.push_back(smem0);
 			}
 		}
+		from = getFrom(curr); // update from
+		/* sort and get unique after backward extension */
+		std::sort(curr.begin(), curr.end());
+		curr.erase(std::unique(curr.begin(), curr.end()), curr.end());
 	}
-	/* get unique SMEM, since backward extension could generate duplicate ones */
-	std::sort(curr.begin(), curr.end()); // sort
-	curr.erase(std::unique(curr.begin(), curr.end())); // remove-unique
 	return curr;
+}
+
+int64_t SMEMS::getFrom(const SMEMS& smems) {
+	int64_t from = INT64_MAX;
+	for(const SMEM& smem : smems)
+		from = std::min(from, smem.getFrom());
+	return from;
+}
+
+int64_t SMEMS::getTo(const SMEMS& smems) {
+	int64_t to = INT64_MIN;
+	for(const SMEM& smem : smems)
+		to = std::max(to, smem.getTo());
+	return to;
 }
 
 SMEMS SMEMS::findSMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
@@ -163,14 +161,6 @@ SeedList SMEM::getSeeds() const {
 			int64_t start = mtg->getLoc(tid, bdStart);
 			assert(tid == mtg->getTid(bdStart + length()));
 			if(mtg->getStrand(tid, bdStart) == GLoc::FWD) { // always only search loc on fwd tStrand
-//				std::cerr << "fwd id: " << seq->getName() << " N: " << N << " i: " << i << " tid: " << tid << " chrLoc: " << mtg->getChromLoc(tid) << " chrBDLoc: " << mtg->getChromBDLoc(tid) <<
-//						" from: " << from << " to: " << to << " seqLen: " << seq->length() <<
-//						" bdStart: " << bdStart << " bdEnd: " << bdStart + length() <<
-//						" start: " << start << " end: " << start + length() << " tLen: " << mtg->getSeq(tid).length() << std::endl;
-//				DNAseq q = seq->getSeq().substr(from, length());
-//				DNAseq t = mtg->getSeq(tid).substr(start, length());
-//				std::cerr << q << std::endl << t << std::endl;
-//				assert(q == t);
 				seeds.push_back(SeedPair(from, start, length(), tid, GLoc::FWD, loglik()));
 			}
 		}
@@ -180,14 +170,6 @@ SeedList SMEM::getSeeds() const {
 			int64_t start = mtg->getLoc(tid, bdStart);
 			if(mtg->getStrand(tid, bdStart) == GLoc::FWD) { // always only search loc on fwd tStrand
 				assert(tid == mtg->getTid(bdStart + length()));
-//				std::cerr << "rev id: " << seq->getName() << " N: " << N << " i: " << i << " tid: " << tid << " chrLoc: " << mtg->getChromLoc(tid) << " chrBDLoc: " << mtg->getChromBDLoc(tid) <<
-//						" from: " << from << " to: " << to << " seqLen: " << seq->length() <<
-//						" bdStart: " << bdStart << " bdEnd: " << bdStart + length() <<
-//						" start: " << start << " end: " << start + length() << " tLen: " << mtg->getSeq().length() << std::endl;
-//				DNAseq q = dna::revcom(seq->getSeq().substr(from, length()));
-//				DNAseq t = mtg->getSeq(tid).substr(start, length());
-//				std::cerr << q << std::endl << t << std::endl;
-//				assert(q == t);
 				seeds.push_back(SeedPair(seq->length() - to, start, length(), tid, GLoc::REV, loglik()));
 			}
 		}
