@@ -73,6 +73,8 @@ void printUsage(const string& progName) {
 		 << "READ-FILE  FILE                  : single-end/forward MSG read file" << ZLIB_SUPPORT << endl
 		 << "MATE-FILE  FILE                  : mate/reverse MSG read file" << ZLIB_SUPPORT << endl
 		 << "Options:    -o  FILE             : BAM or SAM output file" << endl
+		 << "            --global  FLAG       : use Needleman-Wunsch global DP algorithm, no clipping allowed [" << (Alignment::DEFAULT_MODE == Alignment::GLOBAL ? "on" : "off") << endl
+		 << "            --local  FLAG        : use Smith-Waterman local DP algorithm, ends may be soft-clipped" << (Alignment::DEFAULT_MODE == Alignment::LOCAL ? "on" : "off") << endl
 		 << "            --match  DBL         : score for matches [" << ScoreScheme::DEFAULT_MATCH_SCORE << "]" << endl
 		 << "            --mis-match  DBL     : penalty for mis-matches [" << ScoreScheme::DEFAULT_MISMATCH_PENALTY << "]" << endl
 		 << "            --gap-open  DBL      : penalty for (affine) gap opening [" << ScoreScheme::DEFAULT_GAP_OPEN_PENALTY << "]" << endl
@@ -104,7 +106,7 @@ void printUsage(const string& progName) {
  */
 int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 		SeqIO& seqI, SAMfile& out, double maxEvalue,
-		double bestFrac, uint32_t maxReport);
+		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport);
 
 /**
  * main function to process paired-ended reads
@@ -112,7 +114,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
  */
 int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 		SeqIO& fwdI, SeqIO& revI, SAMfile& out, double maxEvalue,
-		double bestFrac, uint32_t maxReport,
+		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap);
 
@@ -143,6 +145,7 @@ int main(int argc, char* argv[]) {
 	string db;
 	boost::iostreams::filtering_istream fwdIn, revIn;
 
+	Alignment::MODE alnMode = Alignment::DEFAULT_MODE;
 	bool isPaired = false;
 	double maxEvalue = SMEMS::DEFAULT_MAX_EVALUE;
 //	double maxIndelRate = DEFAULT_INDEL_RATE;
@@ -190,6 +193,12 @@ int main(int argc, char* argv[]) {
 
 	if(cmdOpts.hasOpt("-o"))
 		outFn = cmdOpts.getOpt("-o");
+
+	if(cmdOpts.hasOpt("--global"))
+		alnMode = Alignment::GLOBAL;
+
+	if(cmdOpts.hasOpt("--local"))
+		alnMode = Alignment::LOCAL;
 
 	if(cmdOpts.hasOpt("--match")) {
 		double matchScore = ::atof(cmdOpts.getOptStr("--match"));
@@ -422,9 +431,9 @@ int main(int argc, char* argv[]) {
 
 	/* main processing */
 	if(!isPaired)
-		return main_SE(mtg, fmdidx, fwdI, out, maxEvalue, bestFrac, maxReport);
+		return main_SE(mtg, fmdidx, fwdI, out, maxEvalue, alnMode, bestFrac, maxReport);
 	else
-		return main_PE(mtg, fmdidx, fwdI, revI, out, maxEvalue, bestFrac, maxReport,
+		return main_PE(mtg, fmdidx, fwdI, revI, out, maxEvalue, alnMode, bestFrac, maxReport,
 				minIns, maxIns, noMixed, noDiscordant, noTailOver, noContain, noOverlap);
 }
 
@@ -493,7 +502,7 @@ int output(const PrimarySeq& fwdRead, const PrimarySeq& revRead, SAMfile& out) {
 
 int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 		SeqIO& seqI, SAMfile& out, double maxEvalue,
-		double bestFrac, uint32_t maxReport) {
+		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport) {
 	infoLog << "Aligning input reads" << endl;
 	/* search MEMS for each read */
 #pragma omp parallel
@@ -522,7 +531,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 						/* filter chains */
 						SeedChain::filter(chains);
 						/* get alignments from SeedMatchList */
-						ALIGN_LIST alnList = Alignment::buildAlignments(&read, &rcRead, mtg, &ss, chains);
+						ALIGN_LIST alnList = Alignment::buildAlignments(&read, &rcRead, mtg, &ss, chains, alnMode);
 						/* filter alignments */
 						Alignment::filter(alnList, bestFrac);
 						/* evaluate alignments */
@@ -544,7 +553,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 
 int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 		SeqIO& fwdI, SeqIO& revI, SAMfile& out, double maxEvalue,
-		double bestFrac, uint32_t maxReport,
+		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap) {
 	infoLog << "Aligning paired-end reads" << endl;
@@ -589,8 +598,8 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 						SeedChain::filter(fwdChains);
 						SeedChain::filter(revChains);
 						/* get alignments */
-						ALIGN_LIST fwdAlnList = Alignment::buildAlignments(&fwdRead, &rcFwdRead, mtg, &ss, fwdChains);
-						ALIGN_LIST revAlnList = Alignment::buildAlignments(&revRead, &rcRevRead, mtg, &ss, revChains);
+						ALIGN_LIST fwdAlnList = Alignment::buildAlignments(&fwdRead, &rcFwdRead, mtg, &ss, fwdChains, alnMode);
+						ALIGN_LIST revAlnList = Alignment::buildAlignments(&revRead, &rcRevRead, mtg, &ss, revChains, alnMode);
 						/* filter alignments */
 						Alignment::filter(fwdAlnList, bestFrac);
 						Alignment::filter(revAlnList, bestFrac);

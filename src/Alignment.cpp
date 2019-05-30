@@ -52,24 +52,42 @@ Alignment& Alignment::calculateScores(const SeedChain& chain) {
 	/* DP at 3', if any */
 	if(chain.getTo() < qTo && chain.getEnd() < tEnd)
 		calculateScores(chain.getTo(), qTo, chain.getEnd(), tEnd);
-	alnScore = M.maxCoeff(&alnTo, &alnEnd); // determine aign 3' and score simultaneously
-	alnTo += qFrom;
-	alnEnd += tStart;
-	assert(alnTo > 0 && alnEnd > 0);
 	return *this;
 }
 
-Alignment& Alignment::backTrace() {
+Alignment& Alignment::backTraceNW() {
+	/* global alignment for read may exist at match or insertion state */
+	alnTo = M.rows() - 1; // global alignment always exist from last column
+	alnScore = infV;
+	alnEnd = 0;
+	uint32_t s = BAM_CMATCH; // alignment of affine DP always end and start at Match states
+	/* determine the exist row and state */
+	for(int64_t j = 1; j < M.cols(); ++j) {
+		if(M(alnTo, j) > alnScore) {
+			alnScore = M(alnTo, j);
+			alnEnd = j;
+			s = BAM_CMATCH;
+		}
+		if(I(alnTo, j) > alnScore) {
+			alnScore = I(alnTo, j);
+			alnEnd = j;
+			s = BAM_CINS;
+		}
+	}
+
+	alnTo += qFrom;
+	alnEnd += tStart;
+	assert(alnTo > 0 && alnEnd > 0);
 	assert(alnScore != infV);
+	const double o = ss->getGapOPenalty();
+	const double e = ss->getGapEPenalty();
+
 	alnPath.clear();
 	alnPath.reserve(getQLen() + getTLen()); /* most time enough for back-trace */
 	int64_t i = alnTo - qFrom; // 1-based
 	int64_t j = alnEnd - tStart; // 1-based
-	uint32_t s = BAM_CMATCH; // local alignment of affine DP always end and start at Match states
 
-	while(i >= 0 && j >= 0) {
-		if(s == BAM_CMATCH && M(i,j) == 0)
-			break;
+	while(i > 0) {
 		alnPath.push_back(s);
 		switch(s) {
 		case BAM_CMATCH:
@@ -78,11 +96,56 @@ Alignment& Alignment::backTrace() {
 			j--;
 			break;
 		case BAM_CINS:
-			s = insMax(M(i-1,j) - ss->openGapPenalty(), I(i-1,j) - ss->extGapPenalty());
+			s = insMax(M(i-1,j) - o - e, I(i-1,j) - e);
 			i--;
 			break;
 		case BAM_CDEL:
-			s = delMax(M(i,j-1) - ss->openGapPenalty(), D(i,j-1) - ss->extGapPenalty());
+			s = delMax(M(i,j-1) - o - e, D(i,j-1) - e);
+			j--;
+			break;
+		default:
+			break;
+		}
+	}
+	alnFrom = qFrom + i;
+	alnStart = tStart + j;
+	assert(!alnPath.empty() &&
+			(alnPath.front() == BAM_CMATCH || alnPath.front() == BAM_CINS) &&
+			(alnPath.back() == BAM_CMATCH || alnPath.back() == BAM_CINS));
+	std::reverse(alnPath.begin(), alnPath.end()); // reverse alnPath
+	return *this;
+}
+
+Alignment& Alignment::backTraceSW() {
+	/* determine end bundaries by finding best index */
+	alnScore = M.maxCoeff(&alnTo, &alnEnd); // determine aign 3' and score simultaneously
+	alnTo += qFrom;
+	alnEnd += tStart;
+	assert(alnTo > 0 && alnEnd > 0);
+	assert(alnScore != infV);
+
+	alnPath.clear();
+	alnPath.reserve(getQLen() + getTLen()); /* most time enough for back-trace */
+	int64_t i = alnTo - qFrom; // 1-based
+	int64_t j = alnEnd - tStart; // 1-based
+	uint32_t s = BAM_CMATCH; // alignment of affine DP always end and start at Match states
+	const double o = ss->getGapOPenalty();
+	const double e = ss->getGapEPenalty();
+
+	while(s != BAM_CMATCH || M(i, j) > 0) {
+		alnPath.push_back(s);
+		switch(s) {
+		case BAM_CMATCH:
+			s = matchMax(M(i-1,j-1), I(i-1,j-1), D(i-1,j-1));
+			i--;
+			j--;
+			break;
+		case BAM_CINS:
+			s = insMax(M(i-1,j) - o - e, I(i-1,j) - e);
+			i--;
+			break;
+		case BAM_CDEL:
+			s = delMax(M(i,j-1) - o - e, D(i,j-1) - e);
 			j--;
 			break;
 		default:
@@ -238,11 +301,11 @@ int32_t Alignment::mdTag2alnQLen(const string& mdTag) {
 }
 
 ALIGN_LIST Alignment::buildAlignments(const PrimarySeq* read, const PrimarySeq* rcRead, const MetaGenome& mtg,
-		const ScoreScheme* ss, const ChainList& chains) {
+		const ScoreScheme* ss, const ChainList& chains, MODE alnMode) {
 	ALIGN_LIST alnList;
 	alnList.reserve(chains.size());
 	for(const SeedChain& chain : chains)
-		alnList.push_back(Alignment(read, rcRead, mtg, ss, chain).calculateScores(chain).backTrace().clearScores());
+		alnList.push_back(Alignment(read, rcRead, mtg, ss, chain, alnMode).calculateScores(chain).backTrace().clearScores());
 	return alnList;
 }
 

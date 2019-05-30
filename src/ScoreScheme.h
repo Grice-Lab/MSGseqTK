@@ -82,7 +82,7 @@ public:
 		if(length == 0)
 			return 0;
 		else
-			return gapOPenalty + (gapEPenalty - 1) * length;
+			return gapOPenalty + gapEPenalty * length;
 	}
 
 	/** get affine gap penalty of opening a gap */

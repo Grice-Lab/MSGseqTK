@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
 	cout << "target1: " << target1 << endl;
 	/* build an alignment */
 	Alignment aln1(&r1, &rc1, &target1, 0, GLoc::FWD,
-			0, r1.length(), 0, target1.length(), &ss);
+			0, r1.length(), 0, target1.length(), &ss, Alignment::LOCAL);
 	cout << "Alignment constructed" << endl;
 	aln1.calculateScores();
 	cout << "aln1 score calculated, score: " << aln1.getScore() << endl;
@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
 	cout << "target2: " << target2 << endl;
 	/* build an alignment */
 	Alignment aln2(&r2, &rc2, &target2, 0, GLoc::FWD,
-			0, r2.length(), 0, target2.length(), &ss);
+			0, r2.length(), 0, target2.length(), &ss, Alignment::LOCAL);
 	cout << "Alignment constructed" << endl;
 	aln2.calculateScores();
 	cout << "aln2 score calculated, score: " << aln2.getScore() << endl;
@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
 	cout << "target3: " << target3 << endl;
 	/* build an alignment */
 	Alignment aln3(&r3, &rc3, &target3, 0, GLoc::FWD,
-			0, r3.length(), 0, target3.length(), &ss);
+			0, r3.length(), 0, target3.length(), &ss, Alignment::LOCAL);
 	cout << "Alignment constructed" << endl;
 	cout << "Alignment constructed" << endl;
 	aln3.calculateScores();

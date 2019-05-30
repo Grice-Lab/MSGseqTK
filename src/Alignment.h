@@ -56,6 +56,8 @@ public:
 	typedef uint32_t CIGAR_OP_TYPE;
 	typedef basic_string<uint32_t> state_str;
 
+	enum MODE { GLOBAL, LOCAL };
+
 	/* constructors */
 	/** default constructor */
 	Alignment() = default;
@@ -64,10 +66,10 @@ public:
 	Alignment(const PrimarySeq* read, const PrimarySeq* rcRead, const DNAseq* target,
 			int32_t tid, GLoc::STRAND qStrand,
 			int64_t qFrom, int64_t qTo, int64_t tStart, int64_t tEnd,
-			const ScoreScheme* ss, uint8_t mapQ = INVALID_MAP_Q)
+			const ScoreScheme* ss, MODE alnMode = DEFAULT_MODE, uint8_t mapQ = INVALID_MAP_Q)
 	: read(read), rcRead(rcRead), tid(tid), target(target), qStrand(qStrand),
 	  qFrom(qFrom), qTo(qTo), tStart(tStart), tEnd(tEnd),
-	  ss(ss), mapQ(mapQ)
+	  ss(ss), alnMode(alnMode), mapQ(mapQ)
 	{
 		assert(qFrom == 0 && qTo == read->length()); // cannot accept hard-clipped query
 		init();
@@ -75,9 +77,9 @@ public:
 
 	/** construct an Alignment between a query, database and a SeedChain */
 	Alignment(const PrimarySeq* read, const PrimarySeq* rcRead, const MetaGenome& mtg,
-			const ScoreScheme* ss, const SeedChain& chain, uint8_t mapQ = INVALID_MAP_Q)
+			const ScoreScheme* ss, const SeedChain& chain, MODE alnMode = DEFAULT_MODE, uint8_t mapQ = INVALID_MAP_Q)
 	: read(read), rcRead(rcRead), tid(chain.getTid()), target(&mtg.getSeq(tid)), qStrand(chain.getStrand()),
-	  qFrom(0), qTo(read->length()), ss(ss), mapQ(mapQ)
+	  qFrom(0), qTo(read->length()), ss(ss), alnMode(alnMode), mapQ(mapQ)
 	{
 		init(mtg.getChromLength(tid), chain);
 	}
@@ -171,7 +173,15 @@ public:
 	}
 
 	/** init Alignment with current values */
-	Alignment& init();
+	Alignment& init() {
+		return alnMode == GLOBAL ? initNW() : initSW();
+	}
+
+	/** init Alignment for Needleman-Wunsch global alignment */
+	Alignment& initNW();
+
+	/** init Alignment for Smith-Waterman local alignment */
+	Alignment& initSW();
 
 	/** init Alignment with known chrom length and SeedChain */
 	Alignment& init(int64_t chrLen, const SeedChain& chain);
@@ -184,27 +194,54 @@ public:
 	 * @param from, start  0-based
 	 * @param to, end  1-based
 	 */
-	void calculateScores(int64_t from, int64_t to, int64_t start, int64_t end);
+	void calculateScores(int64_t from, int64_t to, int64_t start, int64_t end) {
+		if(alnMode == GLOBAL)
+			calculateScoresNW(from, to, start, end);
+		else
+			calculateScoresSW(from, to, start, end);
+	}
+
+	/**
+	 * calculate all scores in a given region using Dynamic-Programming
+	 * using Needleman-Wunsch global algorithm
+	 * @param from, start  0-based
+	 * @param to, end  1-based
+	 */
+	void calculateScoresNW(int64_t from, int64_t to, int64_t start, int64_t end);
+
+	/**
+	 * calculate all scores in a given region using Dynamic-Programming
+	 * using Smith-Waterman local algorithm
+	 * @param from, start  0-based
+	 * @param to, end  1-based
+	 */
+	void calculateScoresSW(int64_t from, int64_t to, int64_t start, int64_t end);
 
 	/**
 	 * calculate scores in a SeedPair region, where only M scores on the diagnal are calculated
 	 */
 	void calculateScores(const SeedPair& pair);
 
+
 	/** calculate all scores in the entire region using Dynamic-Programming, return the alnScore as the maximum score found */
 	Alignment& calculateScores() {
 		calculateScores(qFrom, qTo, 0, getTLen());
-		alnScore = M.maxCoeff(&alnTo, &alnEnd); // determine aign 3' and score simultaneously
-		alnTo += qFrom;
-		alnEnd += tStart;
 		return *this;
 	}
 
 	/** calculate all scores given a SeedChain restricts using Dynamic-Programming, return the alnScore as the maximum score found */
 	Alignment& calculateScores(const SeedChain& chain);
 
-	/** backtrace alnPath */
-	Alignment& backTrace();
+	/** backtrace */
+	Alignment& backTrace() {
+		return alnMode == GLOBAL ? backTraceNW() : backTraceSW();
+	}
+
+	/** backtrace for Needleman-Wunsch global alignment */
+	Alignment& backTraceNW();
+
+	/** backtrace for Smith-Waterman local alignment */
+	Alignment& backTraceSW();
 
 	/** get qLen */
 	int32_t getQLen() const {
@@ -312,6 +349,7 @@ private:
 	int64_t tEnd = 0; // 1-based
 
 	const ScoreScheme* ss = nullptr;
+	MODE alnMode = DEFAULT_MODE;
 	uint8_t mapQ = INVALID_MAP_Q;
 
 	MatrixXd M; // (qLen + 1) * (tLen + 1) DP-matrix to store scores that x[i] is aligned to y[j]
@@ -331,6 +369,7 @@ private:
 
 public:
 	/* static fileds */
+	static const MODE DEFAULT_MODE = GLOBAL;
 	static const uint8_t INVALID_MAP_Q = 0xff;
 	static const uint32_t MAX_ALIGN = UINT16_MAX;
 	static const double MAX_MISMATCH_RATE;
@@ -356,7 +395,7 @@ public:
 
 	/** get calculated and cleaned alignments from database and a ChainList */
 	static ALIGN_LIST buildAlignments(const PrimarySeq* read, const PrimarySeq* rcRead, const MetaGenome& mtg,
-			const ScoreScheme* ss, const ChainList& chains);
+			const ScoreScheme* ss, const ChainList& chains, MODE alnMode = DEFAULT_MODE);
 
 	/** filter candidate list of Alignments using alnScore */
 	static ALIGN_LIST& filter(ALIGN_LIST& alnList, double bestFrac);
@@ -533,8 +572,21 @@ inline Alignment::CIGAR_OP_TYPE Alignment::delMax(double match, double del) {
 	return match > del ? BAM_CMATCH : BAM_CDEL;
 }
 
-inline Alignment& Alignment::init() {
-//	assert(isInitiated());
+inline Alignment& Alignment::initNW() {
+	M = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
+	I = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
+	D = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
+	M.row(0).setZero();
+	I.row(0).setZero();
+	const double o = ss->getGapOPenalty();
+	const double e = ss->getGapEPenalty();
+	/* init first column */
+	for(MatrixXd::Index i = 1; i < M.rows(); ++i)
+		M(i, 0) = I(i, 0) = - (o + e * i);
+	return *this;
+}
+
+inline Alignment& Alignment::initSW() {
 	M = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
 	I = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
 	D = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
@@ -550,13 +602,45 @@ inline Alignment& Alignment::clearScores() {
 	return *this;
 }
 
-inline void Alignment::calculateScores(int64_t from, int64_t to, int64_t start, int64_t end) {
+inline void Alignment::calculateScoresNW(int64_t from, int64_t to, int64_t start, int64_t end) {
 	assert(isInitiated());
 	assert(qFrom <= from && to <= qTo);
 	assert(tStart <= start && end <= tEnd);
 
 	double o = -ss->openGapPenalty();
 	double e = -ss->extGapPenalty();
+
+	const DNAseq& query = qStrand == GLoc::FWD ? read->getSeq() : rcRead->getSeq();
+	for(int64_t q = from; q <= to && q < qTo; ++q) {
+		int32_t i = q - qFrom + 1; // relative to score matrices
+		for(int64_t t = start; t <= end && t < tEnd; ++t) {
+			int32_t j = t - tStart + 1; // relative to score matrices
+			double s = ss->getScore(query[q], (*target)[t]);
+			M(i,j) = std::max({
+				M(i-1,j-1) + s,
+				D(i-1,j-1) + s,
+				I(i-1,j-1) + s
+			});
+			I(i,j) = std::max({
+				M(i-1,j) + o,
+				I(i-1,j) + e
+			});
+			D(i,j) = std::max({
+				M(i,j-1) + o,
+				D(i,j-1) + e
+			});
+		}
+	}
+}
+
+inline void Alignment::calculateScoresSW(int64_t from, int64_t to, int64_t start, int64_t end) {
+	assert(isInitiated());
+	assert(qFrom <= from && to <= qTo);
+	assert(tStart <= start && end <= tEnd);
+
+	double o = -ss->openGapPenalty();
+	double e = -ss->extGapPenalty();
+
 	const DNAseq& query = qStrand == GLoc::FWD ? read->getSeq() : rcRead->getSeq();
 	for(int64_t q = from; q <= to && q < qTo; ++q) {
 		int32_t i = q - qFrom + 1; // relative to score matrices
