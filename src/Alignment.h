@@ -10,6 +10,7 @@
 
 #define _USE_MATH_DEFINES
 #define EIGEN_NO_DEBUG // disable eigen assertions, use one-time assertion outside loops
+#define EIGEN_DONT_PARALLELIZE // disable eigen3 parallization, using per-read level multi-threading instead
 
 #include <string>
 #include <Eigen/Dense>
@@ -577,12 +578,9 @@ inline Alignment& Alignment::initNW() {
 	I = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
 	D = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
 	M.row(0).setZero();
-	I.row(0).setZero();
-	const double o = ss->getGapOPenalty();
-	const double e = ss->getGapEPenalty();
-	/* init first column */
-	for(MatrixXd::Index i = 1; i < M.rows(); ++i)
-		M(i, 0) = I(i, 0) = - (o + e * i);
+	/* init first column of I */
+	for(MatrixXd::Index i = 0; i < I.rows(); ++i)
+		I(i, 0) = - ss->gapPenalty(i);
 	return *this;
 }
 

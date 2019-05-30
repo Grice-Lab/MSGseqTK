@@ -61,6 +61,7 @@ Alignment& Alignment::backTraceNW() {
 	alnScore = infV;
 	alnEnd = 0;
 	uint32_t s = BAM_CMATCH; // alignment of affine DP always end and start at Match states
+
 	/* determine the exist row and state */
 	for(int64_t j = 1; j < M.cols(); ++j) {
 		if(M(alnTo, j) > alnScore) {
