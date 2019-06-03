@@ -490,7 +490,7 @@ public:
 		BAM fwdBam = fwdAln->exportBAM();
 		// update paired-end info
 		fwdBam.setMapQ(mapQ);
-		fwdBam.setISize(isize);
+		fwdBam.setISize(fwdAln->alnStart < revAln->alnStart ? isize : -isize);
 		fwdBam.setFlag(getFwdFlag());
 		return fwdBam;
 	}
@@ -500,19 +500,19 @@ public:
 		BAM revBam = revAln->exportBAM();
 		// update paired-end info
 		revBam.setMapQ(mapQ);
-		revBam.setISize(isize);
+		revBam.setISize(fwdAln->alnStart < revAln->alnStart ? -isize : isize);
 		revBam.setFlag(getRevFlag());
 		return revBam;
 	}
 
 	/** get fwd flag */
 	uint16_t getFwdFlag() const {
-		return fwdAln->getFlag() | BAM_FPROPER_PAIR | BAM_FREAD1;
+		return fwdAln->getFlag() | BAM_FPAIRED | BAM_FPROPER_PAIR | BAM_FREAD1;
 	}
 
 	/** get rev flag */
 	uint16_t getRevFlag() const {
-		return revAln->getFlag() | BAM_FPROPER_PAIR | BAM_FREAD2;
+		return revAln->getFlag() | BAM_FPAIRED | BAM_FPROPER_PAIR | BAM_FREAD2;
 	}
 
 	/* member fields */

@@ -14,6 +14,7 @@
 #include <cassert>
 #include <utility>
 #include <algorithm>
+#include <set>
 #include "SeedPair.h"
 #include "PrimarySeq.h"
 #include "FMDIndex.h"
@@ -24,6 +25,7 @@ namespace MSGseqTK {
 
 using std::vector;
 using std::pair;
+using std::set;
 
 /**
  * A Super-Maximum Exact Match class representing a
@@ -207,7 +209,7 @@ public:
 	static const size_t MAX_NSEEDS = 256;
 	static const size_t MAX_NCHAINS = 256;
 
-	friend class SMEMS;
+	friend class SMEM_LIST;
 
 	/* non-member functions */
 	/** formated output */
@@ -218,13 +220,15 @@ public:
 	friend bool operator==(const SMEM& lhs, const SMEM& rhs);
 };
 
-class SMEMS;
-typedef pair<SMEMS, SMEMS> SMEMS_PE;
+class SMEM_LIST;
+typedef set<SMEM> SMEM_SET;
+typedef pair<SMEM_LIST, SMEM_LIST> SMEM_LIST_PE;
+typedef set<SMEM> SMEM_SET;
 
 /**
- * a SMEMS is a list SMEM with additional methods
+ * a SMEM_LIST is a list SMEM with additional methods
  */
-class SMEMS : public vector<SMEM> {
+class SMEM_LIST : public vector<SMEM> {
 public:
 	/* member methods */
 	/** get total loglik */
@@ -240,35 +244,51 @@ public:
 		return front().fmdidx->length() * pvalue();
 	}
 
-	/** get best (min) loglik */
-	double bestLoglik() const;
-
-	/** get best (min) pvalue */
-	double bestPvalue() const {
-		return std::exp(bestLoglik());
+	/** get best MEM (smallest loglik) */
+	const SMEM& getBest() const {
+		assert(!empty());
+		return *std::min_element(begin(), end(),
+				[](const SMEM& lhs, const SMEM& rhs) { return lhs.loglik() < rhs.loglik(); });
 	}
 
-	/** get best (min) evalue */
-	double bestEvalue() const {
-		return front().fmdidx->length() * bestPvalue();
+	/** get worst MEM (largest loglik) */
+	const SMEM& getWorst() const {
+		assert(!empty());
+		return *std::max_element(begin(), end(),
+				[](const SMEM& lhs, const SMEM& rhs) { return lhs.loglik() < rhs.loglik(); });
 	}
 
 	/**
-	 * filter this SMEMS list by evalue
+	 * filter this SMEMS list by evalue and size
 	 */
-	SMEMS& filter(double maxEvalue = DEFAULT_MAX_EVALUE) {
+	SMEM_LIST& filter(double maxEvalue = MAX_EVALUE, int64_t minSize = MIN_SIZE) {
 		erase(std::remove_if(begin(), end(),
-				[=](const SMEM& mem) { return mem.evalue() > maxEvalue; }),
+				[=](const SMEM& mem) { return !(mem.evalue() <= maxEvalue && mem.size >= MIN_SIZE); }),
 				end());
 		return *this;
 	}
+
+	/**
+	 * sort and get unique SMEMS of this SMEM_LIST
+	 */
+	SMEM_LIST& sort() {
+		std::sort(begin(), end());
+		erase(std::unique(begin(), end()), end());
+		return *this;
+	}
+
+	/** get from of an SMEM_LIST */
+	int64_t getFrom(bool isSorted = true) const;
+
+	/** get to of an SMEM_LIST */
+	int64_t getTo(bool isSorted = true) const;
 
 	/* static methods */
 	/**
 	 * find longest SMEMS of a given seq using step-wise forward/backward searches with required evalue threshold
 	 */
-	static SMEMS findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			double maxEvalue = DEFAULT_MAX_EVALUE, GLoc::STRAND dir = GLoc::FWD) {
+	static SMEM_LIST findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			double maxEvalue = MAX_EVALUE, GLoc::STRAND dir = GLoc::FWD) {
 		return dir == GLoc::FWD ? findSMEMSfwd(seq, mtg, fmdidx, maxEvalue) :
 				findSMEMSrev(seq, mtg, fmdidx, maxEvalue);
 	}
@@ -276,64 +296,70 @@ public:
 	/**
 	 * find longest SMEMS of a given seq using step-wise backward searches with required evalue threshold
 	 */
-	static SMEMS findSMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			double maxEvalue = DEFAULT_MAX_EVALUE);
+	static SMEM_LIST findSMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			double maxEvalue = MAX_EVALUE);
 
 	/**
 	 * find longest SMEMS of a given seq using step-wise forward searches with required evalue threshold
 	 */
-	static SMEMS findSMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			double maxEvalue = DEFAULT_MAX_EVALUE);
+	static SMEM_LIST findSMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			double maxEvalue = MAX_EVALUE);
 
 	/**
 	 * find all SMEMS of a given seq starting at given position relative to the seq by forward/backward extensions
+	 * @return  a SMEM_LIST overlappling position from that may contain duplicated copies
 	 */
-	static SMEMS findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+	static SMEM_LIST findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t& from, int64_t& to);
 
-	/** get from of an SMEMS */
-	static int64_t getFrom(const SMEMS& smems);
-
-	/** get to of an SMEMS */
-	static int64_t getTo(const SMEMS& smems);
-
 	/**
-	 * find all SMEMS of a given seq using step-wise forward/backward searches
+	 * find all SMEMS of a given seq using forward/backward searches
 	 * @return unique list of valid SMEMS sorted by their coordinates
 	 */
-	static SMEMS findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			double maxEvalue = DEFAULT_MAX_EVALUE);
+	static SMEM_LIST findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			double maxEvalue = MAX_EVALUE);
 
 	/**
 	 * get a SeedList of a given seq using step-wise forward/backward searches
 	 * seeds will be filtered and sorted
 	 */
 	static SeedList findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			double maxEvalue = DEFAULT_MAX_EVALUE);
+			double maxEvalue = MAX_EVALUE);
 
 	/**
 	 * find SMEMS_PE for paired-end reads
 	 */
-	static SMEMS_PE findSMEMS_PE(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
-			const MetaGenome* mtg, const FMDIndex* fmdidx, double maxEvalue = DEFAULT_MAX_EVALUE) {
-		return SMEMS_PE(findSMEMS(fwdSeq, mtg, fmdidx, maxEvalue), findSMEMS(revSeq, mtg, fmdidx, maxEvalue));
+	static SMEM_LIST_PE findSMEMS_PE(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
+			const MetaGenome* mtg, const FMDIndex* fmdidx, double maxEvalue = MAX_EVALUE) {
+		return SMEM_LIST_PE(findSMEMS(fwdSeq, mtg, fmdidx, maxEvalue), findSMEMS(revSeq, mtg, fmdidx, maxEvalue));
 	}
 
 	/**
 	 * find SeedListPE for pair-end reads
 	 */
 	static SeedListPE findSeedsPE(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
-			 const MetaGenome* mtg, const FMDIndex* fmdidx, double maxEvalue = DEFAULT_MAX_EVALUE) {
+			 const MetaGenome* mtg, const FMDIndex* fmdidx, double maxEvalue = MAX_EVALUE) {
 		return SeedListPE(findSeeds(fwdSeq, mtg, fmdidx, maxEvalue), findSeeds(revSeq, mtg, fmdidx, maxEvalue));
 	}
 
 	/** get loglik for SMEMS_PE */
-	static double loglik(const SMEMS_PE& smemsPE) {
+	static double loglik(const SMEM_LIST_PE& smemsPE) {
 		return smemsPE.first.loglik() + smemsPE.second.loglik();
 	}
 
+	/** append a new SMEM_LIST */
+	SMEM_LIST& operator+=(const SMEM_LIST& other) {
+		insert(end(), other.begin(), other.end());
+		return *this;
+	}
+
+	/** non-member operators */
+	friend SMEM_LIST operator+(const SMEM_LIST& lhs, const SMEM_LIST& rhs);
+
 	/* static fields */
-	static const double DEFAULT_MAX_EVALUE;
+	static const int64_t MIN_SIZE = 0; // MIN OCCURENCE of a significant SMEM
+	static const double MAX_EVALUE; // MAX EVALUTE for a significant SMEM
+	static const double RESEED_FACTOR; // max relative SMEM size to trigger re-seed search
 };
 
 inline ostream& operator<<(ostream& out, const SMEM& smem) {
@@ -349,7 +375,6 @@ inline bool operator<(const SMEM& lhs, const SMEM& rhs) {
 
 inline bool operator==(const SMEM& lhs, const SMEM& rhs) {
 	assert(lhs.seq == rhs.seq && lhs.mtg == rhs.mtg && lhs.fmdidx == rhs.fmdidx);
-	/* from and to determine all other values including size, fwdStart, revStart */
 	return lhs.from == rhs.from && lhs.to == rhs.to;
 }
 
@@ -367,6 +392,12 @@ inline bool operator>(const SMEM& lhs, const SMEM& rhs) {
 
 inline bool operator>=(const SMEM& lhs, const SMEM& rhs) {
 	return !(lhs < rhs);
+}
+
+inline SMEM_LIST operator+(const SMEM_LIST& lhs, const SMEM_LIST& rhs) {
+	SMEM_LIST smems(lhs);
+	smems += rhs;
+	return smems;
 }
 
 } /* namespace MSGseqTK */

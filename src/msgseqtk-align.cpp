@@ -81,7 +81,7 @@ void printUsage(const string& progName) {
 		 << "            --gap-ext  DBL       : penalty for (affine) gap extension [" << ScoreScheme::DEFAULT_GAP_EXT_PENALTY << "]" << endl
 //		 << "            --max-seeds  INT     : maximum # of seeds to check for a read/pair [" << Alignment::MAX_ALIGN << "]" << endl
 		 << "            -k/--max-report  INT : maximum loci to consider for a read/pair, set to 0 to report all candidate alignments [" << DEFAULT_MAX_REPORT << "]" << endl
-		 << "            -f--best-frac        : minimum score as a fraction of the highest alignment score of all candidates to consider for full evaluation [" << DEFAULT_BEST_FRAC << "]" << endl
+		 << "            -f/--best-frac        : minimum score as a fraction of the highest alignment score of all candidates to consider for full evaluation [" << DEFAULT_BEST_FRAC << "]" << endl
 		 << "Paired-end:" << endl
 		 << "            -I/--min-ins  INT    : minumum insert size [" << DEFAULT_MIN_INSERT << "]" << endl
 		 << "            -X/--max-ins  INT    : maximum insert size, 0 for no limit [" << DEFAULT_MAX_INSERT << "]" << endl
@@ -91,7 +91,7 @@ void printUsage(const string& progName) {
 		 << "            --no-contain  FLAG   : not concordant when one mate alignment contains other" << endl
 		 << "            --no-overlap  FLAG   : not concordant when mates overlap" << endl
 		 << "Other:" << endl
-		 << "            -e|--evalue  DBL     : maximum e-value to consider an MEM as significant [" << SMEMS::DEFAULT_MAX_EVALUE << "]" << endl
+		 << "            -e|--evalue  DBL     : maximum e-value to consider an MEM as significant [" << SMEM_LIST::MAX_EVALUE << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -147,7 +147,7 @@ int main(int argc, char* argv[]) {
 
 	Alignment::MODE alnMode = Alignment::DEFAULT_MODE;
 	bool isPaired = false;
-	double maxEvalue = SMEMS::DEFAULT_MAX_EVALUE;
+	double maxEvalue = SMEM_LIST::MAX_EVALUE;
 //	double maxIndelRate = DEFAULT_INDEL_RATE;
 	int nThreads = DEFAULT_NUM_THREADS;
 
@@ -244,6 +244,8 @@ int main(int argc, char* argv[]) {
 	if(cmdOpts.hasOpt("--max-report"))
 		maxReport = ::atoi(cmdOpts.getOptStr("--max-report"));
 
+	if(cmdOpts.hasOpt("-f"))
+		bestFrac = ::atof(cmdOpts.getOptStr("-f"));
 	if(cmdOpts.hasOpt("--best-frac"))
 		bestFrac = ::atof(cmdOpts.getOptStr("--best-frac"));
 
@@ -495,8 +497,8 @@ int output(const PrimarySeq& read, SAMfile& out) {
 }
 
 int output(const PrimarySeq& fwdRead, const PrimarySeq& revRead, SAMfile& out) {
-	out.write(BAM(fwdRead.getName(), fwdRead.length(), dna::nt16Encode(fwdRead.getSeq()), fwdRead.getQual(), BAM_FREAD1));
-	out.write(BAM(revRead.getName(), revRead.length(), dna::nt16Encode(revRead.getSeq()), revRead.getQual(), BAM_FREAD2));
+	out.write(BAM(fwdRead.getName(), fwdRead.length(), dna::nt16Encode(fwdRead.getSeq()), fwdRead.getQual(), BAM_FPAIRED | BAM_FREAD1));
+	out.write(BAM(revRead.getName(), revRead.length(), dna::nt16Encode(revRead.getSeq()), revRead.getQual(), BAM_FPAIRED | BAM_FREAD2));
 	return 2;
 }
 
@@ -514,7 +516,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 #pragma omp task firstprivate(read)
 				{
 					/* get SeedList */
-					SeedList seeds = SMEMS::findSeeds(&read, &mtg, &fmdidx, maxEvalue);
+					SeedList seeds = SMEM_LIST::findSeeds(&read, &mtg, &fmdidx, maxEvalue);
 					if(seeds.empty()) {
 #pragma omp critical(LOG)
 						debugLog << "Unable to find any valid SMEM seads for '" << read.getName() << "'" << endl;
@@ -575,7 +577,7 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 				}
 #pragma omp task firstprivate(fwdRead, revRead)
 				{
-					SeedListPE seedsPE = SMEMS::findSeedsPE(&fwdRead, &revRead, &mtg, &fmdidx, maxEvalue);
+					SeedListPE seedsPE = SMEM_LIST::findSeedsPE(&fwdRead, &revRead, &mtg, &fmdidx, maxEvalue);
 					if(seedsPE.first.empty() && seedsPE.second.empty()) {
 #pragma omp critical(LOG)
 						debugLog << "Unable to find any valid SMEMS seeds for read pair '" << fwdRead.getName() << "'" << endl;

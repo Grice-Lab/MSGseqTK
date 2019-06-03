@@ -75,7 +75,7 @@ void printUsage(const string& progName) {
 		 << "            -m  FILE             : output of cleaned mate/reverse reads" << ZLIB_SUPPORT << endl
 		 << "            -a  FILE             : write an additional TSV file with the detailed assignment information for each read" << endl
 		 << "            -L|--lod  DBL        : minimum log-odd required to determine a read/pair as reference vs. background [" << DEFAULT_MIN_LOD << "]" << endl
-		 << "            -e|--evalue  DBL     : maximum e-value to consider an MEM as significant [" << SMEMS::DEFAULT_MAX_EVALUE << "]" << endl
+		 << "            -e|--evalue  DBL     : maximum e-value to consider an MEM as significant [" << SMEM_LIST::MAX_EVALUE << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
 	ofstream assignOut;
 
 	double minLod = DEFAULT_MIN_LOD;
-	double maxEvalue = SMEMS::DEFAULT_MAX_EVALUE;
+	double maxEvalue = SMEM_LIST::MAX_EVALUE;
 	int nThreads = DEFAULT_NUM_THREADS;
 
 	/* parse options */
@@ -386,8 +386,8 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 				{
 					const string& id = read.getName();
 					const string& desc = read.getDesc();
-					SMEMS refSmems = SMEMS::findSMEMS(&read, &refMtg, &refFmdidx, maxEvalue);
-					SMEMS bgSmems = SMEMS::findSMEMS(&read, &bgMtg, &bgFmdidx, maxEvalue);
+					SMEM_LIST refSmems = SMEM_LIST::findSMEMS(&read, &refMtg, &refFmdidx, maxEvalue);
+					SMEM_LIST bgSmems = SMEM_LIST::findSMEMS(&read, &bgMtg, &bgFmdidx, maxEvalue);
 					double refLoglik = refSmems.loglik();
 					double bgLoglik = bgSmems.loglik();
 					double lod = - refLoglik + bgLoglik;
@@ -420,10 +420,10 @@ int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 				{
 					const string& id = fwdRead.getName();
 					const string& desc = fwdRead.getDesc();
-					SMEMS_PE refMemsPE = SMEMS::findSMEMS_PE(&fwdRead, &revRead, &refMtg, &refFmdidx, maxEvalue);
-					SMEMS_PE bgMemsPE = SMEMS::findSMEMS_PE(&fwdRead, &revRead, &bgMtg, &bgFmdidx, maxEvalue);
-					double refLoglik = SMEMS::loglik(refMemsPE);
-					double bgLoglik = SMEMS::loglik(bgMemsPE);
+					SMEM_LIST_PE refMemsPE = SMEM_LIST::findSMEMS_PE(&fwdRead, &revRead, &refMtg, &refFmdidx, maxEvalue);
+					SMEM_LIST_PE bgMemsPE = SMEM_LIST::findSMEMS_PE(&fwdRead, &revRead, &bgMtg, &bgFmdidx, maxEvalue);
+					double refLoglik = SMEM_LIST::loglik(refMemsPE);
+					double bgLoglik = SMEM_LIST::loglik(bgMemsPE);
 					double lod = - refLoglik + bgLoglik;
 					if(lod >= minLod) {
 #pragma omp critical(writeSeq)

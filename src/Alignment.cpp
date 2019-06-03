@@ -449,17 +449,11 @@ PAIR_LIST& AlignmentPE::filter(PAIR_LIST& pairList,
 PAIR_LIST AlignmentPE::getPairs(const ALIGN_LIST& fwdAlnList, const ALIGN_LIST& revAlnList, uint32_t maxPair) {
 	PAIR_LIST pairList;
 	pairList.reserve(std::min<size_t>(fwdAlnList.size() * revAlnList.size(), maxPair));
-	bool flag = false;
-	for(const Alignment& fwdAln : fwdAlnList) {
-		for(const Alignment& revAln : revAlnList) {
-			if((fwdAln.qStrand & revAln.qStrand) == 0) { // AlignmentPE must be on different strand
-				pairList.push_back(AlignmentPE(&fwdAln, &revAln));
-				flag = pairList.size() > maxPair;
-				break;
-			}
+	for(ALIGN_LIST::const_iterator fwdAln = fwdAlnList.begin(); fwdAln < fwdAlnList.end() && pairList.size() < maxPair; ++fwdAln) {
+		for(ALIGN_LIST::const_iterator revAln = revAlnList.begin(); revAln < revAlnList.end() && pairList.size() < maxPair; ++revAln) {
+			if((fwdAln->qStrand & revAln->qStrand) == 0) // AlignmentPE must be on different strand
+				pairList.push_back(AlignmentPE(&*fwdAln, &*revAln));
 		}
-		if(flag)
-			break;
 	}
 	return pairList;
 }

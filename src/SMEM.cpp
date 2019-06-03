@@ -12,7 +12,8 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 
-const double SMEMS::DEFAULT_MAX_EVALUE = 0.001;
+const double SMEM_LIST::MAX_EVALUE = 0.001;
+const double SMEM_LIST::RESEED_FACTOR = 0.25;
 
 SMEM& SMEM::evaluate() {
 	logP = 0;
@@ -61,12 +62,12 @@ SMEM SMEM::findSMEMrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIn
 	return smem0;
 }
 
-SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		int64_t& from, int64_t& to) {
 	const size_t L = seq->length();
 	assert(from < L);
 	to = from + 1;
-	SMEMS curr, prev;
+	SMEM_LIST curr, prev;
 
 	nt16_t b = seq->getBase(from);
 	if(DNAalphabet::isAmbiguous(b)) // first base is non-basic, no-matches
@@ -81,7 +82,7 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 		if(smem.size != smem0.size) // a different BD interval found
 			curr.push_back(smem0);
 	}
-	to = getTo(curr); // update to
+	to = curr.getTo(false);
 
 	/* backward extension, if necessary */
 	if(from > 0) {
@@ -93,33 +94,38 @@ SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 					curr.push_back(smem0);
 			}
 		}
-		from = getFrom(curr); // update from
-		/* sort and get unique after backward extension */
-		std::sort(curr.begin(), curr.end());
-		curr.erase(std::unique(curr.begin(), curr.end()), curr.end());
+		from = curr.getFrom(false);
 	}
 	return curr;
 }
 
-int64_t SMEMS::getFrom(const SMEMS& smems) {
+int64_t SMEM_LIST::getFrom(bool isSorted) const {
 	int64_t from = INT64_MAX;
-	for(const SMEM& smem : smems)
+	if(empty())
+		return from;
+	if(isSorted)
+		return front().getFrom();
+	for(const SMEM& smem : *this)
 		from = std::min(from, smem.getFrom());
 	return from;
 }
 
-int64_t SMEMS::getTo(const SMEMS& smems) {
+int64_t SMEM_LIST::getTo(bool isSorted) const {
 	int64_t to = INT64_MIN;
-	for(const SMEM& smem : smems)
+	if(empty())
+		return to;
+	if(isSorted)
+		return back().getTo();
+	for(const SMEM& smem : *this)
 		to = std::max(to, smem.getTo());
 	return to;
 }
 
-SMEMS SMEMS::findSMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+SMEM_LIST SMEM_LIST::findSMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		double maxEvalue) {
 	const int64_t L = seq->length();
-	SMEMS smems;
-	for(int64_t from = 0, to = 1; from < L && to <= L; from = to + 1) {
+	SMEM_LIST smems;
+	for(int64_t from = 0, to = 0; from < L; from = to + 1) {
 		SMEM smem = SMEM::findSMEMfwd(seq, mtg, fmdidx, from, to);
 		if(smem.evalue() <= maxEvalue)
 			smems.push_back(smem);
@@ -127,10 +133,10 @@ SMEMS SMEMS::findSMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	return smems;
 }
 
-SMEMS SMEMS::findSMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+SMEM_LIST SMEM_LIST::findSMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		double maxEvalue) {
 	const int64_t L = seq->length();
-	SMEMS smems;
+	SMEM_LIST smems;
 	for(int64_t from = L - 1, to = L; from >= 0 && to > 0; to = from - 1) {
 		SMEM smem = SMEM::findSMEMrev(seq, mtg, fmdidx, from, to);
 		if(smem.evalue() <= maxEvalue)
@@ -139,13 +145,13 @@ SMEMS SMEMS::findSMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	return smems;
 }
 
-SMEMS SMEMS::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		double maxEvalue) {
-	SMEMS allSmems;
-	for(int64_t from = 0, to = 0; from < seq->length(); from = to + 1) {
-		// get SMEM list at current position
-		SMEMS smems = SMEMS::findAllSMEMS(seq, mtg, fmdidx, from, to).filter(maxEvalue);
-		allSmems.insert(allSmems.end(), smems.begin(), smems.end());
+	const int64_t L = seq->length();
+	SMEM_LIST allSmems;
+	/* 1st-pass forward search */
+	for(int64_t from = 0, to = 0; from < L; from = to + 1) {
+		allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to).filter(maxEvalue).sort();
 	}
 	return allSmems;
 }
@@ -177,9 +183,9 @@ SeedList SMEM::getSeeds() const {
 	return seeds;
 }
 
-SeedList SMEMS::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+SeedList SMEM_LIST::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		double maxEvalue) {
-	const SMEMS& smems = findAllSMEMS(seq, mtg, fmdidx, maxEvalue); // get SMEMS
+	const SMEM_LIST& smems = findAllSMEMS(seq, mtg, fmdidx, maxEvalue); // get SMEMS
 	/* get seeds */
 	SeedList allSeeds;
 	for(const SMEM& smem : smems) {
@@ -191,18 +197,11 @@ SeedList SMEMS::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FM
 	return allSeeds;
 }
 
-double SMEMS::loglik() const {
+double SMEM_LIST::loglik() const {
 	double ll = 0;
 	for(const SMEM& smem : *this)
 		ll += smem.loglik();
 	return ll;
-}
-
-double SMEMS::bestLoglik() const {
-	double minLoglik = inf;
-	for(const SMEM& smem : *this)
-		minLoglik = std::min(minLoglik, smem.loglik());
-	return minLoglik;
 }
 
 } /* namespace MSGseqTK */

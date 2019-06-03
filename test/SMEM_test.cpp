@@ -62,14 +62,14 @@ int main() {
 
 	/* simple SMEM/seed test */
 	PrimarySeq read("ACGTAGTA", "seq1");
-	SMEMS smems = SMEMS::findSMEMS(&read, &mtg, &fmdidx, inf);
+	SMEM_LIST smems = SMEM_LIST::findSMEMS(&read, &mtg, &fmdidx, inf);
 	cout << "found " << smems.size() << " smems" << endl;
 	for(const SMEM& smem : smems)
 		for(const SeedPair& seed : smem.getSeeds())
 			if(!isValidSeed(mtg.getSeq(seed.getTid()), read.getSeq(), seed))
 				return EXIT_FAILURE;
 
-	SeedList seeds = SMEMS::findSeeds(&read, &mtg, &fmdidx, inf);
+	SeedList seeds = SMEM_LIST::findSeeds(&read, &mtg, &fmdidx, inf);
 	cout << "found " << seeds.size() << " all smems seeds" << endl;
 	for(const SeedPair& seed : seeds)
 		if(!isValidSeed(mtg.getSeq(seed.getTid()), read.getSeq(), seed))
