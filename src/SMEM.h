@@ -261,9 +261,9 @@ public:
 	/**
 	 * filter this SMEMS list by evalue and size
 	 */
-	SMEM_LIST& filter(double maxEvalue = MAX_EVALUE, int64_t minSize = MIN_SIZE) {
+	SMEM_LIST& filter(double maxEvalue = MAX_EVALUE) {
 		erase(std::remove_if(begin(), end(),
-				[=](const SMEM& mem) { return !(mem.evalue() <= maxEvalue && mem.size >= MIN_SIZE); }),
+				[=](const SMEM& mem) { return !(mem.evalue() <= maxEvalue); }),
 				end());
 		return *this;
 	}
@@ -278,10 +278,10 @@ public:
 	}
 
 	/** get from of an SMEM_LIST */
-	int64_t getFrom(bool isSorted = true) const;
+	int64_t getFrom() const;
 
 	/** get to of an SMEM_LIST */
-	int64_t getTo(bool isSorted = true) const;
+	int64_t getTo() const;
 
 	/* static methods */
 	/**
@@ -314,7 +314,6 @@ public:
 
 	/**
 	 * find all SMEMS of a given seq using forward/backward searches
-	 * @return unique list of valid SMEMS sorted by their coordinates
 	 */
 	static SMEM_LIST findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			double maxEvalue = MAX_EVALUE);
@@ -357,9 +356,9 @@ public:
 	friend SMEM_LIST operator+(const SMEM_LIST& lhs, const SMEM_LIST& rhs);
 
 	/* static fields */
-	static const int64_t MIN_SIZE = 0; // MIN OCCURENCE of a significant SMEM
+//	static const int64_t MIN_SIZE = 0; // MIN OCCURENCE of a significant SMEM
 	static const double MAX_EVALUE; // MAX EVALUTE for a significant SMEM
-	static const double RESEED_FACTOR; // max relative SMEM size to trigger re-seed search
+//	static const double RESEED_FACTOR; // max relative SMEM size to trigger re-seed search
 };
 
 inline ostream& operator<<(ostream& out, const SMEM& smem) {

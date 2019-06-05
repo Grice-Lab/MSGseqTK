@@ -13,7 +13,7 @@ namespace EGriceLab {
 namespace MSGseqTK {
 
 const double SMEM_LIST::MAX_EVALUE = 0.001;
-const double SMEM_LIST::RESEED_FACTOR = 0.25;
+//const double SMEM_LIST::RESEED_FACTOR = 0.25;
 
 SMEM& SMEM::evaluate() {
 	logP = 0;
@@ -82,7 +82,7 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 		if(smem.size != smem0.size) // a different BD interval found
 			curr.push_back(smem0);
 	}
-	to = curr.getTo(false);
+	to = curr.getTo();
 
 	/* backward extension, if necessary */
 	if(from > 0) {
@@ -94,28 +94,20 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 					curr.push_back(smem0);
 			}
 		}
-		from = curr.getFrom(false);
+		from = curr.getFrom();
 	}
 	return curr;
 }
 
-int64_t SMEM_LIST::getFrom(bool isSorted) const {
+int64_t SMEM_LIST::getFrom() const {
 	int64_t from = INT64_MAX;
-	if(empty())
-		return from;
-	if(isSorted)
-		return front().getFrom();
 	for(const SMEM& smem : *this)
 		from = std::min(from, smem.getFrom());
 	return from;
 }
 
-int64_t SMEM_LIST::getTo(bool isSorted) const {
+int64_t SMEM_LIST::getTo() const {
 	int64_t to = INT64_MIN;
-	if(empty())
-		return to;
-	if(isSorted)
-		return back().getTo();
 	for(const SMEM& smem : *this)
 		to = std::max(to, smem.getTo());
 	return to;
@@ -149,11 +141,15 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 		double maxEvalue) {
 	const int64_t L = seq->length();
 	SMEM_LIST allSmems;
-	/* 1st-pass forward search */
-	for(int64_t from = 0, to = 0; from < L; from = to + 1) {
+	/* forward SMEMS at 5' */
+	for(int64_t from = 0, to = 1; from < L; from = to + 1) {
+		SMEM_LIST smems5 = SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to).filter(maxEvalue).sort();
 		allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to).filter(maxEvalue).sort();
 	}
-	return allSmems;
+	/* backward search of 5' half */
+	for(int64_t from = L / 2 - 1, to = L / 2; from >= 0; from = from - 1)
+		allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to).filter(maxEvalue).sort();
+	return allSmems.sort();
 }
 
 SeedList SMEM::getSeeds() const {
