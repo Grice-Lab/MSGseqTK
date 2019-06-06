@@ -172,25 +172,10 @@ protected:
 
 	/* static methods */
 	/**
-	 * find one longest SMEM of a given seq starting at given position relative to seq by forward or backward extension
+	 * find an SMEM of a given seq starting at given position using forward/backward extension
 	 */
 	static SMEM findSMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t& from, int64_t& to, GLoc::STRAND dir = GLoc::FWD) {
-		return dir == GLoc::FWD ? findSMEMfwd(seq, mtg, fmdidx, from, to) :
-				findSMEMrev(seq, mtg, fmdidx, from, to);
-	}
-
-	/**
-	 * find one longest SMEM of a given seq starting at given position relative to seq by forward extension
-	 */
-	static SMEM findSMEMfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t from, int64_t& to);
-
-	/**
-	 * find one longest SMEM of a given seq starting at given position relative to seq by backward extension
-	 */
-	static SMEM findSMEMrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t& from, int64_t to);
+			int64_t& from, int64_t& to);
 
 private:
 	/* member fields */
@@ -284,24 +269,9 @@ public:
 
 	/* static methods */
 	/**
-	 * find longest SMEMS of a given seq using step-wise forward/backward searches with required evalue threshold
+	 * find longest SMEMS of a given seq using step-wise forward/backward searches
 	 */
 	static SMEM_LIST findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t minLen = MIN_LENGTH, GLoc::STRAND dir = GLoc::FWD) {
-		return dir == GLoc::FWD ? findSMEMSfwd(seq, mtg, fmdidx, minLen) :
-				findSMEMSrev(seq, mtg, fmdidx, minLen);
-	}
-
-	/**
-	 * find longest SMEMS of a given seq using step-wise backward searches with required evalue threshold
-	 */
-	static SMEM_LIST findSMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t minLen = MIN_LENGTH);
-
-	/**
-	 * find longest SMEMS of a given seq using step-wise forward searches with required evalue threshold
-	 */
-	static SMEM_LIST findSMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t minLen = MIN_LENGTH);
 
 	/**

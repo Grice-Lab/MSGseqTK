@@ -19,8 +19,8 @@ SMEM& SMEM::evaluate() {
 	return *this;
 }
 
-SMEM SMEM::findSMEMfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		int64_t from, int64_t& to) {
+SMEM SMEM::findSMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+		int64_t& from, int64_t& to) {
 	const size_t L = seq->length();
 	assert(from < L);
 	nt16_t b = seq->getBase(from);
@@ -32,22 +32,12 @@ SMEM SMEM::findSMEMfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIn
 	for(smem0 = smem; smem.size > 0; smem.fwdExt())
 		smem0 = smem;
 	to = smem0.to;
-	return smem0;
-}
 
-SMEM SMEM::findSMEMrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		int64_t& from, int64_t to) {
-	const size_t L = seq->length();
-	assert(to <= L);
-	nt16_t b = seq->getBase(to - 1);
-
-	/* init */
-	SMEM smem(seq, mtg, fmdidx, to - 1, to, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
-	SMEM smem0;
 	/* backward extension */
 	for(smem0 = smem; smem.size > 0; smem.backExt())
 		smem0 = smem;
 	from = smem0.from;
+
 	return smem0;
 }
 
@@ -92,24 +82,12 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 	return match;
 }
 
-SMEM_LIST SMEM_LIST::findSMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+SMEM_LIST SMEM_LIST::findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		int64_t minLen) {
 	const int64_t L = seq->length();
 	SMEM_LIST smems;
-	for(int64_t from = 0, to = 0; from < L; from = to + 1) {
-		SMEM smem = SMEM::findSMEMfwd(seq, mtg, fmdidx, from, to);
-		if(smem.length() >= minLen)
-			smems.push_back(smem);
-	}
-	return smems;
-}
-
-SMEM_LIST SMEM_LIST::findSMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		int64_t minLen) {
-	const int64_t L = seq->length();
-	SMEM_LIST smems;
-	for(int64_t from = L - 1, to = L; from >= 0 && to > 0; to = from - 1) {
-		SMEM smem = SMEM::findSMEMrev(seq, mtg, fmdidx, from, to);
+	for(int64_t from = 0, to = 1; from < L; from = to + 1) {
+		SMEM smem = SMEM::findSMEM(seq, mtg, fmdidx, from, to);
 		if(smem.length() >= minLen)
 			smems.push_back(smem);
 	}
