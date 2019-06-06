@@ -207,9 +207,6 @@ private:
 public:
 	/* static fields */
 	static const size_t MAX_NSEEDS = 256;
-	static const size_t MAX_NCHAINS = 256;
-
-	friend class SMEM_LIST;
 
 	/* non-member functions */
 	/** formated output */
@@ -218,6 +215,8 @@ public:
 	/** relationship operators */
 	friend bool operator<(const SMEM& lhs, const SMEM& rhs);
 	friend bool operator==(const SMEM& lhs, const SMEM& rhs);
+
+	friend class SMEM_LIST;
 };
 
 class SMEM_LIST;
@@ -261,9 +260,9 @@ public:
 	/**
 	 * filter this SMEMS list by evalue and size
 	 */
-	SMEM_LIST& filter(double maxEvalue = MAX_EVALUE) {
+	SMEM_LIST& filter(int64_t minLen = MIN_LENGTH) {
 		erase(std::remove_if(begin(), end(),
-				[=](const SMEM& mem) { return !(mem.evalue() <= maxEvalue); }),
+				[=](const SMEM& mem) { return mem.length() < minLen; }),
 				end());
 		return *this;
 	}
@@ -288,22 +287,22 @@ public:
 	 * find longest SMEMS of a given seq using step-wise forward/backward searches with required evalue threshold
 	 */
 	static SMEM_LIST findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			double maxEvalue = MAX_EVALUE, GLoc::STRAND dir = GLoc::FWD) {
-		return dir == GLoc::FWD ? findSMEMSfwd(seq, mtg, fmdidx, maxEvalue) :
-				findSMEMSrev(seq, mtg, fmdidx, maxEvalue);
+			int64_t minLen = MIN_LENGTH, GLoc::STRAND dir = GLoc::FWD) {
+		return dir == GLoc::FWD ? findSMEMSfwd(seq, mtg, fmdidx, minLen) :
+				findSMEMSrev(seq, mtg, fmdidx, minLen);
 	}
 
 	/**
 	 * find longest SMEMS of a given seq using step-wise backward searches with required evalue threshold
 	 */
 	static SMEM_LIST findSMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			double maxEvalue = MAX_EVALUE);
+			int64_t minLen = MIN_LENGTH);
 
 	/**
 	 * find longest SMEMS of a given seq using step-wise forward searches with required evalue threshold
 	 */
 	static SMEM_LIST findSMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			double maxEvalue = MAX_EVALUE);
+			int64_t minLen = MIN_LENGTH);
 
 	/**
 	 * find all SMEMS of a given seq starting at given position relative to the seq by forward/backward extensions
@@ -316,29 +315,29 @@ public:
 	 * find all SMEMS of a given seq using forward/backward searches
 	 */
 	static SMEM_LIST findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			double maxEvalue = MAX_EVALUE);
+			int64_t minLen = MIN_LENGTH);
 
 	/**
 	 * get a SeedList of a given seq using step-wise forward/backward searches
 	 * seeds will be filtered and sorted
 	 */
 	static SeedList findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			double maxEvalue = MAX_EVALUE);
+			int64_t minLen = MIN_LENGTH);
 
 	/**
 	 * find SMEMS_PE for paired-end reads
 	 */
 	static SMEM_LIST_PE findSMEMS_PE(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
-			const MetaGenome* mtg, const FMDIndex* fmdidx, double maxEvalue = MAX_EVALUE) {
-		return SMEM_LIST_PE(findSMEMS(fwdSeq, mtg, fmdidx, maxEvalue), findSMEMS(revSeq, mtg, fmdidx, maxEvalue));
+			const MetaGenome* mtg, const FMDIndex* fmdidx, int64_t minLen = MIN_LENGTH) {
+		return SMEM_LIST_PE(findSMEMS(fwdSeq, mtg, fmdidx, minLen), findSMEMS(revSeq, mtg, fmdidx, minLen));
 	}
 
 	/**
 	 * find SeedListPE for pair-end reads
 	 */
 	static SeedListPE findSeedsPE(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
-			 const MetaGenome* mtg, const FMDIndex* fmdidx, double maxEvalue = MAX_EVALUE) {
-		return SeedListPE(findSeeds(fwdSeq, mtg, fmdidx, maxEvalue), findSeeds(revSeq, mtg, fmdidx, maxEvalue));
+			 const MetaGenome* mtg, const FMDIndex* fmdidx, int64_t minLen = MIN_LENGTH) {
+		return SeedListPE(findSeeds(fwdSeq, mtg, fmdidx, minLen), findSeeds(revSeq, mtg, fmdidx, minLen));
 	}
 
 	/** get loglik for SMEMS_PE */
@@ -356,9 +355,7 @@ public:
 	friend SMEM_LIST operator+(const SMEM_LIST& lhs, const SMEM_LIST& rhs);
 
 	/* static fields */
-//	static const int64_t MIN_SIZE = 0; // MIN OCCURENCE of a significant SMEM
-	static const double MAX_EVALUE; // MAX EVALUTE for a significant SMEM
-//	static const double RESEED_FACTOR; // max relative SMEM size to trigger re-seed search
+	static const int64_t MIN_LENGTH = 16; // minimum length for a significant SMEM
 };
 
 inline ostream& operator<<(ostream& out, const SMEM& smem) {
@@ -404,7 +401,10 @@ inline SMEM_LIST operator+(const SMEM_LIST& lhs, const SMEM_LIST& rhs) {
 
 namespace std {
 
-/** template specialization for customized hash function in std namespace */
+/**
+ * template specialization for customized hash function in std namespace
+ * the hash code for SMEM is only based by its pointers and from and to, where all other fields are determined
+ */
 template<>
 class hash<EGriceLab::MSGseqTK::SMEM> {
 public:
@@ -415,9 +415,9 @@ public:
 	res ^= reinterpret_cast<uintptr_t>(smem.getFmdidx()) + 0x9e3779b9 + (res << 6) + (res >> 2);
 	res ^= smem.getFrom() + 0x9e3779b9 + (res << 6) + (res >> 2);
 	res ^= smem.getTo() + 0x9e3779b9 + (res << 6) + (res >> 2);
-	res ^= smem.getSize() + 0x9e3779b9 + (res << 6) + (res >> 2);
-	res ^= smem.getFwdStart() + 0x9e3779b9 + (res << 6) + (res >> 2);
-	res ^= smem.getRevStart() + 0x9e3779b9 + (res << 6) + (res >> 2);
+//	res ^= smem.getSize() + 0x9e3779b9 + (res << 6) + (res >> 2);
+//	res ^= smem.getFwdStart() + 0x9e3779b9 + (res << 6) + (res >> 2);
+//	res ^= smem.getRevStart() + 0x9e3779b9 + (res << 6) + (res >> 2);
 	return res;
   }
 };

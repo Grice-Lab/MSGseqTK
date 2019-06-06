@@ -91,7 +91,7 @@ void printUsage(const string& progName) {
 		 << "            --no-contain  FLAG   : not concordant when one mate alignment contains other" << endl
 		 << "            --no-overlap  FLAG   : not concordant when mates overlap" << endl
 		 << "Other:" << endl
-		 << "            -e|--evalue  DBL     : maximum e-value to consider an MEM as significant [" << SMEM_LIST::MAX_EVALUE << "]" << endl
+		 << "            -s|--seed-len  INT   : minimum length of an SMEM to be used as a seed [" << SMEM_LIST::MIN_LENGTH << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -105,7 +105,7 @@ void printUsage(const string& progName) {
  * @return 0 if success, return non-zero otherwise
  */
 int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
-		SeqIO& seqI, SAMfile& out, double maxEvalue,
+		SeqIO& seqI, SAMfile& out, int64_t minLen,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport);
 
 /**
@@ -113,7 +113,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
  * @return 0 if success, return non-zero otherwise
  */
 int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
-		SeqIO& fwdI, SeqIO& revI, SAMfile& out, double maxEvalue,
+		SeqIO& fwdI, SeqIO& revI, SAMfile& out, int64_t minLen,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap);
@@ -147,7 +147,7 @@ int main(int argc, char* argv[]) {
 
 	Alignment::MODE alnMode = Alignment::DEFAULT_MODE;
 	bool isPaired = false;
-	double maxEvalue = SMEM_LIST::MAX_EVALUE;
+	int64_t minLen = SMEM_LIST::MIN_LENGTH;
 //	double maxIndelRate = DEFAULT_INDEL_RATE;
 	int nThreads = DEFAULT_NUM_THREADS;
 
@@ -272,10 +272,10 @@ int main(int argc, char* argv[]) {
 		noOverlap = true;
 
 	/* other options */
-	if(cmdOpts.hasOpt("-e"))
-		maxEvalue = ::atof(cmdOpts.getOptStr("-e"));
+	if(cmdOpts.hasOpt("-s"))
+		minLen = ::atol(cmdOpts.getOptStr("-s"));
 	if(cmdOpts.hasOpt("--evalue"))
-		maxEvalue = ::atoi(cmdOpts.getOptStr("--evalue"));
+		minLen = ::atol(cmdOpts.getOptStr("--seed-len"));
 
 #ifdef _OPENMP
 	if(cmdOpts.hasOpt("-p"))
@@ -433,9 +433,9 @@ int main(int argc, char* argv[]) {
 
 	/* main processing */
 	if(!isPaired)
-		return main_SE(mtg, fmdidx, fwdI, out, maxEvalue, alnMode, bestFrac, maxReport);
+		return main_SE(mtg, fmdidx, fwdI, out, minLen, alnMode, bestFrac, maxReport);
 	else
-		return main_PE(mtg, fmdidx, fwdI, revI, out, maxEvalue, alnMode, bestFrac, maxReport,
+		return main_PE(mtg, fmdidx, fwdI, revI, out, minLen, alnMode, bestFrac, maxReport,
 				minIns, maxIns, noMixed, noDiscordant, noTailOver, noContain, noOverlap);
 }
 
@@ -503,7 +503,7 @@ int output(const PrimarySeq& fwdRead, const PrimarySeq& revRead, SAMfile& out) {
 }
 
 int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
-		SeqIO& seqI, SAMfile& out, double maxEvalue,
+		SeqIO& seqI, SAMfile& out, int64_t minLen,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport) {
 	infoLog << "Aligning input reads" << endl;
 	/* search MEMS for each read */
@@ -516,7 +516,8 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 #pragma omp task firstprivate(read)
 				{
 					/* get SeedList */
-					SeedList seeds = SMEM_LIST::findSeeds(&read, &mtg, &fmdidx, maxEvalue);
+					SeedList seeds = SMEM_LIST::findSeeds(&read, &mtg, &fmdidx, minLen);
+					cerr << "found " << seeds.size() << " seeds" << endl;
 					if(seeds.empty()) {
 #pragma omp critical(LOG)
 						debugLog << "Unable to find any valid SMEM seads for '" << read.getName() << "'" << endl;
@@ -554,7 +555,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 }
 
 int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
-		SeqIO& fwdI, SeqIO& revI, SAMfile& out, double maxEvalue,
+		SeqIO& fwdI, SeqIO& revI, SAMfile& out, int64_t minLen,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap) {
@@ -577,7 +578,13 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 				}
 #pragma omp task firstprivate(fwdRead, revRead)
 				{
-					SeedListPE seedsPE = SMEM_LIST::findSeedsPE(&fwdRead, &revRead, &mtg, &fmdidx, maxEvalue);
+					SeedListPE seedsPE = SMEM_LIST::findSeedsPE(&fwdRead, &revRead, &mtg, &fmdidx, minLen);
+					cerr << "found " << seedsPE.first.size() << " fwd seeds" << endl;
+					for(const SeedPair& seed : seedsPE.first)
+						cerr << seed << endl;
+					cerr << "found " << seedsPE.second.size() << " rev seeds" << endl;
+					for(const SeedPair& seed : seedsPE.second)
+						cerr << seed << endl;
 					if(seedsPE.first.empty() && seedsPE.second.empty()) {
 #pragma omp critical(LOG)
 						debugLog << "Unable to find any valid SMEMS seeds for read pair '" << fwdRead.getName() << "'" << endl;

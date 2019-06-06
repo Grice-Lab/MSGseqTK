@@ -12,9 +12,6 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 
-const double SMEM_LIST::MAX_EVALUE = 0.001;
-//const double SMEM_LIST::RESEED_FACTOR = 0.25;
-
 SMEM& SMEM::evaluate() {
 	logP = 0;
 	for(int64_t i = from; i < to; ++i)
@@ -26,18 +23,14 @@ SMEM SMEM::findSMEMfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIn
 		int64_t from, int64_t& to) {
 	const size_t L = seq->length();
 	assert(from < L);
-	to = from + 1;
 	nt16_t b = seq->getBase(from);
-	if(DNAalphabet::isAmbiguous(b)) // first base is non-basic, no-matches
-		return SMEM(); // return an empty SMEM
 
 	/* init */
-	SMEM smem(seq, mtg, fmdidx, from, to, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
+	SMEM smem(seq, mtg, fmdidx, from, from + 1, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
 	SMEM smem0;
 	/* forward extension */
-	for(smem0 = smem; smem.to <= L && smem.size > 0; smem0 = smem) {
-		smem.fwdExt();
-	}
+	for(smem0 = smem; smem.size > 0; smem.fwdExt())
+		smem0 = smem;
 	to = smem0.to;
 	return smem0;
 }
@@ -46,18 +39,14 @@ SMEM SMEM::findSMEMrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIn
 		int64_t& from, int64_t to) {
 	const size_t L = seq->length();
 	assert(to <= L);
-	from = to - 1;
 	nt16_t b = seq->getBase(to - 1);
-	if(DNAalphabet::isAmbiguous(b)) // first base is non-basic, no-matches
-		return SMEM(); // return an empty SMEM
 
 	/* init */
-	SMEM smem(seq, mtg, fmdidx, from, to, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
+	SMEM smem(seq, mtg, fmdidx, to - 1, to, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
 	SMEM smem0;
 	/* backward extension */
-	for(smem0 = smem; smem.from >= 0 && smem.size > 0; smem0 = smem) {
-		smem.backExt(); // update smem
-	}
+	for(smem0 = smem; smem.size > 0; smem.backExt())
+		smem0 = smem;
 	from = smem0.from;
 	return smem0;
 }
@@ -66,12 +55,8 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 		int64_t& from, int64_t& to) {
 	const size_t L = seq->length();
 	assert(from < L);
-	to = from + 1;
-	SMEM_LIST curr, prev;
-
+	SMEM_LIST curr, prev, match;
 	nt16_t b = seq->getBase(from);
-	if(DNAalphabet::isAmbiguous(b)) // first base is non-basic, no-matches
-		return curr;
 
 	/* init SMEM */
 	SMEM smem(seq, mtg, fmdidx, from, from + 1, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
@@ -82,73 +67,63 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 		if(smem.size != smem0.size) // a different BD interval found
 			curr.push_back(smem0);
 	}
-	to = curr.getTo();
+	to = smem.to - 1;
+	if(from == 0)
+		return curr;
 
-	/* backward extension, if necessary */
-	if(from > 0) {
-		std::swap(curr, prev);
-		for(SMEM& smem : prev) {
-			for(smem0 = smem; smem.size > 0; smem0 = smem) {
-				smem.backExt();
-				if(smem.size != smem0.size) // a different found
-					curr.push_back(smem0);
+	/* backward extension */
+	std::swap(curr, prev);
+	std::reverse(prev.begin(), prev.end()); // keep larger SMEM near the front
+	while(from >= 0 && !prev.empty()) {
+		curr.clear();
+		int64_t s0 = -1;
+		for(const SMEM& smem : prev) {
+			SMEM smem1 = smem.backExt();
+			if(smem1.size == 0 && curr.empty())
+				match.push_back(smem);
+			if(smem1.size > 0 && smem1.size != s0) {
+				s0 = smem1.size; // size already seen for this round of backExt
+				curr.push_back(smem1);
 			}
 		}
-		from = curr.getFrom();
+		from--;
+		std::swap(curr, prev);
 	}
-	return curr;
-}
-
-int64_t SMEM_LIST::getFrom() const {
-	int64_t from = INT64_MAX;
-	for(const SMEM& smem : *this)
-		from = std::min(from, smem.getFrom());
-	return from;
-}
-
-int64_t SMEM_LIST::getTo() const {
-	int64_t to = INT64_MIN;
-	for(const SMEM& smem : *this)
-		to = std::max(to, smem.getTo());
-	return to;
+	return match;
 }
 
 SMEM_LIST SMEM_LIST::findSMEMSfwd(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		double maxEvalue) {
+		int64_t minLen) {
 	const int64_t L = seq->length();
 	SMEM_LIST smems;
 	for(int64_t from = 0, to = 0; from < L; from = to + 1) {
 		SMEM smem = SMEM::findSMEMfwd(seq, mtg, fmdidx, from, to);
-		if(smem.evalue() <= maxEvalue)
+		if(smem.length() >= minLen)
 			smems.push_back(smem);
 	}
 	return smems;
 }
 
 SMEM_LIST SMEM_LIST::findSMEMSrev(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		double maxEvalue) {
+		int64_t minLen) {
 	const int64_t L = seq->length();
 	SMEM_LIST smems;
 	for(int64_t from = L - 1, to = L; from >= 0 && to > 0; to = from - 1) {
 		SMEM smem = SMEM::findSMEMrev(seq, mtg, fmdidx, from, to);
-		if(smem.evalue() <= maxEvalue)
+		if(smem.length() >= minLen)
 			smems.push_back(smem);
 	}
 	return smems;
 }
 
 SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		double maxEvalue) {
+		int64_t minLen) {
 	const int64_t L = seq->length();
 	SMEM_LIST allSmems;
 	/* forward SMEMS at 5' */
 	for(int64_t from = 0, to = 1; from < L; from = to + 1) {
-		SMEM_LIST smems5 = SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to).filter(maxEvalue).sort();
-		allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to).filter(maxEvalue).sort();
+		allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to).filter(minLen).sort();
 	}
-	/* backward search of 5' half */
-	for(int64_t from = L / 2 - 1, to = L / 2; from >= 0; from = from - 1)
-		allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to).filter(maxEvalue).sort();
 	return allSmems.sort();
 }
 
@@ -180,8 +155,8 @@ SeedList SMEM::getSeeds() const {
 }
 
 SeedList SMEM_LIST::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		double maxEvalue) {
-	const SMEM_LIST& smems = findAllSMEMS(seq, mtg, fmdidx, maxEvalue); // get SMEMS
+		int64_t minLen) {
+	const SMEM_LIST& smems = findAllSMEMS(seq, mtg, fmdidx, minLen);
 	/* get seeds */
 	SeedList allSeeds;
 	for(const SMEM& smem : smems) {
