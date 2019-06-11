@@ -242,15 +242,29 @@ public:
 				[](const SMEM& lhs, const SMEM& rhs) { return lhs.loglik() < rhs.loglik(); });
 	}
 
-	/**
-	 * filter this SMEMS list by evalue and size
-	 */
-	SMEM_LIST& filter(int64_t minLen = MIN_LENGTH) {
-		erase(std::remove_if(begin(), end(),
-				[=](const SMEM& mem) { return mem.length() < minLen; }),
-				end());
-		return *this;
+	/** get longest MEM */
+	const SMEM& getLongest() const {
+		assert(!empty());
+		return *std::max_element(begin(), end(),
+				[](const SMEM& lhs, const SMEM& rhs) { return lhs.length() < rhs.length(); });
 	}
+
+	/** get shortest MEM */
+	const SMEM& getShortest() const {
+		assert(!empty());
+		return *std::min_element(begin(), end(),
+				[](const SMEM& lhs, const SMEM& rhs) { return lhs.length() < rhs.length(); });
+	}
+
+//	/**
+//	 * filter this SMEMS list by evalue and size
+//	 */
+//	SMEM_LIST& filter(int64_t minLen = MIN_LENGTH, int64_t minSize = MIN_SIZE) {
+//		erase(std::remove_if(begin(), end(),
+//				[=](const SMEM& mem) { return !(minLen <= mem.length() && minSize <= mem.size ); }),
+//				end());
+//		return *this;
+//	}
 
 	/**
 	 * sort and get unique SMEMS of this SMEM_LIST
@@ -274,15 +288,17 @@ public:
 	static SMEM_LIST findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t minLen = MIN_LENGTH);
 
+protected:
 	/**
 	 * find all SMEMS of a given seq starting at given position relative to the seq by forward/backward extensions
 	 * @return  a SMEM_LIST overlappling position from that may contain duplicated copies
 	 */
 	static SMEM_LIST findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t& from, int64_t& to);
+			int64_t& from, int64_t& to, int64_t minLen = MIN_LENGTH);
 
+public:
 	/**
-	 * find all SMEMS of a given seq using forward/backward searches
+	 * find filtered SMEMS of a given seq by step-wise searches and re-seeding
 	 */
 	static SMEM_LIST findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t minLen = MIN_LENGTH);
@@ -326,6 +342,8 @@ public:
 
 	/* static fields */
 	static const int64_t MIN_LENGTH = 16; // minimum length for a significant SMEM
+//	static const int64_t MAX_LENGTH = 32; // maximum length for a significant SMEM
+	static const int64_t MIN_SIZE = 1; // minimum size (# of occurrence of a significant SMEM)
 };
 
 inline ostream& operator<<(ostream& out, const SMEM& smem) {

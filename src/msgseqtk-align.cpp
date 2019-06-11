@@ -91,7 +91,7 @@ void printUsage(const string& progName) {
 		 << "            --no-contain  FLAG   : not concordant when one mate alignment contains other" << endl
 		 << "            --no-overlap  FLAG   : not concordant when mates overlap" << endl
 		 << "Other:" << endl
-		 << "            -s|--seed-len  INT   : minimum length of an SMEM to be used as a seed [" << SMEM_LIST::MIN_LENGTH << "]" << endl
+		 << "            --min-seed  INT      : minimum length of an SMEM to be used as a seed [" << SMEM_LIST::MIN_LENGTH << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -272,10 +272,8 @@ int main(int argc, char* argv[]) {
 		noOverlap = true;
 
 	/* other options */
-	if(cmdOpts.hasOpt("-s"))
-		minLen = ::atol(cmdOpts.getOptStr("-s"));
-	if(cmdOpts.hasOpt("--evalue"))
-		minLen = ::atol(cmdOpts.getOptStr("--seed-len"));
+	if(cmdOpts.hasOpt("--min-seed"))
+		minLen = ::atol(cmdOpts.getOptStr("--min-seed"));
 
 #ifdef _OPENMP
 	if(cmdOpts.hasOpt("-p"))
@@ -517,7 +515,6 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 				{
 					/* get SeedList */
 					SeedList seeds = SMEM_LIST::findSeeds(&read, &mtg, &fmdidx, minLen);
-					cerr << "found " << seeds.size() << " seeds" << endl;
 					if(seeds.empty()) {
 #pragma omp critical(LOG)
 						debugLog << "Unable to find any valid SMEM seads for '" << read.getName() << "'" << endl;
@@ -579,12 +576,6 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 #pragma omp task firstprivate(fwdRead, revRead)
 				{
 					SeedListPE seedsPE = SMEM_LIST::findSeedsPE(&fwdRead, &revRead, &mtg, &fmdidx, minLen);
-					cerr << "found " << seedsPE.first.size() << " fwd seeds" << endl;
-					for(const SeedPair& seed : seedsPE.first)
-						cerr << seed << endl;
-					cerr << "found " << seedsPE.second.size() << " rev seeds" << endl;
-					for(const SeedPair& seed : seedsPE.second)
-						cerr << seed << endl;
 					if(seedsPE.first.empty() && seedsPE.second.empty()) {
 #pragma omp critical(LOG)
 						debugLog << "Unable to find any valid SMEMS seeds for read pair '" << fwdRead.getName() << "'" << endl;
