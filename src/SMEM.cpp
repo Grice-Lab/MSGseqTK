@@ -54,7 +54,6 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 	/* forward extension */
 	for(smem0 = smem; smem.size > 0; smem0 = smem) {
 		smem.fwdExt();
-		std::cerr << "fwd exting: smem0: " << smem0 << " smem: " << smem << std::endl;
 		if(smem.size != smem0.size) // a different BD interval found
 			curr.push_back(smem0);
 	}
@@ -68,7 +67,6 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 		int64_t s0 = -1;
 		for(const SMEM& smem : prev) {
 			SMEM smem1 = smem.backExt();
-			std::cerr << "back exting: smem: " << smem << " smem1: " << smem1 << std::endl;
 			if(smem1.size == 0 && curr.empty() && smem.length() >= minLen)
 				match.push_back(smem);
 			if(smem1.size > 0 && smem1.size != s0) {
@@ -105,15 +103,17 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 		allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to, minLen);
 	return allSmems;
 
-//	/* 2nd-pass re-seeding search */
+////	/* 2nd-pass re-seeding search */
 //	for(const SMEM& smem : allSmems) {
-//		if(smem.length() > maxLen) { // need re-seeding
+//		if(smem.length() > 28) { // need re-seeding
 //			std::cerr << "reseeding " << smem << std::endl;
-//			int64_t from1 = (smem.from + smem.to) / 2 - 1;
+//			int64_t from1 = 14;
 //			int64_t to1 = from1 + 1;
-//			allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from1, to1, minLen, smem.size + 1);
+//			allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from1, to1, minLen);
 //		}
 //	}
+//	for(const SMEM& smem : allSmems)
+//		std::cerr << smem << std::endl;
 //	return allSmems.sort();
 }
 
