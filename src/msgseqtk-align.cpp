@@ -73,8 +73,8 @@ void printUsage(const string& progName) {
 		 << "READ-FILE  FILE                  : single-end/forward MSG read file" << ZLIB_SUPPORT << endl
 		 << "MATE-FILE  FILE                  : mate/reverse MSG read file" << ZLIB_SUPPORT << endl
 		 << "Options:    -o  FILE             : BAM or SAM output file" << endl
-		 << "            --global  FLAG       : use Needleman-Wunsch global DP algorithm, no clipping allowed [" << (Alignment::DEFAULT_MODE == Alignment::GLOBAL ? "on" : "off") << endl
-		 << "            --local  FLAG        : use Smith-Waterman local DP algorithm, ends may be soft-clipped" << (Alignment::DEFAULT_MODE == Alignment::LOCAL ? "on" : "off") << endl
+		 << "            --global  FLAG       : use Needleman-Wunsch global DP algorithm, no clipping allowed [" << (Alignment::DEFAULT_MODE == Alignment::GLOBAL ? "on" : "off") << "]" << endl
+		 << "            --local  FLAG        : use Smith-Waterman local DP algorithm, ends may be soft-clipped [" << (Alignment::DEFAULT_MODE == Alignment::LOCAL ? "on" : "off") << "]" << endl
 		 << "            --match  DBL         : score for matches [" << ScoreScheme::DEFAULT_MATCH_SCORE << "]" << endl
 		 << "            --mis-match  DBL     : penalty for mis-matches [" << ScoreScheme::DEFAULT_MISMATCH_PENALTY << "]" << endl
 		 << "            --gap-open  DBL      : penalty for (affine) gap opening [" << ScoreScheme::DEFAULT_GAP_OPEN_PENALTY << "]" << endl
