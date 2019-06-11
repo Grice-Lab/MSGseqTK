@@ -256,15 +256,15 @@ public:
 				[](const SMEM& lhs, const SMEM& rhs) { return lhs.length() < rhs.length(); });
 	}
 
-//	/**
-//	 * filter this SMEMS list by evalue and size
-//	 */
-//	SMEM_LIST& filter(int64_t minLen = MIN_LENGTH, int64_t minSize = MIN_SIZE) {
-//		erase(std::remove_if(begin(), end(),
-//				[=](const SMEM& mem) { return !(minLen <= mem.length() && minSize <= mem.size ); }),
-//				end());
-//		return *this;
-//	}
+	/**
+	 * filter this SMEMS list by evalue and size
+	 */
+	SMEM_LIST& filter(int64_t minLen = MIN_LENGTH) {
+		erase(std::remove_if(begin(), end(),
+				[=](const SMEM& mem) { return !(minLen <= mem.length() ); }),
+				end());
+		return *this;
+	}
 
 	/**
 	 * sort and get unique SMEMS of this SMEM_LIST
@@ -343,7 +343,7 @@ public:
 	/* static fields */
 	static const int64_t MIN_LENGTH = 16; // minimum length for a significant SMEM
 //	static const int64_t MAX_LENGTH = 32; // maximum length for a significant SMEM
-	static const int64_t MIN_SIZE = 1; // minimum size (# of occurrence of a significant SMEM)
+//	static const int64_t MIN_SIZE = 1; // minimum size (# of occurrence of a significant SMEM)
 };
 
 inline ostream& operator<<(ostream& out, const SMEM& smem) {

@@ -45,7 +45,7 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 		int64_t& from, int64_t& to, int64_t minLen) {
 	const size_t L = seq->length();
 	assert(from < L);
-	SMEM_LIST curr, prev, match;
+	SMEM_LIST curr, prev;
 	nt16_t b = seq->getBase(from);
 
 	/* init SMEM */
@@ -54,32 +54,24 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 	/* forward extension */
 	for(smem0 = smem; smem.size > 0; smem0 = smem) {
 		smem.fwdExt();
-		if(smem.size != smem0.size) // a different BD interval found
+		if(smem.size != smem0.size && smem0.to >= minLen) // a different BD interval found
 			curr.push_back(smem0);
 	}
 	to = smem.to - 1;
 
 	/* backward extension */
 	std::swap(curr, prev);
-	std::reverse(prev.begin(), prev.end()); // keep larger SMEM near the front
-	while(from >= 0) {
-		curr.clear();
-		int64_t s0 = -1;
-		for(const SMEM& smem : prev) {
-			SMEM smem1 = smem.backExt();
-			if(smem1.size == 0 && curr.empty() && smem.length() >= minLen)
-				match.push_back(smem);
-			if(smem1.size > 0 && smem1.size != s0) {
-				s0 = smem1.size; // size already seen for this round of backExt
-				curr.push_back(smem1);
-			}
+	for(SMEM& smem : prev) {
+		do {
+			smem0 = smem;
+			smem.backExt();
 		}
-		if(curr.empty())
-			break;
-		from--;
-		std::swap(curr, prev);
+		while(smem.size > 0);
+		if(smem0.length() >= minLen)
+			curr.push_back(smem0);
+		from = std::min(from, smem0.from);
 	}
-	return match;
+	return curr;
 }
 
 SMEM_LIST SMEM_LIST::findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
@@ -101,20 +93,7 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 	/* 1st-pass SMEMS search */
 	for(int64_t from = 0, to = 1; from < L; from = to + 1)
 		allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to, minLen);
-	return allSmems;
-
-////	/* 2nd-pass re-seeding search */
-//	for(const SMEM& smem : allSmems) {
-//		if(smem.length() > 28) { // need re-seeding
-//			std::cerr << "reseeding " << smem << std::endl;
-//			int64_t from1 = 14;
-//			int64_t to1 = from1 + 1;
-//			allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from1, to1, minLen);
-//		}
-//	}
-//	for(const SMEM& smem : allSmems)
-//		std::cerr << smem << std::endl;
-//	return allSmems.sort();
+	return allSmems.sort();
 }
 
 SeedList SMEM::getSeeds() const {
