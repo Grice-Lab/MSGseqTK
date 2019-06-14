@@ -101,6 +101,11 @@ public:
 		return length() == 0;
 	}
 
+	/** test whether this SMEM is valid */
+	bool isValid() const {
+		return size > 0;
+	}
+
 	/**
 	 * get SeedPairs of this SMEM
 	 * @return  mapped seeds that always on FWD strand of target
@@ -267,10 +272,15 @@ public:
 	}
 
 	/**
-	 * sort and get unique SMEMS of this SMEM_LIST
+	 * sort this SMEM_LIST
 	 */
 	SMEM_LIST& sort() {
 		std::sort(begin(), end());
+		return *this;
+	}
+
+	/** get unique SMEM of this list */
+	SMEM_LIST& uniq() {
 		erase(std::unique(begin(), end()), end());
 		return *this;
 	}
@@ -280,6 +290,30 @@ public:
 
 	/** get to of an SMEM_LIST */
 	int64_t getTo() const;
+
+	/** get number of valid in this SMEM list */
+	size_t numValid() const {
+		return std::count_if(begin(), end(),
+				[](const SMEM& smem) { return smem.isValid(); });
+	}
+
+	/** test whether all of SMEM is valid */
+	bool allValid() const {
+		return std::all_of(begin(), end(),
+				[](const SMEM& smem) { return smem.isValid(); });
+	}
+
+	/** test whether any of SMEM is valid */
+	bool anyValid() const {
+		return std::any_of(begin(), end(),
+				[](const SMEM& smem) { return smem.isValid(); });
+	}
+
+	/** test whether none of SMEM is valid */
+	bool noneValid() const {
+		return std::none_of(begin(), end(),
+				[](const SMEM& smem) { return smem.isValid(); });
+	}
 
 	/* static methods */
 	/**
@@ -298,7 +332,7 @@ protected:
 
 public:
 	/**
-	 * find filtered SMEMS of a given seq by step-wise searches and re-seeding
+	 * find SMEMS of a given seq by step-wise searches
 	 */
 	static SMEM_LIST findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t minLen = MIN_LENGTH);
@@ -341,8 +375,8 @@ public:
 	friend SMEM_LIST operator+(const SMEM_LIST& lhs, const SMEM_LIST& rhs);
 
 	/* static fields */
-	static const int64_t MIN_LENGTH = 16; // minimum length for a significant SMEM
-//	static const int64_t MAX_LENGTH = 32; // maximum length for a significant SMEM
+	static const int64_t MIN_LENGTH = 18; // minimum length for a significant SMEM
+	static const int64_t MAX_LENGTH = 28; // maximum length for a significant SMEM
 //	static const int64_t MIN_SIZE = 1; // minimum size (# of occurrence of a significant SMEM)
 };
 

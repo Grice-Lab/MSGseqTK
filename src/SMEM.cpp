@@ -47,29 +47,43 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 	assert(from < L);
 	SMEM_LIST curr, prev;
 	nt16_t b = seq->getBase(from);
+	to = from + 1;
+	if(DNAalphabet::isAmbiguous(b))
+		return curr;
 
 	/* init SMEM */
-	SMEM smem(seq, mtg, fmdidx, from, from + 1, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
+	SMEM smem(seq, mtg, fmdidx, from, to, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
 	SMEM smem0;
 	/* forward extension */
 	for(smem0 = smem; smem.size > 0; smem0 = smem) {
 		smem.fwdExt();
-		if(smem.size != smem0.size && smem0.to >= minLen) // a different BD interval found
-			curr.push_back(smem0);
+		if(smem.size != smem0.size && smem0.to >= minLen)
+			prev.push_back(smem0);
 	}
 	to = smem.to - 1;
 
 	/* backward extension */
-	std::swap(curr, prev);
-	for(SMEM& smem : prev) {
-		do {
+	std::reverse(prev.begin(), prev.end()); // sort SMEM list by their length decreasingly
+	while(from >= 0 && !prev.empty()) {
+		int64_t s0 = -1; // SMEM size in prev of each iteration should be mono decreasing
+		int64_t nValid = 0;
+		for(SMEM& smem : prev) {
 			smem0 = smem;
 			smem.backExt();
+			if(smem.size != smem0.size && nValid == 0 && smem0.length() >= minLen)
+				curr.push_back(smem0);
+			if(smem.size > 0 && smem.size != s0) { /* still a valid SMEM with size not seen */
+				s0 = smem.size;
+				nValid++;
+			}
+			else // mark this SMEM as not valid
+				smem.size = 0;
 		}
-		while(smem.size > 0);
-		if(smem0.length() >= minLen)
-			curr.push_back(smem0);
-		from = std::min(from, smem0.from);
+		/* remove invalid SMEM */
+		prev.erase(std::remove_if(prev.begin(), prev.end(),
+				[](const SMEM& smem) { return !smem.isValid(); }), prev.end());
+		assert(prev.size() == nValid);
+		from--;
 	}
 	return curr;
 }
@@ -93,7 +107,16 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 	/* 1st-pass SMEMS search */
 	for(int64_t from = 0, to = 1; from < L; from = to + 1)
 		allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to, minLen);
-	return allSmems.sort();
+
+	/* 2nd-pass reseeding */
+//	for(const SMEM& smem : allSmems) {
+//		if(smem.length() >= MAX_LENGTH) {
+//			int64_t from1 = (smem.from + smem.to) / 2 - 1;
+//			int64_t to1 = from1 + 1;
+//			allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from1, to1, minLen);
+//		}
+//	}
+	return allSmems;
 }
 
 SeedList SMEM::getSeeds() const {
