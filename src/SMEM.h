@@ -327,22 +327,22 @@ protected:
 	 * find all SMEMS of a given seq starting at given position relative to the seq by forward/backward extensions
 	 * @return  a SMEM_LIST overlappling position from that may contain duplicated copies
 	 */
-	static SMEM_LIST findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t& from, int64_t& to, int64_t minLen = MIN_LENGTH);
+	static SMEM_LIST findAllSMEMSAt(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			int64_t& from, int64_t& to, int64_t minLen = MIN_LENGTH, int64_t minSize = MIN_SIZE);
 
 public:
 	/**
 	 * find SMEMS of a given seq by step-wise searches
 	 */
 	static SMEM_LIST findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t minLen = MIN_LENGTH);
+			int64_t minLen = MIN_LENGTH, int64_t maxLen = MAX_LENGTH);
 
 	/**
 	 * get a SeedList of a given seq using step-wise forward/backward searches
 	 * seeds will be filtered and sorted
 	 */
 	static SeedList findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t minLen = MIN_LENGTH);
+			int64_t minLen = MIN_LENGTH, int64_t maxLen = MAX_LENGTH);
 
 	/**
 	 * find SMEMS_PE for paired-end reads
@@ -356,8 +356,8 @@ public:
 	 * find SeedListPE for pair-end reads
 	 */
 	static SeedListPE findSeedsPE(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
-			 const MetaGenome* mtg, const FMDIndex* fmdidx, int64_t minLen = MIN_LENGTH) {
-		return SeedListPE(findSeeds(fwdSeq, mtg, fmdidx, minLen), findSeeds(revSeq, mtg, fmdidx, minLen));
+			 const MetaGenome* mtg, const FMDIndex* fmdidx, int64_t minLen = MIN_LENGTH, int64_t maxLen = MAX_LENGTH) {
+		return SeedListPE(findSeeds(fwdSeq, mtg, fmdidx, minLen, maxLen), findSeeds(revSeq, mtg, fmdidx, minLen, maxLen));
 	}
 
 	/** get loglik for SMEMS_PE */
@@ -375,9 +375,9 @@ public:
 	friend SMEM_LIST operator+(const SMEM_LIST& lhs, const SMEM_LIST& rhs);
 
 	/* static fields */
-	static const int64_t MIN_LENGTH = 18; // minimum length for a significant SMEM
-	static const int64_t MAX_LENGTH = 28; // maximum length for a significant SMEM
-//	static const int64_t MIN_SIZE = 1; // minimum size (# of occurrence of a significant SMEM)
+	static const int64_t MIN_LENGTH = 17; // minimum length for a significant SMEM
+	static const int64_t MAX_LENGTH = 0; // maximum length for a significant SMEM
+	static const int64_t MIN_SIZE = 1; // minimum size (# of occurrence of a significant SMEM)
 };
 
 inline ostream& operator<<(ostream& out, const SMEM& smem) {
