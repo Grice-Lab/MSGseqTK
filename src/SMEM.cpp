@@ -19,29 +19,28 @@ SMEM& SMEM::evaluate() {
 	return *this;
 }
 
-SMEM SMEM::findSMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+MEM SMEM::findMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		int64_t& from, int64_t& to) {
 	const size_t L = seq->length();
 	assert(from < L);
 	nt16_t b = seq->getBase(from);
 
 	/* init */
-	SMEM smem(seq, mtg, fmdidx, from, from + 1, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
-	SMEM smem0;
+	MEM mem(seq, mtg, fmdidx, from, from + 1, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
+	MEM mem0;
 	/* forward extension */
-	for(smem0 = smem; smem.size > 0; smem.fwdExt())
-		smem0 = smem;
-	to = smem0.to;
+	for(mem0 = mem; mem.size > 0; mem.fwdExt())
+		mem0 = mem;
+	to = mem0.to;
 
 	/* backward extension */
-	for(smem0 = smem; smem.size > 0; smem.backExt())
-		smem0 = smem;
-	from = smem0.from;
-
-	return smem0;
+	for(mem0 = mem; mem.size > 0; mem.backExt())
+		mem0 = mem;
+	from = mem0.from;
+	return mem0;
 }
 
-SMEM_LIST SMEM_LIST::findAllSMEMSAt(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		int64_t& from, int64_t& to, int64_t minLen, int64_t minSize) {
 	const size_t L = seq->length();
 	assert(from < L);
@@ -88,16 +87,16 @@ SMEM_LIST SMEM_LIST::findAllSMEMSAt(const PrimarySeq* seq, const MetaGenome* mtg
 	return curr;
 }
 
-SMEM_LIST SMEM_LIST::findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+MEM_LIST SMEM_LIST::findMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		int64_t minLen) {
 	const int64_t L = seq->length();
-	SMEM_LIST smems;
+	MEM_LIST mems;
 	for(int64_t from = 0, to = 1; from < L; from = to + 1) {
-		SMEM smem = SMEM::findSMEM(seq, mtg, fmdidx, from, to);
-		if(smem.length() >= minLen)
-			smems.push_back(smem);
+		MEM mem = SMEM::findMEM(seq, mtg, fmdidx, from, to);
+		if(mem.length() >= minLen)
+			mems.push_back(mem);
 	}
-	return smems;
+	return mems;
 }
 
 SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
@@ -106,7 +105,7 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 	SMEM_LIST allSmems;
 	/* 1st-pass SMEMS search */
 	for(int64_t from = 0, to = 1; from < L; from = to + 1)
-		allSmems += SMEM_LIST::findAllSMEMSAt(seq, mtg, fmdidx, from, to, minLen);
+		allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to, minLen);
 
 	/* 2nd-pass reseeding, if requested */
 	if(maxLen > 0) {
@@ -114,10 +113,9 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 			if(smem.length() > maxLen) {
 				int64_t from1 = (smem.from + smem.to) / 2 - 1;
 				int64_t to1 = from1 + 1;
-				allSmems += SMEM_LIST::findAllSMEMSAt(seq, mtg, fmdidx, from1, to1, minLen, smem.size + 1);
+				allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from1, to1, minLen, smem.size + 1);
 			}
 		}
-		allSmems.sort().uniq();
 	}
 	return allSmems;
 }
@@ -160,6 +158,7 @@ SeedList SMEM_LIST::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, cons
 	}
 	/* sort and get unique seeds */
 	std::sort(allSeeds.begin(), allSeeds.end());
+	allSeeds.erase(std::unique(allSeeds.begin(), allSeeds.end()), allSeeds.end());
 	return allSeeds;
 }
 

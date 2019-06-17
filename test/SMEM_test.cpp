@@ -62,7 +62,7 @@ int main() {
 
 	/* simple SMEM/seed test */
 	PrimarySeq read("ACGTAGTA", "seq1");
-	SMEM_LIST smems = SMEM_LIST::findSMEMS(&read, &mtg, &fmdidx, 0);
+	SMEM_LIST smems = SMEM_LIST::findMEMS(&read, &mtg, &fmdidx, 0);
 	cout << "found " << smems.size() << " smems" << endl;
 	for(const SMEM& smem : smems)
 		for(const SeedPair& seed : smem.getSeeds())

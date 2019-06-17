@@ -27,9 +27,12 @@ using std::vector;
 using std::pair;
 using std::set;
 
+class SMEM;
+typedef SMEM MEM;
+
 /**
- * A Super-Maximum Exact Match class representing a
- * non-reducible match between a PrimarySeq read and a MetaGenome/FMD-Iidex target
+ * MEM: Maximum Exact Match between a PrimarySeq read and a MetaGenome/FMD-Iidex target that cannot extend to either end
+ * SMEM: Super MEM that is not contained in any other MEM
  */
 class SMEM {
 public:
@@ -160,7 +163,6 @@ public:
 	 */
 	SMEM& evaluate();
 
-protected:
 	/** forward evaluation during forward extension */
 	SMEM& fwdEvaluate() {
 		assert(to <= seq->length());
@@ -177,9 +179,9 @@ protected:
 
 	/* static methods */
 	/**
-	 * find an SMEM of a given seq starting at given position using forward/backward extension
+	 * find list of MEMS of a given seq starting at given position using forward/backward extension
 	 */
-	static SMEM findSMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+	static MEM findMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t& from, int64_t& to);
 
 private:
@@ -210,9 +212,9 @@ public:
 };
 
 class SMEM_LIST;
-typedef set<SMEM> SMEM_SET;
+typedef SMEM_LIST MEM_LIST;
+typedef pair<MEM_LIST, MEM_LIST> MEM_LIST_PE;
 typedef pair<SMEM_LIST, SMEM_LIST> SMEM_LIST_PE;
-typedef set<SMEM> SMEM_SET;
 
 /**
  * a SMEM_LIST is a list SMEM with additional methods
@@ -319,16 +321,15 @@ public:
 	/**
 	 * find longest SMEMS of a given seq using step-wise forward/backward searches
 	 */
-	static SMEM_LIST findSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+	static SMEM_LIST findMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t minLen = MIN_LENGTH);
 
-protected:
 	/**
 	 * find all SMEMS of a given seq starting at given position relative to the seq by forward/backward extensions
 	 * @return  a SMEM_LIST overlappling position from that may contain duplicated copies
 	 */
-	static SMEM_LIST findAllSMEMSAt(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t& from, int64_t& to, int64_t minLen = MIN_LENGTH, int64_t minSize = MIN_SIZE);
+	static SMEM_LIST findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			int64_t& from, int64_t& to, int64_t minLen, int64_t minSize = MIN_SIZE);
 
 public:
 	/**
@@ -345,11 +346,11 @@ public:
 			int64_t minLen = MIN_LENGTH, int64_t maxLen = MAX_LENGTH);
 
 	/**
-	 * find SMEMS_PE for paired-end reads
+	 * find MEMS_PE for paired-end reads
 	 */
-	static SMEM_LIST_PE findSMEMS_PE(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
+	static MEM_LIST_PE findMEMS_PE(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
 			const MetaGenome* mtg, const FMDIndex* fmdidx, int64_t minLen = MIN_LENGTH) {
-		return SMEM_LIST_PE(findSMEMS(fwdSeq, mtg, fmdidx, minLen), findSMEMS(revSeq, mtg, fmdidx, minLen));
+		return MEM_LIST_PE(findMEMS(fwdSeq, mtg, fmdidx, minLen), findMEMS(revSeq, mtg, fmdidx, minLen));
 	}
 
 	/**
