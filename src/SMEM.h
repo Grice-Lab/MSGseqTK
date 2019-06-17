@@ -198,7 +198,7 @@ private:
 
 public:
 	/* static fields */
-	static const size_t MAX_NSEEDS = 256;
+	static const size_t MAX_NSEEDS = 16;
 
 	/* non-member functions */
 	/** formated output */
