@@ -122,7 +122,7 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 
 SeedList SMEM::getSeeds() const {
 	SeedList seeds;
-	const size_t N = std::min<size_t>(MAX_NSEEDS, size);
+	const size_t N = std::min<size_t>(MAX_NSEED, size);
 	seeds.reserve(N);
 	for(size_t i = 0; i < N; ++i) {
 		{

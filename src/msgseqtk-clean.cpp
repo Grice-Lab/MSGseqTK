@@ -75,7 +75,7 @@ void printUsage(const string& progName) {
 		 << "            -m  FILE             : output of cleaned mate/reverse reads" << ZLIB_SUPPORT << endl
 		 << "            -a  FILE             : write an additional TSV file with the detailed assignment information for each read" << endl
 		 << "            -L|--lod  DBL        : minimum log-odd required to determine a read/pair as reference vs. background [" << DEFAULT_MIN_LOD << "]" << endl
-		 << "            -s|--seed-len  INT   : mimimum length of an SMEM to be used as a seed [" << SMEM_LIST::MIN_LENGTH << "]" << endl
+		 << "            --min-seed  INT      : mimimum length of an SMEM to be used as a seed [" << SMEM_LIST::MIN_LENGTH << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
 	ofstream assignOut;
 
 	double minLod = DEFAULT_MIN_LOD;
-	int64_t minLen = SMEM_LIST::MIN_LENGTH;
+	int64_t minSeed = SMEM_LIST::MIN_LENGTH;
 	int nThreads = DEFAULT_NUM_THREADS;
 
 	/* parse options */
@@ -157,10 +157,8 @@ int main(int argc, char* argv[]) {
 	if(cmdOpts.hasOpt("-q"))
 		minLod = ::atof(cmdOpts.getOptStr("-q"));
 
-	if(cmdOpts.hasOpt("-s"))
-		minLen = ::atol(cmdOpts.getOptStr("-s"));
-	if(cmdOpts.hasOpt("--seed-len"))
-		minLen = ::atol(cmdOpts.getOptStr("--seed-len"));
+	if(cmdOpts.hasOpt("--min-seed"))
+		minSeed = ::atol(cmdOpts.getOptStr("--min-seed"));
 
 #ifdef _OPENMP
 	if(cmdOpts.hasOpt("-p"))
@@ -195,6 +193,11 @@ int main(int argc, char* argv[]) {
 
 	if(!(minLod >= 0)) {
 		cerr << "-q must be non-negative" << endl;
+		return EXIT_FAILURE;
+	}
+
+	if(!(minSeed > 0)) {
+		cerr << "--min-seed must be non-netative" << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -367,9 +370,9 @@ int main(int argc, char* argv[]) {
 
 	/* main processing */
 	if(!isPaired)
-		return main_SE(refMtg, bgMtg, refFmdidx, bgFmdidx, fwdI, fwdO, assignOut, minLen, minLod);
+		return main_SE(refMtg, bgMtg, refFmdidx, bgFmdidx, fwdI, fwdO, assignOut, minSeed, minLod);
 	else
-		return main_PE(refMtg, bgMtg, refFmdidx, bgFmdidx, fwdI, revI, fwdO, revO, assignOut, minLen, minLod);
+		return main_PE(refMtg, bgMtg, refFmdidx, bgFmdidx, fwdI, revI, fwdO, revO, assignOut, minSeed, minLod);
 }
 
 int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
