@@ -127,6 +127,9 @@ private:
 	double logP = 0; /* logliklihood */
 
 public:
+	/* static fields */
+	static const double MIN_OVERRATE;
+
 	/* static methods */
 	/** get # of mismatches between two seeds */
 	static int64_t nMismatch(const SeedPair& lhs, const SeedPair& rhs) {
@@ -160,6 +163,45 @@ public:
 	static double bestPvalue(const SeedList& seeds) {
 		return std::exp(bestLoglik(seeds));
 	}
+
+public:
+	/* static methods */
+	/** test whether one pair containing another */
+	static bool containing(const SeedPair& lhs, const SeedPair& rhs) {
+		return  lhs.tid == rhs.tid &&
+				lhs.from <= rhs.from && lhs.to >= rhs.to &&
+				lhs.start <= rhs.start && lhs.end >= rhs.end;
+	}
+
+	/** test whether one pair is contained by another */
+	static bool contained(const SeedPair& lhs, const SeedPair& rhs) {
+		return containing(rhs, lhs);
+	}
+
+	/** test whether two pair is overlapping */
+	static bool overlap(const SeedPair& lhs, const SeedPair& rhs) {
+		return lhs.tid == rhs.tid && (lhs.strand & rhs.strand) != 0 &&
+				lhs.from < rhs.to && lhs.to > rhs.from &&
+				lhs.start < rhs.end && lhs.end > rhs.start;
+	}
+
+	/** get overlap length on target of two Seed Chain */
+	static int64_t overLength(const SeedPair& lhs, const SeedPair& rhs) {
+		return overlap(lhs, rhs) ?
+				std::min(lhs.end, rhs.end) - std::max(lhs.start, rhs.start)
+		: 0;
+	}
+
+	/** test whether two pair is overlapping at a given rate */
+	static bool overlap(const SeedPair& lhs, const SeedPair& rhs, double minRate) {
+		return overLength(lhs, rhs) >= minRate * std::min(lhs.length(), rhs.length());
+	}
+
+	/** filter a Pair list by removing pairs with significant smaller log10lik()
+	 * and smaller pairs that are contained in a larger pair
+	 * filtered pairs will be ordered by their loglik()
+	 */
+	static vector<SeedPair>& filter(vector<SeedPair>& pairs);
 
 	/* non-member operators */
 	/** formated input */

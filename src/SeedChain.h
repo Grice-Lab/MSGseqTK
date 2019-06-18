@@ -68,8 +68,18 @@ public:
 		return loglik() / std::log(10);
 	}
 
-	/** get overal length */
+	/** get total paired length */
 	int64_t length() const;
+
+	/** get query length */
+	int64_t getQLen() const {
+		return getTo() - getFrom();
+	}
+
+	/** get target length */
+	int64_t getTLen() const {
+		return getEnd() - getStart();
+	}
 
 	/** get overal pvalue */
 	double pvalue() const {
@@ -96,6 +106,7 @@ public:
 	/** test whether one chain containing another */
 	static bool containing(const SeedChain& lhs, const SeedChain& rhs) {
 		return  lhs.getTid() == rhs.getTid() &&
+				lhs.getFrom() <= rhs.getFrom() && lhs.getTo() >= rhs.getTo() &&
 				lhs.getStart() <= rhs.getStart() && lhs.getEnd() >= rhs.getEnd();
 	}
 
@@ -107,7 +118,20 @@ public:
 	/** test whether two chain is overlapping */
 	static bool overlap(const SeedChain& lhs, const SeedChain& rhs) {
 		return lhs.getTid() == rhs.getTid() && (lhs.getStrand() & rhs.getStrand()) != 0 &&
+				lhs.getFrom() < rhs.getTo() && lhs.getTo() > rhs.getFrom() &&
 				lhs.getStart() < rhs.getEnd() && lhs.getEnd() > rhs.getStart();
+	}
+
+	/** get overlap length on target of two Seed Chain */
+	static int64_t overLength(const SeedChain& lhs, const SeedChain& rhs) {
+		return overlap(lhs, rhs) ?
+				std::min(lhs.getEnd(), rhs.getEnd()) - std::max(lhs.getStart(), rhs.getStart())
+		: 0;
+	}
+
+	/** test whether two chain is overlapping at a given rate */
+	static bool overlap(const SeedChain& lhs, const SeedChain& rhs, double minRate) {
+		return overLength(lhs, rhs) >= minRate * std::min(lhs.getTLen(), rhs.getTLen());
 	}
 
 	/** filter a ChainList by removing chains with significant smaller log10lik()
@@ -115,7 +139,42 @@ public:
 	 * filtered chains will be ordered by their loglik()
 	 */
 	static ChainList& filter(ChainList& chains);
+
+	/* non-member functions */
+	/** relationship operators */
+	friend bool operator<(const SeedChain& lhs, const SeedChain& rhs);
+	friend bool operator==(const SeedChain& lhs, const SeedChain& rhs);
 };
+
+inline bool operator<(const SeedChain& lhs, const SeedChain& rhs) {
+	return lhs.getFrom() != rhs.getFrom() ? lhs.getFrom() < rhs.getFrom() :
+			lhs.getTo() != rhs.getTo() ? lhs.getTo() < rhs.getTo() :
+					lhs.getTid() != rhs.getTid() ? lhs.getTid() < rhs.getTid() :
+							lhs.getStart() != rhs.getStart() ? lhs.getStart() < rhs.getStart() :
+									lhs.getEnd() < rhs.getEnd();
+}
+
+inline bool operator==(const SeedChain& lhs, const SeedChain& rhs) {
+	return lhs.getFrom() == rhs.getFrom() && lhs.getTo() == rhs.getTo() &&
+			lhs.getTid() == rhs.getTid() &&
+			lhs.getStart() == rhs.getStart() && lhs.getEnd() && rhs.getEnd();
+}
+
+inline bool operator!=(const SeedChain& lhs, const SeedChain& rhs) {
+	return !(lhs == rhs);
+}
+
+inline bool operator<=(const SeedChain& lhs, const SeedChain& rhs) {
+	return lhs < rhs || lhs == rhs;
+}
+
+inline bool operator>(const SeedChain& lhs, const SeedChain& rhs) {
+	return rhs < lhs;
+}
+
+inline bool operator>=(const SeedChain& lhs, const SeedChain& rhs) {
+	return !(lhs < rhs);
+}
 
 } /* namespace MSGseqTK */
 } /* namespace EGriceLab */

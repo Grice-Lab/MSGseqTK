@@ -72,10 +72,11 @@ ChainList& SeedChain::filter(ChainList& chains) {
 	/* sort chains by loglik, so bad chains near the end */
 	std::sort(chains.begin(), chains.end(),
 			[](const SeedChain& lhs, const SeedChain& rhs) { return lhs.loglik() < rhs.loglik(); });
+//	std::sort(chains.begin(), chains.end());
 	/* filter chained smaller chains */
 	for(ChainList::const_reverse_iterator i = chains.rbegin(); i < chains.rend() - 1; ++i) { // search backward
 		for(ChainList::const_reverse_iterator j = i + 1; j < chains.rend(); ++j) {
-			if(contained(*i, *j)) { // a redundant chain
+			if(overlap(*i, *j, SeedPair::MIN_OVERRATE)) { // a redundant chain
 				chains.erase(i.base() - 1);
 				break;
 			}

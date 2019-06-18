@@ -5,11 +5,14 @@
  *      Author: zhengqi
  */
 
+#include <algorithm>
 #include "MSGseqTKConst.h"
 #include "SeedPair.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
+
+const double SeedPair::MIN_OVERRATE = 0.9;
 
 ostream& SeedPair::save(ostream& out) const {
 	out.write((const char*) &from, sizeof(int64_t));
@@ -63,6 +66,24 @@ double SeedPair::bestLoglik(const SeedList& seeds) {
 	for(const SeedPair& seed : seeds)
 		minLoglik = std::min(minLoglik, seed.loglik());
 	return minLoglik;
+}
+
+vector<SeedPair>& SeedPair::filter(vector<SeedPair>& pairs) {
+	if(pairs.size() <= 1)
+		return pairs;
+	/* sort pairs by location decreasingly */
+	std::sort(pairs.rbegin(), pairs.rend());
+	for(vector<SeedPair>::const_reverse_iterator i = pairs.rbegin(); i < pairs.rend() - 1; ++i) { // search backward
+		for(vector<SeedPair>::const_reverse_iterator j = i + 1; j < pairs.rend(); ++j) {
+			if(contained(*i, *j)) { // a redundant pair
+				pairs.erase(i.base() - 1);
+				break;
+			}
+		}
+	}
+	assert(!pairs.empty());
+	std::reverse(pairs.begin(), pairs.end()); // reverse the order
+	return pairs;
 }
 
 } /* namespace MSGseqTK */

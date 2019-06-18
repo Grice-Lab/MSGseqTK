@@ -113,7 +113,7 @@ public:
 	 * get SeedPairs of this SMEM
 	 * @return  mapped seeds that always on FWD strand of target
 	 */
-	SeedList getSeeds() const;
+	SeedList getSeeds(int64_t maxNSeed = MAX_NSEED) const;
 
 	/**
 	 * forward extend this SMEM at current end
@@ -197,7 +197,7 @@ private:
 	double logP = 0; /* log-probability (loglik) of observing this SMEM by chance */
 
 public:
-	static const int64_t MAX_NSEED = 256; // maximum size (# of occurrence of a significant SMEM)
+	static const int64_t MAX_NSEED = 256; // maximum size (# of occurrence of a good SMEM)
 	/* non-member functions */
 	/** formated output */
 	friend ostream& operator<<(ostream& out, const SMEM& smem);
@@ -332,6 +332,7 @@ public:
 public:
 	/**
 	 * find SMEMS of a given seq by step-wise searches
+	 * @return SMEMS sorted by their loglik() smaller loglik near the beginning
 	 */
 	static SMEM_LIST findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t minLen = MIN_LENGTH, int64_t maxLen = MAX_LENGTH);
@@ -341,7 +342,7 @@ public:
 	 * seeds will be filtered and sorted
 	 */
 	static SeedList findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t minLen = MIN_LENGTH, int64_t maxLen = MAX_LENGTH);
+			int64_t minLen = MIN_LENGTH, int64_t maxLen = MAX_LENGTH, int64_t maxNSeed = SMEM::MAX_NSEED);
 
 	/**
 	 * find MEMS_PE for paired-end reads
@@ -355,8 +356,10 @@ public:
 	 * find SeedListPE for pair-end reads
 	 */
 	static SeedListPE findSeedsPE(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
-			 const MetaGenome* mtg, const FMDIndex* fmdidx, int64_t minLen = MIN_LENGTH, int64_t maxLen = MAX_LENGTH) {
-		return SeedListPE(findSeeds(fwdSeq, mtg, fmdidx, minLen, maxLen), findSeeds(revSeq, mtg, fmdidx, minLen, maxLen));
+			 const MetaGenome* mtg, const FMDIndex* fmdidx,
+			 int64_t minLen = MIN_LENGTH, int64_t maxLen = MAX_LENGTH, int64_t maxNSeed = SMEM::MAX_NSEED) {
+		return SeedListPE(findSeeds(fwdSeq, mtg, fmdidx, minLen, maxLen, maxNSeed),
+				findSeeds(revSeq, mtg, fmdidx, minLen, maxLen, maxNSeed));
 	}
 
 	/** get loglik for SMEMS_PE */

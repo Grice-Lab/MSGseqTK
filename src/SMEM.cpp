@@ -102,27 +102,30 @@ MEM_LIST SMEM_LIST::findMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const
 SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		int64_t minLen, int64_t maxLen) {
 	const int64_t L = seq->length();
-	SMEM_LIST allSmems;
+	SMEM_LIST curr, prev;
 	/* 1st-pass SMEMS search */
 	for(int64_t from = 0, to = 1; from < L; from = to + 1)
-		allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to, minLen);
+		curr += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to, minLen);
 
 	/* 2nd-pass reseeding, if requested */
 	if(maxLen > 0) {
-		for(const SMEM& smem : allSmems) {
+		prev = curr; // copy 1st pass result
+		for(const SMEM& smem : prev) {
 			if(smem.length() > maxLen) {
-				int64_t from1 = (smem.from + smem.to) / 2 - 1;
+				int64_t from1 = (smem.from + smem.to + 1) / 2; // ceil((from + to) / 2)
 				int64_t to1 = from1 + 1;
-				allSmems += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from1, to1, minLen, smem.size + 1);
+				curr += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from1, to1, minLen, smem.size + 1);
 			}
 		}
 	}
-	return allSmems;
+	std::sort(curr.begin(), curr.end(),
+			[](const SMEM& lhs, const SMEM& rhs) { return lhs.loglik() < rhs.loglik(); });
+	return curr;
 }
 
-SeedList SMEM::getSeeds() const {
+SeedList SMEM::getSeeds(int64_t maxNSeed) const {
 	SeedList seeds;
-	const size_t N = std::min<size_t>(MAX_NSEED, size);
+	const size_t N = std::min<size_t>(maxNSeed, size);
 	seeds.reserve(N);
 	for(size_t i = 0; i < N; ++i) {
 		{
@@ -148,17 +151,19 @@ SeedList SMEM::getSeeds() const {
 }
 
 SeedList SMEM_LIST::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		int64_t minLen, int64_t maxLen) {
+		int64_t minLen, int64_t maxLen, int64_t maxNSeed) {
 	const SMEM_LIST& smems = findAllSMEMS(seq, mtg, fmdidx, minLen, maxLen);
 	/* get seeds */
 	SeedList allSeeds;
 	for(const SMEM& smem : smems) {
-		const SeedList& seeds = smem.getSeeds();
+		const SeedList& seeds = smem.getSeeds(maxNSeed);
 		allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
 	}
-	/* sort and get unique seeds */
-	std::sort(allSeeds.begin(), allSeeds.end());
-	allSeeds.erase(std::unique(allSeeds.begin(), allSeeds.end()), allSeeds.end());
+//	/* sort and get unique seeds */
+//	std::sort(allSeeds.begin(), allSeeds.end());
+//	allSeeds.erase(std::unique(allSeeds.begin(), allSeeds.end()), allSeeds.end());
+	/* filter seeds */
+	SeedPair::filter(allSeeds);
 	return allSeeds;
 }
 

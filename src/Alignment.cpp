@@ -331,7 +331,7 @@ Alignment& Alignment::evaluate() {
 
 	for(int64_t k = 0, i = alnFrom, j = alnStart; k < alnPath.length(); ++k) { /* k on alnPath, i on query, j on target */
 		state_str::value_type s = alnPath[k];
-//		fprintf(stderr, "k: %d i: %d j: %d s: %d q: %c t: %c qual: %d log10P: %g\n", k, i, j, s, query->decode(i), target->decode(j), (*qual)[i], log10P);
+//		fprintf(stderr, "k: %d i: %d j: %d s: %c q: %c t: %c qual: %d log10P: %g\n", k, i, j, bam_cigar_opchr(s), DNAalphabet::decode(query[i]), DNAalphabet::decode((*target)[j]), qual[i], log10P);
 		switch(s) {
 		case BAM_CMATCH:
 			if(query[i] & (*target)[j]) // IUPAC match (BAM_CEQUAL)
@@ -342,12 +342,14 @@ Alignment& Alignment::evaluate() {
 			j++;
 			break;
 		case BAM_CINS:
+			log10P += qual[i] / quality::PHRED_SCALE; // basic mismatch penalty
 			if(k == 0 || alnPath[k - 1] != BAM_CINS) // gap open
-				log10P += -ss->getGapOPenalty();
+				log10P += - ss->getGapOPenalty(); // additional penalty
 			log10P += -ss->getGapEPenalty();
 			i++;
 			break;
 		case BAM_CDEL:
+			log10P += qual[i] / quality::PHRED_SCALE; // basic mismatch penalty
 			if(k == 0 || alnPath[k - 1] != BAM_CDEL) // gap open
 				log10P += -ss->getGapOPenalty();
 			log10P += -ss->getGapEPenalty();
