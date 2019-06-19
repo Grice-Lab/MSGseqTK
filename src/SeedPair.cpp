@@ -73,10 +73,10 @@ vector<SeedPair>& SeedPair::filter(vector<SeedPair>& pairs) {
 		return pairs;
 	/* sort pairs by location decreasingly */
 	std::sort(pairs.rbegin(), pairs.rend());
-	for(vector<SeedPair>::const_reverse_iterator i = pairs.rbegin(); i < pairs.rend() - 1; ++i) { // search backward
-		for(vector<SeedPair>::const_reverse_iterator j = i + 1; j < pairs.rend(); ++j) {
-			if(contained(*i, *j)) { // a redundant pair
-				pairs.erase(i.base() - 1);
+	for(vector<SeedPair>::const_iterator i = pairs.end(); i > pairs.begin(); --i) { // search backward
+		for(vector<SeedPair>::const_iterator j = i - 1; j > pairs.begin(); --j) {
+			if(contained(*(i - 1), *(j - 1))) { // a redundant pair
+				pairs.erase(i - 1);
 				break;
 			}
 		}

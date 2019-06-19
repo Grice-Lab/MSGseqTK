@@ -69,20 +69,21 @@ void SeedChain::dfsSeeds(const SeedList& inputSeeds, size_t i, ChainList& output
 ChainList& SeedChain::filter(ChainList& chains) {
 	if(chains.size() <= 1)
 		return chains;
-	/* sort chains by loglik, so bad chains near the end */
-	std::sort(chains.begin(), chains.end(),
-			[](const SeedChain& lhs, const SeedChain& rhs) { return lhs.loglik() < rhs.loglik(); });
-//	std::sort(chains.begin(), chains.end());
-	/* filter chained smaller chains */
-	for(ChainList::const_reverse_iterator i = chains.rbegin(); i < chains.rend() - 1; ++i) { // search backward
-		for(ChainList::const_reverse_iterator j = i + 1; j < chains.rend(); ++j) {
-			if(overlap(*i, *j, SeedPair::MIN_OVERRATE)) { // a redundant chain
-				chains.erase(i.base() - 1);
+//	/* sort chains by loglik, so bad chains near the end */
+//	std::sort(chains.begin(), chains.end(),
+//			[](const SeedChain& lhs, const SeedChain& rhs) { return lhs.loglik() < rhs.loglik(); });
+	/* sort chains by location decreasingly */
+	std::sort(chains.rbegin(), chains.rend());
+	for(ChainList::const_iterator i = chains.end(); i > chains.begin(); --i) { // search backward
+		for(ChainList::const_iterator j = i - 1; j > chains.begin(); --j) {
+			if(contained(*(i - 1), *(j - 1))) { // a redundant chain
+				chains.erase(i - 1);
 				break;
 			}
 		}
 	}
 	assert(!chains.empty());
+	std::reverse(chains.begin(), chains.end()); // reverse to increasing order
 	return chains;
 }
 
