@@ -216,7 +216,8 @@ string Alignment::getAlnMDTag() const {
 			j++;
 			break;
 		case BAM_CINS:
-			mdTag.append(boost::lexical_cast<string>(len));
+			if(prev_op != BAM_CINS)
+				mdTag.append(boost::lexical_cast<string>(len));
 			len = 0;
 			if(op != prev_op) /* open insertion */
 				mdTag.push_back(ALIGN_MD_INS);
@@ -342,16 +343,15 @@ Alignment& Alignment::evaluate() {
 			j++;
 			break;
 		case BAM_CINS:
-			log10P += qual[i] / quality::PHRED_SCALE; // basic mismatch penalty
 			if(k == 0 || alnPath[k - 1] != BAM_CINS) // gap open
-				log10P += - ss->getGapOPenalty(); // additional penalty
-			log10P += -ss->getGapEPenalty();
+				log10P += qual[i] / quality::PHRED_SCALE /* mismatch penalty */ - ss->getGapOPenalty(); // additional penalty
+			log10P += - ss->getGapEPenalty();
 			i++;
 			break;
 		case BAM_CDEL:
 			if(k == 0 || alnPath[k - 1] != BAM_CDEL) // gap open
-				log10P += -ss->getGapOPenalty();
-			log10P += -ss->getGapEPenalty();
+				log10P += qual[i] / quality::PHRED_SCALE /* mismatch penalty */ - ss->getGapOPenalty(); // additional penalty
+			log10P += - ss->getGapEPenalty();
 			j++;
 			break;
 		default:
