@@ -90,10 +90,11 @@ void printUsage(const string& progName) {
 		 << "            --no-tail-over FLAG  : not concordant when mates extend (tail) past each other" << endl
 		 << "            --no-contain  FLAG   : not concordant when one mate alignment contains other" << endl
 		 << "            --no-overlap  FLAG   : not concordant when mates overlap" << endl
+		 << "            --max-npair  INT     : maximum number of different paring combinations to try between forward and reverse alignments [" << AlignmentPE::MAX_NPAIR << "]" << endl
 		 << "Other:" << endl
 		 << "            --min-seed  INT      : minimum length of an SMEM to be used as a seed [" << SMEM_LIST::MIN_LENGTH << "]" << endl
 		 << "            --max-seed  INT      : maximum length of an SMEM that will trigger re-seeding to avoid missing seeds, 0 for no-reseeding [" << SMEM_LIST::MAX_LENGTH << "]" << endl
-		 << "            --max-nseed  INT  : maximum # of seed-locs to check for each SMEM [" << SMEM::MAX_NSEED << "]" << endl
+		 << "            --max-nseed  INT     : maximum # of seed-locs to check for each SMEM [" << SMEM::MAX_NSEED << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -118,7 +119,7 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 		SeqIO& fwdI, SeqIO& revI, SAMfile& out, int64_t minSeed, int64_t maxSeed, int64_t maxNSeed,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
-		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap);
+		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap, int64_t maxNPair);
 
 /** get BAM records from ALIGN_LIST */
 vector<BAM> getBAMRecords(const ALIGN_LIST& alnList);
@@ -167,6 +168,7 @@ int main(int argc, char* argv[]) {
 	bool noTailOver = false;
 	bool noContain = false;
 	bool noOverlap = false;
+	int64_t maxNPair = AlignmentPE::MAX_NPAIR;
 
 	/* parse options */
 	/* main options */
@@ -274,6 +276,8 @@ int main(int argc, char* argv[]) {
 		noContain = true;
 	if(cmdOpts.hasOpt("--no-overlap"))
 		noOverlap = true;
+	if(cmdOpts.hasOpt("--max-npair"))
+		maxNPair = ::atol(cmdOpts.getOptStr("--max-npair"));
 
 	/* other options */
 	if(cmdOpts.hasOpt("--min-seed"))
@@ -452,7 +456,7 @@ int main(int argc, char* argv[]) {
 		return main_SE(mtg, fmdidx, fwdI, out, minSeed, maxSeed, maxNSeed, alnMode, bestFrac, maxReport);
 	else
 		return main_PE(mtg, fmdidx, fwdI, revI, out, minSeed, maxSeed, maxNSeed, alnMode, bestFrac, maxReport,
-				minIns, maxIns, noMixed, noDiscordant, noTailOver, noContain, noOverlap);
+				minIns, maxIns, noMixed, noDiscordant, noTailOver, noContain, noOverlap, maxNPair);
 }
 
 int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport) {
@@ -573,7 +577,7 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 		SeqIO& fwdI, SeqIO& revI, SAMfile& out, int64_t minSeed, int64_t maxSeed, int64_t maxNSeed,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
-		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap) {
+		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap, int64_t maxNPair) {
 	infoLog << "Aligning paired-end reads" << endl;
 	/* search MEMS for each read */
 #pragma omp parallel
@@ -631,7 +635,7 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 						/* get alignments */
 						ALIGN_LIST fwdAlnList = Alignment::buildAlignments(&fwdRead, &rcFwdRead, mtg, &ss, fwdChains, alnMode);
 						ALIGN_LIST revAlnList = Alignment::buildAlignments(&revRead, &rcRevRead, mtg, &ss, revChains, alnMode);
-						/* filter alignments */
+						/* 1st pass filtes by alignment scores */
 						Alignment::filter(fwdAlnList, bestFrac);
 						Alignment::filter(revAlnList, bestFrac);
 						/* evaluate alignments */
@@ -639,13 +643,13 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 						Alignment::evaluate(revAlnList);
 						/* get pairs */
 						PAIR_LIST pairList = AlignmentPE::getPairs(fwdAlnList, revAlnList);
+						/* sort pairs by loglik decreasingly */
+						AlignmentPE::sort(pairList);
 						/* filter pairs */
-						AlignmentPE::filter(pairList, minIns, maxIns, noDiscordant, noTailOver, noContain, noOverlap);
+						AlignmentPE::filter(pairList, minIns, maxIns, noDiscordant, noTailOver, noContain, noOverlap, maxNPair);
 						if(!pairList.empty()) {
 							/* calculate mapQ for pairs */
 							AlignmentPE::calcMapQ(pairList);
-							/* sort pairs */
-							AlignmentPE::sort(pairList);
 							/* output pairs */
 #pragma omp critical(BAM_OUTPUT)
 							output(pairList, out, maxReport);

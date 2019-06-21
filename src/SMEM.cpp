@@ -159,11 +159,9 @@ SeedList SMEM_LIST::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, cons
 		const SeedList& seeds = smem.getSeeds(maxNSeed);
 		allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
 	}
-//	/* sort and get unique seeds */
-//	std::sort(allSeeds.begin(), allSeeds.end());
-//	allSeeds.erase(std::unique(allSeeds.begin(), allSeeds.end()), allSeeds.end());
-	/* filter seeds */
-	SeedPair::filter(allSeeds);
+	/* sort and get unique seeds */
+	std::sort(allSeeds.begin(), allSeeds.end());
+	allSeeds.erase(std::unique(allSeeds.begin(), allSeeds.end()), allSeeds.end());
 	return allSeeds;
 }
 

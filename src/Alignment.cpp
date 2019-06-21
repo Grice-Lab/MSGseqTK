@@ -349,7 +349,6 @@ Alignment& Alignment::evaluate() {
 			i++;
 			break;
 		case BAM_CDEL:
-			log10P += qual[i] / quality::PHRED_SCALE; // basic mismatch penalty
 			if(k == 0 || alnPath[k - 1] != BAM_CDEL) // gap open
 				log10P += -ss->getGapOPenalty();
 			log10P += -ss->getGapEPenalty();
@@ -376,6 +375,7 @@ ALIGN_LIST& Alignment::calcMapQ(ALIGN_LIST& alnList) {
 	double maxV = pr.maxCoeff();
 	double scale = maxV != infV && maxV < MIN_LOGLIK_EXP ? MIN_LOGLIK_EXP - maxV : 0;
 	pr = (pr.array() + scale).exp();
+
 	assert(pr.sum() > 0);
 	VectorXd postP = pr / pr.sum();
 	/* assign postP and mapQ */
@@ -434,7 +434,7 @@ ALIGN_LIST& Alignment::filter(ALIGN_LIST& alnList, double bestFrac) {
 
 PAIR_LIST& AlignmentPE::filter(PAIR_LIST& pairList,
 		int32_t minIns, int32_t maxIns,
-		bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap) {
+		bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap, int64_t maxNPair) {
 	if(!(minIns == 0 && maxIns == 0)) // filter by insert size
 		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [=] (const AlignmentPE& pair) { return !(minIns <= pair.getInsertSize() && pair.getInsertSize() <= maxIns); }), pairList.end());
 	if(noDiscordant) // filter discordant pairs
@@ -445,18 +445,18 @@ PAIR_LIST& AlignmentPE::filter(PAIR_LIST& pairList,
 		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [] (const AlignmentPE& pair) { return pair.isContained(); }), pairList.end());
 	if(noOverlap) // filter overlap pairs
 		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [] (const AlignmentPE& pair) { return pair.isOverlap(); }), pairList.end());
+	if(pairList.size() > maxNPair) // too many pairs
+		pairList.erase(pairList.begin() + maxNPair, pairList.end());
 	return pairList;
 }
 
-PAIR_LIST AlignmentPE::getPairs(const ALIGN_LIST& fwdAlnList, const ALIGN_LIST& revAlnList, uint32_t maxPair) {
+PAIR_LIST AlignmentPE::getPairs(const ALIGN_LIST& fwdAlnList, const ALIGN_LIST& revAlnList) {
 	PAIR_LIST pairList;
-	pairList.reserve(std::min<size_t>(fwdAlnList.size() * revAlnList.size(), maxPair));
-	for(ALIGN_LIST::const_iterator fwdAln = fwdAlnList.begin(); fwdAln < fwdAlnList.end() && pairList.size() < maxPair; ++fwdAln) {
-		for(ALIGN_LIST::const_iterator revAln = revAlnList.begin(); revAln < revAlnList.end() && pairList.size() < maxPair; ++revAln) {
-			if((fwdAln->qStrand & revAln->qStrand) == 0) // AlignmentPE must be on different strand
-				pairList.push_back(AlignmentPE(&*fwdAln, &*revAln));
-		}
-	}
+	pairList.reserve(fwdAlnList.size() * revAlnList.size());
+	for(const Alignment& fwdAln : fwdAlnList)
+		for(const Alignment& revAln : revAlnList)
+			if((fwdAln.qStrand & revAln.qStrand) == 0) // AlignmentPE must be on different strand
+				pairList.push_back(AlignmentPE(&fwdAln, &revAln));
 	return pairList;
 }
 

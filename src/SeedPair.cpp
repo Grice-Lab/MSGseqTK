@@ -68,23 +68,5 @@ double SeedPair::bestLoglik(const SeedList& seeds) {
 	return minLoglik;
 }
 
-vector<SeedPair>& SeedPair::filter(vector<SeedPair>& pairs) {
-	if(pairs.size() <= 1)
-		return pairs;
-	/* sort pairs by location decreasingly */
-	std::sort(pairs.rbegin(), pairs.rend());
-	for(vector<SeedPair>::const_iterator i = pairs.end(); i > pairs.begin(); --i) { // search backward
-		for(vector<SeedPair>::const_iterator j = i - 1; j > pairs.begin(); --j) {
-			if(contained(*(i - 1), *(j - 1))) { // a redundant pair
-				pairs.erase(i - 1);
-				break;
-			}
-		}
-	}
-	assert(!pairs.empty());
-	std::reverse(pairs.begin(), pairs.end()); // reverse the order
-	return pairs;
-}
-
 } /* namespace MSGseqTK */
 } /* namespace EGriceLab */

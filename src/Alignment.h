@@ -525,12 +525,12 @@ public:
 
 	/* static methods */
 	/** init candidate list of Alignment pairs from fwd and rev ALIGN_LIST */
-	static PAIR_LIST getPairs(const ALIGN_LIST& fwdAlnList, const ALIGN_LIST& revAlnList, uint32_t maxPair = MAX_PAIR);
+	static PAIR_LIST getPairs(const ALIGN_LIST& fwdAlnList, const ALIGN_LIST& revAlnList);
 
 	/** filter candidate pairs using pairing criteria */
 	static PAIR_LIST& filter(PAIR_LIST& pairList,
 			int32_t minIns, int32_t maxIns,
-			bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap);
+			bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap, int64_t maxNPair = MAX_NPAIR);
 
 	/**
 	 * calculate mapQ as posterior probability of candidate alignment pairs using a uniform prior
@@ -548,7 +548,7 @@ public:
 	static int32_t getInsertSize(const Alignment& lhs, const Alignment& rhs);
 
 	/* static fields */
-	static const uint32_t MAX_PAIR = UINT16_MAX;
+	static const int64_t MAX_NPAIR = 1000;
 };
 
 inline Alignment::CIGAR_OP_TYPE Alignment::matchMax(double match, double ins, double del) {

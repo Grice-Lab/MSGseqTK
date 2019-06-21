@@ -168,7 +168,7 @@ public:
 	/* static methods */
 	/** test whether one pair containing another */
 	static bool containing(const SeedPair& lhs, const SeedPair& rhs) {
-		return  lhs.tid == rhs.tid &&
+		return  lhs.tid == rhs.tid && lhs.strand == rhs.strand &&
 				lhs.from <= rhs.from && lhs.to >= rhs.to &&
 				lhs.start <= rhs.start && lhs.end >= rhs.end;
 	}
@@ -197,12 +197,6 @@ public:
 		return overLength(lhs, rhs) >= minRate * std::min(lhs.length(), rhs.length());
 	}
 
-	/** filter a Pair list by removing pairs with significant smaller log10lik()
-	 * and smaller pairs that are contained in a larger pair
-	 * filtered pairs will be ordered by their loglik()
-	 */
-	static vector<SeedPair>& filter(vector<SeedPair>& pairs);
-
 	/* non-member operators */
 	/** formated input */
 	friend istream& operator>>(istream& in, SeedPair& seed) {
@@ -221,11 +215,11 @@ public:
 
 inline bool operator<(const SeedPair& lhs, const SeedPair& rhs) {
 	return lhs.from != rhs.from ? lhs.from < rhs.from :
-			lhs.to != rhs.to ? lhs.to < rhs.to :
+			lhs.to != rhs.to ? lhs.to > rhs.to :
 					lhs.tid != rhs.tid ? lhs.tid < rhs.tid :
 							lhs.strand != rhs.strand ? lhs.strand < rhs.strand :
 									lhs.start != rhs.start ? lhs.start < rhs.start :
-											lhs.end < rhs.end;
+											lhs.end > rhs.end;
 }
 
 inline bool operator==(const SeedPair& lhs, const SeedPair& rhs) {
