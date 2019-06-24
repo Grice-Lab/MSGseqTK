@@ -69,31 +69,15 @@ void SeedChain::dfsSeeds(const SeedList& inputSeeds, size_t i, ChainList& output
 ChainList& SeedChain::filter(ChainList& chains) {
 	if(chains.size() <= 1)
 		return chains;
-//	/* sort chains by loglik, so bad chains near the end */
-	std::sort(chains.begin(), chains.end(),
-			[](const SeedChain& lhs, const SeedChain& rhs) { return lhs.loglik() < rhs.loglik(); });
-	/* sort chains by location */
-//	std::cerr << "before chain sorting: " << std::endl;
-//	for(const SeedChain& chain : chains) {
-//		for(const SeedPair& seed : chain)
-//			std::cerr << seed << " -> ";
-//		std::cerr << std::endl;
-//	}
 	for(ChainList::const_iterator i = chains.end(); i > chains.begin(); --i) { // search backward
 		for(ChainList::const_iterator j = i - 1; j > chains.begin(); --j) {
-			if(overlap(*(i - 1), *(j - 1), SeedPair::MIN_OVERRATE)) { // a redundant chain
+			if(contained(*(i - 1), *(j - 1))) { // a redundant chain
 				chains.erase(i - 1);
 				break;
 			}
 		}
 	}
 	assert(!chains.empty());
-//	std::cerr << "after chain sorting: " << std::endl;
-//	for(const SeedChain& chain : chains) {
-//		for(const SeedPair& seed : chain)
-//			std::cerr << seed << " -> ";
-//		std::cerr << std::endl;
-//	}
 	return chains;
 }
 

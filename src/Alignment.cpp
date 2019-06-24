@@ -445,7 +445,7 @@ PAIR_LIST& AlignmentPE::filter(PAIR_LIST& pairList,
 		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [] (const AlignmentPE& pair) { return pair.isContained(); }), pairList.end());
 	if(noOverlap) // filter overlap pairs
 		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [] (const AlignmentPE& pair) { return pair.isOverlap(); }), pairList.end());
-	if(pairList.size() > maxNPair) // too many pairs
+	if(maxNPair > 0 && pairList.size() > maxNPair) // too many pairs
 		pairList.erase(pairList.begin() + maxNPair, pairList.end());
 	return pairList;
 }

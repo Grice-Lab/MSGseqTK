@@ -90,7 +90,7 @@ void printUsage(const string& progName) {
 		 << "            --no-tail-over FLAG  : not concordant when mates extend (tail) past each other" << endl
 		 << "            --no-contain  FLAG   : not concordant when one mate alignment contains other" << endl
 		 << "            --no-overlap  FLAG   : not concordant when mates overlap" << endl
-		 << "            --max-npair  INT     : maximum number of different paring combinations to try between forward and reverse alignments [" << AlignmentPE::MAX_NPAIR << "]" << endl
+		 << "            --max-npair  INT     : maximum number of pairs to for each forward/reverse mates, 0 for no limit [" << AlignmentPE::MAX_NPAIR << "]" << endl
 		 << "Other:" << endl
 		 << "            --min-seed  INT      : minimum length of an SMEM to be used as a seed [" << SMEM_LIST::MIN_LENGTH << "]" << endl
 		 << "            --max-seed  INT      : maximum length of an SMEM that will trigger re-seeding to avoid missing seeds, 0 for no-reseeding [" << SMEM_LIST::MAX_LENGTH << "]" << endl
@@ -128,7 +128,7 @@ vector<BAM> getBAMRecords(const ALIGN_LIST& alnList);
  * report and output evaluated Alignments
  * @return # of alignments written
  */
-int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport);
+int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport, uint16_t extrFlag = 0);
 
 /**
  * report and output evaluated Alignment pairs
@@ -459,7 +459,7 @@ int main(int argc, char* argv[]) {
 				minIns, maxIns, noMixed, noDiscordant, noTailOver, noContain, noOverlap, maxNPair);
 }
 
-int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport) {
+int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport, uint16_t extraFlag) {
 	/* export BAM records */
 	size_t numReport = maxReport == 0 ? alnList.size() : std::min((size_t) maxReport, alnList.size());
 	/* generate BAM records first, which does not need locks or openMP critical pragma */
@@ -469,6 +469,7 @@ int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport) {
 		BAM bamAln = aln.exportBAM();
 		/* set additional flags only available at output */
 		bamAln.setSecondaryFlag(i > 0);
+		bamAln.setFlag(bamAln.getFlag() | extraFlag);
 		/* set standard aux tags */
 		bamAln.setAux(NUM_REPORTED_ALIGNMENT_TAG, numReport);
 		bamAln.setAux(NUM_TOTAL_ALIGNMENT_TAG, alnList.size());
@@ -619,19 +620,6 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 						/* filter chains */
 						SeedChain::filter(fwdChains);
 						SeedChain::filter(revChains);
-//						std::cerr << "filtered fwdChains.size: " << fwdChains.size() << std::endl;
-//						for(const SeedChain& chain : fwdChains) {
-//							for(const SeedPair& pair : chain)
-//								std::cerr << pair << "->";
-//							std::cerr << std::endl;
-//						}
-//						std::cerr << "filtered revChains.size: " << revChains.size() << std::endl;
-//						for(const SeedChain& chain : revChains) {
-//							for(const SeedPair& pair : chain)
-//								std::cerr << pair << "->";
-//							std::cerr << std::endl;
-//						}
-
 						/* get alignments */
 						ALIGN_LIST fwdAlnList = Alignment::buildAlignments(&fwdRead, &rcFwdRead, mtg, &ss, fwdChains, alnMode);
 						ALIGN_LIST revAlnList = Alignment::buildAlignments(&revRead, &rcRevRead, mtg, &ss, revChains, alnMode);
@@ -662,7 +650,7 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 								/* sort alignments */
 								Alignment::sort(fwdAlnList);
 								/* output alignments */
-								output(fwdAlnList, out, maxReport);
+								output(fwdAlnList, out, maxReport, BAM_FPAIRED | BAM_FREAD1);
 							}
 							if(!revAlnList.empty()) {
 //								debugLog << "Alignment pairing failed, reporting unpaired alignment for reverse read " << revRead.getName() << endl;
@@ -671,7 +659,7 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx,
 								/* sort alignments */
 								Alignment::sort(revAlnList);
 								/* output alignments */
-								output(revAlnList, out, maxReport);
+								output(revAlnList, out, maxReport, BAM_FPAIRED | BAM_FREAD2);
 							}
 						}
 					} /* end SeedMatch tests */

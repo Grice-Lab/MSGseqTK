@@ -548,7 +548,7 @@ public:
 	static int32_t getInsertSize(const Alignment& lhs, const Alignment& rhs);
 
 	/* static fields */
-	static const int64_t MAX_NPAIR = 1000;
+	static const int64_t MAX_NPAIR = 0;
 };
 
 inline Alignment::CIGAR_OP_TYPE Alignment::matchMax(double match, double ins, double del) {
