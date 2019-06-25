@@ -75,7 +75,7 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 	/* forward extension */
 	for(smem0 = smem; smem.size >= minSize; smem0 = smem) {
 		smem.fwdExt();
-		if(smem.size != smem0.size && smem0.to >= minLen && (maxEvalue == inf || smem.evalue(0, smem.to) <= maxEvalue))
+		if(smem.size != smem0.size && smem0.to >= minLen && (maxEvalue == inf || smem0.evalue(0, smem0.to) <= maxEvalue))
 			prev.push_back(smem0);
 	}
 	to = smem.to - 1;
@@ -151,10 +151,6 @@ SeedList SMEM::getSeeds(int64_t maxNSeed) const {
 			int64_t bdStart = fmdidx->accessSA(fwdStart + i);
 			int64_t tid = mtg->getTid(bdStart);
 			int64_t start = mtg->getLoc(tid, bdStart);
-			if(tid != mtg->getTid(bdStart + length())) {
-				std::cerr << seq->getName() << std::endl;
-				abort();
-			}
 			assert(tid == mtg->getTid(bdStart + length()));
 			if(mtg->getStrand(tid, bdStart) == GLoc::FWD) { // always only search loc on fwd tStrand
 				seeds.push_back(SeedPair(from, start, length(), tid, GLoc::FWD, loglik()));
@@ -174,11 +170,13 @@ SeedList SMEM::getSeeds(int64_t maxNSeed) const {
 }
 
 SeedList SMEM_LIST::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		int64_t minLen, int64_t maxLen, double maxEvalue, int64_t maxNSeed) {
+		int64_t minLen, int64_t maxLen, double maxEvalue, int64_t maxNSeed, bool discardSeed) {
 	const SMEM_LIST& smems = findAllSMEMS(seq, mtg, fmdidx, minLen, maxLen, maxEvalue);
 	/* get seeds */
 	SeedList allSeeds;
 	for(const SMEM& smem : smems) {
+		if(discardSeed && smem.getSize() > maxNSeed)
+			continue;
 		const SeedList& seeds = smem.getSeeds(maxNSeed);
 		allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
 	}

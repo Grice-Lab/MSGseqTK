@@ -95,7 +95,8 @@ void printUsage(const string& progName) {
 		 << "            --min-seed  INT      : minimum length of an SMEM to be used as a seed [" << SMEM_LIST::MIN_LENGTH << "]" << endl
 		 << "            --max-seed  INT      : maximum length of an SMEM that will trigger re-seeding to avoid missing seeds, 0 for no-reseeding [" << SMEM_LIST::MAX_LENGTH << "]" << endl
 		 << "            --max-evalue  DBL    : maximum evalue of an SMEM to be used as a seed [" << SMEM_LIST::MAX_EVALUE << "]" << endl
-		 << "            --max-nseed  INT     : maximum # of seed-locs to check for each SMEM [" << SMEM::MAX_NSEED << "]" << endl
+		 << "            --max-nseed  INT     : maximum # of loci to check for each SMEM [" << SMEM::MAX_NSEED << "]" << endl
+		 << "            --discard-seed  FLAG : discard SMEM as a seed when it has more than --max-nseed loci" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -109,7 +110,7 @@ void printUsage(const string& progName) {
  * @return 0 if success, return non-zero otherwise
  */
 int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile& out,
-		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
+		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed, bool discardSeed,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport);
 
 /**
@@ -117,7 +118,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile&
  * @return 0 if success, return non-zero otherwise
  */
 int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& revI, SAMfile& out,
-		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
+		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed, bool discardSeed,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap, int64_t maxNPair);
@@ -155,6 +156,7 @@ int main(int argc, char* argv[]) {
 	int64_t maxSeed = SMEM_LIST::MAX_LENGTH;
 	double maxEvalue = SMEM_LIST::MAX_EVALUE;
 	int64_t maxNSeed = SMEM::MAX_NSEED;
+	bool discardSeed = false;
 //	double maxIndelRate = DEFAULT_INDEL_RATE;
 	int nThreads = DEFAULT_NUM_THREADS;
 
@@ -293,6 +295,9 @@ int main(int argc, char* argv[]) {
 
 	if(cmdOpts.hasOpt("--max-nseed"))
 		maxNSeed = ::atol(cmdOpts.getOptStr("--max-nseed"));
+
+	if(cmdOpts.hasOpt("--discard-seed"))
+		discardSeed = true;
 
 #ifdef _OPENMP
 	if(cmdOpts.hasOpt("-p"))
@@ -470,9 +475,9 @@ int main(int argc, char* argv[]) {
 
 	/* main processing */
 	if(!isPaired)
-		return main_SE(mtg, fmdidx, fwdI, out, minSeed, maxSeed, maxEvalue, maxNSeed, alnMode, bestFrac, maxReport);
+		return main_SE(mtg, fmdidx, fwdI, out, minSeed, maxSeed, maxEvalue, maxNSeed, discardSeed, alnMode, bestFrac, maxReport);
 	else
-		return main_PE(mtg, fmdidx, fwdI, revI, out, minSeed, maxSeed, maxEvalue, maxNSeed, alnMode, bestFrac, maxReport,
+		return main_PE(mtg, fmdidx, fwdI, revI, out, minSeed, maxSeed, maxEvalue, maxNSeed, discardSeed, alnMode, bestFrac, maxReport,
 				minIns, maxIns, noMixed, noDiscordant, noTailOver, noContain, noOverlap, maxNPair);
 }
 
@@ -541,7 +546,7 @@ int output(const PrimarySeq& fwdRead, const PrimarySeq& revRead, SAMfile& out) {
 }
 
 int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile& out,
-		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
+		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed, bool discardSeed,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport) {
 	infoLog << "Aligning input reads" << endl;
 	/* search MEMS for each read */
@@ -554,7 +559,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile&
 #pragma omp task firstprivate(read)
 				{
 					/* get SeedList */
-					SeedList seeds = SMEM_LIST::findSeeds(&read, &mtg, &fmdidx, minSeed, maxSeed, maxEvalue, maxNSeed);
+					SeedList seeds = SMEM_LIST::findSeeds(&read, &mtg, &fmdidx, minSeed, maxSeed, maxEvalue, maxNSeed, discardSeed);
 					if(seeds.empty()) {
 #pragma omp critical(LOG)
 						debugLog << "Unable to find any valid SMEM seads for '" << read.getName() << "'" << endl;
@@ -592,7 +597,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile&
 }
 
 int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& revI, SAMfile& out,
-		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
+		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed, bool discardSeed,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap, int64_t maxNPair) {
