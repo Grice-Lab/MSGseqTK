@@ -49,6 +49,7 @@ public:
 		V = A | C | G, // V is A or C or G
 		N = A | C | G | T // N is any base
 	};
+
 	static const nt16_t GAP_BASE = 0;
 	static const nt16_t NT16_MIN = 1;
 	static const nt16_t NT16_MAX = 0xF;

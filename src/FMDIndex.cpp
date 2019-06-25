@@ -306,7 +306,7 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 	if(sB[b] != s) {
 		sB[0] = bwtRRR.rank(0, p + s - 1) - bwtRRR.rank(0, p - 1);
 		for(nt16_t i = b + 1; i <= DNAalphabet::NT16_MAX; ++i) { // search from b + 1
-			if(DNAalphabet::isBasic(i))
+			if(!DNAalphabet::isAmbiguous(i))
 				sB[i] = bwtRRR.rank(i, p + s - 1) - bwtRRR.rank(i, p - 1);
 		}
 		/* new range of [q', q' + s' - 1] is a subrange of original [q, q + s] */
