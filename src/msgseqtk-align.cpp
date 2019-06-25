@@ -620,7 +620,7 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& r
 				}
 #pragma omp task firstprivate(fwdRead, revRead)
 				{
-					SeedListPE seedsPE = SMEM_LIST::findSeedsPE(&fwdRead, &revRead, &mtg, &fmdidx, minSeed, maxSeed, maxNSeed);
+					SeedListPE seedsPE = SMEM_LIST::findSeedsPE(&fwdRead, &revRead, &mtg, &fmdidx, minSeed, maxSeed, maxEvalue, maxNSeed, discardSeed);
 					if(seedsPE.first.empty() && seedsPE.second.empty()) {
 #pragma omp critical(LOG)
 						debugLog << "Unable to find any valid SMEMS seeds for read pair '" << fwdRead.getName() << "'" << endl;

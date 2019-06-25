@@ -371,9 +371,10 @@ public:
 	 */
 	static SeedListPE findSeedsPE(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
 			 const MetaGenome* mtg, const FMDIndex* fmdidx,
-			 int64_t minLen = MIN_LENGTH, int64_t maxLen = MAX_LENGTH, int64_t maxNSeed = SMEM::MAX_NSEED, bool discardSeed = false) {
-		return SeedListPE(findSeeds(fwdSeq, mtg, fmdidx, minLen, maxLen, maxNSeed, discardSeed),
-				findSeeds(revSeq, mtg, fmdidx, minLen, maxLen, maxNSeed, discardSeed));
+			 int64_t minLen = MIN_LENGTH, int64_t maxLen = MAX_LENGTH, double maxEvalue = MAX_EVALUE,
+			 int64_t maxNSeed = SMEM::MAX_NSEED, bool discardSeed = false) {
+		return SeedListPE(findSeeds(fwdSeq, mtg, fmdidx, minLen, maxLen, maxEvalue, maxNSeed, discardSeed),
+				findSeeds(revSeq, mtg, fmdidx, minLen, maxLen, maxEvalue, maxNSeed, discardSeed));
 	}
 
 	/** get loglik for SMEMS_PE */
