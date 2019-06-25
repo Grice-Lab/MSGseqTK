@@ -133,7 +133,7 @@ public:
 
 	/** test whether a base is ambiguous */
 	static bool isAmbiguous(nt16_t b) {
-		return b == N || !isBasic(b);
+		return !isBasic(b);
 	}
 
 	/** test whether a symbol is ambiguous */
