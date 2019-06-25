@@ -12,11 +12,29 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 
+const double SMEM_LIST::MAX_EVALUE = inf;
+
 SMEM& SMEM::evaluate() {
 	logP = 0;
 	for(int64_t i = from; i < to; ++i)
 		logP += fmdidx->loglik(seq->getBase(i));
 	return *this;
+}
+
+double SMEM::loglik(int64_t from, int64_t to) const {
+	double ll = 0;
+	if(from <= this->from && to >= this->to) { // calculating in an extended range
+		ll += loglik();
+		for(int64_t i = from; i < this->from; ++i)
+			ll += fmdidx->loglik(seq->getBase(i));
+		for(int64_t i = this->to; i < to; ++i)
+			ll += fmdidx->loglik(seq->getBase(i));
+	}
+	else { // need full evaluation
+		for(int64_t i = from; i < to; ++i)
+			ll += fmdidx->loglik(seq->getBase(i));
+	}
+	return ll;
 }
 
 MEM SMEM::findMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
@@ -41,7 +59,8 @@ MEM SMEM::findMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* 
 }
 
 SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		int64_t& from, int64_t& to, int64_t minLen, int64_t minSize) {
+		int64_t& from, int64_t& to,
+		int64_t minLen, double maxEvalue, int64_t minSize) {
 	const size_t L = seq->length();
 	assert(from < L);
 	SMEM_LIST curr, prev;
@@ -56,7 +75,7 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 	/* forward extension */
 	for(smem0 = smem; smem.size >= minSize; smem0 = smem) {
 		smem.fwdExt();
-		if(smem.size != smem0.size && smem0.to >= minLen)
+		if(smem.size != smem0.size && smem0.to >= minLen && (maxEvalue == inf || smem.evalue(0, smem.to) <= maxEvalue))
 			prev.push_back(smem0);
 	}
 	to = smem.to - 1;
@@ -69,7 +88,7 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 		for(SMEM& smem : prev) {
 			smem0 = smem;
 			smem.backExt();
-			if(smem.size != smem0.size && nValid == 0 && smem0.length() >= minLen)
+			if(smem.size != smem0.size && nValid == 0 && smem0.length() >= minLen && smem0.evalue() <= maxEvalue)
 				curr.push_back(smem0);
 			if(smem.size >= minSize && smem.size != s0) { /* still a valid SMEM with size not seen */
 				s0 = smem.size;
@@ -88,24 +107,24 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 }
 
 MEM_LIST SMEM_LIST::findMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		int64_t minLen) {
+		int64_t minLen, double maxEvalue) {
 	const int64_t L = seq->length();
 	MEM_LIST mems;
 	for(int64_t from = 0, to = 1; from < L; from = to + 1) {
 		MEM mem = SMEM::findMEM(seq, mtg, fmdidx, from, to);
-		if(mem.length() >= minLen)
+		if(mem.length() >= minLen && mem.evalue() <= maxEvalue)
 			mems.push_back(mem);
 	}
 	return mems;
 }
 
 SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		int64_t minLen, int64_t maxLen) {
+		int64_t minLen, int64_t maxLen, double maxEvalue) {
 	const int64_t L = seq->length();
 	SMEM_LIST curr, prev;
 	/* 1st-pass SMEMS search */
 	for(int64_t from = 0, to = 1; from < L; from = to + 1)
-		curr += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to, minLen);
+		curr += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to, minLen, maxEvalue);
 
 	/* 2nd-pass reseeding, if requested */
 	if(maxLen > 0) {
@@ -114,7 +133,7 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 			if(smem.length() > maxLen) {
 				int64_t from1 = (smem.from + smem.to + 1) / 2; // ceil((from + to) / 2)
 				int64_t to1 = from1 + 1;
-				curr += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from1, to1, minLen, smem.size + 1);
+				curr += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from1, to1, minLen, maxEvalue, smem.size + 1);
 			}
 		}
 	}
@@ -132,6 +151,10 @@ SeedList SMEM::getSeeds(int64_t maxNSeed) const {
 			int64_t bdStart = fmdidx->accessSA(fwdStart + i);
 			int64_t tid = mtg->getTid(bdStart);
 			int64_t start = mtg->getLoc(tid, bdStart);
+			if(tid != mtg->getTid(bdStart + length())) {
+				std::cerr << seq->getName() << std::endl;
+				abort();
+			}
 			assert(tid == mtg->getTid(bdStart + length()));
 			if(mtg->getStrand(tid, bdStart) == GLoc::FWD) { // always only search loc on fwd tStrand
 				seeds.push_back(SeedPair(from, start, length(), tid, GLoc::FWD, loglik()));
@@ -151,8 +174,8 @@ SeedList SMEM::getSeeds(int64_t maxNSeed) const {
 }
 
 SeedList SMEM_LIST::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		int64_t minLen, int64_t maxLen, int64_t maxNSeed) {
-	const SMEM_LIST& smems = findAllSMEMS(seq, mtg, fmdidx, minLen, maxLen);
+		int64_t minLen, int64_t maxLen, double maxEvalue, int64_t maxNSeed) {
+	const SMEM_LIST& smems = findAllSMEMS(seq, mtg, fmdidx, minLen, maxLen, maxEvalue);
 	/* get seeds */
 	SeedList allSeeds;
 	for(const SMEM& smem : smems) {

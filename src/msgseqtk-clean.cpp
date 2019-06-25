@@ -76,6 +76,7 @@ void printUsage(const string& progName) {
 		 << "            -a  FILE             : write an additional TSV file with the detailed assignment information for each read" << endl
 		 << "            -L|--lod  DBL        : minimum log-odd required to determine a read/pair as reference vs. background [" << DEFAULT_MIN_LOD << "]" << endl
 		 << "            --min-seed  INT      : mimimum length of an SMEM to be used as a seed [" << SMEM_LIST::MIN_LENGTH << "]" << endl
+		 << "            --max-evalue  DBL    : maximum evalue of an SMEM to be used as a seed [" << SMEM_LIST::MAX_EVALUE << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -89,14 +90,16 @@ void printUsage(const string& progName) {
  * @return 0 if success, return non-zero otherwise
  */
 int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
-		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut, double minLen, double minLod);
+		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut,
+		double minLen, double maxEvalue, double minLod);
 
 /**
  * main function to process paired-ended reads
  * @return 0 if success, return non-zero otherwise
  */
 int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
-		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut, double minLen, double minLod);
+		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut,
+		double minLen, double maxEvalue, double minLod);
 
 int main(int argc, char* argv[]) {
 	/* variable declarations */
@@ -111,6 +114,7 @@ int main(int argc, char* argv[]) {
 
 	double minLod = DEFAULT_MIN_LOD;
 	int64_t minSeed = SMEM_LIST::MIN_LENGTH;
+	double maxEvalue = SMEM_LIST::MAX_EVALUE;
 	int nThreads = DEFAULT_NUM_THREADS;
 
 	/* parse options */
@@ -160,6 +164,9 @@ int main(int argc, char* argv[]) {
 	if(cmdOpts.hasOpt("--min-seed"))
 		minSeed = ::atol(cmdOpts.getOptStr("--min-seed"));
 
+	if(cmdOpts.hasOpt("--max-evalue"))
+		maxEvalue = ::atof(cmdOpts.getOptStr("--max-evalue"));
+
 #ifdef _OPENMP
 	if(cmdOpts.hasOpt("-p"))
 		nThreads = ::atoi(cmdOpts.getOptStr("-p"));
@@ -198,6 +205,11 @@ int main(int argc, char* argv[]) {
 
 	if(!(minSeed > 0)) {
 		cerr << "--min-seed must be non-netative" << endl;
+		return EXIT_FAILURE;
+	}
+
+	if(!(maxEvalue > 0)) {
+		cerr << "--max-evalue must be positive" << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -370,13 +382,14 @@ int main(int argc, char* argv[]) {
 
 	/* main processing */
 	if(!isPaired)
-		return main_SE(refMtg, bgMtg, refFmdidx, bgFmdidx, fwdI, fwdO, assignOut, minSeed, minLod);
+		return main_SE(refMtg, bgMtg, refFmdidx, bgFmdidx, fwdI, fwdO, assignOut, minSeed, maxEvalue, minLod);
 	else
-		return main_PE(refMtg, bgMtg, refFmdidx, bgFmdidx, fwdI, revI, fwdO, revO, assignOut, minSeed, minLod);
+		return main_PE(refMtg, bgMtg, refFmdidx, bgFmdidx, fwdI, revI, fwdO, revO, assignOut, minSeed, maxEvalue, minLod);
 }
 
 int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
-		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut, double minLen, double minLod) {
+		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut,
+		double minLen, double maxEvalue, double minLod) {
 	infoLog << "Filtering input reads" << endl;
 	/* search SMEM for each read */
 #pragma omp parallel
@@ -389,8 +402,8 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 				{
 					const string& id = read.getName();
 					const string& desc = read.getDesc();
-					MEM_LIST refMems = SMEM_LIST::findMEMS(&read, &refMtg, &refFmdidx, minLen);
-					MEM_LIST bgMmems = SMEM_LIST::findMEMS(&read, &bgMtg, &bgFmdidx, minLen);
+					MEM_LIST refMems = SMEM_LIST::findMEMS(&read, &refMtg, &refFmdidx, minLen, maxEvalue);
+					MEM_LIST bgMmems = SMEM_LIST::findMEMS(&read, &bgMtg, &bgFmdidx, minLen, maxEvalue);
 					double refLoglik = refMems.loglik();
 					double bgLoglik = bgMmems.loglik();
 					double lod = - refLoglik + bgLoglik;
@@ -409,7 +422,8 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 }
 
 int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
-		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut, double minLen, double minLod) {
+		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut,
+		double minLen, double maxEvalue, double minLod) {
 	infoLog << "Filtering input paired-end reads" << endl;
 	/* search SMEM for each pair */
 #pragma omp parallel
@@ -423,8 +437,8 @@ int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 				{
 					const string& id = fwdRead.getName();
 					const string& desc = fwdRead.getDesc();
-					MEM_LIST_PE refMemsPE = SMEM_LIST::findMEMS_PE(&fwdRead, &revRead, &refMtg, &refFmdidx, minLen);
-					MEM_LIST_PE bgMemsPE = SMEM_LIST::findMEMS_PE(&fwdRead, &revRead, &bgMtg, &bgFmdidx, minLen);
+					MEM_LIST_PE refMemsPE = SMEM_LIST::findMEMS_PE(&fwdRead, &revRead, &refMtg, &refFmdidx, minLen, maxEvalue);
+					MEM_LIST_PE bgMemsPE = SMEM_LIST::findMEMS_PE(&fwdRead, &revRead, &bgMtg, &bgFmdidx, minLen, maxEvalue);
 					double refLoglik = SMEM_LIST::loglik(refMemsPE);
 					double bgLoglik = SMEM_LIST::loglik(bgMemsPE);
 					double lod = - refLoglik + bgLoglik;
