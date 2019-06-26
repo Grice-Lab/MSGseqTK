@@ -305,8 +305,8 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 	/* update q */
 	if(sB[b] != s) {
 		sB[0] = bwtRRR.rank(0, p + s - 1) - bwtRRR.rank(0, p - 1);
-		for(nt16_t i : { DNAalphabet::A, DNAalphabet::C, DNAalphabet::G, DNAalphabet::T, DNAalphabet::N }) { // search from b + 1
-			if(b == DNAalphabet::N || i > b)
+		for(nt16_t i : { DNAalphabet::A, DNAalphabet::C, DNAalphabet::G, DNAalphabet::T }) { // search from b + 1
+			if(i > b)
 				sB[i] = bwtRRR.rank(i, p + s - 1) - bwtRRR.rank(i, p - 1);
 		}
 		/* new range of [q', q' + s' - 1] is a subrange of original [q, q + s] */
@@ -315,8 +315,6 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 		qB[DNAalphabet::T] = qB[0] + sB[0];
 		for(nt16_t i = DNAalphabet::T; i > b; --i) // only need to search till b + 1
 			qB[i - 1] = qB[i] + sB[i];
-		if(b == DNAalphabet::N)
-			qB[DNAalphabet::N] = qB[1] + sB[1];
 		q = qB[b];
 	}
 
