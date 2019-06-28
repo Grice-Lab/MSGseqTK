@@ -215,7 +215,7 @@ public:
 		assert(len <= wid);
 		size_type k = start * len;
 		size_type i = k / wid;
-		size_type j = k - i * wid;
+		size_type j = k % wid;
 		if (j + len <= wid)
 			return (data[i] << wid - j - len) >> (wid - len);
 		else
