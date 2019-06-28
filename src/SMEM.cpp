@@ -88,7 +88,7 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 		for(SMEM& smem : prev) {
 			smem0 = smem;
 			smem.backExt();
-			if(smem.size != smem0.size && nValid == 0 && smem0.length() >= minLen && smem0.evalue() <= maxEvalue)
+			if(smem.size != smem0.size && smem0.size >= minSize && nValid == 0 && smem0.length() >= minLen && smem0.evalue() <= maxEvalue)
 				curr.push_back(smem0);
 			if(smem.size >= minSize && smem.size != s0) { /* still a valid SMEM with size not seen */
 				s0 = smem.size;
