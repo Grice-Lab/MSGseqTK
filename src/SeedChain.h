@@ -134,16 +134,24 @@ public:
 		return overLength(lhs, rhs) >= minRate * std::min(lhs.getTLen(), rhs.getTLen());
 	}
 
-	/** filter a ChainList by removing chains with significant smaller log10lik()
-	 * and smaller chains that are contained in a larger chain
-	 * filtered chains will be ordered by their loglik()
+	/**
+	 * get unique ChainList by removing chains that are contained in a larger chain
 	 */
-	static ChainList& filter(ChainList& chains);
+	static ChainList& uniq(ChainList& chains);
+
+	/**
+	 * filter a ChainList by removing chains have log10lik smaller than the given odd of the best chain
+	 * return a ordered filtered chain list
+	 */
+	static ChainList& filter(ChainList& chains, double maxLod0 = MAX_LOD10);
 
 	/* non-member functions */
 	/** relationship operators */
 	friend bool operator<(const SeedChain& lhs, const SeedChain& rhs);
 	friend bool operator==(const SeedChain& lhs, const SeedChain& rhs);
+
+	/* static fields */
+	static const double MAX_LOD10; // default max log10lik odd
 };
 
 inline bool operator<(const SeedChain& lhs, const SeedChain& rhs) {

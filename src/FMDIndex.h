@@ -60,7 +60,7 @@ public:
 	 * it will build the counts and BWT,
 	 * and optionally build the SA (SAidx and SAsampled)
 	 */
-	explicit FMDIndex(const DNAseq& seq, bool keepSA = true);
+	explicit FMDIndex(const DNAseq& seq, bool keepSA = true, int saSampleRate = SA_SAMPLE_RATE);
 
 	/* member methods */
 	/** test whether contains uncompressed BWT */
@@ -195,7 +195,7 @@ public:
 	istream& load(istream& in);
 
 	/** build SAidx and SAsampled */
-	FMDIndex& buildSA();
+	FMDIndex& buildSA(int saSampleRate = SA_SAMPLE_RATE);
 
 public:
 	/**
@@ -270,7 +270,7 @@ protected:
 	/**
 	 * build SAidx and SAsampled with given internal SA, which are available during direct construction
 	 */
-	void buildSA(const int64_t* SA);
+	void buildSA(const int64_t* SA, int saSampleRate = SA_SAMPLE_RATE);
 
 	/** build interleaving BitVector for two FMD-index, use parallelization optionally */
 	static BitStr32 buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs);

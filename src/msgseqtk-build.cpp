@@ -76,6 +76,7 @@ void printUsage(const string& progName) {
 		 << "            -l  FILE             : tab-delimited genome list with 1st field unique genome IDs, 2nd filed genome names, 3nd field genomic sequence filenames; if provided, <SEQ-FILE> options are ignored" << ZLIB_SUPPORT << endl
 		 << "            -r|--update  STR     : update database based on this old DB, it can be the same name as -n, which will overwrite the old database" << endl
 		 << "            -b|--block  INT      : block size (in MB) for building FMD-index, larget block size is faster but uses more memory [" << DEFAULT_BLOCK_SIZE << "]" << endl
+		 << "            --sample-rate  INT   : sample rate for the Suffix-Array (SA), recommend use smaller value means faster location search but more RAM/disk usage when the reference genomes are highly redundant [" << FMDIndex::SA_SAMPLE_RATE << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing, only used in building SA and merging BWTs [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -87,12 +88,12 @@ void printUsage(const string& progName) {
 /**
  * build the FMD-index build in one general block, which should not exceeding the DEFAULT_BLOCK_SIZE
  */
-void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx);
+void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx, int saSampleRate);
 
 /**
  * build the FMD-index incrementally, it will also shrink the MetaGenome on-the-fly to save RAM
  */
-void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize);
+void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize, int saSampleRate);
 
 int main(int argc, char* argv[]) {
 	/* variable declarations */
@@ -109,6 +110,7 @@ int main(int argc, char* argv[]) {
 	const SeqIO::FORMAT fmt = SeqIO::FASTA; // always use fasta format
 
 	size_t blockSize = DEFAULT_BLOCK_SIZE;
+	int saSampleRate = FMDIndex::SA_SAMPLE_RATE;
 	int nThreads = DEFAULT_NUM_THREADS;
 
 	/* parse options */
@@ -147,6 +149,9 @@ int main(int argc, char* argv[]) {
 		blockSize = ::atol(cmdOpts.getOptStr("-b"));
 	if(cmdOpts.hasOpt("--block"))
 		blockSize = ::atol(cmdOpts.getOptStr("--block"));
+
+	if(cmdOpts.hasOpt("--sample-rate"))
+		saSampleRate = ::atoi(cmdOpts.getOptStr("--sample-rate"));
 
 	blockSize *= BLOCK_UNIT; // switch to bp unit
 
@@ -339,9 +344,9 @@ int main(int argc, char* argv[]) {
 	const int64_t mtgSize = mtg.BDSize(); // store old size
 	/* build FMD-index */
 	if(mtg.BDSize() <= blockSize) // we can build the FMD-index in one step
-		buildFMDIndex(mtg, fmdidx);
+		buildFMDIndex(mtg, fmdidx, saSampleRate);
 	else // build the FMD-index incrementally
-		buildFMDIndex(mtg, fmdidx, blockSize);
+		buildFMDIndex(mtg, fmdidx, blockSize, saSampleRate);
 	assert(mtgSize == fmdidx.length());
 
 	/* save FMDIndex */
@@ -360,12 +365,12 @@ int main(int argc, char* argv[]) {
 		infoLog << "Database built. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.BDSize() << endl;
 }
 
-void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx) {
+void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx, int saSampleRate) {
 	infoLog << "Building FMD-index" << endl;
-	fmdidx = FMDIndex(mtg.getBDSeq()).clearBWT(); // build whole metagenome FMDIndex in one step
+	fmdidx = FMDIndex(mtg.getBDSeq(), true, saSampleRate).clearBWT(); // build whole metagenome FMDIndex in one step
 }
 
-void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize) {
+void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize, int saSampleRate) {
 	infoLog << "Building FMD-index incrementally" << endl;
 	const size_t NC = mtg.numChroms();
 	size_t blockId = 0;
@@ -389,7 +394,7 @@ void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize) {
 		}
 	}
 	infoLog << "Building final Suffix-Array" << endl;
-	fmdidx.buildSA();
+	fmdidx.buildSA(saSampleRate);
 //	fmdidx.buildSA(gapLocs);
 	fmdidx.clearBWT(); // clear uncompressed BWT
 }

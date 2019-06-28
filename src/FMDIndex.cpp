@@ -24,14 +24,14 @@ using std::vector;
 using EGriceLab::libSDS::BitStr32;
 using EGriceLab::libSDS::BitSeqGGMN; // useful for temporary and fast BitSeq solution
 
-FMDIndex::FMDIndex(const DNAseq& seq, bool keepSA) {
+FMDIndex::FMDIndex(const DNAseq& seq, bool keepSA, int saSampleRate) {
 	if(seq.length() > MAX_LENGTH)
 		throw std::length_error("DNAseq length exceeding the max allowed length");
 	buildCounts(seq); // build count
 	const int64_t* SA = buildBWT(seq); // build BWT
 	buildGap(SA); // build GAP
 	if(keepSA)
-		buildSA(SA);
+		buildSA(SA, saSampleRate);
 	else
 		clearSA();
 	delete[] SA; // delete temporary
@@ -179,13 +179,13 @@ int64_t* FMDIndex::buildBWT(const DNAseq& seq) {
     return SA;
 }
 
-FMDIndex& FMDIndex::buildSA() {
+FMDIndex& FMDIndex::buildSA(int saSampleRate) {
 	const int64_t N = length();
 	assert(bwt.length() == N);
 	/* build the bitstr in the 1st pass */
 	BitStr32 bstr(N);
 	for(size_t i = 0; i < N; ++i) {
-		if(i % SA_SAMPLE_RATE == 0 || bwt[i] == 0) /* sample at all null characters */
+		if(i % saSampleRate == 0 || bwt[i] == 0) /* sample at all null characters */
 			bstr.set(i);
 	}
 	SAidx = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
@@ -215,15 +215,15 @@ void FMDIndex::buildGap(const int64_t* SA) {
 		gapSA[i] = SA[i];
 }
 
-void FMDIndex::buildSA(const int64_t* SA) {
+void FMDIndex::buildSA(const int64_t* SA, int saSampleRate) {
 	const int64_t N = length();
 	assert(bwt.length() == N);
 	/* build the bitstr by sampling SA direction */
 	BitStr32 bstr(N);
 	SAsampled.clear();
-	SAsampled.reserve(N / SA_SAMPLE_RATE + numGaps()); // enough to hold both peroid sampling and gaps
+	SAsampled.reserve(N / saSampleRate + numGaps()); // enough to hold both peroid sampling and gaps
 	for(size_t i = 0; i < N; ++i) {
-		if(i % SA_SAMPLE_RATE == 0 || bwt[i] == 0) { /* sample at all null characters */
+		if(i % saSampleRate == 0 || bwt[i] == 0) { /* sample at all null characters */
 			bstr.set(i);
 			SAsampled.push_back(SA[i]);
 		}

@@ -17,6 +17,8 @@ namespace MSGseqTK {
 using std::vector;
 using std::stack;
 
+const double SeedChain::MAX_LOD10 = 10;
+
 double SeedChain::loglik() const {
 	double ll = 0;
 	for(const SeedPair& seed : *this)
@@ -66,7 +68,7 @@ void SeedChain::dfsSeeds(const SeedList& inputSeeds, size_t i, ChainList& output
 	chainIdx.pop_back();
 }
 
-ChainList& SeedChain::filter(ChainList& chains) {
+ChainList& SeedChain::uniq(ChainList& chains) {
 	if(chains.size() <= 1)
 		return chains;
 	for(ChainList::const_iterator i = chains.end(); i > chains.begin(); --i) { // search backward
@@ -78,6 +80,17 @@ ChainList& SeedChain::filter(ChainList& chains) {
 		}
 	}
 	assert(!chains.empty());
+	return chains;
+}
+
+ChainList& SeedChain::filter(ChainList& chains, double maxLod0) {
+	/* sort chains by loglik */
+	std::sort(chains.begin(), chains.end(),
+			[](const SeedChain& lhs, const SeedChain& rhs) { return lhs.loglik() < lhs.loglik(); });
+	const double bestLog10lik = chains.front().log10lik();
+	chains.erase(std::remove_if(chains.begin(), chains.end(),
+			[=](const SeedChain& chain) { return chain.log10lik() > bestLog10lik + maxLod0; }),
+			chains.end());
 	return chains;
 }
 
