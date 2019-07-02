@@ -71,8 +71,8 @@ void SeedChain::dfsSeeds(const SeedList& inputSeeds, size_t i, ChainList& output
 ChainList& SeedChain::uniq(ChainList& chains) {
 	if(chains.size() <= 1)
 		return chains;
-	for(ChainList::const_iterator i = chains.end(); i > chains.begin(); --i) { // search backward
-		for(ChainList::const_iterator j = i - 1; j > chains.begin(); --j) {
+	for(ChainList::iterator i = chains.end(); i > chains.begin(); --i) { // search backward
+		for(ChainList::iterator j = i - 1; j > chains.begin(); --j) {
 			if(contained(*(i - 1), *(j - 1))) { // a redundant chain
 				chains.erase(i - 1);
 				break;
