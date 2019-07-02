@@ -170,13 +170,11 @@ SeedList SMEM::getSeeds(int64_t maxNSeed) const {
 }
 
 SeedList SMEM_LIST::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		int64_t minLen, int64_t maxLen, double maxEvalue, int64_t maxNSeed, bool discardSeed) {
+		int64_t minLen, int64_t maxLen, double maxEvalue, int64_t maxNSeed) {
 	const SMEM_LIST& smems = findAllSMEMS(seq, mtg, fmdidx, minLen, maxLen, maxEvalue);
 	/* get seeds */
 	SeedList allSeeds;
 	for(const SMEM& smem : smems) {
-		if(discardSeed && smem.getSize() > maxNSeed)
-			continue;
 		const SeedList& seeds = smem.getSeeds(maxNSeed);
 		allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
 	}

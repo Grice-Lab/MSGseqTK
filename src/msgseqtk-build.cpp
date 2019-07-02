@@ -173,6 +173,11 @@ int main(int argc, char* argv[]) {
 	if(dbName == oldDBName)
 		warningLog << "Warning: old database '" << oldDBName << "' will be overwritten!" << endl;
 
+	if(!(saSampleRate > 0)) {
+		cerr << "--sample-rate must be positive" << endl;
+		return EXIT_FAILURE;
+	}
+
 #ifdef _OPENMP
 	if(!(nThreads > 0)) {
 		cerr << "-p|--process must be positive" << endl;
