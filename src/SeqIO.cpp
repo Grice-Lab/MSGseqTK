@@ -12,43 +12,30 @@
 
 namespace EGriceLab {
 namespace MSGseqTK {
+using std::endl;
 
-using namespace std;
-
-SeqIO::SeqIO(istream* in, FORMAT fmt, bool fixQual, int maxLine) :
-	in(in), out(nullptr), fmt(fmt), fixQual(fixQual), maxLine(maxLine) {
+void SeqIO::reset(istream* in, FORMAT fmt, bool maskLower, bool fixQual, int maxLine) {
 	/* check format support */
 	if(fmt == UNK)
-		throw invalid_argument("Unsupported file format");
-}
-
-SeqIO::SeqIO(ostream* out, FORMAT fmt, bool fixQual, int maxLine) :
-	in(nullptr), out(out), fmt(fmt), fixQual(fixQual), maxLine(maxLine) {
-	/* check format support */
-	if(fmt == UNK)
-		throw invalid_argument("Unsupported file format");
-}
-
-void SeqIO::reset(istream* in, FORMAT fmt, bool fixQual, int maxLine) {
-	/* check format support */
-	if(fmt == UNK)
-		throw invalid_argument("Unsupported file format");
+		throw std::invalid_argument("Unsupported file format");
 	/* replace values */
 	this->in = in;
 	out = nullptr;
 	this->fmt = fmt;
+	this->maskLower = maskLower;
 	this->fixQual = fixQual;
 	this->maxLine = maxLine;
 }
 
-void SeqIO::reset(ostream* out, FORMAT fmt, bool fixQual, int maxLine) {
+void SeqIO::reset(ostream* out, FORMAT fmt, bool maskLower, bool fixQual, int maxLine) {
 	/* check format support */
 	if(fmt == UNK)
-		throw invalid_argument("Unsupported file format");
+		throw std::invalid_argument("Unsupported file format");
 	/* replace values */
 	in = nullptr;
 	this->out = out;
 	this->fmt = fmt;
+	this->maskLower = maskLower;
 	this->fixQual = fixQual;
 	this->maxLine = maxLine;
 }
@@ -69,7 +56,7 @@ PrimarySeq SeqIO::nextFastaSeq() {
 	string line;
 	tag = in->get();
 	if(tag != fastaHead)
-		throw ios_base::failure("input is not a valid FASTA format");
+		throw std::ios_base::failure("input is not a valid FASTA format");
 
 	*in >> name; // read the next word as id
 	while(::isspace(in->peek()) && in->peek() != '\n') // ignore non-newline white spaces
@@ -79,6 +66,8 @@ PrimarySeq SeqIO::nextFastaSeq() {
 		getline(*in, line);
 		seq += line;
 	}
+	if(maskLower)
+		dna::mask(seq);
 	return !fixQual ? PrimarySeq(seq, name, desc) : PrimarySeq(seq, name, desc).fixQual();
 }
 
@@ -88,7 +77,7 @@ PrimarySeq SeqIO::nextFastqSeq() {
 	string line;
 	tag = in->get();
 	if(tag != fastqHead)
-		throw ios_base::failure("input is not a valid FASTQ format");
+		throw std::ios_base::failure("input is not a valid FASTQ format");
 	*in >> name; // read the next word as id
 	while(::isspace(in->peek()) && in->peek() != '\n') // ignore non-newline white spaces
 		in->get();

@@ -77,6 +77,7 @@ void printUsage(const string& progName) {
 		 << "            -r|--update  STR     : update database based on this old DB, it can be the same name as -n, which will overwrite the old database" << endl
 		 << "            -b|--block  INT      : block size (in MB) for building FMD-index, larget block size is faster but uses more memory [" << DEFAULT_BLOCK_SIZE << "]" << endl
 		 << "            --sample-rate  INT   : sample rate for the Suffix-Array (SA), recommend use smaller value means faster location search but more RAM/disk usage when the reference genomes are highly redundant [" << FMDIndex::SA_SAMPLE_RATE << "]" << endl
+		 << "            --mask-lc  FLAG      : treat lower-case bases as repeats and mask as Ns" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing, only used in building SA and merging BWTs [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -111,6 +112,7 @@ int main(int argc, char* argv[]) {
 
 	size_t blockSize = DEFAULT_BLOCK_SIZE;
 	int saSampleRate = FMDIndex::SA_SAMPLE_RATE;
+	bool maskLower = false;
 	int nThreads = DEFAULT_NUM_THREADS;
 
 	/* parse options */
@@ -152,6 +154,9 @@ int main(int argc, char* argv[]) {
 
 	if(cmdOpts.hasOpt("--sample-rate"))
 		saSampleRate = ::atoi(cmdOpts.getOptStr("--sample-rate"));
+
+	if(cmdOpts.hasOpt("--mask-lc"))
+		maskLower = true;
 
 	blockSize *= BLOCK_UNIT; // switch to bp unit
 
@@ -314,7 +319,7 @@ int main(int argc, char* argv[]) {
 		/* read in genome sequences */
 		Genome genome(genomeId, genomeName);
 		infoLog << "Reading genome " << genome.displayId() << endl;
-		SeqIO seqI(&genomeIn, fmt);
+		SeqIO seqI(&genomeIn, fmt, maskLower);
 		while(seqI.hasNext()) {
 			const PrimarySeq& chr = seqI.nextSeq();
 			const string& chrName = chr.getName();

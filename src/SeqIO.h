@@ -41,12 +41,24 @@ public:
 	/**
 	 * Construct a SeqIO object in READ mode with given info
 	 */
-	SeqIO(istream* in, FORMAT fmt, bool fixQual = false, int maxLine = DEFAULT_MAX_LINE);
+	SeqIO(istream* in, FORMAT fmt, bool maskLower = false, bool fixQual = false, int maxLine = DEFAULT_MAX_LINE)
+	: in(in), fmt(fmt), maskLower(maskLower), fixQual(fixQual), maxLine(maxLine)
+	{
+		/* check format support */
+		if(fmt == UNK)
+			throw std::invalid_argument("Unsupported file format");
+	}
 
 	/**
 	 * Construct a SeqIO object in WRITE mode with given info
 	 */
-	SeqIO(ostream* out, FORMAT fmt, bool fixQual = false, int maxLine = DEFAULT_MAX_LINE);
+	SeqIO(ostream* out, FORMAT fmt, bool maskLower = false, bool fixQual = false, int maxLine = DEFAULT_MAX_LINE)
+	: out(out), fmt(fmt), maskLower(maskLower), fixQual(fixQual), maxLine(maxLine)
+	{
+		/* check format support */
+		if(fmt == UNK)
+			throw std::invalid_argument("Unsupported file format");
+	}
 
 public:
 	/* Getters and Setters */
@@ -64,10 +76,10 @@ public:
 
 	/* member methods */
 	/** set the input to a given a new istream, will not close the old one */
-	void reset(istream* in, FORMAT fmt, bool fixQual = false, int maxLine = DEFAULT_MAX_LINE);
+	void reset(istream* in, FORMAT fmt, bool maskLower = false, bool fixQual = false, int maxLine = DEFAULT_MAX_LINE);
 
 	/** set the out to a given a new ostream, will not close the old one */
-	void reset(ostream* out, FORMAT fmt, bool fixQual = false, int maxLine = DEFAULT_MAX_LINE);
+	void reset(ostream* out, FORMAT fmt, bool maskLower = false, bool fixQual = false, int maxLine = DEFAULT_MAX_LINE);
 
 	/**
 	 * test whether this file has next PrimarySeq
@@ -135,12 +147,13 @@ private:
 
 private:
 	/** member fields */
-	FORMAT fmt;
-	int maxLine;
+	FORMAT fmt = UNK;
+	bool maskLower = false; // mask lower case characters?
 	bool fixQual = false;
+	int maxLine = DEFAULT_MAX_LINE;
 
-	istream* in; /* input */
-	ostream* out; /* output */
+	istream* in = nullptr; /* input */
+	ostream* out = nullptr; /* output */
 
 	/* static members */
 public:

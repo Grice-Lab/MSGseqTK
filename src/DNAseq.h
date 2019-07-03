@@ -12,6 +12,7 @@
 #include <iostream>
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include "DNAalphabet.h"
 #include "StringUtils.h"
 
@@ -169,6 +170,13 @@ ostream& nt16Save(const DNAseq& seq, ostream& out);
 
 /** get base count of a given region */
 BaseCount baseCount(const DNAseq& seq, size_t start = 0, size_t len = DNAseq::npos);
+
+/** mask lower case in a seq string to Ns */
+inline string& mask(string& seqStr) {
+	std::replace_if(seqStr.begin(), seqStr.end(),
+			[](char c) { return std::islower(c); }, 'N');
+	return seqStr;
+}
 
 } /* namespace dna */
 
