@@ -122,9 +122,6 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& r
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap, int64_t maxNPair);
 
-/** get BAM records from ALIGN_LIST */
-vector<BAM> getBAMRecords(const ALIGN_LIST& alnList);
-
 /**
  * report and output evaluated Alignments
  * @return # of alignments written
