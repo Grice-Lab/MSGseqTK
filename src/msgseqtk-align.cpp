@@ -551,7 +551,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile&
 #pragma omp master
 		{
 			while(seqI.hasNext()) {
-				const PrimarySeq& read = seqI.nextSeq();
+				PrimarySeq read = seqI.nextSeq();
 #pragma omp task firstprivate(read)
 				{
 					/* get SeedList */
