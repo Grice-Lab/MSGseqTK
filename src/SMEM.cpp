@@ -47,13 +47,19 @@ MEM SMEM::findMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* 
 	MEM mem(seq, mtg, fmdidx, from, from + 1, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
 	MEM mem0;
 	/* forward extension */
-	for(mem0 = mem; mem.size > 0; mem.fwdExt())
-		mem0 = mem;
+	for(mem0 = mem; mem.size > 0; mem0 = mem) {
+		mem.fwdExt();
+		if(mem.size == 0)
+			break;
+	}
 	to = mem0.to;
 
 	/* backward extension */
-	for(mem0 = mem; mem.size > 0; mem.backExt())
-		mem0 = mem;
+	for(mem = mem0; mem.size > 0; mem0 = mem) {
+		mem.backExt();
+		if(mem.size == 0)
+			break;
+	}
 	from = mem0.from;
 	return mem0;
 }
@@ -71,12 +77,13 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 
 	/* init SMEM */
 	SMEM smem(seq, mtg, fmdidx, from, to, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
-	SMEM smem0;
+	SMEM smem0 = smem;
 	/* forward extension */
-	for(smem0 = smem; smem.size >= minSize; smem0 = smem) {
+	while(smem.size >= minSize) {
 		smem.fwdExt();
 		if(smem.size != smem0.size && smem0.to >= minLen && (maxEvalue == inf || smem0.evalue(0, smem0.to) <= maxEvalue))
 			prev.push_back(smem0);
+		smem0 = smem;
 	}
 	to = smem.to - 1;
 
@@ -88,6 +95,7 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 		for(SMEM& smem : prev) {
 			smem0 = smem;
 			smem.backExt();
+//			std::cerr << "backexting smem0: " << smem0 << " smem: " << smem << std::endl;
 			if(smem.size != smem0.size && smem0.size >= minSize && nValid == 0 && smem0.length() >= minLen && smem0.evalue() <= maxEvalue)
 				curr.push_back(smem0);
 			if(smem.size >= minSize && smem.size != s0) { /* still a valid SMEM with size not seen */
@@ -160,8 +168,8 @@ SeedList SMEM::getSeeds(int64_t maxNSeed) const {
 			int64_t bdStart = fmdidx->accessSA(revStart + i);
 			int64_t tid = mtg->getTid(bdStart);
 			int64_t start = mtg->getLoc(tid, bdStart);
+			assert(tid == mtg->getTid(bdStart + length()));
 			if(mtg->getStrand(tid, bdStart) == GLoc::FWD) { // always only search loc on fwd tStrand
-				assert(tid == mtg->getTid(bdStart + length()));
 				seeds.push_back(SeedPair(seq->length() - to, start, length(), tid, GLoc::REV, loglik()));
 			}
 		}

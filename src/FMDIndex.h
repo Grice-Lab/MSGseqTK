@@ -78,6 +78,11 @@ public:
 		return B[0];
 	}
 
+	/** get gap value of i-th null char (begin of i-th block */
+	int64_t getGapSA(int64_t i) const {
+		return gapSA[i];
+	}
+
 	/** get the encoded BWT of the original seq */
 	DNAseq getBWT() const;
 

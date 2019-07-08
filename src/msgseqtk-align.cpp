@@ -551,8 +551,9 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile&
 #pragma omp master
 		{
 			while(seqI.hasNext()) {
-				PrimarySeq read = seqI.nextSeq();
-#pragma omp task firstprivate(read)
+				const PrimarySeq read = seqI.nextSeq();
+				const PrimarySeq rcRead = read.revcom();
+#pragma omp task firstprivate(read, rcRead)
 				{
 					/* get SeedList */
 					SeedList seeds = SMEM_LIST::findSeeds(&read, &mtg, &fmdidx, minSeed, maxSeed, maxEvalue, maxNSeed);
@@ -566,7 +567,6 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile&
 						const int64_t L = read.length();
 						const int64_t maxMismatch = std::ceil(L * Alignment::MAX_MISMATCH_RATE);
 						const int64_t maxIndel = std::ceil(L * Alignment::MAX_INDEL_RATE);
-						const PrimarySeq& rcRead = read.revcom();
 						/* get SeedChains */
 						ChainList chains = SeedChain::getChains(seeds, maxMismatch, maxIndel);
 						/* filter chains by log10-odd (lod10) */
@@ -608,6 +608,7 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& r
 			while(fwdI.hasNext() && revI.hasNext()) {
 				PrimarySeq fwdRead = fwdI.nextSeq();
 				PrimarySeq revRead = revI.nextSeq();
+
 				if(fwdRead.getName() != revRead.getName()) {
 					fwdRead.trimNameExt();
 					revRead.trimNameExt();
@@ -616,7 +617,9 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& r
 						abort();
 					}
 				}
-#pragma omp task firstprivate(fwdRead, revRead)
+				PrimarySeq rcFwdRead = static_cast<const PrimarySeq&>(fwdRead).revcom();
+				PrimarySeq rcRevRead = static_cast<const PrimarySeq&>(revRead).revcom();
+#pragma omp task firstprivate(fwdRead, revRead, rcFwdRead, rcRevRead)
 				{
 					SeedListPE seedsPE = SMEM_LIST::findSeedsPE(&fwdRead, &revRead, &mtg, &fmdidx, minSeed, maxSeed, maxEvalue, maxNSeed);
 					if(seedsPE.first.empty() && seedsPE.second.empty()) {
@@ -632,8 +635,6 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& r
 						const int64_t fwdMaxIndel = std::ceil(fwdL * Alignment::MAX_INDEL_RATE);
 						const int64_t revMaxMismatch = std::ceil(revL * Alignment::MAX_MISMATCH_RATE);
 						const int64_t revMaxIndel = std::ceil(revL * Alignment::MAX_INDEL_RATE);
-						PrimarySeq rcFwdRead = static_cast<const PrimarySeq&>(fwdRead).revcom();
-						PrimarySeq rcRevRead = static_cast<const PrimarySeq&>(revRead).revcom();
 						/* get chains from seeds */
 						ChainList fwdChains = SeedChain::getChains(seedsPE.first, fwdMaxMismatch, fwdMaxIndel);
 						ChainList revChains = SeedChain::getChains(seedsPE.second, revMaxMismatch, revMaxIndel);

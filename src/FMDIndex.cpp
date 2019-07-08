@@ -145,7 +145,7 @@ DNAseq FMDIndex::getSeq() const {
 	DNAseq seq(N, 0);
 #pragma omp parallel for schedule(dynamic, 4)
 	for(int64_t i = 0; i < numGaps(); ++i) { // i-th BWT segment
-		int64_t sa = gapSA[i]; // end SA value
+		int64_t sa = getGapSA(i); // end SA value
 		seq[sa] = 0;
 		nt16_t b = accessBWT(i);
 		sa--;
@@ -195,7 +195,7 @@ FMDIndex& FMDIndex::buildSA(int saSampleRate) {
 	/* build SAsampled in the 2nd pass */
 #pragma omp parallel for schedule(dynamic, 4)
 	for(int64_t i = 0; i < numGaps(); ++i) { // the i-th BWT segment
-		int64_t sa = gapSA[i]; // end SA value
+		int64_t sa = getGapSA(i); // end SA value
 		nt16_t b = bwt[i];
 		SAsampled[SAidx.rank1(i) - 1] = sa--; // end is always null and sampled
 		for(int64_t j = i; b != 0; b = bwt[j]) {
@@ -328,13 +328,13 @@ BitStr32 FMDIndex::buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs)
 	const size_t N = lhs.length() + rhs.length();
 	BitStr32 bstrM(N);
 #pragma omp parallel for schedule(dynamic, 4)
-	for(int64_t i = 0; i < lhs.B[0]; ++i) { // i-th pass LF-mapping on lhs
-		int64_t j = i; // position on lhs.BWT
+	for(int64_t i = 0; i < lhs.numGaps(); ++i) { // the i-th BWT segment of lhs
 		nt16_t b = lhs.accessBWT(i);
-		int64_t RA = rhs.B[0]; // position on rhs.BWT
+		assert(b != 0);
+		int64_t RA = rhs.numGaps(); // position on rhs.BWT
 #pragma omp critical(WRITE_bstrM)
 		bstrM.set(i + RA);
-		for(int64_t j = i, k = 0; b != 0; b = lhs.accessBWT(j)) {
+		for(int64_t j = i; b != 0; b = lhs.accessBWT(j)) { // j is position on lhs.BWT
 			j = lhs.LF(b, j) - 1; // LF-mapping on lhs
 			RA = rhs.LF(b, RA - 1); // LF-mapping on rhs
 #pragma omp critical(WRITE_bstrM)

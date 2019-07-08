@@ -159,10 +159,11 @@ public:
 
 	/** get strand of given chrom index and position seq */
 	GLoc::STRAND getStrand(size_t tid, int64_t pos) const {
-		const Loc& bdLoc = getChromBDLoc(tid);
-		assert(bdLoc.getStart() <= pos && pos < bdLoc.getEnd());
-		assert(bdLoc.length() % 2 == 0);
-		return pos < bdLoc.getStart() + bdLoc.length() / 2 ? GLoc::FWD : GLoc::REV;
+		int64_t chrStart = getChromBDStart(tid);
+		int64_t chrLen = getChromBDLength(tid);
+//		assert(getChromBDStart(tid) <= pos && pos < getChromBDEnd(tid));
+//		assert(getChromBDLength(tid) % 2 == 0);
+		return chrStart <= pos && pos < chrStart + chrLen / 2 ? GLoc::FWD : GLoc::REV;
 	}
 
 	/**

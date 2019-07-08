@@ -153,7 +153,7 @@ public:
 
 	/** test whether two AlnSeeds are compatitable */
 	static bool isCompatitable(const SeedPair& lhs, const SeedPair& rhs) {
-		return lhs.to <= rhs.from && lhs.end <= rhs.start && lhs.tid == rhs.tid && (lhs.strand & rhs.strand) != 0;
+		return lhs.to <= rhs.from && lhs.end <= rhs.start && lhs.tid == rhs.tid && lhs.strand == rhs.strand;
 	}
 
 	/** get the best (min) loglik of a SeedList */

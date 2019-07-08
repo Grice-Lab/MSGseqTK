@@ -27,11 +27,12 @@ int main() {
 	MetaGenome mtg1;
 	mtg1.addGenome(g1);
 	mtg1.updateIndex();
-	FMDIndex fmdidx1(mtg1.getBDSeq(), true);
+	FMDIndex fmdidx1(mtg1.getBDSeq(), false);
+	fmdidx1.buildSA();
 	fmdidx1.clearBWT();
 	bdSeq += mtg1.getBDSeq();
-	cerr << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
-	cerr << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl << "mtg1.getBDSeq():" << endl << mtg1.getBDSeq() << endl;
+	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
+	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl << "mtg1.getBDSeq():" << endl << mtg1.getBDSeq() << endl;
 	assert(fmdidx1.getSeq() == bdSeq);
 
 	const DNAseq chr2_1 = dna::encode("ACGTCGTAGTACTACGNACGTCGTAGTACTACG");
@@ -42,11 +43,12 @@ int main() {
 	MetaGenome mtg2;
 	mtg2.addGenome(g2);
 	mtg2.updateIndex();
-	FMDIndex fmdidx2(mtg2.getBDSeq(), true);
+	FMDIndex fmdidx2(mtg2.getBDSeq(), false);
+	fmdidx2.buildSA();
 	fmdidx2.clearBWT();
 	bdSeq += mtg2.getBDSeq();
-	cerr << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
-	cerr << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl << "mtg2.getBDSeq():" << endl << mtg2.getBDSeq() << endl;
+	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
+	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl << "mtg2.getBDSeq():" << endl << mtg2.getBDSeq() << endl;
 	assert(fmdidx2.getSeq() == mtg2.getBDSeq());
 
 	FMDIndex fmdidx = fmdidx1 + fmdidx2;
@@ -54,26 +56,30 @@ int main() {
 	MetaGenome mtg = mtg1 + mtg2;
 	fmdidx.buildSA();
 	fmdidx.clearBWT();
-	cerr << "fmdidx.getBWT():" << endl << fmdidx.getBWT() << endl;
-	cerr << "fmdidx.getSeq():" << endl << fmdidx.getSeq() << endl << "mtg.getBDSeq():" << endl << mtg1.getBDSeq() + mtg2.getBDSeq() << endl;
-	assert(fmdidx.getSeq() == mtg1.getBDSeq() + mtg2.getBDSeq());
-	cerr << "fmdidx.getSeq():" << endl << fmdidx.getSeq() << endl;
-//	assert(mtg.BDSize() == fmdidx.length());
+	cout << "fmdidx.getBWT():" << endl << fmdidx.getBWT() << endl;
+	cout << "fmdidx.getSeq():" << endl << fmdidx.getSeq() << endl;
+	cout << "mtg.getBDSeq():" << endl << mtg.getBDSeq() << endl;
+	assert(fmdidx.getSeq() == mtg.getBDSeq());
 
 	/* simple SMEM/seed test */
 	PrimarySeq read("ACGTAGTA", "seq1");
-	SMEM_LIST smems = SMEM_LIST::findMEMS(&read, &mtg, &fmdidx, 0);
-	cout << "found " << smems.size() << " smems" << endl;
-	for(const SMEM& smem : smems)
-		for(const SeedPair& seed : smem.getSeeds())
+	MEM_LIST mems = SMEM_LIST::findMEMS(&read, &mtg, &fmdidx, 1);
+	cout << "found " << mems.size() << " mems" << endl;
+	for(const MEM& mem : mems) {
+		cout << "mem: " << mem << endl;
+		for(const SeedPair& seed : mem.getSeeds()) {
 			if(!isValidSeed(mtg.getSeq(seed.getTid()), read.getSeq(), seed))
 				return EXIT_FAILURE;
+		}
+	}
 
+	/* all SMEM/seed test */
 	SeedList seeds = SMEM_LIST::findSeeds(&read, &mtg, &fmdidx, 0);
 	cout << "found " << seeds.size() << " all smems seeds" << endl;
-	for(const SeedPair& seed : seeds)
+	for(const SeedPair& seed : seeds) {
 		if(!isValidSeed(mtg.getSeq(seed.getTid()), read.getSeq(), seed))
 			return EXIT_FAILURE;
+	}
 	cout << endl;
 }
 
@@ -82,7 +88,7 @@ bool isValidSeed(const DNAseq& target, const DNAseq& query, const SeedPair& seed
 	DNAseq qSeg = seed.getStrand() == GLoc::FWD ? query.substr(seed.getFrom(), seed.length()) :
 			dna::revcom(query).substr(seed.getFrom(), seed.length());
 	if(tSeg != qSeg) {
-		cerr << "Unmatched seed: " << seed << " between target:" << endl <<
+		cout << "Unmatched seed: " << seed << " between target:" << endl <<
 				target << endl << "query:" << endl << query << endl <<
 				"tSeg: " << tSeg << " qSeg: " << qSeg << endl;
 		return false;
