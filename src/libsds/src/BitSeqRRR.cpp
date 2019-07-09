@@ -27,7 +27,7 @@ void BitSeqRRR::TableOffset::init_binomials() {
 		log2binomial[i][1] = 0;
 		log2binomial[i][i] = 0;
 	}
-	for(uint32_t j = 1; j <= BLOCK_SIZE; ++j) {
+	for(uint32_t j = 1; j <= BLOCK_SIZE; ++j) { /* lower-left half */
 		for(uint32_t i = j + 1; i <= BLOCK_SIZE; ++i) {
 			binomial[i][j] = binomial[i - 1][j - 1] + binomial[i - 1][j];
 			log2binomial[i][j] = bits(binomial[i][j] - 1);
@@ -107,14 +107,13 @@ size_t BitSeqRRR::rank1(size_t i) const {
 		posO += OFFSET.get_log2binomial(BLOCK_SIZE, aux);
 		k++;
 	}
-	size_t mask = 0x0F;
 	const uint8_t* arr = reinterpret_cast<const uint8_t*>(C.getData().c_str());
-	arr += k/2;
+	arr += k / 2;
 	while(k + 1 < pos) {
 //		size_t lower = C.getValue(k, wC) & mask;
 //		size_t upper = C.getValue(k + 1, wC);
-		size_t lower = *arr & mask;
-		size_t upper = *arr / 16;
+		uint8_t lower = *arr & LOWER_MASK;
+		uint8_t upper = *arr >> UPPER_SHIFT;
 //		assert(lower == C.getValue(k, wC) & mask);
 //		assert(upper == C.getValue(k + 1, wC));
 		sum += lower + upper;

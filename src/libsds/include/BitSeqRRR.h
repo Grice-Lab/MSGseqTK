@@ -14,6 +14,7 @@
 #include "BitStr.h"
 
 /*
+ * new block implementation by Qi Zheng
  * block size can't be changed in this implementation
  * it would require more than just changing the constant
  */
@@ -248,8 +249,8 @@ private:
 	BitStr32 O; /* bitstring for offsets */
 	size_t nC = 0, wC = 0; /* len and bit wid for C */
 	size_t nO = 0, wO = 0; /* len and bit wid for O */
-	BitStr32 Csampled; /* C samplings */
-	BitStr32 Osampled; /* O samplings */
+	BitStr64 Csampled; /* C samplings */
+	BitStr64 Osampled; /* O samplings */
 	size_t nCsampled = 0, wCsampled = 0;
 	size_t nOsampled = 0, wOsampled = 0;
 	/** Sample rate */
@@ -264,6 +265,10 @@ public:
 public:
 	static const size_t DEFAULT_SAMPLE_RATE = 32;
 	static const TableOffset OFFSET; /* pre-computed TalbeOffset given block size */
+
+protected:
+	static const uint8_t LOWER_MASK = 0x0F;
+	static const uint8_t UPPER_SHIFT = 4;
 };
 
 inline bool operator!=(const BitSeqRRR& lhs, const BitSeqRRR& rhs) {
