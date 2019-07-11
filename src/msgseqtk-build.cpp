@@ -370,9 +370,9 @@ int main(int argc, char* argv[]) {
 
 	if(!oldDBName.empty())
 		infoLog << "Database updated. Newly added # of genomes: " << nProcessed <<
-		" Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.BDSize() << endl;
+		" Total # of genomes: " << mtg.numGenomes() << " size: " << mtgSize << endl;
 	else
-		infoLog << "Database built. Total # of genomes: " << mtg.numGenomes() << " size: " << mtg.BDSize() << endl;
+		infoLog << "Database built. Total # of genomes: " << mtg.numGenomes() << " size: " << mtgSize << endl;
 }
 
 void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx, int saSampleRate) {
