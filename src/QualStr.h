@@ -35,6 +35,16 @@ const uint8_t INVALID_Q_SCORE = 0xFF;
 const uint8_t MAX_Q_SCORE = 250;
 const double PHRED_SCALE = -10;
 
+/** encode an ascii char to quality score */
+inline uint8_t encode(char c, uint8_t qShift = DEFAULT_Q_SHIFT) {
+	return std::max<uint8_t>(c - qShift, MIN_Q_SCORE);
+}
+
+/** decode a quality score to an ascii char */
+inline char decode(uint8_t q, uint8_t qShift = DEFAULT_Q_SHIFT) {
+	return q + qShift;
+}
+
 /** encode a QualStr from a string */
 QualStr encode(const string& qStr, uint8_t qShift = DEFAULT_Q_SHIFT);
 

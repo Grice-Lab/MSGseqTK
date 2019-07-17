@@ -15,14 +15,14 @@ namespace quality {
 QualStr encode(const string& qStr, uint8_t qShift) {
 	QualStr qual(qStr.length(), 0);
 	std::transform(qStr.begin(), qStr.end(), qual.begin(),
-			[=](string::value_type q) { return q - qShift; });
+			[=](string::value_type c) { return encode(c, qShift); });
 	return qual;
 }
 
 string decode(const QualStr& qual, uint8_t qShift) {
 	string qStr(qual.length(), '\0');
 	std::transform(qual.begin(), qual.end(), qStr.begin(),
-			[=](QualStr::value_type q) { return q + qShift; });
+			[=](QualStr::value_type q) { return decode(q, qShift); });
 	return qStr;
 }
 
