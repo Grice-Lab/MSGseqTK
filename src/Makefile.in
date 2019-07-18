@@ -177,7 +177,7 @@ am_msgseqtk_mergedb_OBJECTS = msgseqtk-mergedb.$(OBJEXT) \
 msgseqtk_mergedb_OBJECTS = $(am_msgseqtk_mergedb_OBJECTS)
 msgseqtk_mergedb_DEPENDENCIES = libMSGseqTK.a util/UCSC/libEGUCSC.a \
 	util/libEGUtil.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-	libsds/src/libsds.la
+	libsds/src/libsds.la $(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -518,7 +518,8 @@ libMSGseqTK.a \
 util/UCSC/libEGUCSC.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libsds/src/libsds.la
+libsds/src/libsds.la \
+$(OPENMP_CXXFLAGS)
 
 msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTKEnv.cpp
 msgseqtk_clean_LDADD = \

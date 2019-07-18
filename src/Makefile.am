@@ -91,7 +91,8 @@ libMSGseqTK.a \
 util/UCSC/libEGUCSC.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libsds/src/libsds.la
+libsds/src/libsds.la \
+$(OPENMP_CXXFLAGS)
 
 msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTKEnv.cpp
 msgseqtk_clean_LDADD = \

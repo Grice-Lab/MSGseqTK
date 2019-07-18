@@ -33,10 +33,16 @@
 #include "EGUtil.h"
 #include "MSGseqTK.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 using namespace std;
 using namespace EGriceLab;
 using namespace EGriceLab::MSGseqTK;
 using UCSC::GFF;
+
+static const int DEFAULT_NUM_THREADS = 1;
 
 /**
  * Print introduction of this program
@@ -52,6 +58,10 @@ void printUsage(const string& progName) {
 	cerr << "Usage:    " << progName << "  <DB1> <DB2> [DB3 ...] <-n DBNAME> [options]" << endl
 		 << "D1, D2, ...    STR               : database names need to be merged" << endl
 		 << "Options:    -n  STR              : new name for the merged database" << endl
+		 << "            --sample-rate  INT   : sample rate for the Suffix-Array (SA), recommend use smaller value means faster location search but more RAM/disk usage when the reference genomes are highly redundant [" << FMDIndex::SA_SAMPLE_RATE << "]" << endl
+#ifdef _OPENMP
+		 << "            -p|--process INT     : number of threads/cpus for parallel SA building [" << DEFAULT_NUM_THREADS << "]" << endl
+#endif
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
 		 << "            -h|--help            : print this message and exit" << endl;
@@ -62,6 +72,9 @@ int main(int argc, char* argv[]) {
 	vector<string> inDBNames;
 	string dbName;
 	ofstream mtgOut, fmdidxOut;
+
+	int saSampleRate = FMDIndex::SA_SAMPLE_RATE;
+	int nThreads = DEFAULT_NUM_THREADS;
 
 	/* parse options */
 	CommandOptions cmdOpts(argc, argv);
@@ -86,6 +99,16 @@ int main(int argc, char* argv[]) {
 	if(cmdOpts.hasOpt("-n"))
 		dbName = cmdOpts.getOpt("-n");
 
+	if(cmdOpts.hasOpt("--sample-rate"))
+		saSampleRate = ::atoi(cmdOpts.getOptStr("--sample-rate"));
+
+#ifdef _OPENMP
+	if(cmdOpts.hasOpt("-p"))
+		nThreads = ::atoi(cmdOpts.getOptStr("-p"));
+	if(cmdOpts.hasOpt("--process"))
+		nThreads = ::atoi(cmdOpts.getOptStr("--process"));
+#endif
+
 	if(cmdOpts.hasOpt("-v"))
 		INCREASE_LEVEL(cmdOpts.getOpt("-v").length());
 
@@ -99,6 +122,19 @@ int main(int argc, char* argv[]) {
 		cerr << "new DB name '" << dbName << " cannot be the same as any old DB name, abort merging" << endl;
 		return EXIT_FAILURE;
 	}
+
+	if(!(saSampleRate > 0)) {
+		cerr << "--sample-rate must be positive" << endl;
+		return EXIT_FAILURE;
+	}
+
+#ifdef _OPENMP
+	if(!(nThreads > 0)) {
+		cerr << "-p|--process must be positive" << endl;
+		return EXIT_FAILURE;
+	}
+	omp_set_num_threads(nThreads);
+#endif
 
 	/* set dbName */
 	string mtgFn = dbName + METAGENOME_FILE_SUFFIX;
@@ -160,20 +196,18 @@ int main(int argc, char* argv[]) {
 		}
 
 		/* incremental update */
-		if(!isLast) {
-			debugLog << "Removing SA info from intermediate FMD-index" << endl;
-			fmdidxPart.clearSA(); /* do not store SA info for intermediate parts */
-		}
-
 		if(!isLast)
+			fmdidxPart.clearSA(); /* do not store SA info for intermediate parts */
+
 			infoLog << "Merging into new database" << endl;
-		else
-			infoLog << "Merging into new database and building final Suffix-Array" << endl;
 		mtg = mtgPart + mtg;
 		fmdidx = fmdidxPart + fmdidx;
 		assert(mtg.BDSize() == fmdidx.length());
 		infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmdidx.length() << endl;
 	}
+	infoLog << "Building final Suffix-Array" << endl;
+	fmdidx.buildSA(saSampleRate);
+	fmdidx.clearBWT(); // clear uncompressed BWT
 
 	infoLog << "Database merged. # of genomes: " << mtg.numGenomes() << " # of bases: " << fmdidx.length() << endl;
 	infoLog << "Saving database files ..." << endl;

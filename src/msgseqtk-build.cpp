@@ -405,6 +405,5 @@ void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize, int saSa
 	}
 	infoLog << "Building final Suffix-Array" << endl;
 	fmdidx.buildSA(saSampleRate);
-//	fmdidx.buildSA(gapLocs);
 	fmdidx.clearBWT(); // clear uncompressed BWT
 }
