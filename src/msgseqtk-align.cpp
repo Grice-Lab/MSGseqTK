@@ -38,7 +38,7 @@ using namespace EGriceLab::MSGseqTK;
 //static const int DEFAULT_STRAND = 3;
 static const int DEFAULT_NUM_THREADS = 1;
 static const int DEFAULT_MAX_REPORT = 1;
-static const double DEFAULT_BEST_FRAC = 0.85;
+static const double DEFAULT_BEST_FRAC = 0.8;
 static const int DEFAULT_MIN_INSERT = 0;
 static const int DEFAULT_MAX_INSERT = 750;
 static const string NUM_REPORTED_ALIGNMENT_TAG = "NH";
