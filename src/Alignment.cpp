@@ -426,9 +426,13 @@ ALIGN_LIST& Alignment::filter(ALIGN_LIST& alnList, double bestFrac) {
 	if(alnList.size() <= 1)
 		return alnList;
 	/* find best alignment by alnScore */
-	ALIGN_LIST::const_iterator bestAln = std::max_element(alnList.cbegin(), alnList.cend(), [] (const Alignment& lhs, const Alignment& rhs) { return lhs.alnScore > rhs.alnScore; });
+	ALIGN_LIST::const_iterator bestAln = std::max_element(alnList.cbegin(), alnList.cend(), [] (const Alignment& lhs, const Alignment& rhs) { return lhs.alnScore < rhs.alnScore; });
+//	ALIGN_LIST::const_iterator worstAln = std::min_element(alnList.cbegin(), alnList.cend(), [] (const Alignment& lhs, const Alignment& rhs) { return lhs.alnScore > rhs.alnScore; });
 	/* filter alignment by alnScore */
-	alnList.erase(std::remove_if(alnList.begin(), alnList.end(), [&] (const Alignment& aln) { return aln.alnScore < bestAln->alnScore * bestFrac; }), alnList.end());
+	if(bestAln->alnScore < 0)
+		bestFrac = 1.0 / bestFrac; // invert bestFrac if bestScore is negative
+	alnList.erase(std::remove_if(alnList.begin(), alnList.end(),
+			[&](const Alignment& aln) { return aln.alnScore < bestAln->alnScore * bestFrac; }), alnList.end());
 	return alnList;
 }
 
