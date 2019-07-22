@@ -41,6 +41,9 @@ using namespace std;
 using namespace EGriceLab;
 using namespace EGriceLab::MSGseqTK;
 
+static const string GENOME_TSV_HEADER = "genomeId\tgenomeName\tsize";
+static const string CHROM_TSV_HEADER = "chromName\tsize\tgenomeId\tgenomeName";
+
 /**
  * Print introduction of this program
  */
@@ -59,8 +62,9 @@ void printUsage(const string& progName) {
 
 	cerr << "Usage:    " << progName << "  <DB-NAME> [options]" << endl
 		 << "DB-NAME    STR                   : database name/prefix" << endl
-		 << "Options:    -l  FILE             : write the genome names included in this database to FILE" << endl
-		 << "            -s  FILE             : write the genome sequences in this database to FILE" << ZLIB_SUPPORT << endl
+		 << "Options:    -g|--genome  FILE    : write the genome names and length in this database in TSV fomrat" << endl
+		 << "            -c|--chrom  FILE     : write the chromosome names and length in this database in TSV format" << endl
+		 << "            -s|--seq  FILE       : write the genome sequences in this database " << ZLIB_SUPPORT << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
 		 << "            -h|--help            : print this message and exit" << endl;
@@ -69,9 +73,9 @@ void printUsage(const string& progName) {
 int main(int argc, char* argv[]) {
 	/* variable declarations */
 	string dbName;
-	string listFn, seqFn, mtgFn, fmdidxFn;
+	string genomeFn, chromFn, seqFn, mtgFn, fmdidxFn;
 	ifstream mtgIn, fmdidxIn;
-	ofstream listOut;
+	ofstream genomeOut, chromOut;
 	boost::iostreams::filtering_ostream seqOut;
 
 	/* parse options */
@@ -94,11 +98,21 @@ int main(int argc, char* argv[]) {
 	}
 	dbName = cmdOpts.getMainOpt(0);
 
-	if(cmdOpts.hasOpt("-l"))
-		listFn = cmdOpts.getOpt("-l");
+	if(cmdOpts.hasOpt("-g"))
+		genomeFn = cmdOpts.getOpt("-g");
+	if(cmdOpts.hasOpt("--genome"))
+		genomeFn = cmdOpts.getOpt("--genome");
+
+	if(cmdOpts.hasOpt("-c"))
+		chromFn = cmdOpts.getOpt("-c");
+	if(cmdOpts.hasOpt("--chrom"))
+		chromFn = cmdOpts.getOpt("--chrom");
 
 	if(cmdOpts.hasOpt("-s"))
 		seqFn = cmdOpts.getOpt("-s");
+	if(cmdOpts.hasOpt("--seq"))
+		seqFn = cmdOpts.getOpt("--seq");
+
 
 	if(cmdOpts.hasOpt("-v"))
 		INCREASE_LEVEL(cmdOpts.getOpt("-v").length());
@@ -122,10 +136,18 @@ int main(int argc, char* argv[]) {
 	}
 
 	/* open outputs */
-	if(!listFn.empty()) {
-		listOut.open(listFn.c_str());
-		if(!listOut.is_open()) {
-			cerr << "Unable to write to '" << listFn << "': " << ::strerror(errno) << endl;
+	if(!genomeFn.empty()) {
+		genomeOut.open(genomeFn.c_str());
+		if(!genomeOut.is_open()) {
+			cerr << "Unable to write to '" << genomeFn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
+	}
+
+	if(!chromFn.empty()) {
+		chromOut.open(chromFn.c_str());
+		if(!chromOut.is_open()) {
+			cerr << "Unable to write to '" << chromFn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
 	}
@@ -183,24 +205,30 @@ int main(int argc, char* argv[]) {
 			<< " T: " << fmdidx.getBaseCount(DNAalphabet::T)
 			<< endl;
 
-	/* if -l requested */
-	if(listOut.is_open()) {
-		infoLog << "Writing genome name list" << endl;
+	/* if genomeOut is requested */
+	if(genomeOut.is_open()) {
+		infoLog << "Writing genome list" << endl;
+		genomeOut << GENOME_TSV_HEADER << endl;
 		for(const Genome& genome : mtg.getGenomes())
-			listOut << genome.getId() << "\t" << genome.getName() << endl;
+			genomeOut << genome.getId() << "\t" << genome.getName() << genome.size() << endl;
 	}
 
-	/* if -s requested */
+	/* if chromOut is requested */
+	if(chromOut.is_open()) {
+		infoLog << "Writing chrom list" << endl;
+		chromOut << CHROM_TSV_HEADER << endl;
+		for(const Genome& genome : mtg.getGenomes())
+			for(const Genome::Chrom& chr : genome.getChroms())
+				chromOut << chr.name << "\t" << chr.size() << "\t" << genome.getId() << "\t" << genome.getName() << endl;
+	}
+
+	/* if seqOut requested */
 	if(seqOut.is_complete()) {
-		infoLog << "Writing genome sequences" << endl;
+		infoLog << "Writing chrom sequences" << endl;
 		SeqIO seqO(&seqOut, SeqIO::FASTA);
-		size_t tid = 0;
-		for(const Genome& genome : mtg.getGenomes()) {
-			for(const Genome::Chrom chr : genome.getChroms()) {
-				DNAseq chrSeq = mtg.getSeq(tid++);
-				seqO.writeSeq(PrimarySeq(chrSeq, chr.name,
+		for(const Genome& genome : mtg.getGenomes())
+			for(const Genome::Chrom& chr : genome.getChroms())
+				seqO.writeSeq(PrimarySeq(chr.seq, chr.name,
 						"genomeId=" + genome.getId() + ";genomeName=" + genome.getName() + ";chromName=" + chr.name));
-			}
-		}
 	}
 }
