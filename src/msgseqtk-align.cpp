@@ -38,7 +38,8 @@ using namespace EGriceLab::MSGseqTK;
 //static const int DEFAULT_STRAND = 3;
 static const int DEFAULT_NUM_THREADS = 1;
 static const int DEFAULT_MAX_REPORT = 1;
-static const double DEFAULT_BEST_FRAC = 0.8;
+static const double DEFAULT_BEST_FRAC = 0.85;
+//static const double DEFAULT_MAX_LOD10 = 100;
 static const int DEFAULT_MIN_INSERT = 0;
 static const int DEFAULT_MAX_INSERT = 750;
 static const string NUM_REPORTED_ALIGNMENT_TAG = "NH";
@@ -95,7 +96,7 @@ void printUsage(const string& progName) {
 		 << "            --max-seed  INT      : maximum length of an SMEM that will trigger re-seeding to avoid missing seeds, 0 for no-reseeding [" << SMEM_LIST::MAX_LENGTH << "]" << endl
 		 << "            --max-evalue  DBL    : maximum evalue of an SMEM to be used as a seed [" << SMEM_LIST::MAX_EVALUE << "]" << endl
 		 << "            --max-nseed  INT     : maximum # of loci to check for each SMEM [" << SMEM::MAX_NSEED << "]" << endl
-		 << "            --max-lod10  DBL     : maximum log10-liklihood odd (lod10) allowed for a good seed-chain compared to the best seed-chain [" << SeedChain::MAX_LOD10 << "]" << endl
+//		 << "            --max-lod10  DBL     : maximum log10-liklihood odd (lod10) allowed for a good seed-chain compared to the best seed-chain [" << DEFAULT_MAX_LOD10 << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -109,7 +110,7 @@ void printUsage(const string& progName) {
  * @return 0 if success, return non-zero otherwise
  */
 int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile& out,
-		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed, double maxLod10,
+		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport);
 
 /**
@@ -117,7 +118,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile&
  * @return 0 if success, return non-zero otherwise
  */
 int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& revI, SAMfile& out,
-		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed, double maxLod10,
+		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap, int64_t maxNPair);
@@ -152,7 +153,7 @@ int main(int argc, char* argv[]) {
 	int64_t maxSeed = SMEM_LIST::MAX_LENGTH;
 	double maxEvalue = SMEM_LIST::MAX_EVALUE;
 	int64_t maxNSeed = SMEM::MAX_NSEED;
-	double maxLod10 = SeedChain::MAX_LOD10;
+//	double maxLod10 = DEFAULT_MAX_LOD10;
 //	double maxIndelRate = DEFAULT_INDEL_RATE;
 	int nThreads = DEFAULT_NUM_THREADS;
 
@@ -291,9 +292,9 @@ int main(int argc, char* argv[]) {
 
 	if(cmdOpts.hasOpt("--max-nseed"))
 		maxNSeed = ::atol(cmdOpts.getOptStr("--max-nseed"));
-
-	if(cmdOpts.hasOpt("--max-lod10"))
-		maxLod10 = ::atof(cmdOpts.getOptStr("--max-lod10"));
+//
+//	if(cmdOpts.hasOpt("--max-lod10"))
+//		maxLod10 = ::atof(cmdOpts.getOptStr("--max-lod10"));
 
 #ifdef _OPENMP
 	if(cmdOpts.hasOpt("-p"))
@@ -471,9 +472,9 @@ int main(int argc, char* argv[]) {
 
 	/* main processing */
 	if(!isPaired)
-		return main_SE(mtg, fmdidx, fwdI, out, minSeed, maxSeed, maxEvalue, maxNSeed, maxLod10, alnMode, bestFrac, maxReport);
+		return main_SE(mtg, fmdidx, fwdI, out, minSeed, maxSeed, maxEvalue, maxNSeed, alnMode, bestFrac, maxReport);
 	else
-		return main_PE(mtg, fmdidx, fwdI, revI, out, minSeed, maxSeed, maxEvalue, maxNSeed, maxLod10, alnMode, bestFrac, maxReport,
+		return main_PE(mtg, fmdidx, fwdI, revI, out, minSeed, maxSeed, maxEvalue, maxNSeed, alnMode, bestFrac, maxReport,
 				minIns, maxIns, noMixed, noDiscordant, noTailOver, noContain, noOverlap, maxNPair);
 }
 
@@ -542,7 +543,7 @@ int output(const PrimarySeq& fwdRead, const PrimarySeq& revRead, SAMfile& out) {
 }
 
 int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile& out,
-		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed, double maxLod10,
+		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport) {
 	infoLog << "Aligning input reads" << endl;
 	/* search MEMS for each read */
@@ -570,7 +571,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile&
 						/* get SeedChains */
 						ChainList chains = SeedChain::getChains(seeds, maxMismatch, maxIndel);
 						/* filter chains by log10-odd (lod10) */
-						SeedChain::filter(chains);
+//						SeedChain::filter(chains, maxLod10);
 						/* get unique chains */
 						SeedChain::uniq(chains);
 						/* get alignments from SeedMatchList */
@@ -584,6 +585,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile&
 						/* sort alignments */
 						Alignment::sort(alnList);
 						/* output alignments */
+						assert(!alnList.empty());
 #pragma omp critical(BAM_OUTPUT)
 						output(alnList, out, maxReport);
 					} /* end task */
@@ -595,7 +597,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile&
 }
 
 int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& revI, SAMfile& out,
-		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed, double maxLod10,
+		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap, int64_t maxNPair) {
@@ -639,8 +641,8 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& r
 						ChainList fwdChains = SeedChain::getChains(seedsPE.first, fwdMaxMismatch, fwdMaxIndel);
 						ChainList revChains = SeedChain::getChains(seedsPE.second, revMaxMismatch, revMaxIndel);
 						/* filter chains */
-						SeedChain::filter(fwdChains);
-						SeedChain::filter(revChains);
+//						SeedChain::filter(fwdChains, maxLod10);
+//						SeedChain::filter(revChains, maxLod10);
 						/* get unique chains */
 						SeedChain::uniq(fwdChains);
 						SeedChain::uniq(revChains);

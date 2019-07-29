@@ -17,8 +17,6 @@ namespace MSGseqTK {
 using std::vector;
 using std::stack;
 
-const double SeedChain::MAX_LOD10 = 10;
-
 double SeedChain::loglik() const {
 	double ll = 0;
 	for(const SeedPair& seed : *this)
@@ -71,6 +69,9 @@ void SeedChain::dfsSeeds(const SeedList& inputSeeds, size_t i, ChainList& output
 ChainList& SeedChain::uniq(ChainList& chains) {
 	if(chains.size() <= 1)
 		return chains;
+	/* sort chains by loglik, so bad chains near the end */
+	std::sort(chains.begin(), chains.end(),
+			[](const SeedChain& lhs, const SeedChain& rhs) { return lhs.loglik() < rhs.loglik(); });
 	for(ChainList::iterator i = chains.end(); i > chains.begin(); --i) { // search backward
 		for(ChainList::iterator j = i - 1; j > chains.begin(); --j) {
 			if(contained(*(i - 1), *(j - 1))) { // a redundant chain

@@ -143,15 +143,12 @@ public:
 	 * filter a ChainList by removing chains have log10lik smaller than the given odd of the best chain
 	 * return a ordered filtered chain list
 	 */
-	static ChainList& filter(ChainList& chains, double maxLod0 = MAX_LOD10);
+	static ChainList& filter(ChainList& chains, double maxLod0);
 
 	/* non-member functions */
 	/** relationship operators */
 	friend bool operator<(const SeedChain& lhs, const SeedChain& rhs);
 	friend bool operator==(const SeedChain& lhs, const SeedChain& rhs);
-
-	/* static fields */
-	static const double MAX_LOD10; // default max log10lik odd
 };
 
 inline bool operator<(const SeedChain& lhs, const SeedChain& rhs) {

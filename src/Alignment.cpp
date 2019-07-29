@@ -427,7 +427,6 @@ ALIGN_LIST& Alignment::filter(ALIGN_LIST& alnList, double bestFrac) {
 		return alnList;
 	/* find best alignment by alnScore */
 	ALIGN_LIST::const_iterator bestAln = std::max_element(alnList.cbegin(), alnList.cend(), [] (const Alignment& lhs, const Alignment& rhs) { return lhs.alnScore < rhs.alnScore; });
-//	ALIGN_LIST::const_iterator worstAln = std::min_element(alnList.cbegin(), alnList.cend(), [] (const Alignment& lhs, const Alignment& rhs) { return lhs.alnScore > rhs.alnScore; });
 	/* filter alignment by alnScore */
 	if(bestAln->alnScore < 0)
 		bestFrac = 1.0 / bestFrac; // invert bestFrac if bestScore is negative
