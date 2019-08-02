@@ -81,7 +81,8 @@ public:
 				GFF::attr_map {
 			{ "ID", MetaGenome::getChromId(genome.id, chr.name) },
 			{ "Name", chr.name },
-			{ "Parent", genome.id }
+			{ "Parent", genome.id },
+			{ "genomeName", genome.name }
 		});
 	}
 
