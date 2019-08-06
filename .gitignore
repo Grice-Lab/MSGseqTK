@@ -20,6 +20,7 @@ config.status
 **/*~
 **/configure.scan
 **/missing
+**/aclocal.m4
 # Ignore test temporaries
 **/*.trs
 **/*.swp
