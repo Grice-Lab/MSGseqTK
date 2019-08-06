@@ -19,6 +19,7 @@ config.status
 **/*.a
 **/*~
 **/configure.scan
+**/missing
 # Ignore test temporaries
 **/*.trs
 **/*.swp
