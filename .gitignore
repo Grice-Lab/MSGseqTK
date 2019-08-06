@@ -24,6 +24,7 @@ config.status
 **/libtool.m4
 **/lt*.m4
 **/libtool
+**/ltmain.sh
 # Ignore test temporaries
 **/*.trs
 **/*.swp

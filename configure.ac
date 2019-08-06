@@ -2,7 +2,6 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.69)
 AC_INIT(MSGseqTK, 1.0)
-LT_INIT([shared static])
 
 AC_CANONICAL_SYSTEM
 AC_CANONICAL_HOST
@@ -17,7 +16,7 @@ AC_TYPE_INT32_T
 AC_TYPE_INT64_T
 AC_TYPE_UINT64_T
 AC_PROG_LIBTOOL
-LT_INIT
+LT_INIT([shared static])
 #AC_PROG_RANLIB
 AC_CHECK_HEADERS
 AC_CHECK_HEADER_STDBOOL
