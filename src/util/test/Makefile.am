@@ -3,12 +3,14 @@ AUTOMAKE_OPTIONS = subdir-objects
 AM_CFLAGS = \
 -I$(top_srcdir) \
 -I$(top_srcdir)/UCSC \
--I$(top_srcdir)/SAMtools
+-I$(top_srcdir)/SAMtools \
+$(HTSLIB_CPPFLAGS)
 
 AM_CXXFLAGS = \
 -I$(top_srcdir) \
 -I$(top_srcdir)/UCSC \
--I$(top_srcdir)/SAMtools
+-I$(top_srcdir)/SAMtools \
+$(HTSLIB_CPPFLAGS)
 
 AM_CPPFLAGS = \
 $(BOOST_CPPFLAGS) \
