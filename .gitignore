@@ -19,10 +19,6 @@ config.status
 **/*.a
 **/*~
 **/configure.scan
-**/aclocal.m4
-**/libtool.m4
-**/lt*.m4
-**/libtool
 # Ignore test temporaries
 **/*.trs
 **/*.swp
