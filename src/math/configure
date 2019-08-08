@@ -7018,7 +7018,16 @@ done
 
 
 # Set options
-# Check whether --enable-shared was given.
+
+
+
+        enable_dlopen=no
+
+
+  enable_win32_dll=no
+
+
+            # Check whether --enable-shared was given.
 if test "${enable_shared+set}" = set; then :
   enableval=$enable_shared; p=${PACKAGE-default}
     case $enableval in
@@ -7047,7 +7056,9 @@ fi
 
 
 
-# Check whether --enable-static was given.
+
+
+  # Check whether --enable-static was given.
 if test "${enable_static+set}" = set; then :
   enableval=$enable_static; p=${PACKAGE-default}
     case $enableval in
@@ -7074,15 +7085,6 @@ fi
 
 
 
-
-
-
-
-
-        enable_dlopen=no
-
-
-  enable_win32_dll=no
 
 
 

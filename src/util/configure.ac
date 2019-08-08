@@ -4,7 +4,7 @@
 AC_PREREQ([2.69])
 AC_INIT([util], [1.0], [e00011027@gmail.com])
 AC_CONFIG_HEADERS([config.h])
-LT_INIT([shared static])
+LT_INIT
 
 # Checks for programs.
 AC_LANG(C++)
