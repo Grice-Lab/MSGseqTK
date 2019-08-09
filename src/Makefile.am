@@ -25,7 +25,7 @@ $(BOOST_CPPFLAGS) \
 $(OPENMP_CXXFLAGS)
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENMP_CFLAGS) $(OPENMP_CXXFLAGS) $(HTSLIB_CPPFLAGS)
-#AM_LDFLAGS = $(BOOST_LDFLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS)
 
 # Build convenient non-install libraries
 noinst_LIBRARIES = libMSGseqTK.a
@@ -66,8 +66,6 @@ libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB) \
 $(OPENMP_CXXFLAGS)
-msgseqtk_build_LDFLAGS = \
-$(BOOST_LDFLAGS)
 
 msgseqtk_anno_SOURCES = msgseqtk-anno.cpp MSGseqTKEnv.cpp
 msgseqtk_anno_LDADD = \
@@ -77,8 +75,6 @@ util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB)
-msgseqtk_anno_LDFLAGS = \
-$(BOOST_LDFLAGS)
 
 msgseqtk_inspect_SOURCES = msgseqtk-inspect.cpp MSGseqTKEnv.cpp
 msgseqtk_inspect_LDADD = \
@@ -88,8 +84,6 @@ util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB)
-msgseqtk_inspect_LDFLAGS = \
-$(BOOST_LDFLAGS)
 
 msgseqtk_mergedb_SOURCES = msgseqtk-mergedb.cpp MSGseqTKEnv.cpp
 msgseqtk_mergedb_LDADD = \
@@ -110,8 +104,6 @@ libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \
 $(BOOST_IOSTREAMS_LIB) \
 $(OPENMP_CXXFLAGS)
-msgseqtk_build_LDFLAGS = \
-$(BOOST_LDFLAGS)
 
 msgseqtk_align_SOURCES = msgseqtk-align.cpp MSGseqTKEnv.cpp
 msgseqtk_align_LDADD = \
@@ -128,5 +120,4 @@ $(OPENMP_CXXFLAGS) \
 
 msgseqtk_align_LDFLAGS = \
 $(AM_LDFLAGS) \
-$(HTSLIB_LDFLAGS) \
-$(BOOST_LDFLAGS)
+$(HTSLIB_LDFLAGS)
