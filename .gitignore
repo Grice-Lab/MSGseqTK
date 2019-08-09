@@ -19,12 +19,14 @@ config.status
 **/*.a
 **/*~
 **/configure.scan
+**/config.*
 **/missing
 **/aclocal.m4
 **/libtool.m4
 **/lt*.m4
 **/libtool
 **/ltmain.sh
+**/*.log
 # Ignore test temporaries
 **/*.trs
 **/*.swp
