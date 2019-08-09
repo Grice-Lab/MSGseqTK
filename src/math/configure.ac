@@ -4,7 +4,7 @@
 AC_PREREQ([2.69])
 AC_INIT([math], [1.0], [e00011027@gmail.com])
 AC_CONFIG_HEADERS([config.h])
-LT_INIT([shared static])
+LT_INIT
 
 # Checks for programs.
 AC_PROG_CXX
@@ -26,7 +26,7 @@ AC_TYPE_SIZE_T
 
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE()
+AM_INIT_AUTOMAKE
 
 # Checks for autoconf-archive macros
 AX_BOOST_BASE([1.50.0])
