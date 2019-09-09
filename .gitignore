@@ -11,11 +11,10 @@
 **/autom4te.cache/**
 config.log
 **/config.log
-config.*
-**/config.*
+#**/config.*
 **/libtool
 **/libtool.m4
-**/ltmain.sh
+#**/ltmain.sh
 **/.deps/**
 **/.libs/**
 **/*.lo
@@ -24,7 +23,7 @@ config.*
 **/*.a
 **/*~
 **/configure.scan
-**/missing
+#**/missing
 **/aclocal.m4
 **/lt*.m4
 **/*.log
