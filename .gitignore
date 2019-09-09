@@ -11,6 +11,11 @@
 **/autom4te.cache/**
 config.log
 **/config.log
+config.*
+**/config.*
+**/libtool
+**/libtool.m4
+**/ltmain.sh
 **/.deps/**
 **/.libs/**
 **/*.lo
@@ -21,11 +26,9 @@ config.log
 **/configure.scan
 **/missing
 **/aclocal.m4
-**/libtool.m4
 **/lt*.m4
-**/libtool
-**/ltmain.sh
 **/*.log
+**/Makefile.in
 # Ignore test temporaries
 **/*.trs
 **/*.swp
