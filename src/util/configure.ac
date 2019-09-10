@@ -38,6 +38,7 @@ AC_CHECK_FUNCS([strerror])
 AC_CONFIG_MACRO_DIR([m4])
 
 AM_INIT_AUTOMAKE
+AM_MAINTAINER_MODE([disable])
 
 # Checks for autoconf-archive macros
 AX_CXX_COMPILE_STDCXX(11)

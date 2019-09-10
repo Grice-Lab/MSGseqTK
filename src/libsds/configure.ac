@@ -22,6 +22,7 @@ AC_CHECK_FUNCS([strerror])
 
 dnl Initialize automake
 AM_INIT_AUTOMAKE
+AM_MAINTAINER_MODE([disable])
 
 dnl this allows us specify individual liking flags for each target
 AM_PROG_CC_C_O 
