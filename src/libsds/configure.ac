@@ -1,9 +1,9 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.59)
-AC_INIT([libsds], [1.0], [e00011027@gmail.com])
+AC_PREREQ([2.69])
+AC_INIT([libsds],[1.0],[e00011027@gmail.com])
 
-AC_CANONICAL_SYSTEM
+AC_CANONICAL_TARGET
 
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -29,7 +29,7 @@ AM_PROG_CC_C_O
 AC_PROG_CC
 AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX(11)
-AC_PROG_RANLIB
+#AC_PROG_RANLIB
 
 dnl Initialize Libtool
 LT_INIT

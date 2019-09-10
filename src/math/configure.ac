@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([math], [1.0], [e00011027@gmail.com])
+AC_INIT([math],[1.0],[e00011027@gmail.com])
 AC_CONFIG_HEADERS([config.h])
 LT_INIT
 
@@ -14,7 +14,7 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_PROG_RANLIB
+#AC_PROG_RANLIB
 # Checks for libraries.
 
 # Checks for header files.

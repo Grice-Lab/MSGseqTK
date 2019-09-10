@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([util], [1.0], [e00011027@gmail.com])
+AC_INIT([util],[1.0],[e00011027@gmail.com])
 AC_CONFIG_HEADERS([config.h])
 LT_INIT
 
@@ -22,7 +22,7 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
 AC_TYPE_UINT8_T
-AC_PROG_RANLIB
+#AC_PROG_RANLIB
 
 
 # Checks for libraries.

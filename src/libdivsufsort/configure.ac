@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([libdivsufsort], [2.0.0], [e00011027@gmail.com])
+AC_INIT([libdivsufsort],[2.0.0],[e00011027@gmail.com])
 AC_CONFIG_SRCDIR([lib/utils.c])
 AC_CONFIG_HEADERS([config.h])
 
@@ -22,7 +22,7 @@ AC_C_INLINE
 # Checks for library functions.
 #AC_FUNC_MALLOC # ignored to avoid cross-compilation problems
 AC_CHECK_FUNCS([malloc])
-AC_PROG_RANLIB
+#AC_PROG_RANLIB
 LT_INIT
 
 # customized macros
