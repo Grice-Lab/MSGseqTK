@@ -42,6 +42,7 @@ static const double DEFAULT_BEST_FRAC = 0.85;
 //static const double DEFAULT_MAX_LOD10 = 100;
 static const int DEFAULT_MIN_INSERT = 0;
 static const int DEFAULT_MAX_INSERT = 750;
+static const double DEFAULT_MAX_EVALUE = 0.01;
 static const string NUM_REPORTED_ALIGNMENT_TAG = "NH";
 static const string MISMATCH_POSITION_TAG = "MD";
 static const string NUM_TOTAL_ALIGNMENT_TAG = "XN";
@@ -94,7 +95,7 @@ void printUsage(const string& progName) {
 		 << "Other:" << endl
 		 << "            --min-seed  INT      : minimum length of an SMEM to be used as a seed [" << SMEM_LIST::MIN_LENGTH << "]" << endl
 		 << "            --max-seed  INT      : maximum length of an SMEM that will trigger re-seeding to avoid missing seeds, 0 for no-reseeding [" << SMEM_LIST::MAX_LENGTH << "]" << endl
-		 << "            --max-evalue  DBL    : maximum evalue of an SMEM to be used as a seed [" << SMEM_LIST::MAX_EVALUE << "]" << endl
+		 << "            --max-evalue  DBL    : maximum evalue of an SMEM to be used as a seed [" << DEFAULT_MAX_EVALUE << "]" << endl
 		 << "            --max-nseed  INT     : maximum # of loci to check for each SMEM [" << SMEM::MAX_NSEED << "]" << endl
 //		 << "            --max-lod10  DBL     : maximum log10-liklihood odd (lod10) allowed for a good seed-chain compared to the best seed-chain [" << DEFAULT_MAX_LOD10 << "]" << endl
 #ifdef _OPENMP
@@ -151,7 +152,7 @@ int main(int argc, char* argv[]) {
 	bool isPaired = false;
 	int64_t minSeed = SMEM_LIST::MIN_LENGTH;
 	int64_t maxSeed = SMEM_LIST::MAX_LENGTH;
-	double maxEvalue = SMEM_LIST::MAX_EVALUE;
+	double maxEvalue = DEFAULT_MAX_EVALUE;
 	int64_t maxNSeed = SMEM::MAX_NSEED;
 //	double maxLod10 = DEFAULT_MAX_LOD10;
 //	double maxIndelRate = DEFAULT_INDEL_RATE;
