@@ -28,6 +28,7 @@
 #include <iostream>
 #include <ctime>
 #include <cstdlib>
+#include <chrono>
 #include <boost/iostreams/filtering_stream.hpp> /* basic boost streams */
 #include <boost/iostreams/device/file.hpp> /* file sink and source */
 #include <boost/iostreams/filter/zlib.hpp> /* for zlib support */
@@ -87,17 +88,17 @@ void printUsage(const string& progName) {
 
 /**
  * main function to process single-ended reads
- * @return 0 if success, return non-zero otherwise
+ * @return # of reads processed
  */
-int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
+uint64_t main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
 		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut,
 		double minLen, double maxEvalue, double minLod);
 
 /**
  * main function to process paired-ended reads
- * @return 0 if success, return non-zero otherwise
+ * @return # of pairs processed
  */
-int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
+uint64_t main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
 		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut,
 		double minLen, double maxEvalue, double minLod);
 
@@ -381,16 +382,24 @@ int main(int argc, char* argv[]) {
 	}
 
 	/* main processing */
+	infoLog << "Cleaning input reads ..." << endl;
+	uint64_t nProcessed = 0;
+	chrono::time_point<chrono::steady_clock> start = chrono::steady_clock::now();
 	if(!isPaired)
-		return main_SE(refMtg, bgMtg, refFmdidx, bgFmdidx, fwdI, fwdO, assignOut, minSeed, maxEvalue, minLod);
+		nProcessed = main_SE(refMtg, bgMtg, refFmdidx, bgFmdidx, fwdI, fwdO, assignOut, minSeed, maxEvalue, minLod);
 	else
-		return main_PE(refMtg, bgMtg, refFmdidx, bgFmdidx, fwdI, revI, fwdO, revO, assignOut, minSeed, maxEvalue, minLod);
+		nProcessed = main_PE(refMtg, bgMtg, refFmdidx, bgFmdidx, fwdI, revI, fwdO, revO, assignOut, minSeed, maxEvalue, minLod);
+	chrono::time_point<chrono::steady_clock> fin = chrono::steady_clock::now();
+	infoLog << "Read cleaning finished. Total processed reads: " <<  nProcessed
+			<< ". Elapsed time: "
+			<< chrono::duration_cast<std::chrono::seconds>(fin - start).count()
+			<< " sec" << endl;
 }
 
-int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
+uint64_t main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
 		SeqIO& seqI, SeqIO& seqO, ofstream& assignOut,
 		double minLen, double maxEvalue, double minLod) {
-	infoLog << "Filtering input reads" << endl;
+	uint64_t nRead = 0;
 	/* search SMEM for each read */
 #pragma omp parallel
 	{
@@ -415,17 +424,18 @@ int main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 							assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod << endl;
 					}
 				} /* end task */
+				nRead++;
 			} /* end each read */
 		} /* end master, implicit barrier */
 	} /* end parallel */
-	return EXIT_SUCCESS;
+	return nRead;
 }
 
-int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
+uint64_t main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& refFmdidx, const FMDIndex& bgFmdidx,
 		SeqIO& fwdI, SeqIO& revI, SeqIO& fwdO, SeqIO& revO, ofstream& assignOut,
 		double minLen, double maxEvalue, double minLod) {
-	infoLog << "Filtering input paired-end reads" << endl;
 	/* search SMEM for each pair */
+	uint64_t nPair = 0;
 #pragma omp parallel
 	{
 #pragma omp master
@@ -454,8 +464,9 @@ int main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDIndex& r
 							assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod << endl;
 					}
 				} /* end task */
+				nPair++;
 			} /* end each pair */
 		} /* end master, implicit barrier */
 	} /* end parallel */
-	return EXIT_SUCCESS;
+	return nPair;
 }

@@ -16,6 +16,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <cmath>
+#include <chrono>
 #include <boost/iostreams/filtering_stream.hpp> /* basic boost streams */
 #include <boost/iostreams/device/file.hpp> /* file sink and source */
 #include <boost/iostreams/filter/zlib.hpp> /* for zlib support */
@@ -108,17 +109,17 @@ void printUsage(const string& progName) {
 
 /**
  * main function to process single-ended reads
- * @return 0 if success, return non-zero otherwise
+ * @return # of reads processed
  */
-int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile& out,
+uint64_t main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile& out,
 		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport);
 
 /**
  * main function to process paired-ended reads
- * @return 0 if success, return non-zero otherwise
+ * @return # of read pairs processed
  */
-int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& revI, SAMfile& out,
+uint64_t main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& revI, SAMfile& out,
 		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
@@ -472,11 +473,19 @@ int main(int argc, char* argv[]) {
 	out.writeHeader();
 
 	/* main processing */
+	infoLog << "Aligning input reads ..." << endl;
+	uint64_t nProcessed = 0;
+	chrono::time_point<chrono::steady_clock> start = chrono::steady_clock::now();
 	if(!isPaired)
-		return main_SE(mtg, fmdidx, fwdI, out, minSeed, maxSeed, maxEvalue, maxNSeed, alnMode, bestFrac, maxReport);
+		nProcessed = main_SE(mtg, fmdidx, fwdI, out, minSeed, maxSeed, maxEvalue, maxNSeed, alnMode, bestFrac, maxReport);
 	else
-		return main_PE(mtg, fmdidx, fwdI, revI, out, minSeed, maxSeed, maxEvalue, maxNSeed, alnMode, bestFrac, maxReport,
+		nProcessed = main_PE(mtg, fmdidx, fwdI, revI, out, minSeed, maxSeed, maxEvalue, maxNSeed, alnMode, bestFrac, maxReport,
 				minIns, maxIns, noMixed, noDiscordant, noTailOver, noContain, noOverlap, maxNPair);
+	chrono::time_point<chrono::steady_clock> fin = chrono::steady_clock::now();
+	infoLog << "Read alignment finished. Total processed reads: " <<  nProcessed
+			<< ". Elapsed time: "
+			<< chrono::duration_cast<std::chrono::seconds>(fin - start).count()
+			<< " sec" << endl;
 }
 
 int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport, uint16_t extraFlag) {
@@ -543,10 +552,10 @@ int output(const PrimarySeq& fwdRead, const PrimarySeq& revRead, SAMfile& out) {
 	return 2;
 }
 
-int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile& out,
+uint64_t main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile& out,
 		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport) {
-	infoLog << "Aligning input reads" << endl;
+	uint64_t nRead = 0;
 	/* search MEMS for each read */
 #pragma omp parallel
 	{
@@ -561,7 +570,7 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile&
 					SeedList seeds = SMEM_LIST::findSeeds(&read, &mtg, &fmdidx, minSeed, maxSeed, maxEvalue, maxNSeed);
 					if(seeds.empty()) {
 #pragma omp critical(LOG)
-						debugLog << "Unable to find any valid SMEM seads for '" << read.getName() << "'" << endl;
+						debugLog << "Unable to find any valid SMEM seads for '" << read.getName() << "', ignore" << endl;
 #pragma omp critical(BAM_OUTPUT)
 						output(read, out);
 					}
@@ -586,23 +595,24 @@ int main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile&
 						/* sort alignments */
 						Alignment::sort(alnList);
 						/* output alignments */
-						assert(!alnList.empty());
+//						assert(!alnList.empty());
 #pragma omp critical(BAM_OUTPUT)
 						output(alnList, out, maxReport);
 					} /* end task */
+					nRead++;
 				} /* end each read */
 			} /* end master, implicit barrier */
 		} /* end parallel */
 	}
-	return out.close();
+	return nRead;
 }
 
-int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& revI, SAMfile& out,
+uint64_t main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& revI, SAMfile& out,
 		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport,
 		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap, int64_t maxNPair) {
-	infoLog << "Aligning paired-end reads" << endl;
+	uint64_t nPair = 0;
 	/* search MEMS for each read */
 #pragma omp parallel
 	{
@@ -691,8 +701,9 @@ int main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& r
 						}
 					} /* end SeedMatch tests */
 				} /* end task */
+				nPair++;
 			} /* end each read */
 		} /* end master, implicit barrier */
 	} /* end parallel */
-	return out.close();
+	return nPair;
 }
