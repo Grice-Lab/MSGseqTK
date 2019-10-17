@@ -51,8 +51,8 @@ using namespace EGriceLab;
 using namespace EGriceLab::MSGseqTK;
 
 static const int DEFAULT_NUM_THREADS = 1;
-static const size_t DEFAULT_BLOCK_SIZE = 2000;
-static const size_t BLOCK_UNIT = 1 << 20; // 1 MB in Byte
+static const size_t DEFAULT_BLOCK_SIZE = 8000;
+static const size_t BLOCK_UNIT = 1000000; // 1 Mbps
 
 /**
  * Print introduction of this program
@@ -75,7 +75,7 @@ void printUsage(const string& progName) {
 		 << "Options:    -n  STR              : database name/prefix" << endl
 		 << "            -l  FILE             : tab-delimited genome list with 1st field unique genome IDs, 2nd filed genome names, 3nd field genomic sequence filenames; if provided, <SEQ-FILE> options are ignored" << ZLIB_SUPPORT << endl
 		 << "            -r|--update  STR     : update database based on this old DB, it can be the same name as -n, which will overwrite the old database" << endl
-		 << "            -b|--block  INT      : block size (in MB) for building FMD-index, larget block size is faster but uses more memory [" << DEFAULT_BLOCK_SIZE << "]" << endl
+		 << "            -b|--block  INT      : block size (in Mbps) for building FMD-index, larget block size is faster but uses more memory [" << DEFAULT_BLOCK_SIZE << "]" << endl
 		 << "            --sample-rate  INT   : sample rate for the Suffix-Array (SA), recommend use smaller value means faster location search but more RAM/disk usage when the reference genomes are highly redundant [" << FMDIndex::SA_SAMPLE_RATE << "]" << endl
 		 << "            --mask-lc  FLAG      : treat lower-case bases as repeats and mask as Ns" << endl
 #ifdef _OPENMP
