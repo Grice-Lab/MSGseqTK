@@ -391,7 +391,7 @@ int main(int argc, char* argv[]) {
 		nProcessed = main_PE(refMtg, bgMtg, refFmdidx, bgFmdidx, fwdI, revI, fwdO, revO, assignOut, minSeed, maxEvalue, minLod);
 	chrono::time_point<chrono::steady_clock> fin = chrono::steady_clock::now();
 	infoLog << "Read cleaning finished. Total processed reads: " <<  nProcessed
-			<< ". Elapsed time: "
+			<< " . Elapsed time: "
 			<< chrono::duration_cast<std::chrono::seconds>(fin - start).count()
 			<< " sec" << endl;
 }

@@ -483,7 +483,7 @@ int main(int argc, char* argv[]) {
 				minIns, maxIns, noMixed, noDiscordant, noTailOver, noContain, noOverlap, maxNPair);
 	chrono::time_point<chrono::steady_clock> fin = chrono::steady_clock::now();
 	infoLog << "Read alignment finished. Total processed reads: " <<  nProcessed
-			<< ". Elapsed time: "
+			<< " . Elapsed time: "
 			<< chrono::duration_cast<std::chrono::seconds>(fin - start).count()
 			<< " sec" << endl;
 }
