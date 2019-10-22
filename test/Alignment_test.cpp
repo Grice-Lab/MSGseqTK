@@ -16,8 +16,6 @@ using namespace EGriceLab::SAMtools;
 
 int main(int argc, char* argv[]) {
 	string prog = argv[0];
-	/* construct default ScoreScheme */
-	ScoreScheme ss;
 
 	/* perfect match test */
 	const PrimarySeq r1("ATCG", "r1");
@@ -30,8 +28,7 @@ int main(int argc, char* argv[]) {
 	cout << "read1:  " << r1.getSeq() << endl;
 	cout << "target1: " << target1 << endl;
 	/* build an alignment */
-	Alignment aln1(&r1, &rc1, &target1, 0, GLoc::FWD,
-			0, r1.length(), 0, target1.length(), &ss, Alignment::LOCAL);
+	Alignment aln1(&r1, &rc1, &target1, 0, GLoc::FWD, 0, r1.length(), 0, target1.length(), Alignment::LOCAL);
 	cout << "Alignment constructed" << endl;
 	aln1.calculateScores();
 	cout << "aln1 score calculated, score: " << aln1.getScore() << endl;
@@ -62,8 +59,7 @@ int main(int argc, char* argv[]) {
 	cout << "read2:  " << r2.getSeq() << endl;
 	cout << "target2: " << target2 << endl;
 	/* build an alignment */
-	Alignment aln2(&r2, &rc2, &target2, 0, GLoc::FWD,
-			0, r2.length(), 0, target2.length(), &ss, Alignment::LOCAL);
+	Alignment aln2(&r2, &rc2, &target2, 0, GLoc::FWD, 0, r2.length(), 0, target2.length(), Alignment::LOCAL);
 	cout << "Alignment constructed" << endl;
 	aln2.calculateScores();
 	cout << "aln2 score calculated, score: " << aln2.getScore() << endl;
@@ -93,8 +89,7 @@ int main(int argc, char* argv[]) {
 	cout << "read3:  " << r3.getSeq() << endl;
 	cout << "target3: " << target3 << endl;
 	/* build an alignment */
-	Alignment aln3(&r3, &rc3, &target3, 0, GLoc::FWD,
-			0, r3.length(), 0, target3.length(), &ss, Alignment::LOCAL);
+	Alignment aln3(&r3, &rc3, &target3, 0, GLoc::FWD, 0, r3.length(), 0, target3.length(), Alignment::LOCAL);
 	cout << "Alignment constructed" << endl;
 	cout << "Alignment constructed" << endl;
 	aln3.calculateScores();
@@ -125,8 +120,7 @@ int main(int argc, char* argv[]) {
 	cout << "read4:  " << r4.getSeq() << endl;
 	cout << "target4: " << target4 << endl;
 	/* build an alignment */
-	Alignment aln4(&r4, &rc4, &target4, 0, GLoc::FWD,
-			0, r4.length(), 0, target4.length(), &ss);
+	Alignment aln4(&r4, &rc4, &target4, 0, GLoc::FWD, 0, r4.length(), 0, target4.length());
 	cout << "Alignment constructed" << endl;
 	aln4.calculateScores();
 	cout << "aln4 score calculated, score: " << aln4.getScore() << endl;
@@ -156,8 +150,7 @@ int main(int argc, char* argv[]) {
 	cout << "read5:  " << r5.getSeq() << endl;
 	cout << "target5: " << target5 << endl;
 	/* build an alignment */
-	Alignment aln5(&r5, &rc5, &target5, 0, GLoc::FWD,
-			0, r5.length(), 0, target5.length(), &ss);
+	Alignment aln5(&r5, &rc5, &target5, 0, GLoc::FWD, 0, r5.length(), 0, target5.length());
 	cout << "Alignment constructed" << endl;
 	aln5.calculateScores();
 	cout << "aln5 score calculated, score: " << aln5.getScore() << endl;

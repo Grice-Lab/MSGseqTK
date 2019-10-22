@@ -22,6 +22,7 @@
 #include "MetaGenome.h"
 #include "MetaGenomeAnno.h"
 #include "ScoreScheme.h"
+#include "PairingScheme.h"
 #include "Alignment.h"
 
 #endif /* SRC_MSGSEQTK_H_ */

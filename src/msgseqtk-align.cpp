@@ -50,9 +50,6 @@ static const string NUM_TOTAL_ALIGNMENT_TAG = "XN";
 static const string ALIGNMENT_LOG10LIK_TAG = "XH";
 static const string ALIGNMENT_POSTERIOR_PROB_TAG = "XP";
 
-/* static object for this program */
-static ScoreScheme ss;
-
 /**
  * Print introduction of this program
  */
@@ -215,7 +212,7 @@ int main(int argc, char* argv[]) {
 			cerr << "--match must be non-negative" << endl;
 			return EXIT_FAILURE;
 		}
-		ss.setMatchScore(matchScore);
+		Alignment::ss.setMatchScore(matchScore);
 	}
 
 	if(cmdOpts.hasOpt("--mis-match")) {
@@ -224,7 +221,7 @@ int main(int argc, char* argv[]) {
 			cerr << "--mis-match must be non-negative" << endl;
 			return EXIT_FAILURE;
 		}
-		ss.setMismatchPenalty(misPenalty);
+		Alignment::ss.setMismatchPenalty(misPenalty);
 	}
 
 	if(cmdOpts.hasOpt("--gap-open")) {
@@ -233,7 +230,7 @@ int main(int argc, char* argv[]) {
 			cerr << "--gap-open must be non-negative" << endl;
 			return EXIT_FAILURE;
 		}
-		ss.setGapOPenalty(op);
+		Alignment::ss.setGapOPenalty(op);
 	}
 
 	if(cmdOpts.hasOpt("--gap-ext")) {
@@ -242,7 +239,7 @@ int main(int argc, char* argv[]) {
 			cerr << "--gap-ext must be non-negative" << endl;
 			return EXIT_FAILURE;
 		}
-		ss.setGapEPenalty(op);
+		Alignment::ss.setGapEPenalty(op);
 	}
 //
 //	if(cmdOpts.hasOpt("--max-seeds"))
@@ -585,7 +582,7 @@ uint64_t main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAM
 						/* get unique chains */
 						SeedChain::uniq(chains);
 						/* get alignments from SeedMatchList */
-						ALIGN_LIST alnList = Alignment::buildAlignments(&read, &rcRead, mtg, &ss, chains, alnMode);
+						ALIGN_LIST alnList = Alignment::buildAlignments(&read, &rcRead, mtg, chains, alnMode);
 						/* filter alignments */
 						Alignment::filter(alnList, bestFrac);
 						/* evaluate alignments */
@@ -658,8 +655,8 @@ uint64_t main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, Seq
 						SeedChain::uniq(fwdChains);
 						SeedChain::uniq(revChains);
 						/* get alignments */
-						ALIGN_LIST fwdAlnList = Alignment::buildAlignments(&fwdRead, &rcFwdRead, mtg, &ss, fwdChains, alnMode);
-						ALIGN_LIST revAlnList = Alignment::buildAlignments(&revRead, &rcRevRead, mtg, &ss, revChains, alnMode);
+						ALIGN_LIST fwdAlnList = Alignment::buildAlignments(&fwdRead, &rcFwdRead, mtg, fwdChains, alnMode);
+						ALIGN_LIST revAlnList = Alignment::buildAlignments(&revRead, &rcRevRead, mtg, revChains, alnMode);
 						/* 1st pass filtes by alignment scores */
 						Alignment::filter(fwdAlnList, bestFrac);
 						Alignment::filter(revAlnList, bestFrac);

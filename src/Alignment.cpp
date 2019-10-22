@@ -19,6 +19,10 @@ namespace EGriceLab {
 namespace MSGseqTK {
 using namespace Eigen;
 
+/* static member initiation */
+ScoreScheme Alignment::ss = ScoreScheme();
+//PairingScheme Alignment::ps = PairingScheme();
+
 const double Alignment::MAX_MISMATCH_RATE = 0.2;
 const double Alignment::MAX_INDEL_RATE = 0.1;
 const string Alignment::STATES = BAM_CIGAR_STR;
@@ -80,8 +84,8 @@ Alignment& Alignment::backTraceNW() {
 	alnEnd += tStart;
 	assert(alnTo > 0 && alnEnd > 0);
 	assert(alnScore != infV);
-	const double o = ss->getGapOPenalty();
-	const double e = ss->getGapEPenalty();
+	const double o = ss.getGapOPenalty();
+	const double e = ss.getGapEPenalty();
 
 	alnPath.clear();
 	alnPath.reserve(getQLen() + getTLen()); /* most time enough for back-trace */
@@ -130,8 +134,8 @@ Alignment& Alignment::backTraceSW() {
 	int64_t i = alnTo - qFrom; // 1-based
 	int64_t j = alnEnd - tStart; // 1-based
 	uint32_t s = BAM_CMATCH; // alignment of affine DP always end and start at Match states
-	const double o = ss->getGapOPenalty();
-	const double e = ss->getGapEPenalty();
+	const double o = ss.getGapOPenalty();
+	const double e = ss.getGapEPenalty();
 
 	while(s != BAM_CMATCH || M(i, j) > 0) {
 		alnPath.push_back(s);
@@ -303,11 +307,11 @@ int32_t Alignment::mdTag2alnQLen(const string& mdTag) {
 }
 
 ALIGN_LIST Alignment::buildAlignments(const PrimarySeq* read, const PrimarySeq* rcRead, const MetaGenome& mtg,
-		const ScoreScheme* ss, const ChainList& chains, MODE alnMode) {
+		const ChainList& chains, MODE alnMode) {
 	ALIGN_LIST alnList;
 	alnList.reserve(chains.size());
 	for(const SeedChain& chain : chains)
-		alnList.push_back(Alignment(read, rcRead, mtg, ss, chain, alnMode).calculateScores(chain).backTrace().clearScores());
+		alnList.push_back(Alignment(read, rcRead, mtg, chain, alnMode).calculateScores(chain).backTrace().clearScores());
 	return alnList;
 }
 
@@ -328,7 +332,7 @@ Alignment& Alignment::evaluate() {
 	const QualStr& qual = qStrand == GLoc::FWD ? read->getQual() : rcRead->getQual();
 	/* process 5' soft-clips, if any */
 	for(int64_t i = qFrom; i < alnFrom; ++i)
-		log10P += - ss->getClipPenalty();
+		log10P += - ss.getClipPenalty();
 
 	for(int64_t k = 0, i = alnFrom, j = alnStart; k < alnPath.length(); ++k) { /* k on alnPath, i on query, j on target */
 		state_str::value_type s = alnPath[k];
@@ -344,14 +348,14 @@ Alignment& Alignment::evaluate() {
 			break;
 		case BAM_CINS:
 			if(k == 0 || alnPath[k - 1] != BAM_CINS) // gap open
-				log10P += qual[i] / quality::PHRED_SCALE /* mismatch penalty */ - ss->getGapOPenalty(); // additional penalty
-			log10P += - ss->getGapEPenalty();
+				log10P += qual[i] / quality::PHRED_SCALE /* mismatch penalty */ - ss.getGapOPenalty(); // additional penalty
+			log10P += - ss.getGapEPenalty();
 			i++;
 			break;
 		case BAM_CDEL:
 			if(k == 0 || alnPath[k - 1] != BAM_CDEL) // gap open
-				log10P += qual[i] / quality::PHRED_SCALE /* mismatch penalty */ - ss->getGapOPenalty(); // additional penalty
-			log10P += - ss->getGapEPenalty();
+				log10P += qual[i] / quality::PHRED_SCALE /* mismatch penalty */ - ss.getGapOPenalty(); // additional penalty
+			log10P += - ss.getGapEPenalty();
 			j++;
 			break;
 		default:
@@ -361,7 +365,7 @@ Alignment& Alignment::evaluate() {
 
 	/* process 3' soft-clips, if any */
 	for(int64_t i = alnTo; i < qTo; ++i)
-		log10P += - ss->getClipPenalty();
+		log10P += - ss.getClipPenalty();
 	return *this;
 }
 
