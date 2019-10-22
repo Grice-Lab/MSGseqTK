@@ -84,6 +84,8 @@ void printUsage(const string& progName) {
 		 << "Paired-end:" << endl
 		 << "            -I/--min-ins  INT    : minumum insert size [" << DEFAULT_MIN_INSERT << "]" << endl
 		 << "            -X/--max-ins  INT    : maximum insert size, 0 for no limit [" << DEFAULT_MAX_INSERT << "]" << endl
+		 << "            -m/--mean-ins  DBL   : mean insert size, set to 0 to ignore pairing probabilities (uniform prior) [" << PairingScheme::DEFAULT_MEAN_INSERT << "]" << endl
+		 << "            -s/--sd-ins  DBL     : standard deviation of insert size [" << PairingScheme::DEFAULT_SD_INSERT << "]" << endl
 		 << "            --no-mixed  FLAG     : suppress unpaired alignments for paired reads" << endl
 		 << "            --no-discordant FLAG : suppress discordant alignments for paired reads" << endl
 		 << "            --no-tail-over FLAG  : not concordant when mates extend (tail) past each other" << endl
@@ -163,6 +165,8 @@ int main(int argc, char* argv[]) {
 	/* mate options */
 	int32_t minIns = DEFAULT_MIN_INSERT;
 	int32_t maxIns = DEFAULT_MAX_INSERT;
+	double meanIns = PairingScheme::DEFAULT_MEAN_INSERT;
+	double sdIns = PairingScheme::DEFAULT_SD_INSERT;
 	bool noMixed = false;
 	bool noDiscordant = false;
 	bool noTailOver = false;
@@ -266,6 +270,16 @@ int main(int argc, char* argv[]) {
 	if(cmdOpts.hasOpt("--max-ins"))
 		maxIns = ::atoi(cmdOpts.getOptStr("--max-ins"));
 
+	if(cmdOpts.hasOpt("-m"))
+		meanIns = ::atof(cmdOpts.getOptStr("-m"));
+	if(cmdOpts.hasOpt("--mean-ins"))
+		meanIns = ::atof(cmdOpts.getOptStr("--mean-ins"));
+
+	if(cmdOpts.hasOpt("-s"))
+		sdIns = ::atof(cmdOpts.getOptStr("-s"));
+	if(cmdOpts.hasOpt("--sd-ins"))
+		sdIns = ::atof(cmdOpts.getOptStr("--sd-ins"));
+
 	if(cmdOpts.hasOpt("--no-mixed"))
 		noMixed = true;
 	if(cmdOpts.hasOpt("--no-discordant"))
@@ -335,6 +349,16 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
+	if(!(meanIns > 0)) {
+		cerr << "-m/--mean-ins must be positive" << endl;
+		return EXIT_FAILURE;
+	}
+
+	if(!(sdIns >= 0)) {
+		cerr << "-s/--sd-ins must be non-negative" << endl;
+		return EXIT_FAILURE;
+	}
+
 	if(!(0 < minSeed)) {
 		cerr << "--min-seed must be non-negative" << endl;
 		return EXIT_FAILURE;
@@ -362,6 +386,9 @@ int main(int argc, char* argv[]) {
 	}
 	omp_set_num_threads(nThreads);
 #endif
+
+	/* set pairing scheme */
+	Alignment::ps.update(meanIns, sdIns);
 
 	/* guess input seq format */
 	SeqIO::FORMAT fmt = SeqIO::guessFormat(fwdInFn);

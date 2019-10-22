@@ -20,7 +20,7 @@ const double ScoreScheme::DEFAULT_CLIP_PENALTY = 4; /* 5' and 3' soft-clip (S) p
 void ScoreScheme::updateScores() {
 	for(nt16_t i = 0; i < DNAalphabet::SIZE; ++i)
 		for(nt16_t j = 0; j < DNAalphabet::SIZE; ++j)
-			SCORE[i][j] = i & j && i != DNAalphabet::N && j != DNAalphabet::N ? matchScore : -mismatchPenalty;
+			SCORE[i][j] = (i & j) && i != DNAalphabet::N && j != DNAalphabet::N ? matchScore : -mismatchPenalty;
 }
 
 } /* namespace MSGseqTK */

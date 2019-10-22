@@ -25,7 +25,7 @@
 #include "PrimarySeq.h"
 #include "QualStr.h"
 #include "ScoreScheme.h"
-//#include "PairingScheme.h"
+#include "PairingScheme.h"
 #include "SeedPair.h"
 #include "SeedChain.h"
 #include "MetaGenome.h"
@@ -367,7 +367,7 @@ private:
 public:
 	/* static fileds */
 	static ScoreScheme ss; // class-wise static score scheme object
-//	static PairingScheme ps; // class-wise static pairing sheme object
+	static PairingScheme ps; // class-wise static pairing sheme object
 
 	static const MODE DEFAULT_MODE = GLOBAL;
 	static const uint8_t INVALID_MAP_Q = 0xff;

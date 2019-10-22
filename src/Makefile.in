@@ -124,8 +124,9 @@ libMSGseqTK_a_LIBADD =
 am_libMSGseqTK_a_OBJECTS = DNAalphabet.$(OBJEXT) DNAseq.$(OBJEXT) \
 	QualStr.$(OBJEXT) PrimarySeq.$(OBJEXT) SeqIO.$(OBJEXT) \
 	Loc.$(OBJEXT) GLoc.$(OBJEXT) SMEM.$(OBJEXT) SeedPair.$(OBJEXT) \
-	SeedChain.$(OBJEXT) ScoreScheme.$(OBJEXT) FMDIndex.$(OBJEXT) \
-	Genome.$(OBJEXT) MetaGenome.$(OBJEXT) MetaGenomeAnno.$(OBJEXT) \
+	SeedChain.$(OBJEXT) ScoreScheme.$(OBJEXT) \
+	PairingScheme.$(OBJEXT) FMDIndex.$(OBJEXT) Genome.$(OBJEXT) \
+	MetaGenome.$(OBJEXT) MetaGenomeAnno.$(OBJEXT) \
 	Alignment.$(OBJEXT)
 libMSGseqTK_a_OBJECTS = $(am_libMSGseqTK_a_OBJECTS)
 am_msgseqtk_align_OBJECTS = msgseqtk-align.$(OBJEXT) \
@@ -198,13 +199,13 @@ am__depfiles_remade = ./$(DEPDIR)/Alignment.Po \
 	./$(DEPDIR)/FMDIndex.Po ./$(DEPDIR)/GLoc.Po \
 	./$(DEPDIR)/Genome.Po ./$(DEPDIR)/Loc.Po \
 	./$(DEPDIR)/MSGseqTKEnv.Po ./$(DEPDIR)/MetaGenome.Po \
-	./$(DEPDIR)/MetaGenomeAnno.Po ./$(DEPDIR)/PrimarySeq.Po \
-	./$(DEPDIR)/QualStr.Po ./$(DEPDIR)/SMEM.Po \
-	./$(DEPDIR)/ScoreScheme.Po ./$(DEPDIR)/SeedChain.Po \
-	./$(DEPDIR)/SeedPair.Po ./$(DEPDIR)/SeqIO.Po \
-	./$(DEPDIR)/msgseqtk-align.Po ./$(DEPDIR)/msgseqtk-anno.Po \
-	./$(DEPDIR)/msgseqtk-build.Po ./$(DEPDIR)/msgseqtk-clean.Po \
-	./$(DEPDIR)/msgseqtk-inspect.Po \
+	./$(DEPDIR)/MetaGenomeAnno.Po ./$(DEPDIR)/PairingScheme.Po \
+	./$(DEPDIR)/PrimarySeq.Po ./$(DEPDIR)/QualStr.Po \
+	./$(DEPDIR)/SMEM.Po ./$(DEPDIR)/ScoreScheme.Po \
+	./$(DEPDIR)/SeedChain.Po ./$(DEPDIR)/SeedPair.Po \
+	./$(DEPDIR)/SeqIO.Po ./$(DEPDIR)/msgseqtk-align.Po \
+	./$(DEPDIR)/msgseqtk-anno.Po ./$(DEPDIR)/msgseqtk-build.Po \
+	./$(DEPDIR)/msgseqtk-clean.Po ./$(DEPDIR)/msgseqtk-inspect.Po \
 	./$(DEPDIR)/msgseqtk-mergedb.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
@@ -479,6 +480,7 @@ SMEM.cpp \
 SeedPair.cpp \
 SeedChain.cpp \
 ScoreScheme.cpp \
+PairingScheme.cpp \
 FMDIndex.cpp \
 Genome.cpp \
 MetaGenome.cpp \
@@ -681,6 +683,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MSGseqTKEnv.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MetaGenome.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MetaGenomeAnno.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PairingScheme.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PrimarySeq.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QualStr.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SMEM.Po@am__quote@ # am--include-marker
@@ -939,6 +942,7 @@ distclean: distclean-recursive
 	-rm -f ./$(DEPDIR)/MSGseqTKEnv.Po
 	-rm -f ./$(DEPDIR)/MetaGenome.Po
 	-rm -f ./$(DEPDIR)/MetaGenomeAnno.Po
+	-rm -f ./$(DEPDIR)/PairingScheme.Po
 	-rm -f ./$(DEPDIR)/PrimarySeq.Po
 	-rm -f ./$(DEPDIR)/QualStr.Po
 	-rm -f ./$(DEPDIR)/SMEM.Po
@@ -1007,6 +1011,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f ./$(DEPDIR)/MSGseqTKEnv.Po
 	-rm -f ./$(DEPDIR)/MetaGenome.Po
 	-rm -f ./$(DEPDIR)/MetaGenomeAnno.Po
+	-rm -f ./$(DEPDIR)/PairingScheme.Po
 	-rm -f ./$(DEPDIR)/PrimarySeq.Po
 	-rm -f ./$(DEPDIR)/QualStr.Po
 	-rm -f ./$(DEPDIR)/SMEM.Po

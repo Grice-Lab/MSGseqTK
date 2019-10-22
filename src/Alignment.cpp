@@ -21,7 +21,7 @@ using namespace Eigen;
 
 /* static member initiation */
 ScoreScheme Alignment::ss = ScoreScheme();
-//PairingScheme Alignment::ps = PairingScheme();
+PairingScheme Alignment::ps = PairingScheme();
 
 const double Alignment::MAX_MISMATCH_RATE = 0.2;
 const double Alignment::MAX_INDEL_RATE = 0.1;
