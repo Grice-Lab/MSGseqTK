@@ -82,10 +82,10 @@ void printUsage(const string& progName) {
 		 << "            -k/--max-report  INT : maximum loci to consider for a read/pair, set to 0 to report all candidate alignments [" << DEFAULT_MAX_REPORT << "]" << endl
 		 << "            -f/--best-frac        : minimum score as a fraction of the highest alignment score of all candidates to consider for full evaluation [" << DEFAULT_BEST_FRAC << "]" << endl
 		 << "Paired-end:" << endl
-		 << "            -I/--min-ins  INT    : minumum insert size [" << DEFAULT_MIN_INSERT << "]" << endl
-		 << "            -X/--max-ins  INT    : maximum insert size, 0 for no limit [" << DEFAULT_MAX_INSERT << "]" << endl
 		 << "            -m/--mean-ins  DBL   : mean insert size, set to 0 to ignore pairing probabilities (uniform prior) [" << PairingScheme::DEFAULT_MEAN_INSERT << "]" << endl
-		 << "            -s/--sd-ins  DBL     : standard deviation of insert size [" << PairingScheme::DEFAULT_SD_INSERT << "]" << endl
+		 << "            -s/--sd-ins  DBL     : standard deviation of insert size [" << PairingScheme::DEFAULT_CV_INSERT << " * mean]" << endl
+		 << "            -I/--min-ins  DBL    : minumum insert size [mean - " << PairingScheme::DEFAULT_OUTLIER_DIST << " * sd]" << endl
+		 << "            -X/--max-ins  DBL    : maximum insert size [mean + " << PairingScheme::DEFAULT_OUTLIER_DIST << " * sd]" << endl
 		 << "            --no-mixed  FLAG     : suppress unpaired alignments for paired reads" << endl
 		 << "            --no-discordant FLAG : suppress discordant alignments for paired reads" << endl
 		 << "            --no-tail-over FLAG  : not concordant when mates extend (tail) past each other" << endl
@@ -94,7 +94,7 @@ void printUsage(const string& progName) {
 		 << "            --max-npair  INT     : maximum number of pairs to for each forward/reverse mates, 0 for no limit [" << AlignmentPE::MAX_NPAIR << "]" << endl
 		 << "Other:" << endl
 		 << "            --min-seed  INT      : minimum length of an SMEM to be used as a seed [" << SMEM_LIST::MIN_LENGTH << "]" << endl
-		 << "            --max-seed  INT      : maximum length of an SMEM that will trigger re-seeding to avoid missing seeds, 0 for no-reseeding [" << SMEM_LIST::MAX_LENGTH << "]" << endl
+		 << "            --max-seed  INT      : maximum length of an SMEM that will trigger re-seeding to avoid missed seeds, 0 for no-reseeding [" << SMEM_LIST::MAX_LENGTH << "]" << endl
 		 << "            --max-evalue  DBL    : maximum evalue of an SMEM to be used as a seed [" << DEFAULT_MAX_EVALUE << "]" << endl
 		 << "            --max-nseed  INT     : maximum # of loci to check for each SMEM [" << SMEM::MAX_NSEED << "]" << endl
 //		 << "            --max-lod10  DBL     : maximum log10-liklihood odd (lod10) allowed for a good seed-chain compared to the best seed-chain [" << DEFAULT_MAX_LOD10 << "]" << endl
@@ -121,7 +121,6 @@ uint64_t main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAM
 uint64_t main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& revI, SAMfile& out,
 		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport,
-		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap, int64_t maxNPair);
 
 /**
@@ -162,11 +161,7 @@ int main(int argc, char* argv[]) {
 	uint32_t maxReport = DEFAULT_MAX_REPORT;
 	double bestFrac = DEFAULT_BEST_FRAC;
 
-	/* mate options */
-	int32_t minIns = DEFAULT_MIN_INSERT;
-	int32_t maxIns = DEFAULT_MAX_INSERT;
-	double meanIns = PairingScheme::DEFAULT_MEAN_INSERT;
-	double sdIns = PairingScheme::DEFAULT_SD_INSERT;
+	/* pairing options */
 	bool noMixed = false;
 	bool noDiscordant = false;
 	bool noTailOver = false;
@@ -260,25 +255,60 @@ int main(int argc, char* argv[]) {
 		bestFrac = ::atof(cmdOpts.getOptStr("--best-frac"));
 
 	/* paired-end options */
-	if(cmdOpts.hasOpt("-I"))
-		minIns = ::atoi(cmdOpts.getOptStr("-I"));
-	if(cmdOpts.hasOpt("--min-ins"))
-		minIns = ::atoi(cmdOpts.getOptStr("--min-ins"));
+	if(cmdOpts.hasOpt({"-m", "--mean-ins"}))
+	{
+		double meanIns = 0;
+		if(cmdOpts.hasOpt("-m"))
+			meanIns = ::atof(cmdOpts.getOptStr("-m"));
+		if(cmdOpts.hasOpt("--mean-ins"))
+			meanIns = ::atof(cmdOpts.getOptStr("--mean-ins"));
+		if(!(meanIns >= 0)) {
+			cerr << "-m/--mean-ins must non-netative" << endl;
+			return EXIT_FAILURE;
+		}
+		AlignmentPE::ps.setMean(meanIns);
+	}
 
-	if(cmdOpts.hasOpt("-X"))
-		maxIns = ::atoi(cmdOpts.getOptStr("-X"));
-	if(cmdOpts.hasOpt("--max-ins"))
-		maxIns = ::atoi(cmdOpts.getOptStr("--max-ins"));
+	if(cmdOpts.hasOpt({"-s", "--sd-ins"})) {
+		double sdIns = 0;
+		if(cmdOpts.hasOpt("-s"))
+			sdIns = ::atof(cmdOpts.getOptStr("-s"));
+		if(cmdOpts.hasOpt("--sd-ins"))
+			sdIns = ::atof(cmdOpts.getOptStr("--sd-ins"));
+		if(!(sdIns > 0)) {
+			cerr << "-s/--sd-ins must be positive" << endl;
+			return EXIT_FAILURE;
+		}
+		AlignmentPE::ps.setSD(sdIns);
+	}
+	AlignmentPE::ps.updateRange(); // update range using m and s
 
-	if(cmdOpts.hasOpt("-m"))
-		meanIns = ::atof(cmdOpts.getOptStr("-m"));
-	if(cmdOpts.hasOpt("--mean-ins"))
-		meanIns = ::atof(cmdOpts.getOptStr("--mean-ins"));
+	/* set customized ranges */
+	if(cmdOpts.hasOpt({"-I", "--min-ins"})) {
+		double minIns = 0;
+		if(cmdOpts.hasOpt("-I"))
+			minIns = ::atof(cmdOpts.getOptStr("-I"));
+		if(cmdOpts.hasOpt("--min-ins"))
+			minIns = ::atof(cmdOpts.getOptStr("--min-ins"));
+		if(!(minIns >= 0)) {
+			cerr << "-I/--min-ins must be non-negative" << endl;
+			return EXIT_FAILURE;
+		}
+		AlignmentPE::ps.setMin(minIns);
+	}
 
-	if(cmdOpts.hasOpt("-s"))
-		sdIns = ::atof(cmdOpts.getOptStr("-s"));
-	if(cmdOpts.hasOpt("--sd-ins"))
-		sdIns = ::atof(cmdOpts.getOptStr("--sd-ins"));
+	if(cmdOpts.hasOpt({"-X", "--max-ins"})) {
+		double maxIns = 0;
+		if(cmdOpts.hasOpt("-X"))
+			maxIns = ::atof(cmdOpts.getOptStr("-X"));
+		if(cmdOpts.hasOpt("--max-ins"))
+			maxIns = ::atof(cmdOpts.getOptStr("--max-ins"));
+		if(!(maxIns > 0)) {
+			cerr << "-X/--max-ins must be positive" << endl;
+			return EXIT_FAILURE;
+		}
+		AlignmentPE::ps.setMax(maxIns);
+	}
 
 	if(cmdOpts.hasOpt("--no-mixed"))
 		noMixed = true;
@@ -340,25 +370,6 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	if(!(minIns >= 0)) {
-		cerr << "-I/--min-ins must be non-negative" << endl;
-		return EXIT_FAILURE;
-	}
-	if(!(maxIns >= minIns)) {
-		cerr << "-X/--max-ins must be not smaller than -I/--min-ins" << endl;
-		return EXIT_FAILURE;
-	}
-
-	if(!(meanIns > 0)) {
-		cerr << "-m/--mean-ins must be positive" << endl;
-		return EXIT_FAILURE;
-	}
-
-	if(!(sdIns >= 0)) {
-		cerr << "-s/--sd-ins must be non-negative" << endl;
-		return EXIT_FAILURE;
-	}
-
 	if(!(0 < minSeed)) {
 		cerr << "--min-seed must be non-negative" << endl;
 		return EXIT_FAILURE;
@@ -387,8 +398,9 @@ int main(int argc, char* argv[]) {
 	omp_set_num_threads(nThreads);
 #endif
 
-	/* set pairing scheme */
-	Alignment::ps.update(meanIns, sdIns);
+	/* update set pairing scheme */
+	AlignmentPE::ps.updateParam();
+	debugLog << "minIns: " << AlignmentPE::ps.getMin() << " maxIns: " << AlignmentPE::ps.getMax() << endl;
 
 	/* guess input seq format */
 	SeqIO::FORMAT fmt = SeqIO::guessFormat(fwdInFn);
@@ -504,7 +516,7 @@ int main(int argc, char* argv[]) {
 		nProcessed = main_SE(mtg, fmdidx, fwdI, out, minSeed, maxSeed, maxEvalue, maxNSeed, alnMode, bestFrac, maxReport);
 	else
 		nProcessed = main_PE(mtg, fmdidx, fwdI, revI, out, minSeed, maxSeed, maxEvalue, maxNSeed, alnMode, bestFrac, maxReport,
-				minIns, maxIns, noMixed, noDiscordant, noTailOver, noContain, noOverlap, maxNPair);
+				noMixed, noDiscordant, noTailOver, noContain, noOverlap, maxNPair);
 	chrono::time_point<chrono::steady_clock> fin = chrono::steady_clock::now();
 	infoLog << "Read alignment finished. Total processed reads: " <<  nProcessed
 			<< " . Elapsed time: "
@@ -634,7 +646,6 @@ uint64_t main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAM
 uint64_t main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& revI, SAMfile& out,
 		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
 		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport,
-		int32_t minIns, int32_t maxIns,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap, int64_t maxNPair) {
 	uint64_t nPair = 0;
 	/* search MEMS for each read */
@@ -695,7 +706,7 @@ uint64_t main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, Seq
 						/* sort pairs by loglik decreasingly */
 						AlignmentPE::sort(pairList);
 						/* filter pairs */
-						AlignmentPE::filter(pairList, minIns, maxIns, noDiscordant, noTailOver, noContain, noOverlap, maxNPair);
+						AlignmentPE::filter(pairList, noDiscordant, noTailOver, noContain, noOverlap, maxNPair);
 						if(!pairList.empty()) {
 							/* calculate mapQ for pairs */
 							AlignmentPE::calcMapQ(pairList);

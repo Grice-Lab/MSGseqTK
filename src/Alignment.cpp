@@ -21,7 +21,7 @@ using namespace Eigen;
 
 /* static member initiation */
 ScoreScheme Alignment::ss = ScoreScheme();
-PairingScheme Alignment::ps = PairingScheme();
+PairingScheme AlignmentPE::ps = PairingScheme();
 
 const double Alignment::MAX_MISMATCH_RATE = 0.2;
 const double Alignment::MAX_INDEL_RATE = 0.1;
@@ -440,10 +440,8 @@ ALIGN_LIST& Alignment::filter(ALIGN_LIST& alnList, double bestFrac) {
 }
 
 PAIR_LIST& AlignmentPE::filter(PAIR_LIST& pairList,
-		int32_t minIns, int32_t maxIns,
 		bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap, int64_t maxNPair) {
-	if(!(minIns == 0 && maxIns == 0)) // filter by insert size
-		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [=] (const AlignmentPE& pair) { return !(minIns <= pair.getInsertSize() && pair.getInsertSize() <= maxIns); }), pairList.end());
+	pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [=] (const AlignmentPE& pair) { return !(ps.getMin() <= pair.getInsertSize() && pair.getInsertSize() <= ps.getMax()); }), pairList.end());
 	if(noDiscordant) // filter discordant pairs
 		pairList.erase(std::remove_if(pairList.begin(), pairList.end(), [] (const AlignmentPE& pair) { return !pair.isConcordant(); }), pairList.end());
 	if(noTailOver) // filter tail-overlap pairs

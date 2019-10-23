@@ -367,7 +367,6 @@ private:
 public:
 	/* static fileds */
 	static ScoreScheme ss; // class-wise static score scheme object
-	static PairingScheme ps; // class-wise static pairing sheme object
 
 	static const MODE DEFAULT_MODE = GLOBAL;
 	static const uint8_t INVALID_MAP_Q = 0xff;
@@ -465,13 +464,14 @@ public:
 		return fwdAln->getScore() + revAln->getScore();
 	}
 
+	/** get log10lik of this pair */
 	double log10lik() const {
-		return fwdAln->log10lik() + revAln->log10lik();
+		return fwdAln->log10lik() + revAln->log10lik() + AlignmentPE::ps.log10lik(getInsertSize());
 	}
 
 	/** get loglik of this pair */
 	double loglik() const {
-		return fwdAln->loglik() + revAln->loglik();
+		return fwdAln->loglik() + revAln->loglik() + AlignmentPE::ps.loglik(getInsertSize());
 	}
 
 	/** get insert size */
@@ -528,7 +528,6 @@ public:
 
 	/** filter candidate pairs using pairing criteria */
 	static PAIR_LIST& filter(PAIR_LIST& pairList,
-			int32_t minIns, int32_t maxIns,
 			bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap, int64_t maxNPair = MAX_NPAIR);
 
 	/**
@@ -547,6 +546,7 @@ public:
 	static int32_t getInsertSize(const Alignment& lhs, const Alignment& rhs);
 
 	/* static fields */
+	static PairingScheme ps; // class-wise static pairing sheme object
 	static const int64_t MAX_NPAIR = 0;
 };
 
