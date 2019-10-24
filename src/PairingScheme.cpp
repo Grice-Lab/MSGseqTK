@@ -12,7 +12,7 @@ namespace EGriceLab {
 namespace MSGseqTK {
 
 const double PairingScheme::DEFAULT_MEAN_INSERT = 200;
-const double PairingScheme::DEFAULT_CV_INSERT = 0.2;
+const double PairingScheme::DEFAULT_CV_INSERT = 0.1;
 const double PairingScheme::DEFAULT_OUTLIER_DIST = 10;
 
 double PairingScheme::pr(double x) const {
