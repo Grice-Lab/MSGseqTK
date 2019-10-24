@@ -402,7 +402,6 @@ int main(int argc, char* argv[]) {
 
 	/* update set pairing scheme */
 	AlignmentPE::ps.updateParam();
-	debugLog << "minIns: " << AlignmentPE::ps.getMin() << " maxIns: " << AlignmentPE::ps.getMax() << endl;
 
 	/* guess input seq format */
 	SeqIO::FORMAT fmt = SeqIO::guessFormat(fwdInFn);
