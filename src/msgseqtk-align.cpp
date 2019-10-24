@@ -95,7 +95,7 @@ void printUsage(const string& progName) {
 		 << "Other:" << endl
 		 << "            --min-seed  INT      : minimum length of an SMEM to be used as a seed [" << SMEM_LIST::MIN_LENGTH << "]" << endl
 		 << "            --max-seed  INT      : maximum length of an SMEM that will trigger re-seeding to avoid missed seeds, 0 for no-reseeding [" << SMEM_LIST::MAX_LENGTH << "]" << endl
-		 << "            --max-evalue  DBL    : maximum evalue of an SMEM to be used as a seed [" << DEFAULT_MAX_EVALUE << "]" << endl
+		 << "            --max-evalue  DBL    : maximum evalue of an SMEM to be used as a seed, 0 for no limit [" << DEFAULT_MAX_EVALUE << "]" << endl
 		 << "            --max-nseed  INT     : maximum # of loci to check for each SMEM [" << SMEM::MAX_NSEED << "]" << endl
 //		 << "            --max-lod10  DBL     : maximum log10-liklihood odd (lod10) allowed for a good seed-chain compared to the best seed-chain [" << DEFAULT_MAX_LOD10 << "]" << endl
 #ifdef _OPENMP
@@ -380,10 +380,12 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	if(!(maxEvalue > 0)) {
-		cerr << "--max-evalue must be positive" << endl;
+	if(!(maxEvalue >= 0)) {
+		cerr << "--max-evalue must be non-negative" << endl;
 		return EXIT_FAILURE;
 	}
+	if(maxEvalue == 0)
+		maxEvalue = inf;
 
 	if(!(maxNSeed > 0)) {
 		cerr << "--max-nseed must be positive" << endl;
