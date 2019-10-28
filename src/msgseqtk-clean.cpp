@@ -424,6 +424,7 @@ uint64_t main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDInd
 							assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod << endl;
 					}
 				} /* end task */
+#pragma omp atomic
 				nRead++;
 			} /* end each read */
 		} /* end master, implicit barrier */
@@ -464,6 +465,7 @@ uint64_t main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDInd
 							assignOut << id << "\t" << desc << "\t" << refLoglik << "\t" << bgLoglik << "\t" << lod << endl;
 					}
 				} /* end task */
+#pragma omp atomic
 				nPair++;
 			} /* end each pair */
 		} /* end master, implicit barrier */

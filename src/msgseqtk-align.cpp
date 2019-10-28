@@ -636,6 +636,7 @@ uint64_t main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAM
 #pragma omp critical(BAM_OUTPUT)
 						output(alnList, out, maxReport);
 					} /* end task */
+#pragma omp atomic
 					nRead++;
 				} /* end each read */
 			} /* end master, implicit barrier */
@@ -723,6 +724,7 @@ uint64_t main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, Seq
 								/* sort alignments */
 								Alignment::sort(fwdAlnList);
 								/* output alignments */
+#pragma omp critical(BAM_OUTPUT)
 								output(fwdAlnList, out, maxReport, BAM_FPAIRED | BAM_FREAD1);
 							}
 							if(!revAlnList.empty()) {
@@ -732,11 +734,13 @@ uint64_t main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, Seq
 								/* sort alignments */
 								Alignment::sort(revAlnList);
 								/* output alignments */
+#pragma omp critical(BAM_OUTPUT)
 								output(revAlnList, out, maxReport, BAM_FPAIRED | BAM_FREAD2);
 							}
 						}
 					} /* end SeedMatch tests */
 				} /* end task */
+#pragma omp atomic
 				nPair++;
 			} /* end each read */
 		} /* end master, implicit barrier */
