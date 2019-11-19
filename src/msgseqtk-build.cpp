@@ -392,7 +392,7 @@ void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize, int saSa
 		if(mtg.getChromBDLoc(blockStart, blockEnd).length() >= blockSize || blockStart == 0) { /* first chrom or block is full */
 			infoLog << "Adding " << (blockEnd - blockStart) << " chroms in block " << ++blockId << " into FMD-index" << endl;
 			DNAseq blockSeq = mtg.getBDSeq(blockStart, blockEnd);
-			blockSeq.back() = 0; // use null terminal instead of N
+//			assert(blockSeq.back() == 0);
 			fmdidx = FMDIndex(blockSeq, false) + fmdidx; /* prepend new FMDIndex, whose SA is never built */
 			if(blockStart > 0) // not the final FMDindex
 				fmdidx.clearBWT(); // clear RAM before next merge
