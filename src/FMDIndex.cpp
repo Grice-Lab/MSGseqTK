@@ -294,9 +294,10 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 		return s;
 	}
 	int64_t pN; // fwd strand backExt
-	BCarray_t qB, sB;
-	qB.fill(0);
-	sB.fill(0);
+	BCarray_t qB {};
+	BCarray_t sB {};
+//	qB.fill(0);
+//	sB.fill(0);
 	/* calculate new p and s */
 	int64_t O = bwtRRR.rank(b, p - 1);
 	pN = C[b] + O;
