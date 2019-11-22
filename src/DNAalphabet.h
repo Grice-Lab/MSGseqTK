@@ -61,13 +61,13 @@ public:
 
 private:
 	/* static fields */
-	static const base_map sym2base; /* internal symbo->base map, almost the same as the nt16 encoding except Ns */
-	static const sym_map base2sym;  /* internal base->sym map, almost the same as nt16 decoding except Ns */
+	static const base_map sym2base; /* internal symbo->base map, almost the same as the nt16 encoding */
+	static const sym_map base2sym;  /* internal base->sym map, almost the same as nt16 decoding */
 	static const sym_map sym2comp;  /* internal complement map from symbol to symbol, static zero initiated by default */
 	static const base_map base2comp;  /* internal complement map from base to base, static zero initiated by default */
-	static const int_map base2int; /* internal base->int(0,1,2,3) map, with $,A,C,G,T->0,1,2,3,4 */
-	static const int_map sym2int;   /* internal sym->int(0,1,2,3) map, with $,A,C,G,T->0,1,2,3,4 */
-	static const base_map base2basic; /* internal base->base map to map IUPAC extended bases to nearest basic bases */
+	static const int_map base2int; /* internal base->int(0,1,2,3,4) map, with $,A,C,G,T->0,1,2,3,4 */
+	static const int_map sym2int;   /* internal sym->int(0,1,2,3,4) map, with $,A,C,G,T->0,1,2,3,4 */
+	static const base_map base2basic; /* internal base->base map to map IUPAC extended bases to nearest basic bases, but leave Ns not changed so reads won't be mapped to sequencing gaps */
 
 	/* static methods */
 public:
