@@ -293,34 +293,32 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 		s = 0;
 		return s;
 	}
-	int i = DNAalphabet::toInt(b); // 0,1,2,3,4 for $,A,C,G,T
 	int64_t pN; // fwd strand backExt
-	array<int64_t, 5> qB;
-	array<int64_t, 5> sB;
+	array<int64_t, 16> qB;
+	array<int64_t, 16> sB;
 	/* calculate new p and s */
 	int64_t O = bwtRRR.rank(b, p - 1);
 	pN = C[b] + O;
-	sB[i] = bwtRRR.rank(b, p + s - 1) - O;
+	sB[b] = bwtRRR.rank(b, p + s - 1) - O;
 
 	/* update q */
-	if(sB[i] != s) {
+	if(sB[b] != s) {
 		sB[0] = bwtRRR.rank(0, p + s - 1) - bwtRRR.rank(0, p - 1);
-		for(nt16_t j : { DNAalphabet::A, DNAalphabet::C, DNAalphabet::G, DNAalphabet::T }) { // search from b + 1
-			if(j > b)
-				sB[DNAalphabet::toInt(j)] = bwtRRR.rank(j, p + s - 1) - bwtRRR.rank(j, p - 1);
+		for(nt16_t j = b + 1; j <= DNAalphabet::T; ++j) { // search from b + 1 to T
+			sB[j] = !DNAalphabet::isAmbiguous(j) ? bwtRRR.rank(j, p + s - 1) - bwtRRR.rank(j, p - 1) : 0;
 		}
 		/* new range of [q', q' + s' - 1] is a subrange of original [q, q + s] */
 		/* devide q + q + s */
 		qB[0] = q;
-		qB[4] = qB[0] + sB[0];
-		for(int j = 4; j > i; --j) // only need to search till b (exclusive)
+		qB[DNAalphabet::T] = qB[0] + sB[0];
+		for(int j = DNAalphabet::T; j > b; --j) // only need to search till b (exclusive)
 			qB[j - 1] = qB[j] + sB[j];
-		q = qB[i];
+		q = qB[b];
 	}
 
 	/* update p and s */
 	p = pN;
-	s = sB[i];
+	s = sB[b];
 	return s;
 }
 
