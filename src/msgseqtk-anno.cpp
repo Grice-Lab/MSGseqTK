@@ -36,15 +36,15 @@ void printIntro(void) {
  * Print the usage information
  */
 void printUsage(const string& progName) {
-	string ZLIB_SUPPORT;
+	string ZLIB_SUPPORT = "support GTF/GFF3 files";
 	#ifdef HAVE_LIBZ
-	ZLIB_SUPPORT = ", support .gz or .bz2 compressed GTF/GFF3 files";
+	ZLIB_SUPPORT = "support .gz or .bz2 compressed GTF/GFF3 files";
 	#endif
 
 	cerr << "Usage:    " << progName << "  <DB> [options]" << endl
 		 << "DB          STR                  : database name/prefix" << endl
 		 << "Options:    -o  FILE             : write database annotation to FILE instead of the default file [DB" << GFF::GFF3_SUFFIX << "]" << endl
-		 << "            -l  FILE             : tab-delimited annotation list with first field unique genome IDs and last field external GFF annotation filenames, any middle fields are ignored" << ZLIB_SUPPORT << endl
+		 << "            -l  FILE             : tab-delimited annotation list with first column unique genome IDs and last column external GFF annotation filenames (other columns ignored), " << ZLIB_SUPPORT << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
 		 << "            -h|--help            : print this message and exit" << endl;
