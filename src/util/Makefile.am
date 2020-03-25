@@ -1,4 +1,4 @@
-SUBDIRS=. UCSC SAMtools test
+SUBDIRS=. UCSC test
 
 # This is the Makefile for the EGUtil library
 ACLOCAL_AMFLAGS = -I m4

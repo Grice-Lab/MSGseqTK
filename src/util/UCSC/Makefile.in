@@ -90,10 +90,9 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = UCSC
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/ax_with_htslib.m4 \
-	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
-	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
-	$(top_srcdir)/m4/lt~obsolete.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
+	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
+	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
 	$(top_srcdir)/m4/m4_ax_boost_base.m4 \
 	$(top_srcdir)/m4/m4_ax_cxx_compile_stdcxx.m4 \
 	$(top_srcdir)/configure.ac
@@ -157,7 +156,11 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
+<<<<<<< HEAD
 am__depfiles_remade = ./$(DEPDIR)/libEGUCSC_a-GFF.Po
+=======
+am__depfiles_remade = ./$(DEPDIR)/GFF.Po
+>>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 am__mv = mv -f
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -242,9 +245,6 @@ EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 GREP = @GREP@
 HAVE_CXX11 = @HAVE_CXX11@
-HTSDIR = @HTSDIR@
-HTSLIB_CPPFLAGS = @HTSLIB_CPPFLAGS@
-HTSLIB_LDFLAGS = @HTSLIB_LDFLAGS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -331,7 +331,6 @@ psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
-subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
@@ -425,7 +424,11 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+<<<<<<< HEAD
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libEGUCSC_a-GFF.Po@am__quote@ # am--include-marker
+=======
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GFF.Po@am__quote@ # am--include-marker
+>>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -602,7 +605,11 @@ clean-am: clean-generic clean-libLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
+<<<<<<< HEAD
 		-rm -f ./$(DEPDIR)/libEGUCSC_a-GFF.Po
+=======
+		-rm -f ./$(DEPDIR)/GFF.Po
+>>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -648,7 +655,11 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
+<<<<<<< HEAD
 		-rm -f ./$(DEPDIR)/libEGUCSC_a-GFF.Po
+=======
+		-rm -f ./$(DEPDIR)/GFF.Po
+>>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

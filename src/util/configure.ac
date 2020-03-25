@@ -42,13 +42,16 @@ AM_MAINTAINER_MODE
 # Checks for autoconf-archive macros
 AX_CXX_COMPILE_STDCXX(11)
 AX_BOOST_BASE([1.50.0])
+<<<<<<< HEAD
 #AX_BOOST_REGEX()
 AX_WITH_HTSLIB
+=======
+AX_BOOST_REGEX()
+>>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 
 # Checks for library functions.
 
 AC_CONFIG_FILES([Makefile
 				UCSC/Makefile
-				SAMtools/Makefile
 				test/Makefile])
 AC_OUTPUT
