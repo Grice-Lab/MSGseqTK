@@ -43,12 +43,10 @@ AM_INIT_AUTOMAKE()
 AX_CXX_COMPILE_STDCXX(11)
 AX_BOOST_BASE([1.50.0])
 AX_BOOST_REGEX()
-AX_WITH_HTSLIB
 
 # Checks for library functions.
 
 AC_CONFIG_FILES([Makefile
 				UCSC/Makefile
-				SAMtools/Makefile
 				test/Makefile])
 AC_OUTPUT
