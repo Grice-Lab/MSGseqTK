@@ -20,6 +20,7 @@
 
 namespace EGriceLab {
 namespace MSGseqTK {
+
 using std::vector;
 using EGriceLab::libSDS::BitStr32;
 using EGriceLab::libSDS::BitSeqGGMN; // useful for temporary and fast BitSeq solution

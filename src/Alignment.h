@@ -370,7 +370,7 @@ public:
 
 	static const MODE DEFAULT_MODE = GLOBAL;
 	static const uint8_t INVALID_MAP_Q = 0xff;
-	static const uint32_t MAX_ALIGN = UINT16_MAX;
+	static const uint32_t MAX_ALIGN = UINT32_MAX;
 	static const double MAX_MISMATCH_RATE;
 	static const double MAX_INDEL_RATE;
 	static const string STATES; // human readable STATES
