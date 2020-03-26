@@ -101,6 +101,16 @@ public:
 		bamAln->core.bin = bin;
 	}
 
+	/** get mapQ */
+	uint8_t getMapQ() const {
+		return bamAln->core.qual;
+	}
+
+	/** set mapQ */
+	void setMapQ(uint8_t mapQ) {
+		bamAln->core.qual = mapQ;
+	}
+
 	/** get qname len, including tailing nulls */
 	uint8_t getQNameLen() const {
 		return bamAln->core.l_qname;
@@ -164,6 +174,36 @@ public:
 	/** set flag */
 	void setFlag(uint16_t flag) {
 		bamAln->core.flag = flag;
+	}
+
+	/** get mtid */
+	int32_t getMTId() const {
+		return bamAln->core.mtid;
+	}
+
+	/** set mtid */
+	void setMTId(int32_t mtid) {
+		bamAln->core.mtid = mtid;
+	}
+
+	/** get mpos */
+	int32_t getMPos() const {
+		return bamAln->core.mpos;
+	}
+
+	/** set mpos */
+	void setMPos(int32_t mpos) {
+		bamAln->core.mpos = mpos;
+	}
+
+	/** get isize */
+	int32_t getISize() const {
+		return bamAln->core.isize;
+	}
+
+	/** set isize */
+	void setISize(int32_t isize) {
+		bamAln->core.isize = isize;
 	}
 
 	/** get read paired flag */
