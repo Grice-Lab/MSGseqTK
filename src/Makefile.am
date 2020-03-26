@@ -1,11 +1,11 @@
-SUBDIRS = libdivsufsort libsds util math
+SUBDIRS = libdivsufsort libsds util SAMtools math
 
 AM_CFLAGS = \
 -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/util/UCSC \
 -I$(top_srcdir)/src/util/GFF \
--I$(top_srcdir)/src/util/SAMtools \
+-I$(top_srcdir)/src/SAMtools \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
@@ -17,7 +17,7 @@ AM_CXXFLAGS = \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/util/UCSC \
 -I$(top_srcdir)/src/util/GFF \
--I$(top_srcdir)/src/util/SAMtools \
+-I$(top_srcdir)/src/SAMtools \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
@@ -111,7 +111,7 @@ msgseqtk_align_LDADD = \
 libMSGseqTK.a \
 util/UCSC/libEGUCSC.a \
 util/libEGUtil.a \
-util/SAMtools/libEGSAMtools.a \
+SAMtools/libEGSAMtools.a \
 math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \

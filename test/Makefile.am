@@ -5,8 +5,7 @@ AM_CFLAGS = \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/util/UCSC \
--I$(top_srcdir)/src/util/GFF \
--I$(top_srcdir)/src/util/SAMtools \
+-I$(top_srcdir)/src/SAMtools \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
 $(BOOST_CPPFLAGS) \
@@ -16,8 +15,7 @@ AM_CXXFLAGS = \
 -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/util/UCSC \
--I$(top_srcdir)/src/util/GFF \
--I$(top_srcdir)/src/util/SAMtools \
+-I$(top_srcdir)/src/SAMtools \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
@@ -88,7 +86,7 @@ $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 $(top_srcdir)/src/libsds/src/libsds.la \
 $(top_srcdir)/src/util/libEGUtil.a \
 $(top_srcdir)/src/util/UCSC/libEGUCSC.a \
-$(top_srcdir)/src/util/SAMtools/libEGSAMtools.a \
+$(top_srcdir)/src/SAMtools/libEGSAMtools.a \
 -lhts
 
 Alignment_test_LDFLAGS = \

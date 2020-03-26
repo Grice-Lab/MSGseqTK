@@ -635,14 +635,7 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
-<<<<<<< HEAD
-HTSLIB_LDFLAGS
-HTSLIB_CPPFLAGS
-HTSDIR
-subdirs
-=======
 BOOST_REGEX_LIB
->>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 BOOST_LDFLAGS
 BOOST_CPPFLAGS
 HAVE_CXX11
@@ -785,12 +778,7 @@ enable_silent_rules
 enable_maintainer_mode
 with_boost
 with_boost_libdir
-<<<<<<< HEAD
-with_htslib
-enable_configure_htslib
-=======
 with_boost_regex
->>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1435,15 +1423,9 @@ Optional Features:
                           speeds up one-time build
   --enable-silent-rules   less verbose build output (undo: "make V=1")
   --disable-silent-rules  verbose build output (undo: "make V=0")
-<<<<<<< HEAD
   --enable-maintainer-mode
                           enable make rules and dependencies not useful (and
                           sometimes confusing) to the casual installer
-  --enable-configure-htslib
-                          run configure for htslib as well
-                          [default=only_in_subdir]
-=======
->>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1465,15 +1447,10 @@ Optional Packages:
                           this parameter only if default library detection
                           fails and you know exactly where your boost
                           libraries are located.
-<<<<<<< HEAD
-  --with-htslib=DIR       use the HTSlib source tree or installation in DIR
-  --with-htslib=system    use only a system HTSlib installation
-=======
   --with-boost-regex[=special-lib]
                           use the Regex library from boost - it is possible to
                           specify a certain library for the linker e.g.
                           --with-boost-regex=boost_regex-gcc-mt-d-1_33_1
->>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 
 Some influential environment variables:
   CC          C compiler command
@@ -2202,37 +2179,6 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_cxx_check_func
-
-# ac_fn_cxx_check_header_compile LINENO HEADER VAR INCLUDES
-# ---------------------------------------------------------
-# Tests whether HEADER exists and can be compiled using the include files in
-# INCLUDES, setting the cache variable VAR accordingly.
-ac_fn_cxx_check_header_compile ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-$as_echo_n "checking for $2... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-#include <$2>
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  eval "$3=yes"
-else
-  eval "$3=no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_cxx_check_header_compile
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -18444,98 +18390,91 @@ $as_echo "#define HAVE_BOOST /**/" >>confdefs.h
 fi
 
 
-#AX_BOOST_REGEX()
 
-<<<<<<< HEAD
+# Check whether --with-boost-regex was given.
+if test "${with_boost_regex+set}" = set; then :
+  withval=$with_boost_regex;
+        if test "$withval" = "no"; then
+			want_boost="no"
+        elif test "$withval" = "yes"; then
+            want_boost="yes"
+            ax_boost_user_regex_lib=""
+        else
+		    want_boost="yes"
+		ax_boost_user_regex_lib="$withval"
+		fi
 
-
-# Check whether --with-htslib was given.
-if test "${with_htslib+set}" = set; then :
-  withval=$with_htslib;
 else
-  with_htslib=search
+  want_boost="yes"
+
 fi
 
-# Check whether --enable-configure-htslib was given.
-if test "${enable_configure_htslib+set}" = set; then :
-  enableval=$enable_configure_htslib;
+
+	if test "x$want_boost" = "xyes"; then
+
+		CPPFLAGS_SAVED="$CPPFLAGS"
+		CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
+		export CPPFLAGS
+
+		LDFLAGS_SAVED="$LDFLAGS"
+		LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
+		export LDFLAGS
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the Boost::Regex library is available" >&5
+$as_echo_n "checking whether the Boost::Regex library is available... " >&6; }
+if ${ax_cv_boost_regex+:} false; then :
+  $as_echo_n "(cached) " >&6
 else
-  enable_configure_htslib=only_in_subdir
+  ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+			 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <boost/regex.hpp>
+
+int
+main ()
+{
+boost::regex r(); return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ax_cv_boost_regex=yes
+else
+  ax_cv_boost_regex=no
 fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+         ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
-case $with_htslib in
-yes|search)
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking location of HTSlib source tree" >&5
-$as_echo_n "checking location of HTSlib source tree... " >&6; }
-  case $srcdir in
-    .) srcp= ;;
-    *) srcp=$srcdir/ ;;
-  esac
-  found=
-  for dir in ${srcp}htslib* -- ${srcp}../htslib -- ${srcp}../htslib*
-  do
-    if test "$dir" = "--"; then
-      test -n "$found" && break
-    elif test -f "$dir/hts.c" && test -f "$dir/htslib/hts.h"; then
-      found="${found}1"
-      HTSDIR=$dir
-    fi
-  done
-  if test -z "$found"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: none found" >&5
-$as_echo "none found" >&6; }
-    ax_cv_htslib_which=system
-  elif test "$found" = 1; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $HTSDIR" >&5
-$as_echo "$HTSDIR" >&6; }
-    ax_cv_htslib_which=source
-    if test "x$enable_configure_htslib" = "xonly_in_subdir" ; then
-      case $HTSDIR in
-        "${srcp}htslib"*) enable_configure_htslib=yes ;;
-        *) ;;
-      esac
-    fi
-  else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: several directories found" >&5
-$as_echo "several directories found" >&6; }
-    as_fn_error $? "use --with-htslib=DIR to select which HTSlib to use" "$LINENO" 5
-  fi
-  ;;
-no) ax_cv_htslib_which=none ;;
-system) ax_cv_htslib_which=system ;;
-*)
-  HTSDIR=$with_htslib
-  if test -f "$HTSDIR/hts.c" && test -f "$HTSDIR/htslib/hts.h"; then
-    ax_cv_htslib_which=source
-  else
-    ax_cv_htslib_which=install
-  fi
-  ;;
-esac
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_boost_regex" >&5
+$as_echo "$ax_cv_boost_regex" >&6; }
+		if test "x$ax_cv_boost_regex" = "xyes"; then
 
-case $ax_cv_htslib_which in
-source)
-  ax_cv_htslib=yes
-  HTSLIB_CPPFLAGS="-I$HTSDIR"
-  HTSLIB_LDFLAGS="-L$HTSDIR"
-  if test "x$enable_configure_htslib" = "xyes"; then
-    # We can't use a literal, because $HTSDIR is user-provided and variable
-    subdirs="$subdirs $HTSDIR"
+$as_echo "#define HAVE_BOOST_REGEX /**/" >>confdefs.h
 
-  fi
-  ;;
-system)
-  ac_fn_cxx_check_header_compile "$LINENO" "htslib/sam.h" "ac_cv_header_htslib_sam_h" ";
-"
-if test "x$ac_cv_header_htslib_sam_h" = xyes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for hts_version in -lhts" >&5
-$as_echo_n "checking for hts_version in -lhts... " >&6; }
-if ${ac_cv_lib_hts_hts_version+:} false; then :
+            BOOSTLIBDIR=`echo $BOOST_LDFLAGS | sed -e 's/[^\/]*//'`
+            if test "x$ax_boost_user_regex_lib" = "x"; then
+                for libextension in `ls $BOOSTLIBDIR/libboost_regex*.so* $BOOSTLIBDIR/libboost_regex*.dylib* $BOOSTLIBDIR/libboost_regex*.a* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^lib\(boost_regex.*\)\.so.*$;\1;' -e 's;^lib\(boost_regex.*\)\.dylib.*;\1;' -e 's;^lib\(boost_regex.*\)\.a.*$;\1;'` ; do
+                     ax_lib=${libextension}
+				    as_ac_Lib=`$as_echo "ac_cv_lib_$ax_lib''_exit" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for exit in -l$ax_lib" >&5
+$as_echo_n "checking for exit in -l$ax_lib... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lhts  $LIBS"
+LIBS="-l$ax_lib  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -18545,59 +18484,45 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char hts_version ();
+char exit ();
 int
 main ()
 {
-return hts_version ();
+return exit ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_cxx_try_link "$LINENO"; then :
-  ac_cv_lib_hts_hts_version=yes
+  eval "$as_ac_Lib=yes"
 else
-  ac_cv_lib_hts_hts_version=no
+  eval "$as_ac_Lib=no"
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_hts_hts_version" >&5
-$as_echo "$ac_cv_lib_hts_hts_version" >&6; }
-if test "x$ac_cv_lib_hts_hts_version" = xyes; then :
-  ax_cv_htslib=yes
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  BOOST_REGEX_LIB="-l$ax_lib";  link_regex="yes"; break
 else
-  ax_cv_htslib=no
+  link_regex="no"
 fi
 
-else
-  ax_cv_htslib=no
-fi
-
-
-  ax_cv_htslib_which=install
-  HTSDIR=
-  HTSLIB_CPPFLAGS=
-  HTSLIB_LDFLAGS=
-  ;;
-install)
-  ax_saved_CPPFLAGS=$CPPFLAGS
-  ax_saved_LDFLAGS=$LDFLAGS
-  HTSLIB_CPPFLAGS="-I$HTSDIR/include"
-  HTSLIB_LDFLAGS="-L$HTSDIR/lib"
-  CPPFLAGS="$CPPFLAGS $HTSLIB_CPPFLAGS"
-  LDFLAGS="$LDFLAGS $HTSLIB_LDFLAGS"
-  ac_fn_cxx_check_header_compile "$LINENO" "htslib/sam.h" "ac_cv_header_htslib_sam_h" ";
-"
-if test "x$ac_cv_header_htslib_sam_h" = xyes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for hts_version in -lhts" >&5
-$as_echo_n "checking for hts_version in -lhts... " >&6; }
-if ${ac_cv_lib_hts_hts_version+:} false; then :
+				done
+                if test "x$link_regex" != "xyes"; then
+                for libextension in `ls $BOOSTLIBDIR/boost_regex*.dll* $BOOSTLIBDIR/boost_regex*.a* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^\(boost_regex.*\)\.dll.*$;\1;' -e 's;^\(boost_regex.*\)\.a.*$;\1;'` ; do
+                     ax_lib=${libextension}
+				    as_ac_Lib=`$as_echo "ac_cv_lib_$ax_lib''_exit" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for exit in -l$ax_lib" >&5
+$as_echo_n "checking for exit in -l$ax_lib... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lhts  $LIBS"
+LIBS="-l$ax_lib  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -18607,52 +18532,90 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char hts_version ();
+char exit ();
 int
 main ()
 {
-return hts_version ();
+return exit ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_cxx_try_link "$LINENO"; then :
-  ac_cv_lib_hts_hts_version=yes
+  eval "$as_ac_Lib=yes"
 else
-  ac_cv_lib_hts_hts_version=no
+  eval "$as_ac_Lib=no"
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_hts_hts_version" >&5
-$as_echo "$ac_cv_lib_hts_hts_version" >&6; }
-if test "x$ac_cv_lib_hts_hts_version" = xyes; then :
-  ax_cv_htslib=yes
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  BOOST_REGEX_LIB="-l$ax_lib";  link_regex="yes"; break
 else
-  ax_cv_htslib=no
+  link_regex="no"
 fi
 
+				done
+                fi
+
+            else
+               for ax_lib in $ax_boost_user_regex_lib boost_regex-$ax_boost_user_regex_lib; do
+				      as_ac_Lib=`$as_echo "ac_cv_lib_$ax_lib''_main" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -l$ax_lib" >&5
+$as_echo_n "checking for main in -l$ax_lib... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
 else
-  ax_cv_htslib=no
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l$ax_lib  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  BOOST_REGEX_LIB="-l$ax_lib";  link_regex="yes"; break
+else
+  link_regex="no"
 fi
 
+               done
+            fi
+            if test "x$ax_lib" = "x"; then
+                as_fn_error $? "Could not find a version of the Boost::Regex library!" "$LINENO" 5
+            fi
+			if test "x$link_regex" != "xyes"; then
+				as_fn_error $? "Could not link against $ax_lib !" "$LINENO" 5
+			fi
+		fi
 
-  HTSDIR=
-  CPPFLAGS=$ax_saved_CPPFLAGS
-  LDFLAGS=$ax_saved_LDFLAGS
-  ;;
-none)
-  ax_cv_htslib=no
-  ;;
-esac
+		CPPFLAGS="$CPPFLAGS_SAVED"
+	LDFLAGS="$LDFLAGS_SAVED"
+	fi
 
-
-
-
-
-=======
->>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 # Checks for library functions.
 
 ac_config_files="$ac_config_files Makefile UCSC/Makefile test/Makefile"

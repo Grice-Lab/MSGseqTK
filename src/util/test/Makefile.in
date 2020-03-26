@@ -112,17 +112,6 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-<<<<<<< HEAD
-am_SAMtools_test_OBJECTS = SAMtools_test.$(OBJEXT)
-SAMtools_test_OBJECTS = $(am_SAMtools_test_OBJECTS)
-SAMtools_test_DEPENDENCIES = $(top_srcdir)/libEGUtil.a \
-	$(top_srcdir)/SAMtools/libEGSAMtools.a
-SAMtools_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(AM_CXXFLAGS) $(CXXFLAGS) $(SAMtools_test_LDFLAGS) $(LDFLAGS) \
-	-o $@
-=======
->>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -138,12 +127,7 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-<<<<<<< HEAD
-am__depfiles_remade = ./$(DEPDIR)/GFF_test.Po \
-	./$(DEPDIR)/SAMtools_test.Po
-=======
 am__depfiles_remade = ./$(DEPDIR)/GFF_test.Po
->>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -406,6 +390,7 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BOOST_CPPFLAGS = @BOOST_CPPFLAGS@
 BOOST_LDFLAGS = @BOOST_LDFLAGS@
+BOOST_REGEX_LIB = @BOOST_REGEX_LIB@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -523,45 +508,17 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
 AM_CFLAGS = \
 -I$(top_srcdir) \
-<<<<<<< HEAD
--I$(top_srcdir)/UCSC \
--I$(top_srcdir)/SAMtools \
-$(HTSLIB_CPPFLAGS)
-
-AM_CXXFLAGS = \
--I$(top_srcdir) \
--I$(top_srcdir)/UCSC \
--I$(top_srcdir)/SAMtools \
-$(HTSLIB_CPPFLAGS)
-
-AM_CPPFLAGS = \
-$(BOOST_CPPFLAGS) \
-$(HTSLIB_CPPFLAGS)
-=======
 -I$(top_srcdir)/UCSC
 
 AM_CXXFLAGS = \
 -I$(top_srcdir) \
 -I$(top_srcdir)/UCSC
->>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 
 GFF_test_SOURCES = GFF_test.cpp
 GFF_test_LDADD = \
 $(top_srcdir)/UCSC/libEGUCSC.a \
 $(top_srcdir)/libEGUtil.a
 
-<<<<<<< HEAD
-SAMtools_test_SOURCES = SAMtools_test.cpp
-SAMtools_test_LDFLAGS = \
-$(HTSLIB_LDFLAGS)
-
-SAMtools_test_LDADD = \
-$(top_srcdir)/libEGUtil.a \
-$(top_srcdir)/SAMtools/libEGSAMtools.a \
--lhts
-
-=======
->>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 all: all-am
 
 .SUFFIXES:
@@ -616,10 +573,6 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GFF_test.Po@am__quote@ # am--include-marker
-<<<<<<< HEAD
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SAMtools_test.Po@am__quote@ # am--include-marker
-=======
->>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -951,10 +904,6 @@ clean-am: clean-checkPROGRAMS clean-generic clean-libtool \
 
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/GFF_test.Po
-<<<<<<< HEAD
-	-rm -f ./$(DEPDIR)/SAMtools_test.Po
-=======
->>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1001,10 +950,6 @@ installcheck-am:
 
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/GFF_test.Po
-<<<<<<< HEAD
-	-rm -f ./$(DEPDIR)/SAMtools_test.Po
-=======
->>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

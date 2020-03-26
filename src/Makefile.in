@@ -134,8 +134,8 @@ am_msgseqtk_align_OBJECTS = msgseqtk-align.$(OBJEXT) \
 msgseqtk_align_OBJECTS = $(am_msgseqtk_align_OBJECTS)
 am__DEPENDENCIES_1 =
 msgseqtk_align_DEPENDENCIES = libMSGseqTK.a util/UCSC/libEGUCSC.a \
-	util/libEGUtil.a util/SAMtools/libEGSAMtools.a \
-	math/libEGMath.a libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
+	util/libEGUtil.a SAMtools/libEGSAMtools.a math/libEGMath.a \
+	libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 	libsds/src/libsds.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -438,13 +438,13 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = libdivsufsort libsds util math
+SUBDIRS = libdivsufsort libsds util SAMtools math
 AM_CFLAGS = \
 -I$(top_srcdir)/src \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/util/UCSC \
 -I$(top_srcdir)/src/util/GFF \
--I$(top_srcdir)/src/util/SAMtools \
+-I$(top_srcdir)/src/SAMtools \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
@@ -456,7 +456,7 @@ AM_CXXFLAGS = \
 -I$(top_srcdir)/src/util \
 -I$(top_srcdir)/src/util/UCSC \
 -I$(top_srcdir)/src/util/GFF \
--I$(top_srcdir)/src/util/SAMtools \
+-I$(top_srcdir)/src/SAMtools \
 -I$(top_srcdir)/src/math \
 -I$(top_srcdir)/src/libdivsufsort/include \
 -I$(top_srcdir)/src/libsds/include \
@@ -540,7 +540,7 @@ msgseqtk_align_LDADD = \
 libMSGseqTK.a \
 util/UCSC/libEGUCSC.a \
 util/libEGUtil.a \
-util/SAMtools/libEGSAMtools.a \
+SAMtools/libEGSAMtools.a \
 math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
 libsds/src/libsds.la \

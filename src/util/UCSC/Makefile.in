@@ -156,11 +156,7 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-<<<<<<< HEAD
 am__depfiles_remade = ./$(DEPDIR)/libEGUCSC_a-GFF.Po
-=======
-am__depfiles_remade = ./$(DEPDIR)/GFF.Po
->>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 am__mv = mv -f
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -222,6 +218,7 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BOOST_CPPFLAGS = @BOOST_CPPFLAGS@
 BOOST_LDFLAGS = @BOOST_LDFLAGS@
+BOOST_REGEX_LIB = @BOOST_REGEX_LIB@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -424,11 +421,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-<<<<<<< HEAD
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libEGUCSC_a-GFF.Po@am__quote@ # am--include-marker
-=======
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GFF.Po@am__quote@ # am--include-marker
->>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -605,11 +598,7 @@ clean-am: clean-generic clean-libLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-<<<<<<< HEAD
 		-rm -f ./$(DEPDIR)/libEGUCSC_a-GFF.Po
-=======
-		-rm -f ./$(DEPDIR)/GFF.Po
->>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -655,11 +644,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-<<<<<<< HEAD
 		-rm -f ./$(DEPDIR)/libEGUCSC_a-GFF.Po
-=======
-		-rm -f ./$(DEPDIR)/GFF.Po
->>>>>>> a66b57bd920cc7ceb17ae424a3e6ae995995a427
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

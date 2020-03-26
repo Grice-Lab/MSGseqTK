@@ -50,6 +50,7 @@ AC_CONFIG_FILES([Makefile
 				 test/Makefile])
 
 AC_CONFIG_SUBDIRS([src/util
+                   src/SAMtools
                    src/math
                    src/libsds])
                    
