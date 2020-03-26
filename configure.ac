@@ -46,7 +46,9 @@ AX_BOOST_REGEX()
 
 # Checks for library functions.
 
-AC_CONFIG_FILES([Makefile
-				UCSC/Makefile
-				test/Makefile])
+AC_CONFIG_FILES(
+[Makefile
+UCSC/Makefile
+test/Makefile]
+)
 AC_OUTPUT
