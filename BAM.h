@@ -10,7 +10,7 @@
 
 #include <string>
 #include <utility>
-#include <boost/algorithm/string/regex.hpp>
+#include <regex> // C++11
 #include <htslib/sam.h>
 
 namespace EGriceLab {
@@ -59,14 +59,24 @@ public:
 
 	/** construct a BAM from all core data */
 	BAM(const string& qname, uint16_t flag, int32_t tid, int32_t pos, uint8_t mapQ,
-			const cigar_str& cigar, uint32_t l_seq, const seq_str& seq, const qual_str& qual,
-			int32_t mtid = -1, int32_t mpos = -1, int32_t isize = 0, uint64_t id = 0);
+			const cigar_str& cigar, int32_t l_seq, const seq_str& seq, const qual_str& qual,
+			int32_t mtid = -1, int32_t mpos = 0, int32_t isize = 0, uint64_t id = 0);
 
 	/** deligating construt a BAM from all core data, using raw seq */
 	BAM(const string& qname, uint16_t flag, int32_t tid, int32_t pos, uint8_t mapQ,
 			const cigar_str& cigar, const string& seq, const qual_str& qual,
-			int32_t mtid = -1, int32_t mpos = -1, int32_t isize = 0, uint64_t id = 0)
+			int32_t mtid = -1, int32_t mpos = 0, int32_t isize = 0, uint64_t id = 0)
 	: BAM(qname, flag, tid, pos, mapQ, cigar, seq.length(), nt16Encode(seq), qual, mtid, mpos, isize, id)
+	{  }
+
+	/** deligating construct a BAM from an (unmapped) seq only */
+	BAM(const string& qname, int32_t l_seq, const seq_str& seq, const qual_str& qual, uint16_t flag = 0)
+	: BAM(qname, 0, -1, 0, 0, cigar_str(), l_seq, seq, qual)
+	{  }
+
+	/** deligating construct a BAM from an (unmapped) raw-seq only */
+	BAM(const string& qname, const string& seq, const qual_str& qual, uint16_t flag = 0)
+	: BAM(qname, seq.length(), nt16Encode(seq), qual, flag)
 	{  }
 
 	/* member methods */
@@ -201,17 +211,16 @@ public:
 		return bamAln->core.isize;
 	}
 
-	/** set isize */
+	/** set mpos */
 	void setISize(int32_t isize) {
 		bamAln->core.isize = isize;
 	}
 
-	/** get read paired flag */
+	/* getter and setter for individual flags */
 	bool getPairedFlag() const {
 		return bamAln->core.flag & BAM_FPAIRED != 0;
 	}
 
-	/** set read paired flag */
 	void setPairedFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FPAIRED;
@@ -219,12 +228,10 @@ public:
 			bamAln->core.flag &= ~BAM_FPAIRED;
 	}
 
-	/** get read paired flag */
 	bool getProperPairFlag() const {
 		return bamAln->core.flag & BAM_FPROPER_PAIR != 0;
 	}
 
-	/** set read paired flag */
 	void setProperPairFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FPAIRED;
@@ -232,12 +239,10 @@ public:
 			bamAln->core.flag &= ~BAM_FPAIRED;
 	}
 
-	/** get read paired flag */
 	bool getUnmapFlag() const {
 		return bamAln->core.flag & BAM_FUNMAP != 0;
 	}
 
-	/** set read paired flag */
 	void setUnmapFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FUNMAP;
@@ -245,12 +250,10 @@ public:
 			bamAln->core.flag &= ~BAM_FUNMAP;
 	}
 
-	/** get read paired flag */
 	bool getMateUnmapFlag() const {
 		return bamAln->core.flag & BAM_FMUNMAP != 0;
 	}
 
-	/** set read paired flag */
 	void setMateUnmapFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FMUNMAP;
@@ -258,12 +261,10 @@ public:
 			bamAln->core.flag &= ~BAM_FMUNMAP;
 	}
 
-	/** get read paired flag */
 	bool getRevcomFlag() const {
 		return bamAln->core.flag & BAM_FREVERSE != 0;
 	}
 
-	/** set read paired flag */
 	void setRevcomFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FREVERSE;
@@ -271,12 +272,10 @@ public:
 			bamAln->core.flag &= ~BAM_FREVERSE;
 	}
 
-	/** get read paired flag */
-	bool getMateRevcomFlag() const {
+	bool getMateReverseFlag() const {
 		return bamAln->core.flag & BAM_FMREVERSE != 0;
 	}
 
-	/** set read paired flag */
 	void setMateRevcomFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FMREVERSE;
@@ -284,11 +283,10 @@ public:
 			bamAln->core.flag &= ~BAM_FMREVERSE;
 	}
 
-	/** get read paired flag */
 	bool getIsFwdFlag() const {
 		return bamAln->core.flag & BAM_FREAD1 != 0;
 	}
-	/** set read paired flag */
+
 	void setIsFwdFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FREAD1;
@@ -296,12 +294,10 @@ public:
 			bamAln->core.flag &= ~BAM_FREAD1;
 	}
 
-	/** get read paired flag */
 	bool getIsRevFlag() const {
 		return bamAln->core.flag & BAM_FREAD2 != 0;
 	}
 
-	/** set read paired flag */
 	void setIsRevFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FREAD2;
@@ -309,12 +305,10 @@ public:
 			bamAln->core.flag &= ~BAM_FREAD2;
 	}
 
-	/** get read paired flag */
 	bool getSecondaryFlag() const {
 		return bamAln->core.flag & BAM_FSECONDARY != 0;
 	}
 
-	/** set read paired flag */
 	void setSecondaryFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FSECONDARY;
@@ -322,12 +316,10 @@ public:
 			bamAln->core.flag &= ~BAM_FSECONDARY;
 	}
 
-	/** get read paired flag */
 	bool getQCFailFlag() const {
 		return bamAln->core.flag & BAM_FQCFAIL != 0;
 	}
 
-	/** set read paired flag */
 	void setQCFailFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FQCFAIL;
@@ -335,12 +327,10 @@ public:
 			bamAln->core.flag &= ~BAM_FQCFAIL;
 	}
 
-	/** get read paired flag */
 	bool getDupFlagFlag() const {
 		return bamAln->core.flag & BAM_FDUP != 0;
 	}
 
-	/** set read paired flag */
 	void setDupFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FDUP;
@@ -348,12 +338,10 @@ public:
 			bamAln->core.flag &= ~BAM_FDUP;
 	}
 
-	/** get read paired flag */
 	bool getSupplementaryFlag() const {
 		return bamAln->core.flag & BAM_FSUPPLEMENTARY != 0;
 	}
 
-	/** set read paired flag */
 	void setSupplementaryFlag(bool flag = true) {
 		if(flag)
 			bamAln->core.flag |= BAM_FSUPPLEMENTARY;
@@ -506,7 +494,6 @@ public:
 		return seq_str(bam_get_seq(bamAln), bamAln->core.l_qseq);
 	}
 
-
 	/**
 	 * get the decoded seq string
 	 */
@@ -608,7 +595,17 @@ public:
 	}
 
 	/** add or update a new int tag for this BAM record */
+	int setAux(const string& tag, uint32_t val) {
+		return bam_aux_update_int(bamAln, tag.c_str(), val);
+	}
+
+	/** add or update a new int tag for this BAM record */
 	int setAux(const string& tag, int64_t val) {
+		return bam_aux_update_int(bamAln, tag.c_str(), val);
+	}
+
+	/** add or update a new int tag for this BAM record */
+	int setAux(const string& tag, uint64_t val) {
 		return bam_aux_update_int(bamAln, tag.c_str(), val);
 	}
 
@@ -733,8 +730,29 @@ public:
 		return bam_cigar_type(op);
 	}
 
+	/** get query length from a given cigar */
+	static int cigar2QLen(uint32_t n, const uint32_t* cigar) {
+		return bam_cigar2qlen(n, cigar);
+	}
+
+	/** get query length from a given cigar_str */
+	static int cigar2QLen(const cigar_str& cigar) {
+		return cigar2QLen(cigar.length(), cigar.c_str());
+	}
+
+	/** get reference length from cigar */
+	static int cigar2RLen(uint32_t n, const uint32_t* cigar) {
+		return bam_cigar2rlen(n, cigar);
+	}
+
+	/** get reference length from cigar_str */
+	static int cigar2RLen(const cigar_str& cigar) {
+		return cigar2RLen(cigar.length(), cigar.c_str());
+	}
+
 	/* static fields */
-	static const boost::regex CIGAR_PATTERN;
+	static const std::regex CIGAR_PATTERN;
+	static const double DEFAULT_AUX_DATA_FACTOR; // data factor between m_data and l_data, to avoid too much internal re-allocation by htslib
 };
 
 } /* namespace SAMtools */

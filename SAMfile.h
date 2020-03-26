@@ -116,6 +116,7 @@ public:
 
 	/**
 	 * write a BAM algnment to this SAMfile
+	 * @return >= 0 if successful, or -1 if failed
 	 */
 	int write(const BAM& aln) {
 		return sam_write1(samFh, header.bamHeader, aln.bamAln);
