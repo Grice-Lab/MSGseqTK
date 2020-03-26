@@ -21,8 +21,10 @@ int main(int argc, char *argv[]) {
 		{ "chr1", 1000000 },
 		{ "chr2", 500000  }
 	};
+
 	BAMheader header(chrMap);
 	cerr << "BAMheader constructed" << endl;
+	header.setHDTag("SQ", "unsorted");
 
 	header.addTag("@PG", argv[0]);
 	cerr << "BAMheader tag added" << endl;
@@ -34,6 +36,7 @@ int main(int argc, char *argv[]) {
 	BAM bam2("r2", 0, header.getIndex("chr1"), 100000, 0, BAM::encodeCigar("50M1X49M"), string(readLen, 'C'), BAM::qual_str(readLen, 20));
 	BAM bam3("r3", 0, header.getIndex("chr1"), 100000, 0, BAM::encodeCigar("10S90M"), string(readLen, 'G'), BAM::qual_str(readLen, 20));
 	BAM bam4("r4", 0, header.getIndex("chr1"), 100000, 0, BAM::encodeCigar("40=2X8=1X49="), string(readLen, 'T'), BAM::qual_str(readLen, 20));
+	BAM bamNull("r5", string(readLen, 'N'), BAM::qual_str(readLen, 2));
 	cerr << "bam constructed" << endl;
 
 	bam1.setAux("XI", 10);
@@ -61,15 +64,19 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 	if(samOut.write(bam2) == -1) {
-		cerr << "Failed to write bam1 to '" << samFn << "'" << endl;
+		cerr << "Failed to write bam2 to '" << samFn << "'" << endl;
 		return EXIT_FAILURE;
 	}
 	if(samOut.write(bam3) == -1) {
-		cerr << "Failed to write bam1 to '" << samFn << "'" << endl;
+		cerr << "Failed to write bam3 to '" << samFn << "'" << endl;
 		return EXIT_FAILURE;
 	}
 	if(samOut.write(bam4) == -1) {
-		cerr << "Failed to write bam1 to '" << samFn << "'" << endl;
+		cerr << "Failed to write bam4 to '" << samFn << "'" << endl;
+		return EXIT_FAILURE;
+	}
+	if(samOut.write(bamNull) == -1) {
+		cerr << "Failed to write bamNull to '" << samFn << "'" << endl;
 		return EXIT_FAILURE;
 	}
 	cerr << "SAM IO tested" << endl;
@@ -80,15 +87,19 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 	if(bamOut.write(bam2) == -1) {
-		cerr << "Failed to write bam1 to '" << bamFn << "'" << endl;
+		cerr << "Failed to write bam2 to '" << bamFn << "'" << endl;
 		return EXIT_FAILURE;
 	}
 	if(bamOut.write(bam3) == -1) {
-		cerr << "Failed to write bam1 to '" << bamFn << "'" << endl;
+		cerr << "Failed to write bam3 to '" << bamFn << "'" << endl;
 		return EXIT_FAILURE;
 	}
 	if(bamOut.write(bam4) == -1) {
-		cerr << "Failed to write bam1 to '" << bamFn << "'" << endl;
+		cerr << "Failed to write bam4 to '" << bamFn << "'" << endl;
+		return EXIT_FAILURE;
+	}
+	if(bamOut.write(bamNull) == -1) {
+		cerr << "Failed to write bamNull to '" << bamFn << "'" << endl;
 		return EXIT_FAILURE;
 	}
 	cerr << "BAM IO tested" << endl;

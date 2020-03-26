@@ -9,6 +9,7 @@
 #define SRC_BAMHEADER_H_
 
 #include <string>
+#include <vector>
 #include <utility>
 #include <map>
 #include <cstdint>
@@ -18,6 +19,7 @@
 namespace EGriceLab {
 namespace SAMtools {
 using std::string;
+using std::vector;
 
 /**
  * A C++ wrapper class for the alignment header,
@@ -63,10 +65,14 @@ public:
 	{  	}
 
 	/** construct a BAMheader from a target map */
-	BAMheader(const targetMap& targetDict);
+	BAMheader(const targetMap& targetDict) : BAMheader() {
+		setTarget(targetDict);
+	}
 
-	/** construct a BAMheader from a target map and an auxinary test map */
-	BAMheader(const targetMap& targetDict, const textMap& textDict);
+	/** construct a BAMheader from a given order of targets and a target map */
+	BAMheader(const vector<string>& targets, const targetMap& targetDict) : BAMheader() {
+		setTarget(targets, targetDict);
+	}
 
 	/* member methods */
 	/** get index of a given chrom */
@@ -74,8 +80,28 @@ public:
 		return bam_name2id(bamHeader, name.c_str());
 	}
 
+	/** set/add the @HD tag value from this BAMheader */
+	int setHDTag(const string& tag, const string& val) const {
+		return sam_hdr_change_HD(bamHeader, tag.c_str(), val.c_str());
+	}
+
+	/** add a new target with given name and length */
+	BAMheader& addTarget(const string& name, uint32_t len);
+
+	/** set targets using a target dict */
+	BAMheader& setTarget(const targetMap& targetDict);
+
+	/** set targets using a given order of targets and a target dict */
+	BAMheader& setTarget(const vector<string>& targets, const targetMap& targetDict);
+
 	/** add a new text tag into this header */
 	BAMheader& addTag(const string& tag, const string& val);
+
+	/** set text tags using a text dict */
+	BAMheader& setTag(const textMap& textDict);
+
+	/** set text tags using a given order of tags and a text dict */
+	BAMheader& setTag(const vector<string>& tags, const textMap& textDict);
 
 	/* member fields */
 private:

@@ -14,10 +14,11 @@
 
 namespace EGriceLab {
 namespace SAMtools {
-const boost::regex BAM::CIGAR_PATTERN = boost::regex("([0-9]+)([MIDNSHPX=])");
+const std::regex BAM::CIGAR_PATTERN = std::regex("([0-9]+)([MIDNSHPX=])");
+const double BAM::DEFAULT_AUX_DATA_FACTOR = 4;
 
 BAM::BAM(const string& qname, uint16_t flag, int32_t tid, int32_t pos, uint8_t mapQ,
-		const cigar_str& cigar, uint32_t l_seq, const seq_str& seq, const qual_str& qual,
+		const cigar_str& cigar, int32_t l_seq, const seq_str& seq, const qual_str& qual,
 		int32_t mtid, int32_t mpos, int32_t isize, uint64_t id) : BAM() {
 	assert(seq.length() == (l_seq + 1) / 2);
 	assert(qual.length() == l_seq);
@@ -26,6 +27,7 @@ BAM::BAM(const string& qname, uint16_t flag, int32_t tid, int32_t pos, uint8_t m
 	bamAln->core.l_extranul = bamAln->core.l_qname % 4 != 0 ? 4 - bamAln->core.l_qname % 4 : 0;
 	bamAln->core.l_qname += bamAln->core.l_extranul;
 	bamAln->core.flag = flag;
+	bamAln->core.tid = tid;
 	bamAln->core.pos = pos;
 	bamAln->core.qual = mapQ;
 	bamAln->core.n_cigar = cigar.length();
@@ -38,8 +40,8 @@ BAM::BAM(const string& qname, uint16_t flag, int32_t tid, int32_t pos, uint8_t m
 #endif
 	/* set variable length data and other fields */
 	bamAln->l_data = bamAln->core.l_qname + bamAln->core.n_cigar * sizeof(uint32_t) + (bamAln->core.l_qseq + 1) / 2 + bamAln->core.l_qseq;
-	bamAln->m_data = bamAln->l_data;
-	bamAln->data = new uint8_t[bamAln->l_data]();
+	bamAln->m_data = bamAln->l_data * DEFAULT_AUX_DATA_FACTOR;
+	bamAln->data = new uint8_t[bamAln->m_data](); // allocate data according m_data
 	uint8_t* ptr = bamAln->data;
 	std::copy(qname.begin(), qname.end(), ptr); // copy qname
 	ptr += bamAln->core.l_qname; // jump over qname and nulls
@@ -148,9 +150,9 @@ string BAM::nt16Decode(const seq_str& seq) {
 
 BAM::cigar_str BAM::encodeCigar(const string& str) {
 	cigar_str cigar;
-	boost::smatch match;
-	for(string::const_iterator searchStart(str.cbegin()); boost::regex_search(searchStart, str.cend(), match, CIGAR_PATTERN); searchStart = match[0].second)
-		cigar.push_back(bam_cigar_gen(boost::lexical_cast<uint32_t>(string(match[1])), encodeCigar(string(match[2]).front())));
+	std::smatch match;
+	for(string::const_iterator searchStart(str.cbegin()); std::regex_search(searchStart, str.cend(), match, CIGAR_PATTERN); searchStart = match[0].second)
+		cigar.push_back(bam_cigar_gen(boost::lexical_cast<uint32_t>(match.str(1)), encodeCigar(match.str(2).front())));
 	return cigar;
 }
 
