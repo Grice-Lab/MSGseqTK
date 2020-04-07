@@ -39,7 +39,14 @@ public:
 	 * @param bstr  BitStr of uint
 	 * @param super-block factor, if 0, automatic determined
 	 */
-	BitSeqGGMN(const BitStr32& bstr, size_t factor = 0);
+	explicit BitSeqGGMN(const BitStr32& bstr, size_t factor = 0);
+
+	/**
+	 * constructing by moving a BitStr of suitable type and factor rate
+	 * @param bstr  BitStr of uint
+	 * @param super-block factor, if 0, automatic determined
+	 */
+	explicit BitSeqGGMN(BitStr32&& bstr, size_t factor = 0);
 
 	/**
 	 * constructing from a BitStr of suitable type and factor rate
@@ -47,7 +54,7 @@ public:
 	 * @param super-block factor, if 0, automatic determined
 	 */
 	template<typename oIntType>
-	BitSeqGGMN(const BitStr<oIntType>& bstr, size_t factor = 0) : bstr(bstr) {
+	explicit BitSeqGGMN(const BitStr<oIntType>& bstr, size_t factor = 0) : bstr(bstr) {
 		n = bstr.length();
 		ones = bstr.count();
 		if(factor == 0)
