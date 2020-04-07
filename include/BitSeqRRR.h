@@ -51,7 +51,7 @@ public:
 		}
 
 		/** get the bitmap represented by the given class and inclass offsets */
-		uint32_t get_bitmap(uint32_t class_offset, uint inclass_offset) const {
+		uint32_t get_bitmap(uint32_t class_offset, uint32_t inclass_offset) const {
 			if(class_offset == 0)
 				return 0;
 			if(class_offset == BLOCK_SIZE)

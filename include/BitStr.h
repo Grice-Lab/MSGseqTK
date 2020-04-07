@@ -139,7 +139,7 @@ public:
 
 	/* member methods */
 	/** get wid */
-	uint getWid() const {
+	uint32_t getWid() const {
 		return wid;
 	}
 

@@ -37,7 +37,7 @@ void BitSeqRRR::TableOffset::init_binomials() {
 
 uint32_t BitSeqRRR::TableOffset::init_classes(uint32_t& shift, uint32_t& classIdx, uint32_t k,
 		uint32_t len, uint32_t start, uint32_t val) {
-	uint idx = 0;
+	uint32_t idx = 0;
 	if (k == len) {
 		bitmaps[classIdx] = val;
 		rev_offset[val] = classIdx - shift;
