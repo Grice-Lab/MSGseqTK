@@ -107,15 +107,10 @@ size_t BitSeqRRR::rank1(size_t i) const {
 		posO += OFFSET.get_log2binomial(BLOCK_SIZE, aux);
 		k++;
 	}
-	size_t mask = 0x0F;
 	const uint8_t* arr = reinterpret_cast<const uint8_t*>(C.getData().c_str());
 	while(k + 1 < pos) {
-//		size_t lower = C.getValue(k, wC) & mask;
-//		size_t upper = C.getValue(k + 1, wC);
-		size_t lower = arr[k / 2] & mask;
-		size_t upper = arr[k / 2] / 16;
-//		assert(lower == C.getValue(k, wC) & mask);
-//		assert(upper == C.getValue(k + 1, wC));
+		size_t lower = arr[k / 2] & LOWER_MASK;
+		size_t upper = arr[k / 2] >> UPPER_SHIFT;
 		sum += lower + upper;
 		posO += OFFSET.get_log2binomial(BLOCK_SIZE, lower) + OFFSET.get_log2binomial(BLOCK_SIZE, upper);
 		k += 2;

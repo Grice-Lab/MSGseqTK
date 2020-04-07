@@ -264,6 +264,10 @@ public:
 public:
 	static const size_t DEFAULT_SAMPLE_RATE = 32;
 	static const TableOffset OFFSET; /* pre-computed TalbeOffset given block size */
+
+protected:
+	static const uint8_t LOWER_MASK = 0x0F;
+	static const uint8_t UPPER_SHIFT = 4;
 };
 
 inline bool operator!=(const BitSeqRRR& lhs, const BitSeqRRR& rhs) {
