@@ -113,7 +113,6 @@ size_t BitSeqRRR::rank1(size_t i) const {
 		size_t upper = arr[k / 2] >> UPPER_SHIFT;
 		sum += lower + upper;
 		posO += OFFSET.get_log2binomial(BLOCK_SIZE, lower) + OFFSET.get_log2binomial(BLOCK_SIZE, upper);
-		arr++;
 		k += 2;
 	}
 	if(k < pos) { /* process last field */
@@ -288,7 +287,6 @@ bool BitSeqRRR::access(size_t i, size_t& r) const {
 		size_t upper = arr[k / 2] / 16;
 		sum += lower + upper;
 		posO += OFFSET.get_log2binomial(BLOCK_SIZE, lower) + OFFSET.get_log2binomial(BLOCK_SIZE, upper);
-		arr++;
 		k += 2;
 	}
 	if(k < pos) {
