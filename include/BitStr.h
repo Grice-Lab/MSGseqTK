@@ -424,7 +424,7 @@ private:
 
 typedef BitStr<uint8_t> BitStr8;
 typedef BitStr<uint16_t> BitStr16;
-typedef BitStr<> BitStr32;
+typedef BitStr<uint32_t> BitStr32;
 typedef BitStr<uint64_t> BitStr64;
 
 template<typename T>
