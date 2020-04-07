@@ -27,7 +27,7 @@ void BitSeqRRR::TableOffset::init_binomials() {
 		log2binomial[i][1] = 0;
 		log2binomial[i][i] = 0;
 	}
-	for(uint32_t j = 1; j <= BLOCK_SIZE; ++j) {
+	for(uint32_t j = 1; j <= BLOCK_SIZE; ++j) { /* lower-left half */
 		for(uint32_t i = j + 1; i <= BLOCK_SIZE; ++i) {
 			binomial[i][j] = binomial[i - 1][j - 1] + binomial[i - 1][j];
 			log2binomial[i][j] = bits(binomial[i][j] - 1);
@@ -151,7 +151,7 @@ size_t BitSeqRRR::select1(size_t r) const {
 		}
 	}
 	acc = Csampled.getValue(start, wCsampled);
-	while(start < nC - 1 && acc == Csampled.getValue(start + 1, wCsampled))
+	while(start + 1 < nC && acc == Csampled.getValue(start + 1, wCsampled))
 		start++;
 	pos = start * sample_rate;
 	size_t posO = Osampled.getValue(start, wOsampled);
