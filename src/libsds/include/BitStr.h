@@ -139,7 +139,7 @@ public:
 
 	/* member methods */
 	/** get wid */
-	uint getWid() const {
+	uint32_t getWid() const {
 		return wid;
 	}
 
@@ -213,9 +213,8 @@ public:
 	 */
 	size_t getValue(size_type start, size_type len) const {
 		assert(len <= wid);
-		start *= len; // use bit
-		size_type i = start / wid;
-		size_type j = start % wid;
+		size_type i = start * len / wid;
+		size_type j = start * len % wid;
 		if (j + len <= wid)
 			return (data[i] << wid - j - len) >> (wid - len);
 		else
@@ -237,9 +236,8 @@ public:
 	 */
 	void setValue(size_type start, size_type len, value_type v) {
 		assert(len <= wid);
-		start *= len; // use bit
-		size_type i = start / wid;
-		size_type j = start % wid;
+		size_type i = start * len / wid;
+		size_type j = start * len % wid;
 		size_t mask = ((j + len) < wid ? ~0UL << j + len : 0UL)
 			| ((wid - j) < wid ? ~0UL >> wid - j : 0UL);
 		data[i] = (data[i] & mask) | v << j;

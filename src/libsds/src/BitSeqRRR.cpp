@@ -37,7 +37,7 @@ void BitSeqRRR::TableOffset::init_binomials() {
 
 uint32_t BitSeqRRR::TableOffset::init_classes(uint32_t& shift, uint32_t& classIdx, uint32_t k,
 		uint32_t len, uint32_t start, uint32_t val) {
-	uint idx = 0;
+	uint32_t idx = 0;
 	if (k == len) {
 		bitmaps[classIdx] = val;
 		rev_offset[val] = classIdx - shift;
@@ -107,13 +107,13 @@ size_t BitSeqRRR::rank1(size_t i) const {
 		posO += OFFSET.get_log2binomial(BLOCK_SIZE, aux);
 		k++;
 	}
+	size_t mask = 0x0F;
 	const uint8_t* arr = reinterpret_cast<const uint8_t*>(C.getData().c_str());
-	arr += k / 2;
 	while(k + 1 < pos) {
 //		size_t lower = C.getValue(k, wC) & mask;
 //		size_t upper = C.getValue(k + 1, wC);
-		uint8_t lower = *arr & LOWER_MASK;
-		uint8_t upper = *arr >> UPPER_SHIFT;
+		size_t lower = arr[k / 2] & mask;
+		size_t upper = arr[k / 2] / 16;
 //		assert(lower == C.getValue(k, wC) & mask);
 //		assert(upper == C.getValue(k + 1, wC));
 		sum += lower + upper;
@@ -286,12 +286,11 @@ bool BitSeqRRR::access(size_t i, size_t& r) const {
 	}
 	size_t mask = 0x0F;
 	const uint8_t* arr = reinterpret_cast<const uint8_t*>(C.getData().c_str());
-	arr += k / 2;
 	while(k + 1 < pos) {
 //		size_t lower = C.getValue(k, wC) & mask;
 //		size_t upper = C.getValue(k + 1, wC);
-		size_t lower = *arr & mask;
-		size_t upper = *arr / 16;
+		size_t lower = arr[k / 2] & mask;
+		size_t upper = arr[k / 2] / 16;
 		sum += lower + upper;
 		posO += OFFSET.get_log2binomial(BLOCK_SIZE, lower) + OFFSET.get_log2binomial(BLOCK_SIZE, upper);
 		arr++;

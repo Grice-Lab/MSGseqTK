@@ -179,7 +179,7 @@ size_t BitSeqGGMN::selectNext1(size_t start) const {
 	}
 
 	/* no reminding */
-	for(uint i = start / W + 1; i < bstr.numValues(); ++i) {
+	for(size_t i = start / W + 1; i < bstr.numValues(); ++i) {
 		aux = bstr.getValue(i);
 		if(aux) {
 			if (aux & 0xff)

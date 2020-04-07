@@ -158,13 +158,13 @@ private:
 		assert(bs.length() == n);
 
 		for (size_t i = 0; i < sym.length(); ++i) {
-			uIntType s = sym[i];
-			if(test(s, level)) {
+			if(test(sym[i], level)) {
 				bs.set(i + offset);
-				right.push_back(s);
+				right.push_back(sym[i]);
 			}
-			else
-				left.push_back(s);
+			else {
+				left.push_back(sym[i]);
+			}
 		}
 
 		/* build level recursevely */
@@ -215,7 +215,6 @@ inline void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
 	build_level(bstrs, src, 0);
 
 	/* build the BitSeqs from BitStrs */
-	bseqs.clear();
 	bseqs.reserve(height);
 	for(const BitStr32& bs : bstrs)
 		bseqs.push_back(BitSeqRRR(bs, sample_rate));
