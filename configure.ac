@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([MSGseqTK],[1.0])
+AC_INIT([MSGseqTK],[1.2.1])
 
 AC_CANONICAL_TARGET
 AC_CANONICAL_HOST
