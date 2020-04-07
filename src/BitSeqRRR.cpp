@@ -37,7 +37,7 @@ void BitSeqRRR::TableOffset::init_binomials() {
 
 uint32_t BitSeqRRR::TableOffset::init_classes(uint32_t& shift, uint32_t& classIdx, uint32_t k,
 		uint32_t len, uint32_t start, uint32_t val) {
-	uint idx = 0;
+	uint32_t idx = 0;
 	if (k == len) {
 		bitmaps[classIdx] = val;
 		rev_offset[val] = classIdx - shift;
@@ -107,10 +107,10 @@ size_t BitSeqRRR::rank1(size_t i) const {
 		posO += OFFSET.get_log2binomial(BLOCK_SIZE, aux);
 		k++;
 	}
-	size_t mask = 0x0F;
-	while(k < pos - 1 && pos > 0) {
-		size_t lower = C.getValue(k, wC) & mask;
-		size_t upper = C.getValue(k + 1, wC);
+	const uint8_t* arr = reinterpret_cast<const uint8_t*>(C.getData().c_str());
+	while(k + 1 < pos) {
+		size_t lower = arr[k / 2] & LOWER_MASK;
+		size_t upper = arr[k / 2] >> UPPER_SHIFT;
 		sum += lower + upper;
 		posO += OFFSET.get_log2binomial(BLOCK_SIZE, lower) + OFFSET.get_log2binomial(BLOCK_SIZE, upper);
 		k += 2;
@@ -198,7 +198,7 @@ size_t BitSeqRRR::select0(size_t r) const {
 	size_t start = 0;
 	size_t end = nCsampled - 1;
 	size_t med, acc = 0, pos;
-	while(start < end - 1) {
+	while(start + 1 < end) {
 		med = (start + end) / 2;
 		acc = med * sample_rate * BLOCK_SIZE - Csampled.getValue(med, wCsampled);
 		if(acc < r) {
@@ -213,7 +213,7 @@ size_t BitSeqRRR::select0(size_t r) const {
 		}
 	}
 	acc = Csampled.getValue(start, wCsampled);
-	while(start < nC -1 && acc + sample_rate * BLOCK_SIZE == Csampled.getValue(start + 1, wCsampled)) {
+	while(start + 1 < nC && acc + sample_rate * BLOCK_SIZE == Csampled.getValue(start + 1, wCsampled)) {
 		start++;
 		acc += sample_rate * BLOCK_SIZE;
 	}
@@ -279,9 +279,12 @@ bool BitSeqRRR::access(size_t i, size_t& r) const {
 		k++;
 	}
 	size_t mask = 0x0F;
-	while(k < pos - 1 && pos > 0) {
-		size_t lower = C.getValue(k, wC) & mask;
-		size_t upper = C.getValue(k + 1, wC);
+	const uint8_t* arr = reinterpret_cast<const uint8_t*>(C.getData().c_str());
+	while(k + 1 < pos) {
+//		size_t lower = C.getValue(k, wC) & mask;
+//		size_t upper = C.getValue(k + 1, wC);
+		size_t lower = arr[k / 2] & mask;
+		size_t upper = arr[k / 2] / 16;
 		sum += lower + upper;
 		posO += OFFSET.get_log2binomial(BLOCK_SIZE, lower) + OFFSET.get_log2binomial(BLOCK_SIZE, upper);
 		k += 2;

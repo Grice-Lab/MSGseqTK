@@ -51,7 +51,7 @@ public:
 		}
 
 		/** get the bitmap represented by the given class and inclass offsets */
-		uint32_t get_bitmap(uint32_t class_offset, uint inclass_offset) const {
+		uint32_t get_bitmap(uint32_t class_offset, uint32_t inclass_offset) const {
 			if(class_offset == 0)
 				return 0;
 			if(class_offset == BLOCK_SIZE)
@@ -105,7 +105,7 @@ public:
 
 	/** construct a BitSeqRRR from a given BitStr with any type */
 	template<typename oIntType>
-	explicit BitSeqRRR(const BitStr<oIntType>& bstr, uint32_t sample_rate = DEFAULT_SAMPLE_RATE) : sample_rate(sample_rate) {
+	explicit BitSeqRRR(const BitStr<oIntType>& bstr, size_t sample_rate = DEFAULT_SAMPLE_RATE) : sample_rate(sample_rate) {
 		build_basic(bstr);
 		build_sampled();
 	}
@@ -224,7 +224,7 @@ private:
 		wO = 1; /* Offset in 1 bit */
 		for(size_t i = 0; i < nC; ++i) {
 			uint32_t value = popcount32(bstr.get(i * BLOCK_SIZE, BLOCK_SIZE));
-			assert(value <= BLOCK_SIZE);
+//			assert(value <= BLOCK_SIZE);
 			C.setValue(i, wC, value);
 			ones += value;
 			nO += OFFSET.get_log2binomial(BLOCK_SIZE, value);
@@ -264,6 +264,10 @@ public:
 public:
 	static const size_t DEFAULT_SAMPLE_RATE = 32;
 	static const TableOffset OFFSET; /* pre-computed TalbeOffset given block size */
+
+protected:
+	static const uint8_t LOWER_MASK = 0x0F;
+	static const uint8_t UPPER_SHIFT = 4;
 };
 
 inline bool operator!=(const BitSeqRRR& lhs, const BitSeqRRR& rhs) {

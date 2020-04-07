@@ -13,6 +13,7 @@
 #include <utility>
 #include <iostream>
 #include <cassert>
+#include <cmath>
 #include "libsdsConst.h"
 #include "libsdsBitBasic.h"
 
@@ -138,7 +139,7 @@ public:
 
 	/* member methods */
 	/** get wid */
-	uint getWid() const {
+	uint32_t getWid() const {
 		return wid;
 	}
 
@@ -212,20 +213,13 @@ public:
 	 */
 	size_t getValue(size_type start, size_type len) const {
 		assert(len <= wid);
-		if(len == 0)
-			return 0;
-		if((start + 1) * len > nB)
-			len = nB - start * len;
-		size_type i = start * len / wid;
-		size_type j = start * len - wid * i;
-		size_t result;
+		start *= len; // use bit
+		size_type i = start / wid;
+		size_type j = start % wid;
 		if (j + len <= wid)
-			result = (data[i] << wid - j - len) >> (wid - len);
-		else {
-			result = data[i] >> j;
-			result |= (data[i + 1] << wid * 2 - j - len) >> (wid - len);
-		}
-		return result;
+			return (data[i] << wid - j - len) >> (wid - len);
+		else
+			return data[i] >> j | ((data[i + 1] << wid * 2 - j - len) >> (wid - len));
 	}
 
 	/**
@@ -243,18 +237,15 @@ public:
 	 */
 	void setValue(size_type start, size_type len, value_type v) {
 		assert(len <= wid);
-		if(len == 0)
-			return;
-		if((start + 1) * len > nB)
-			len = nB - start * len;
-		size_type i = start * len / wid;
-		size_type j = start * len - i * wid;
+		start *= len; // use bit
+		size_type i = start / wid;
+		size_type j = start % wid;
 		size_t mask = ((j + len) < wid ? ~0UL << j + len : 0UL)
 			| ((wid - j) < wid ? ~0UL >> wid - j : 0UL);
 		data[i] = (data[i] & mask) | v << j;
 		if (j + len > wid) {
 			mask = (~0UL) << len + j - wid;
-			data[i+1] = (data[i + 1] & mask) | v >> wid - j;
+			data[i + 1] = (data[i + 1] & mask) | v >> wid - j;
 		}
 	}
 
@@ -277,18 +268,21 @@ public:
 			len = nB - start;
 		size_t i = start / wid;
 		size_t j = start - wid * i;
-		size_t result;
 		if (j + len <= W)
-			result = (data[i] << (wid - j - len)) >> (wid - len);
-		else {
-			result = data[i] >> j;
-			result |= (data[i+1] << (2 * wid - j - len)) >> (wid - len);
-		}
-		return result;
+			return (data[i] << (wid - j - len)) >> (wid - len);
+		else
+			return data[i] >> j | ((data[i+1] << (2 * wid - j - len)) >> (wid - len));
 	}
 
-	/** set the i-th bit of this BitStr */
-	BitStr<uIntType>& set(size_type i, bool bit = true) {
+	/** set/turn-on the i-th bit of this BitStr */
+	BitStr<uIntType>& set(size_type i) {
+		/* set bit */
+		data[i / wid] |= 1UL << (i % wid);
+		return *this;
+	}
+
+	/** set the i-th bit of this BitStr to given state */
+	BitStr<uIntType>& set(size_type i, bool bit) {
 		/* clear bits first */
 		data[i / wid] &= ~(1UL << (i % wid));
 		/* set bit */
@@ -306,8 +300,7 @@ public:
 		assert(len <= wid);
 		if(len == 0)
 			return *this;
-		if(start + len > nB)
-			len = nB - start;
+		len = std::min(len, nB - start);
 		size_t i = start / wid;
 		size_t j = start - i * wid;
 		size_t mask = ((j + len) < wid ? ~0UL << j + len : 0UL)
