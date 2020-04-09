@@ -14,7 +14,7 @@ namespace EGriceLab {
 using std::string;
 
 const string progName = "MSGseqTK";
-const VersionSequence progVer("v1.2.2");
+const VersionSequence progVer("v1.2.3");
 const string projectURL = "https://github.com/Grice-Lab/MSGseqTK";
 
 } /* namespace EGriceLab */
