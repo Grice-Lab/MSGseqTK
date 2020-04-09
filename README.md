@@ -53,12 +53,15 @@ make install
 ```
 You may need root privilege to do it, such as using `sudo`.
 
-Pre-built databases
--------------------
-You need to build an MSGseqTK database before using it tools for mapping and clean metagenomic NGS reads.
-You can build your own database using `msgseqtk-build`, or alternatively [download the pre-built databases](https://www.med.upenn.edu/gricelab/msgseqtk.html#databases "Pre-built databases").
+Input & Output
+--------------
+All MSGseqTK's tools use standard formats. For example, FASTQ/FASTQ formats for read files, BAM/SAM formats for alignment files, GTF/GFF3 formats for annotation files and sometimes TSV format for list files. Type the program name with `-h|--help` or without option for detailed help messages for all its tools.
 
 Documentations
 --------------
 Please check the help and documentations at MSGseqTK's [home page](https://www.med.upenn.edu/gricelab/msgseqtk.html "MSGseqTK home")
 
+Pre-built databases
+-------------------
+You need to build an MSGseqTK database before using it tools for analhying metagenomic data.
+You can build your own database using `msgseqtk-build`, or alternatively [download the pre-built databases](https://www.med.upenn.edu/gricelab/msgseqtk.html#databases "Pre-built databases").
