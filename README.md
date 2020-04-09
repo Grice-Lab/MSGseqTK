@@ -59,6 +59,6 @@ You need to build an MSGseqTK database before using it tools for mapping and cle
 You can build your own database using `msgseqtk-build`, or alternatively [download the pre-built databases](https://www.med.upenn.edu/gricelab/msgseqtk.html#databases "Pre-built databases").
 
 Documentations
--------------=
+--------------
 Please check the help and documentations at MSGseqTK's [home page](https://www.med.upenn.edu/gricelab/msgseqtk.html "MSGseqTK home")
 
