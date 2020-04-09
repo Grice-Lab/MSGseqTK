@@ -2,7 +2,7 @@
  * This file is part of MSGseqTK, a Metagenomics Shot-Gun sequencing ToolKit
  * for ultra-fast and accurate MSG-seq cleaning, mapping and more,
  * based on space-efficient FMD-index on entire collection of meta-genomics sequences.
- * Copyright (C) 2018  Qi Zheng
+ * Copyright (C) 2018, 2019  Qi Zheng
  *
  * MSGseqTK is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
