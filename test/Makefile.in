@@ -112,6 +112,10 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+SAMtools_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(SAMtools_test_LDFLAGS) $(LDFLAGS) \
+	-o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -523,8 +527,9 @@ $(BOOST_CPPFLAGS) \
 $(HTSLIB_CPPFLAGS)
 
 SAMtools_test_SOURCES = SAMtools_test.cpp
-#SAMtools_test_LDFLAGS = \
-#$(HTSLIB_LDFLAGS)
+SAMtools_test_LDFLAGS = \
+$(HTSLIB_LDFLAGS)
+
 SAMtools_test_LDADD = \
 $(top_srcdir)/libEGSAMtools.a \
 -lhts
@@ -574,7 +579,7 @@ clean-checkPROGRAMS:
 
 SAMtools_test$(EXEEXT): $(SAMtools_test_OBJECTS) $(SAMtools_test_DEPENDENCIES) $(EXTRA_SAMtools_test_DEPENDENCIES) 
 	@rm -f SAMtools_test$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(SAMtools_test_OBJECTS) $(SAMtools_test_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(SAMtools_test_LINK) $(SAMtools_test_OBJECTS) $(SAMtools_test_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
