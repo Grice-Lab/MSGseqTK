@@ -20,6 +20,9 @@ SAMtools_test
 
 SAMtools_test_SOURCES = SAMtools_test.cpp
 
+SAMtools_test_LDFLAGS = \
+$(HTSLIB_LDFLAGS)
+
 SAMtools_test_LDADD = \
 $(top_srcdir)/libEGSAMtools.a \
 -lhts
