@@ -91,9 +91,12 @@ check_PROGRAMS = SAMtools_test$(EXEEXT)
 TESTS = SAMtools_test$(EXEEXT)
 subdir = test
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
-	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
-	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_with_htslib.m4 \
+	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
+	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
+	$(top_srcdir)/m4/lt~obsolete.m4 \
+	$(top_srcdir)/m4/m4_ax_boost_base.m4 \
+	$(top_srcdir)/m4/m4_ax_cxx_compile_stdcxx.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
@@ -104,17 +107,11 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am_SAMtools_test_OBJECTS = SAMtools_test.$(OBJEXT)
 SAMtools_test_OBJECTS = $(am_SAMtools_test_OBJECTS)
-am__DEPENDENCIES_1 =
-SAMtools_test_DEPENDENCIES = $(top_srcdir)/libEGSAMtools.a \
-	$(am__DEPENDENCIES_1)
+SAMtools_test_DEPENDENCIES = $(top_srcdir)/libEGSAMtools.a
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-SAMtools_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(AM_CXXFLAGS) $(CXXFLAGS) $(SAMtools_test_LDFLAGS) $(LDFLAGS) \
-	-o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -393,7 +390,6 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BOOST_CPPFLAGS = @BOOST_CPPFLAGS@
 BOOST_LDFLAGS = @BOOST_LDFLAGS@
-BOOST_REGEX_LIB = @BOOST_REGEX_LIB@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -417,6 +413,9 @@ EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 GREP = @GREP@
 HAVE_CXX11 = @HAVE_CXX11@
+HTSDIR = @HTSDIR@
+HTSLIB_CPPFLAGS = @HTSLIB_CPPFLAGS@
+HTSLIB_LDFLAGS = @HTSLIB_LDFLAGS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -502,6 +501,7 @@ psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
+subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
@@ -510,19 +510,23 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
 AM_CFLAGS = \
 -I$(top_srcdir) \
--I$(top_srcdir)/SAMtools
+-I$(top_srcdir)/SAMtools \
+$(HTSLIB_CPPFLAGS)
 
 AM_CXXFLAGS = \
 -I$(top_srcdir) \
--I$(top_srcdir)/SAMtools
+-I$(top_srcdir)/SAMtools \
+$(HTSLIB_CPPFLAGS)
+
+AM_CPPFLAGS = \
+$(BOOST_CPPFLAGS) \
+$(HTSLIB_CPPFLAGS)
 
 SAMtools_test_SOURCES = SAMtools_test.cpp
-SAMtools_test_LDFLAGS = \
-$(HTSLIB_LDFLAGS)
-
+#SAMtools_test_LDFLAGS = \
+#$(HTSLIB_LDFLAGS)
 SAMtools_test_LDADD = \
 $(top_srcdir)/libEGSAMtools.a \
-$(BOOST_REGEX_LIB) \
 -lhts
 
 all: all-am
@@ -570,7 +574,7 @@ clean-checkPROGRAMS:
 
 SAMtools_test$(EXEEXT): $(SAMtools_test_OBJECTS) $(SAMtools_test_DEPENDENCIES) $(EXTRA_SAMtools_test_DEPENDENCIES) 
 	@rm -f SAMtools_test$(EXEEXT)
-	$(AM_V_CXXLD)$(SAMtools_test_LINK) $(SAMtools_test_OBJECTS) $(SAMtools_test_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(SAMtools_test_OBJECTS) $(SAMtools_test_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
