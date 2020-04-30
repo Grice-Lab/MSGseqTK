@@ -153,7 +153,7 @@ public:
 
 	/** test whether this TSVRecord has an associated header */
 	bool hasHeader() const {
-		return header != NULL && !header->empty();
+		return header != nullptr && !header->empty();
 	}
 
 	/** get field by name */
