@@ -28,15 +28,16 @@
 #include <cctype>
 #include <iostream>
 #include <climits>
+#include <array>
 #include "StringUtils.h"
 
 namespace EGriceLab {
 
 string StringUtils::remove_dup_chars(const string& str) {
 	string newStr;
-	for(string::const_iterator it = str.begin(); it != str.end(); ++it)
-		if(newStr.find(*it) == string::npos) // not exist
-			newStr.push_back(*it);
+	for(string::value_type c : str)
+		if(newStr.find(c) == string::npos) // not exist
+			newStr.push_back(c);
 	return newStr;
 }
 
@@ -124,17 +125,12 @@ string StringUtils::stripQuotes(const string& str, char quote) {
 }
 
 bool StringUtils::containsWhiteSpace(const string& str) {
-	for(string::const_iterator it = str.begin(); it != str.end(); ++it)
-		if(::isspace(*it))
-			return true;
-	return false;
+	return std::any_of(str.begin(), str.end(), ::isspace);
 }
 
 bool StringUtils::containsAny(const string& str, const string& query) {
-	for(string::const_iterator it = query.begin(); it != query.end(); ++it)
-		if(str.find(*it) != string::npos)
-			return true;
-	return false;
+	return std::any_of(query.begin(), query.end(),
+			[=] (string::value_type c) { return str.find(c) != string::npos; });
 }
 
 string& StringUtils::removeAll(string& str, const string& pattern) {
@@ -165,34 +161,16 @@ string StringUtils::removeEnd(const string& str, const string& suffix) {
 	return strN;
 }
 
-string::size_type StringUtils::common(const string& str1, const string& str2) {
-	string::size_type N = 0;
-	string::size_type count1[CHAR_MAX + 1] = { }; /* zero initialization */
-	string::size_type count2[CHAR_MAX + 1] = { }; /* zero initialization */
-
-	for(string::const_iterator it = str1.begin(); it != str1.end(); ++it)
-		count1[*it]++;
-	for(string::const_iterator it = str2.begin(); it != str2.end(); ++it)
-		count2[*it]++;
-	for(int i = 0; i <= CHAR_MAX; ++i)
-		if(count1[i] && count2[i])
-			N++;
-	return N;
-}
-
-size_t StringUtils::common(const char* str1, const char* str2) {
-	size_t N = 0;
-	size_t count1[CHAR_MAX + 1] = { }; /* zero initialization */
-	size_t count2[CHAR_MAX + 1] = { }; /* zero initialization */
-
-	for(; *str1; ++str1)
-		count1[*str1]++;
-	for(; *str2; ++str2)
-		count2[*str2]++;
-	for(int i = 0; i <= CHAR_MAX; ++i)
-		if(count1[i] && count2[i])
-			N++;
-	return N;
+string StringUtils::common(string str1, string str2) {
+	/* sort input strings */
+	std::sort(str1.begin(), str1.end());
+	std::sort(str2.begin(), str2.end());
+	string::size_type n = std::min(str1.length(), str2.length());
+	string comm(n, '\0'); // construct a common string with enough space
+	string::iterator result = std::set_intersection(str1.begin(), str1.end(),
+			str2.begin(), str2.end(), comm.begin());
+	comm.resize(result - comm.begin()); // resize to fit
+	return comm;
 }
 
 } /* namespace EGriceLab */

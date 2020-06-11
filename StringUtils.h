@@ -217,11 +217,8 @@ public:
 		return saveString(src, out, len);
 	}
 
-	/** get the number of common occuring characters/alphabets used by two strings */
-	static string::size_type common(const string& str1, const string& str2);
-
-	/** get the number of common occuring characters/alphabets used by two C-strs */
-	static size_t common(const char* str1, const char* str2);
+	/** get the common characters/alphabets shared by two strings */
+	static string common(string str1, string str2);
 
 }; /* end class StringUtils */
 
