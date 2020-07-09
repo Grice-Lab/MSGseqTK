@@ -159,8 +159,10 @@ int main(int argc, char* argv[]) {
 	if(cmdOpts.hasOpt("-a"))
 		assignFn = cmdOpts.getOpt("-a");
 
-	if(cmdOpts.hasOpt("-q"))
-		minLod = ::atof(cmdOpts.getOptStr("-q"));
+	if(cmdOpts.hasOpt("-L"))
+		minLod = ::atof(cmdOpts.getOptStr("-L"));
+	if(cmdOpts.hasOpt("--lod"))
+		minLod = ::atof(cmdOpts.getOptStr("--lod"));
 
 	if(cmdOpts.hasOpt("--min-seed"))
 		minSeed = ::atol(cmdOpts.getOptStr("--min-seed"));
