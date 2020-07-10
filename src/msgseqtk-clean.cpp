@@ -49,6 +49,7 @@ using namespace EGriceLab::MSGseqTK;
 static const double DEFAULT_MIN_LOD = 0;
 static const string ASSIGNMENT_HEADER = "id\tdescription\tref_loglik\tbg_loglik\tLOD";
 static const int DEFAULT_NUM_THREADS = 1;
+static const double DEFAULT_MAX_EVALUE = 0.01;
 
 /**
  * Print introduction of this program
@@ -77,7 +78,7 @@ void printUsage(const string& progName) {
 		 << "            -a  FILE             : write an additional TSV file with the detailed assignment information for each read" << endl
 		 << "            -L|--lod  DBL        : minimum log-odd required to determine a read/pair as reference vs. background [" << DEFAULT_MIN_LOD << "]" << endl
 		 << "            --min-seed  INT      : mimimum length of an SMEM to be used as a seed [" << SMEM_LIST::MIN_LENGTH << "]" << endl
-		 << "            --max-evalue  DBL    : maximum evalue of an SMEM to be used as a seed [" << SMEM_LIST::MAX_EVALUE << "]" << endl
+		 << "            --max-evalue  DBL    : maximum evalue of an SMEM to be used as a seed [" << DEFAULT_MAX_EVALUE << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
 #endif
@@ -115,7 +116,7 @@ int main(int argc, char* argv[]) {
 
 	double minLod = DEFAULT_MIN_LOD;
 	int64_t minSeed = SMEM_LIST::MIN_LENGTH;
-	double maxEvalue = SMEM_LIST::MAX_EVALUE;
+	double maxEvalue = DEFAULT_MAX_EVALUE;
 	int nThreads = DEFAULT_NUM_THREADS;
 
 	/* parse options */
