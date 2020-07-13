@@ -173,6 +173,10 @@ public:
 		return target;
 	}
 
+	int64_t getReadLen() const {
+		return read != nullptr ? read->length() : 0;
+	}
+
 	int64_t getEnd() const {
 		return tEnd;
 	}
@@ -399,17 +403,18 @@ public:
 	static const std::regex MDTAG_MAIN_PATTERN;
 
 	/* standard aux tags */
+	static const string ALIGNMENT_SCORE_TAG;
 	static const string NUM_REPORTED_ALIGNMENT_TAG;
 	static const string MISMATCH_POSITION_TAG;
 	/* customized aux tags */
-	static const string ALIGNMENT_LENGTH_TAG;
-	static const string ALIGNMENT_INSERT_TAG;
+//	static const string ALIGNMENT_LENGTH_TAG;
+//	static const string ALIGNMENT_INSERT_TAG;
 	static const string NUM_TOTAL_ALIGNMENT_TAG;
 	static const string ALIGNMENT_LOG10LIK_TAG;
 	static const string ALIGNMENT_POSTERIOR_PROB_TAG;
-	static const string NUM_MISMATCHES_TAG;
-	static const string NUM_INDEL_TAG;
-	static const string ALIGNMENT_IDENTITY_TAG;
+//	static const string NUM_MISMATCHES_TAG;
+//	static const string NUM_INDEL_TAG;
+//	static const string ALIGNMENT_IDENTITY_TAG;
 
 	/* static methods */
 	static CIGAR_OP_TYPE matchMax(double match, double ins, double del);
@@ -424,7 +429,7 @@ public:
 			const ChainList& chains, MODE alnMode = DEFAULT_MODE);
 
 	/** filter candidate list of Alignments using alnScore */
-	static ALIGN_LIST& filter(ALIGN_LIST& alnList, double bestFrac);
+	static ALIGN_LIST& filter(ALIGN_LIST& alnList, double minScoreRate);
 
 	/** evaluate each SMEM in an SMEM_LIST */
 	static ALIGN_LIST& evaluate(ALIGN_LIST& alnList);

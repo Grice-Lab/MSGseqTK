@@ -30,17 +30,18 @@ const double Alignment::DEFAULT_SCORE_REL_EPSILON = 0.85;
 const std::regex Alignment::MDTAG_LEADING_PATTERN = std::regex("^\\d+");
 const std::regex Alignment::MDTAG_MAIN_PATTERN = std::regex("([A-Z]|\\^[A-Z]+)(\\d+)");
 /* standard aux tags */
+const string Alignment::ALIGNMENT_SCORE_TAG = "AS";
 const string Alignment::NUM_REPORTED_ALIGNMENT_TAG = "NH";
 const string Alignment::MISMATCH_POSITION_TAG = "MD";
 /* customized aux tags */
-const string Alignment::ALIGNMENT_LENGTH_TAG = "XA";
-const string Alignment::ALIGNMENT_INSERT_TAG = "XL";
+//const string Alignment::ALIGNMENT_LENGTH_TAG = "XA";
+//const string Alignment::ALIGNMENT_INSERT_TAG = "XL";
 const string Alignment::NUM_TOTAL_ALIGNMENT_TAG = "XN";
 const string Alignment::ALIGNMENT_LOG10LIK_TAG = "XH";
 const string Alignment::ALIGNMENT_POSTERIOR_PROB_TAG = "XP";
-const string Alignment::NUM_MISMATCHES_TAG = "ZX";
-const string Alignment::NUM_INDEL_TAG = "ZG";
-const string Alignment::ALIGNMENT_IDENTITY_TAG = "XI";
+//const string Alignment::NUM_MISMATCHES_TAG = "ZX";
+//const string Alignment::NUM_INDEL_TAG = "ZG";
+//const string Alignment::ALIGNMENT_IDENTITY_TAG = "XI";
 
 Alignment& Alignment::init(int64_t chrLen, const SeedChain& chain) {
 	// set up tStart and tEnd
@@ -329,14 +330,15 @@ BAM Alignment::exportBAM() const {
 	BAM bamAln(query->getName(), getFlag(), tid, alnStart, mapQ, getAlnCigar(), getQLen(),
 			dna::nt16Encode(query->getSeq()), query->getQual());
 	/* set standard aux tags */
+	bamAln.setAux(ALIGNMENT_SCORE_TAG, static_cast<int>(std::round(alnScore)));
 	bamAln.setAux(MISMATCH_POSITION_TAG, getAlnMDTag());
 	/* set customized aux tags */
-	bamAln.setAux(ALIGNMENT_LENGTH_TAG, getAlnLen());
-	bamAln.setAux(ALIGNMENT_INSERT_TAG, getInsLen());
+//	bamAln.setAux(ALIGNMENT_LENGTH_TAG, getAlnLen());
+//	bamAln.setAux(ALIGNMENT_INSERT_TAG, getInsLen());
 	bamAln.setAux(ALIGNMENT_LOG10LIK_TAG, getLog10P());
-	bamAln.setAux(NUM_MISMATCHES_TAG, getNumMis());
-	bamAln.setAux(NUM_INDEL_TAG, getNumIndel());
-	bamAln.setAux(ALIGNMENT_IDENTITY_TAG, getAlnIdentity());
+//	bamAln.setAux(NUM_MISMATCHES_TAG, getNumMis());
+//	bamAln.setAux(NUM_INDEL_TAG, getNumIndel());
+//	bamAln.setAux(ALIGNMENT_IDENTITY_TAG, getAlnIdentity());
 	return bamAln;
 }
 
@@ -456,16 +458,12 @@ int32_t AlignmentPE::getInsertSize(const Alignment& lhs, const Alignment& rhs) {
 		return std::max(lhs.alnEnd, rhs.alnEnd) - std::min(lhs.alnStart, rhs.alnStart);
 }
 
-ALIGN_LIST& Alignment::filter(ALIGN_LIST& alnList, double bestFrac) {
-	if(alnList.size() <= 1)
+ALIGN_LIST& Alignment::filter(ALIGN_LIST& alnList, double minScoreRate) {
+	if(alnList.empty())
 		return alnList;
-	/* find best alignment by alnScore */
-	ALIGN_LIST::const_iterator bestAln = std::max_element(alnList.cbegin(), alnList.cend(), [] (const Alignment& lhs, const Alignment& rhs) { return lhs.alnScore < rhs.alnScore; });
 	/* filter alignment by alnScore */
-	if(bestAln->alnScore < 0)
-		bestFrac = 1.0 / bestFrac; // invert bestFrac if bestScore is negative
 	alnList.erase(std::remove_if(alnList.begin(), alnList.end(),
-			[&](const Alignment& aln) { return aln.alnScore < bestAln->alnScore * bestFrac; }), alnList.end());
+			[&](const Alignment& aln) { return aln.alnScore < alnList.front().getReadLen() * minScoreRate; }), alnList.end());
 	return alnList;
 }
 

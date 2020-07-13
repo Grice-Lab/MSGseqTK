@@ -58,7 +58,7 @@ using namespace EGriceLab::MSGseqTK;
 //static const int DEFAULT_STRAND = 3;
 static const int DEFAULT_NUM_THREADS = 1;
 static const int DEFAULT_MAX_REPORT = 1;
-static const double DEFAULT_BEST_FRAC = 0.85;
+static const double DEFAULT_MIN_SCORE_RATE = 0.85;
 //static const double DEFAULT_MAX_LOD10 = 100;
 static const int DEFAULT_MIN_INSERT = 0;
 static const int DEFAULT_MAX_INSERT = 750;
@@ -94,7 +94,7 @@ void printUsage(const string& progName) {
 		 << "            --gap-open  DBL      : penalty for (affine) gap opening [" << ScoreScheme::DEFAULT_GAP_OPEN_PENALTY << "]" << endl
 		 << "            --gap-ext  DBL       : penalty for (affine) gap extension [" << ScoreScheme::DEFAULT_GAP_EXT_PENALTY << "]" << endl
 		 << "            -k/--max-report  INT : maximum loci to consider for a read/pair, set to 0 to report all candidate alignments [" << DEFAULT_MAX_REPORT << "]" << endl
-		 << "            -f/--best-frac        : minimum score as a fraction of the highest alignment score of all candidates to consider for full evaluation [" << DEFAULT_BEST_FRAC << "]" << endl
+		 << "            -s/--min-score       : minimum score rate as a fraction of read-length * match-score [" << DEFAULT_MIN_SCORE_RATE << "]" << endl
 		 << "Paired-end:" << endl
 		 << "            -m/--mean-ins  DBL   : mean insert size, set to 0 to ignore pairing probabilities (uniform prior) [" << PairingScheme::DEFAULT_MEAN_INSERT << "]" << endl
 		 << "            -s/--sd-ins  DBL     : standard deviation of insert size [" << PairingScheme::DEFAULT_CV_INSERT << " * mean]" << endl
@@ -126,7 +126,7 @@ void printUsage(const string& progName) {
  */
 uint64_t main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile& out,
 		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
-		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport);
+		Alignment::MODE alnMode, double minScoreRate, uint32_t maxReport);
 
 /**
  * main function to process paired-ended reads
@@ -134,7 +134,7 @@ uint64_t main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAM
  */
 uint64_t main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& revI, SAMfile& out,
 		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
-		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport,
+		Alignment::MODE alnMode, double minScoreRate, uint32_t maxReport,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap, int64_t maxNPair);
 
 /**
@@ -173,7 +173,7 @@ int main(int argc, char* argv[]) {
 
 //	uint32_t maxSeeds = Alignment::MAX_ALIGN;
 	uint32_t maxReport = DEFAULT_MAX_REPORT;
-	double bestFrac = DEFAULT_BEST_FRAC;
+	double minScoreRate = DEFAULT_MIN_SCORE_RATE;
 
 	/* pairing options */
 	bool noMixed = false;
@@ -263,10 +263,10 @@ int main(int argc, char* argv[]) {
 	if(cmdOpts.hasOpt("--max-report"))
 		maxReport = ::atoi(cmdOpts.getOptStr("--max-report"));
 
-	if(cmdOpts.hasOpt("-f"))
-		bestFrac = ::atof(cmdOpts.getOptStr("-f"));
-	if(cmdOpts.hasOpt("--best-frac"))
-		bestFrac = ::atof(cmdOpts.getOptStr("--best-frac"));
+	if(cmdOpts.hasOpt("-s"))
+		minScoreRate = ::atof(cmdOpts.getOptStr("-s"));
+	if(cmdOpts.hasOpt("--min-score"))
+		minScoreRate = ::atof(cmdOpts.getOptStr("--min-score"));
 
 	/* paired-end options */
 	if(cmdOpts.hasOpt({"-m", "--mean-ins"}))
@@ -379,8 +379,8 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	if(!(0 <= bestFrac && bestFrac <= 1)) {
-		cerr << "--best-frac must between 0 and 1" << endl;
+	if(!(minScoreRate <= 1)) {
+		cerr << "-s|-min-score must no greater than 1" << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -528,9 +528,9 @@ int main(int argc, char* argv[]) {
 	uint64_t nProcessed = 0;
 	chrono::time_point<chrono::steady_clock> start = chrono::steady_clock::now();
 	if(!isPaired)
-		nProcessed = main_SE(mtg, fmdidx, fwdI, out, minSeed, maxSeed, maxEvalue, maxNSeed, alnMode, bestFrac, maxReport);
+		nProcessed = main_SE(mtg, fmdidx, fwdI, out, minSeed, maxSeed, maxEvalue, maxNSeed, alnMode, minScoreRate, maxReport);
 	else
-		nProcessed = main_PE(mtg, fmdidx, fwdI, revI, out, minSeed, maxSeed, maxEvalue, maxNSeed, alnMode, bestFrac, maxReport,
+		nProcessed = main_PE(mtg, fmdidx, fwdI, revI, out, minSeed, maxSeed, maxEvalue, maxNSeed, alnMode, minScoreRate, maxReport,
 				noMixed, noDiscordant, noTailOver, noContain, noOverlap, maxNPair);
 	chrono::time_point<chrono::steady_clock> fin = chrono::steady_clock::now();
 	infoLog << "Read alignment finished. Total processed reads: " <<  nProcessed
@@ -598,7 +598,7 @@ int output(const PrimarySeq& fwdRead, const PrimarySeq& revRead, SAMfile& out) {
 
 uint64_t main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAMfile& out,
 		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
-		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport) {
+		Alignment::MODE alnMode, double minScoreRate, uint32_t maxReport) {
 	uint64_t nRead = 0;
 	/* search MEMS for each read */
 #pragma omp parallel
@@ -631,17 +631,22 @@ uint64_t main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAM
 						/* get alignments from SeedMatchList */
 						ALIGN_LIST alnList = Alignment::buildAlignments(&read, &rcRead, mtg, chains, alnMode);
 						/* filter alignments */
-						Alignment::filter(alnList, bestFrac);
-						/* evaluate alignments */
-						Alignment::evaluate(alnList);
-						/* calculate mapQ for alignments */
-						Alignment::calcMapQ(alnList);
-						/* sort alignments */
-						Alignment::sort(alnList);
-						/* output alignments */
-//						assert(!alnList.empty());
+						Alignment::filter(alnList, minScoreRate);
+						if(alnList.empty()) { // no good alignment found
 #pragma omp critical(BAM_OUTPUT)
-						output(alnList, out, maxReport);
+							output(read, out);
+						}
+						else {
+							/* evaluate alignments */
+							Alignment::evaluate(alnList);
+							/* calculate mapQ for alignments */
+							Alignment::calcMapQ(alnList);
+							/* sort alignments */
+							Alignment::sort(alnList);
+							/* output alignments */
+#pragma omp critical(BAM_OUTPUT)
+							output(alnList, out, maxReport);
+						}
 					} /* end task */
 #pragma omp atomic
 					nRead++;
@@ -654,7 +659,7 @@ uint64_t main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAM
 
 uint64_t main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, SeqIO& revI, SAMfile& out,
 		int64_t minSeed, int64_t maxSeed, double maxEvalue, int64_t maxNSeed,
-		Alignment::MODE alnMode, double bestFrac, uint32_t maxReport,
+		Alignment::MODE alnMode, double minScoreRate, uint32_t maxReport,
 		bool noMixed, bool noDiscordant, bool noTailOver, bool noContain, bool noOverlap, int64_t maxNPair) {
 	uint64_t nPair = 0;
 	/* search MEMS for each read */
@@ -705,44 +710,50 @@ uint64_t main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, Seq
 						ALIGN_LIST fwdAlnList = Alignment::buildAlignments(&fwdRead, &rcFwdRead, mtg, fwdChains, alnMode);
 						ALIGN_LIST revAlnList = Alignment::buildAlignments(&revRead, &rcRevRead, mtg, revChains, alnMode);
 						/* 1st pass filtes by alignment scores */
-						Alignment::filter(fwdAlnList, bestFrac);
-						Alignment::filter(revAlnList, bestFrac);
-						/* evaluate alignments */
-						Alignment::evaluate(fwdAlnList);
-						Alignment::evaluate(revAlnList);
-						/* get pairs */
-						PAIR_LIST pairList = AlignmentPE::getPairs(fwdAlnList, revAlnList);
-						/* sort pairs by loglik decreasingly */
-						AlignmentPE::sort(pairList);
-						/* filter pairs */
-						AlignmentPE::filter(pairList, noDiscordant, noTailOver, noContain, noOverlap, maxNPair);
-						if(!pairList.empty()) {
-							/* calculate mapQ for pairs */
-							AlignmentPE::calcMapQ(pairList);
-							/* output pairs */
+						Alignment::filter(fwdAlnList, minScoreRate);
+						Alignment::filter(revAlnList, minScoreRate);
+						if(fwdAlnList.empty() && revAlnList.empty()) { // both mate cannot map
 #pragma omp critical(BAM_OUTPUT)
-							output(pairList, out, maxReport);
+							output(fwdRead, revRead, out);
 						}
-						else if(!noMixed) { /* pair-end matching failed, try unpaired */
-							if(!fwdAlnList.empty()) {
-//								debugLog << "Alignment pairing failed, reporting unpaired alignment for forward read " << fwdRead.getName() << endl;
-								/* calculate mapQ */
-								Alignment::calcMapQ(fwdAlnList);
-								/* sort alignments */
-								Alignment::sort(fwdAlnList);
-								/* output alignments */
+						else {
+							/* evaluate alignments */
+							Alignment::evaluate(fwdAlnList);
+							Alignment::evaluate(revAlnList);
+							/* get pairs */
+							PAIR_LIST pairList = AlignmentPE::getPairs(fwdAlnList, revAlnList);
+							/* sort pairs by loglik decreasingly */
+							AlignmentPE::sort(pairList);
+							/* filter pairs */
+							AlignmentPE::filter(pairList, noDiscordant, noTailOver, noContain, noOverlap, maxNPair);
+							if(!pairList.empty()) {
+								/* calculate mapQ for pairs */
+								AlignmentPE::calcMapQ(pairList);
+								/* output pairs */
 #pragma omp critical(BAM_OUTPUT)
-								output(fwdAlnList, out, maxReport, BAM_FPAIRED | BAM_FREAD1);
+								output(pairList, out, maxReport);
 							}
-							if(!revAlnList.empty()) {
-//								debugLog << "Alignment pairing failed, reporting unpaired alignment for reverse read " << revRead.getName() << endl;
-								/* calculate mapQ */
-								Alignment::calcMapQ(revAlnList);
-								/* sort alignments */
-								Alignment::sort(revAlnList);
-								/* output alignments */
+							else if(!noMixed) { /* pair-end matching failed, try unpaired */
+								if(!fwdAlnList.empty()) {
+									//								debugLog << "Alignment pairing failed, reporting unpaired alignment for forward read " << fwdRead.getName() << endl;
+									/* calculate mapQ */
+									Alignment::calcMapQ(fwdAlnList);
+									/* sort alignments */
+									Alignment::sort(fwdAlnList);
+									/* output alignments */
 #pragma omp critical(BAM_OUTPUT)
-								output(revAlnList, out, maxReport, BAM_FPAIRED | BAM_FREAD2);
+									output(fwdAlnList, out, maxReport, BAM_FPAIRED | BAM_FREAD1);
+								}
+								if(!revAlnList.empty()) {
+									//								debugLog << "Alignment pairing failed, reporting unpaired alignment for reverse read " << revRead.getName() << endl;
+									/* calculate mapQ */
+									Alignment::calcMapQ(revAlnList);
+									/* sort alignments */
+									Alignment::sort(revAlnList);
+									/* output alignments */
+#pragma omp critical(BAM_OUTPUT)
+									output(revAlnList, out, maxReport, BAM_FPAIRED | BAM_FREAD2);
+								}
 							}
 						}
 					} /* end SeedMatch tests */
