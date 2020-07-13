@@ -63,11 +63,6 @@ static const double DEFAULT_BEST_FRAC = 0.85;
 static const int DEFAULT_MIN_INSERT = 0;
 static const int DEFAULT_MAX_INSERT = 750;
 static const double DEFAULT_MAX_EVALUE = 0.01;
-static const string NUM_REPORTED_ALIGNMENT_TAG = "NH";
-static const string MISMATCH_POSITION_TAG = "MD";
-static const string NUM_TOTAL_ALIGNMENT_TAG = "XN";
-static const string ALIGNMENT_LOG10LIK_TAG = "XH";
-static const string ALIGNMENT_POSTERIOR_PROB_TAG = "XP";
 
 /**
  * Print introduction of this program
@@ -556,12 +551,10 @@ int output(const ALIGN_LIST& alnList, SAMfile& out, uint32_t maxReport, uint16_t
 		bamAln.setSecondaryFlag(i > 0);
 		bamAln.setFlag(bamAln.getFlag() | extraFlag);
 		/* set standard aux tags */
-		bamAln.setAux(NUM_REPORTED_ALIGNMENT_TAG, numReport);
-		bamAln.setAux(NUM_TOTAL_ALIGNMENT_TAG, alnList.size());
-		bamAln.setAux(MISMATCH_POSITION_TAG, aln.getAlnMDTag());
+		bamAln.setAux(Alignment::NUM_REPORTED_ALIGNMENT_TAG, numReport);
+		bamAln.setAux(Alignment::NUM_TOTAL_ALIGNMENT_TAG, alnList.size());
 		/* set customized aux tags */
-		bamAln.setAux(ALIGNMENT_LOG10LIK_TAG, aln.getLog10P());
-		bamAln.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, aln.getPostP());
+		bamAln.setAux(Alignment::ALIGNMENT_POSTERIOR_PROB_TAG, aln.getPostP());
 		out.write(bamAln);
 	}
 	return numReport;
@@ -580,18 +573,13 @@ int output(const PAIR_LIST& pairList, SAMfile& out, uint32_t maxReport) {
 		fwdBam.setSecondaryFlag(i > 0);
 		revBam.setSecondaryFlag(i > 0);
 		/* set standard aux tags */
-		fwdBam.setAux(NUM_REPORTED_ALIGNMENT_TAG, numReport);
-		fwdBam.setAux(NUM_TOTAL_ALIGNMENT_TAG, pairList.size());
-		fwdBam.setAux(MISMATCH_POSITION_TAG, pair.fwdAln->getAlnMDTag());
-
-		revBam.setAux(NUM_REPORTED_ALIGNMENT_TAG, numReport);
-		revBam.setAux(NUM_TOTAL_ALIGNMENT_TAG, pairList.size());
-		revBam.setAux(MISMATCH_POSITION_TAG, pair.revAln->getAlnMDTag());
+		fwdBam.setAux(Alignment::NUM_REPORTED_ALIGNMENT_TAG, numReport);
+		fwdBam.setAux(Alignment::NUM_TOTAL_ALIGNMENT_TAG, pairList.size());
+		revBam.setAux(Alignment::NUM_REPORTED_ALIGNMENT_TAG, numReport);
+		revBam.setAux(Alignment::NUM_TOTAL_ALIGNMENT_TAG, pairList.size());
 		/* set customized aux tags */
-		fwdBam.setAux(ALIGNMENT_LOG10LIK_TAG, pair.log10lik());
-		fwdBam.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, pair.postP);
-		revBam.setAux(ALIGNMENT_LOG10LIK_TAG, pair.log10lik());
-		revBam.setAux(ALIGNMENT_POSTERIOR_PROB_TAG, pair.postP);
+		fwdBam.setAux(Alignment::ALIGNMENT_POSTERIOR_PROB_TAG, pair.postP);
+		revBam.setAux(Alignment::ALIGNMENT_POSTERIOR_PROB_TAG, pair.postP);
 		out.write(fwdBam);
 		out.write(revBam);
 	}

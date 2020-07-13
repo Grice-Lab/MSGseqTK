@@ -117,6 +117,26 @@ public:
 		return alnTo;
 	}
 
+	int64_t getAlnLen() const {
+		return alnLen;
+	}
+
+	int64_t getInsLen() const {
+		return insLen;
+	}
+
+	int64_t getNumMis() const {
+		return numMis;
+	}
+
+	int64_t getNumIndel() const {
+		return numIndel;
+	}
+
+	float getAlnIdentity() const {
+		return 1 - (numMis + numIndel) / static_cast<float>(insLen);
+	}
+
 	double getLog10P() const {
 		return log10P;
 	}
@@ -276,9 +296,6 @@ public:
 		return alnEnd - alnStart;
 	}
 
-	/** get align length, determined by alnPath, including M=XIDX but not H,P,N */
-	int32_t getAlnLen() const;
-
 	/** get decoded aligned query seq */
 	string getAlnQSeq() const;
 
@@ -301,7 +318,7 @@ public:
 		return alnScore - ss.getClipPenalty() * getClipLen();
 	}
 
-	/** evaluate this alignment log-liklihood using seq, align-path and quality */
+	/** evaluate this alignment */
 	Alignment& evaluate();
 
 	/** get log10-liklihood of this alignment */
@@ -325,13 +342,9 @@ public:
 	}
 
 	/**
-	 * export core info of this alignment to a BAM record, with no aux data
+	 * export core info of this alignment to a BAM record, with standard and customized aux tags set if not depend on output
 	 */
-	BAM exportBAM() const {
-		const PrimarySeq* query = qStrand == GLoc::FWD ? read : rcRead;
-		return BAM(query->getName(), getFlag(), tid, alnStart, mapQ, getAlnCigar(), getQLen(),
-				dna::nt16Encode(query->getSeq()), query->getQual());
-	}
+	BAM exportBAM() const;
 
 private:
 	/* member fields */
@@ -361,6 +374,11 @@ private:
 	state_str alnPath; // backtrace alignment path using cigar ops defined htslib/sam.h
 //	BAM::cigar_str alnCigar; // cigar_str compressed from alnPath
 
+	/* build-in alignment properties */
+	int64_t alnLen = 0; // alignment length, including M,=,X,I,D,S but not H,P,N
+	int64_t insLen = 0; // insert length, including M,=,X,I,D but not S,H,P,N
+	int64_t numMis = 0; // number of mismatches
+	int64_t numIndel = 0; // number of in-dels
 	double log10P = 0;  // log10-liklihood of this alignment, given the alignment and quality
 	double postP = 0;   // posterior probability of this alignment, given all candidate alignments
 
@@ -380,9 +398,18 @@ public:
 	static const std::regex MDTAG_LEADING_PATTERN;
 	static const std::regex MDTAG_MAIN_PATTERN;
 
+	/* standard aux tags */
+	static const string NUM_REPORTED_ALIGNMENT_TAG;
 	static const string MISMATCH_POSITION_TAG;
+	/* customized aux tags */
+	static const string ALIGNMENT_LENGTH_TAG;
+	static const string ALIGNMENT_INSERT_TAG;
+	static const string NUM_TOTAL_ALIGNMENT_TAG;
 	static const string ALIGNMENT_LOG10LIK_TAG;
 	static const string ALIGNMENT_POSTERIOR_PROB_TAG;
+	static const string NUM_MISMATCHES_TAG;
+	static const string NUM_INDEL_TAG;
+	static const string ALIGNMENT_IDENTITY_TAG;
 
 	/* static methods */
 	static CIGAR_OP_TYPE matchMax(double match, double ins, double del);
