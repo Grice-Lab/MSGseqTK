@@ -59,9 +59,6 @@ using namespace EGriceLab::MSGseqTK;
 static const int DEFAULT_NUM_THREADS = 1;
 static const int DEFAULT_MAX_REPORT = 1;
 static const double DEFAULT_MIN_SCORE_RATE = 0.85;
-//static const double DEFAULT_MAX_LOD10 = 100;
-static const int DEFAULT_MIN_INSERT = 0;
-static const int DEFAULT_MAX_INSERT = 750;
 static const double DEFAULT_MAX_EVALUE = 0.01;
 
 /**

@@ -345,44 +345,32 @@ BAM Alignment::exportBAM() const {
 Alignment& Alignment::evaluate() {
 	if(alnPath.empty())
 		return *this;
-	alnLen = 0;
-	insLen = 0;
-	numMis = 0;
-	numIndel = 0;
 	log10P = 0;
 	const DNAseq& query = qStrand == GLoc::FWD ? read->getSeq() : rcRead->getSeq();
 	const QualStr& qual = qStrand == GLoc::FWD ? read->getQual() : rcRead->getQual();
 	/* process 5' soft-clips, if any */
-	for(int64_t i = qFrom; i < alnFrom; ++i) {
-		alnLen++;
+	for(int64_t i = qFrom; i < alnFrom; ++i)
 		log10P += - ss.getClipPenalty();
-	}
 
 	for(int64_t k = 0, i = alnFrom, j = alnStart; k < alnPath.length(); ++k) { /* k on alnPath, i on query, j on target */
 		state_str::value_type s = alnPath[k]; // only =,X,I,D exists in alnPath
-		alnLen++;
-		insLen++;
 //		fprintf(stderr, "k: %d i: %d j: %d s: %c q: %c t: %c qual: %d log10P: %g\n", k, i, j, bam_cigar_opchr(s), DNAalphabet::decode(query[i]), DNAalphabet::decode((*target)[j]), qual[i], log10P);
 		switch(s) {
 		case BAM_CMATCH:
 			if(query[i] & (*target)[j]) // IUPAC match (BAM_CEQUAL)
 				log10P += ::log10(1 - quality::phredQ2P(qual[i]));
-			else {
-				numMis++;
+			else
 				log10P += qual[i] / quality::PHRED_SCALE;
-			}
 			i++;
 			j++;
 			break;
 		case BAM_CINS:
-			numIndel++;
 			if(k == 0 || alnPath[k - 1] != BAM_CINS) // gap open
 				log10P += qual[i] / quality::PHRED_SCALE /* mismatch penalty */ - ss.getGapOPenalty(); // additional penalty
 			log10P += - ss.getGapEPenalty();
 			i++;
 			break;
 		case BAM_CDEL:
-			numIndel++;
 			if(k == 0 || alnPath[k - 1] != BAM_CDEL) // gap open
 				log10P += qual[i] / quality::PHRED_SCALE /* mismatch penalty */ - ss.getGapOPenalty(); // additional penalty
 			log10P += - ss.getGapEPenalty();
@@ -394,10 +382,8 @@ Alignment& Alignment::evaluate() {
 	}
 
 	/* process 3' soft-clips, if any */
-	for(int64_t i = alnTo; i < qTo; ++i) {
-		alnLen++;
+	for(int64_t i = alnTo; i < qTo; ++i)
 		log10P += - ss.getClipPenalty();
-	}
 	return *this;
 }
 

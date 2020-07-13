@@ -117,26 +117,6 @@ public:
 		return alnTo;
 	}
 
-	int64_t getAlnLen() const {
-		return alnLen;
-	}
-
-	int64_t getInsLen() const {
-		return insLen;
-	}
-
-	int64_t getNumMis() const {
-		return numMis;
-	}
-
-	int64_t getNumIndel() const {
-		return numIndel;
-	}
-
-	float getAlnIdentity() const {
-		return 1 - (numMis + numIndel) / static_cast<float>(insLen);
-	}
-
 	double getLog10P() const {
 		return log10P;
 	}
@@ -376,13 +356,8 @@ private:
 	int64_t alnEnd = 0; // 1-based alignment end
 	double alnScore = NAN; // alignment score
 	state_str alnPath; // backtrace alignment path using cigar ops defined htslib/sam.h
-//	BAM::cigar_str alnCigar; // cigar_str compressed from alnPath
 
 	/* build-in alignment properties */
-	int64_t alnLen = 0; // alignment length, including M,=,X,I,D,S but not H,P,N
-	int64_t insLen = 0; // insert length, including M,=,X,I,D but not S,H,P,N
-	int64_t numMis = 0; // number of mismatches
-	int64_t numIndel = 0; // number of in-dels
 	double log10P = 0;  // log10-liklihood of this alignment, given the alignment and quality
 	double postP = 0;   // posterior probability of this alignment, given all candidate alignments
 
