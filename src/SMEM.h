@@ -207,7 +207,7 @@ private:
 	double logP = 0; /* log-probability (loglik) of observing this SMEM by chance */
 
 public:
-	static const int64_t MAX_NSEED = 500; // maximum size (# of occurrence of a good SMEM)
+	static const int64_t MAX_NSEED = 200; // maximum size (# of occurrence of a good SMEM)
 	/* non-member functions */
 	/** formated output */
 	friend ostream& operator<<(ostream& out, const SMEM& smem);
