@@ -428,7 +428,7 @@ uint64_t main_SE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDInd
 					double refLoglik = refMems.loglik();
 					double bgLoglik = bgMmems.loglik();
 					double lod = - refLoglik + bgLoglik;
-					if(lod >= minLod)
+					if(lod > minLod)
 #pragma omp critical(WRITE_SEQ)
 						seqO.writeSeq(read);
 					if(writeAssign) {
@@ -465,7 +465,7 @@ uint64_t main_PE(const MetaGenome& refMtg, const MetaGenome& bgMtg, const FMDInd
 					double refLoglik = SMEM_LIST::loglik(refMemsPE);
 					double bgLoglik = SMEM_LIST::loglik(bgMemsPE);
 					double lod = - refLoglik + bgLoglik;
-					if(lod >= minLod) {
+					if(lod > minLod) {
 #pragma omp critical(WRITE_SEQ)
 						{
 							fwdO.writeSeq(fwdRead);
