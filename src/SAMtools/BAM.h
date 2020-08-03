@@ -71,7 +71,7 @@ public:
 
 	/** deligating construct a BAM from an (unmapped) seq only */
 	BAM(const string& qname, int32_t l_seq, const seq_str& seq, const qual_str& qual, uint16_t flag = 0)
-	: BAM(qname, 0, -1, 0, 0, cigar_str(), l_seq, seq, qual)
+	: BAM(qname, flag, -1, 0, 0, cigar_str(), l_seq, seq, qual)
 	{  }
 
 	/** deligating construct a BAM from an (unmapped) raw-seq only */

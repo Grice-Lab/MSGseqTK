@@ -584,12 +584,12 @@ int output(const PAIR_LIST& pairList, SAMfile& out, uint32_t maxReport) {
 }
 
 int output(const PrimarySeq& read, SAMfile& out) {
-	return out.write(BAM(read.getName(), read.length(), dna::nt16Encode(read.getSeq()), read.getQual()));
+	return out.write(BAM(read.getName(), read.length(), dna::nt16Encode(read.getSeq()), read.getQual(), BAM_FUNMAP));
 }
 
 int output(const PrimarySeq& fwdRead, const PrimarySeq& revRead, SAMfile& out) {
-	out.write(BAM(fwdRead.getName(), fwdRead.length(), dna::nt16Encode(fwdRead.getSeq()), fwdRead.getQual(), BAM_FPAIRED | BAM_FREAD1));
-	out.write(BAM(revRead.getName(), revRead.length(), dna::nt16Encode(revRead.getSeq()), revRead.getQual(), BAM_FPAIRED | BAM_FREAD2));
+	out.write(BAM(fwdRead.getName(), fwdRead.length(), dna::nt16Encode(fwdRead.getSeq()), fwdRead.getQual(), BAM_FUNMAP | BAM_FMUNMAP | BAM_FPAIRED | BAM_FREAD1));
+	out.write(BAM(revRead.getName(), revRead.length(), dna::nt16Encode(revRead.getSeq()), revRead.getQual(), BAM_FUNMAP | BAM_FMUNMAP | BAM_FPAIRED | BAM_FREAD2));
 	return 2;
 }
 
