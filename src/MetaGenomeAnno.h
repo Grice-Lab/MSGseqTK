@@ -36,6 +36,8 @@ public:
 	static const GFF::Version ANNO_VER = GFF::GFF3;
 	static const string GENOME_START_TAG;
 	static const string GENOME_END_TAG;
+	static const string METAGENOME_ID_TAG;
+	static const string DEFAULT_FEATURE_TAG;
 
 	/* static methods */
 	/** get the default GFF annotation filename from a database name */
@@ -88,6 +90,12 @@ public:
 
 	/** read in all GFF records from text input in given GFF version */
 	static vector<GFF> read(istream& in, GFF::Version ver);
+
+	/**
+	 * add a unique additional metagenomeID to all GFF records
+	 * record with Parent feature will be traced back recursively, assuming the records are in correct order
+	 */
+	static vector<GFF>& addMetagenomeId(const Genome& genome, vector<GFF>& gffRecords,  const string& featureTag = DEFAULT_FEATURE_TAG);
 
 	/**
 	 * write genome annotations including both genome-level and any auxilary GFF records

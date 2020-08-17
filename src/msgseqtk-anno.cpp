@@ -64,6 +64,7 @@ void printUsage(const string& progName) {
 		 << "DB          STR                  : database name/prefix" << endl
 		 << "Options:    -o  FILE             : write database annotation to FILE instead of the default file [DB" << GFF::GFF3_SUFFIX << "]" << endl
 		 << "            -l  FILE             : tab-delimited annotation list with first column unique genome IDs and last column external GFF annotation filenames (other columns ignored), " << ZLIB_SUPPORT << endl
+		 << "            -g  STR              : use this tag attribute from the last GFF field to give each feature an metagenome ID, child features (e.g. exon) will use their top-level feature ID recursively [" << MetaGenomeAnno::DEFAULT_FEATURE_TAG << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
 		 << "            -h|--help            : print this message and exit" << endl;
@@ -75,6 +76,7 @@ int main(int argc, char* argv[]) {
 
 	string dbName;
 	string listFn, mtgFn, gffOutFn;
+	string featureTag = MetaGenomeAnno::DEFAULT_FEATURE_TAG;
 
 	ifstream listIn, mtgIn;
 
@@ -108,6 +110,9 @@ int main(int argc, char* argv[]) {
 
 	if(cmdOpts.hasOpt("-l"))
 		listFn = cmdOpts.getOpt("-l");
+
+	if(cmdOpts.hasOpt("-g"))
+		featureTag = cmdOpts.getOpt("-g");
 
 	if(cmdOpts.hasOpt("-v"))
 		INCREASE_LEVEL(cmdOpts.getOpt("-v").length());
@@ -213,6 +218,11 @@ int main(int argc, char* argv[]) {
 		/* read in all annotations in this external GFF file */
 		std::vector<GFF> gffRecords = MetaGenomeAnno::read(gffIn, extVer);
 		infoLog << "Read in " << gffRecords.size() << " external GFF annotations" << endl;
+
+		/* add metagenome ids */
+		MetaGenomeAnno::addMetagenomeId(genome, gffRecords, featureTag);
+		infoLog << "Unique Metagenome IDs added for all features" << endl;
+
 		/* write genome annotations */
 		size_t n = MetaGenomeAnno::writeGenomeAnnos(gffOut, genome, gffRecords);
 		nTotal += n;

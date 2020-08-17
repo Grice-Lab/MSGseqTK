@@ -16,6 +16,8 @@ namespace MSGseqTK {
 using namespace std;
 const string MetaGenomeAnno::GENOME_START_TAG = "##genome";
 const string MetaGenomeAnno::GENOME_END_TAG = "##end-genome";
+const string MetaGenomeAnno::METAGENOME_ID_TAG = "metagenomeID";
+const string MetaGenomeAnno::DEFAULT_FEATURE_TAG = "ID";
 
 size_t MetaGenomeAnno::writeGenomeAnnos(ostream& out, const Genome& genome, const vector<GFF>& gffRecords) {
 	size_t n = 0;
@@ -120,6 +122,17 @@ ostream& MetaGenomeAnno::writeStartComment(ostream& out, const Genome& genome) {
 ostream& MetaGenomeAnno::writeEndComment(ostream& out) {
 	out << GENOME_END_TAG << endl;
 	return out;
+}
+
+vector<GFF>& MetaGenomeAnno::addMetagenomeId(const Genome& genome, vector<GFF>& gffRecords, const string& featureTag) {
+	const string prefix = genome.getId();
+	string id;
+	for(GFF& record : gffRecords) {
+		if(!record.hasAttr("Parent"))// update id only when it is not a child feature
+			id = record.getAttr(featureTag);
+		record.setAttr(METAGENOME_ID_TAG, prefix + ":" + id);
+	}
+	return gffRecords;
 }
 
 } /* namespace MSGseqTK */
