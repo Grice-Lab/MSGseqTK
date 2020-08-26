@@ -17,7 +17,11 @@ using namespace std;
 const string MetaGenomeAnno::GENOME_START_TAG = "##genome";
 const string MetaGenomeAnno::GENOME_END_TAG = "##end-genome";
 const string MetaGenomeAnno::METAGENOME_ID_TAG = "metagenomeID";
-const string MetaGenomeAnno::DEFAULT_FEATURE_TAG = "ID";
+const string MetaGenomeAnno::METAGENOME_NAME_TAG = "metagenomeName";
+const string MetaGenomeAnno::METAGENOME_TYPE_TAG = "metagenomeType";
+const string MetaGenomeAnno::EXTERNAL_ID_TAG = "ID";
+const string MetaGenomeAnno::EXTERNAL_NAME_TAG = "Name";
+
 
 size_t MetaGenomeAnno::writeGenomeAnnos(ostream& out, const Genome& genome, const vector<GFF>& gffRecords) {
 	size_t n = 0;
@@ -58,6 +62,8 @@ vector<GFF> MetaGenomeAnno::read(istream& in, GFF::Version ver) {
 				ver = GFF::GTF;
 				debugLog << "  GFF version determined by embedded comment" << endl;
 			}
+			else if(line == "##FASTA") /* appended FASTA sequences */
+				break;
 			else
 				continue;
 		}
@@ -124,13 +130,20 @@ ostream& MetaGenomeAnno::writeEndComment(ostream& out) {
 	return out;
 }
 
-vector<GFF>& MetaGenomeAnno::addMetagenomeId(const Genome& genome, vector<GFF>& gffRecords, const string& featureTag) {
-	const string prefix = genome.getId();
+vector<GFF>& MetaGenomeAnno::addMetagenomeTags(const Genome& genome, vector<GFF>& gffRecords,
+		const string& idTag, const string& nameTag) {
 	string id;
+	string name;
+	string type;
 	for(GFF& record : gffRecords) {
-		if(!record.hasAttr("Parent"))// update id only when it is not a child feature
-			id = record.getAttr(featureTag);
-		record.setAttr(METAGENOME_ID_TAG, prefix + ":" + id);
+		if(!record.hasAttr("Parent")) { //update only when it is not a child feature
+			id = genome.getId() + ":" + record.getAttr(idTag);
+			name = record.hasAttr(nameTag) ? genome.getName() + ":" + record.getAttr(nameTag) : id;
+			type = record.getType();
+		}
+		record.setAttr(METAGENOME_ID_TAG, id);
+		record.setAttr(METAGENOME_NAME_TAG, name);
+		record.setAttr(METAGENOME_TYPE_TAG, type);
 	}
 	return gffRecords;
 }

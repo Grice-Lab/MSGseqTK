@@ -64,7 +64,8 @@ void printUsage(const string& progName) {
 		 << "DB          STR                  : database name/prefix" << endl
 		 << "Options:    -o  FILE             : write database annotation to FILE instead of the default file [DB" << GFF::GFF3_SUFFIX << "]" << endl
 		 << "            -l  FILE             : tab-delimited annotation list with first column unique genome IDs and last column external GFF annotation filenames (other columns ignored), " << ZLIB_SUPPORT << endl
-		 << "            -g  STR              : use this tag attribute from the last GFF field to give each feature an metagenome ID, child features (e.g. exon) will use their top-level feature ID recursively [" << MetaGenomeAnno::DEFAULT_FEATURE_TAG << endl
+		 << "            --id-tag  STR        : extract this tag value from the attributes field of external GFF annotations to give a unique metagenome ID of each GFF feature, child features (e.g. exon) will use their top-level feature ID recursively [" << MetaGenomeAnno::EXTERNAL_ID_TAG << endl
+		 << "            --name-tag  STR      : extract this tag value from the attributes field of external GFF annotations to give a unique metagenome Name of each GFF feature, use --id-tag if not exists [" << MetaGenomeAnno::EXTERNAL_NAME_TAG << endl
 		 << "            -v  FLAG             : enable verbose information, you may set multiple -v for more details" << endl
 		 << "            --version            : show program version and exit" << endl
 		 << "            -h|--help            : print this message and exit" << endl;
@@ -76,7 +77,7 @@ int main(int argc, char* argv[]) {
 
 	string dbName;
 	string listFn, mtgFn, gffOutFn;
-	string featureTag = MetaGenomeAnno::DEFAULT_FEATURE_TAG;
+	string featureTag = MetaGenomeAnno::EXTERNAL_ID_TAG;
 
 	ifstream listIn, mtgIn;
 
@@ -220,7 +221,7 @@ int main(int argc, char* argv[]) {
 		infoLog << "Read in " << gffRecords.size() << " external GFF annotations" << endl;
 
 		/* add metagenome ids */
-		MetaGenomeAnno::addMetagenomeId(genome, gffRecords, featureTag);
+		MetaGenomeAnno::addMetagenomeTags(genome, gffRecords, featureTag);
 		infoLog << "Unique Metagenome IDs added for all features" << endl;
 
 		/* write genome annotations */
