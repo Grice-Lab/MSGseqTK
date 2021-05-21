@@ -28,6 +28,7 @@
 #ifndef STRINGUTILS_H_
 #define STRINGUTILS_H_
 #include <string>
+#include <regex>
 #include <iostream>
 #include <sstream>
 
@@ -99,20 +100,20 @@ public:
 	static string basename(string path, string suffix = "");
 
 	/**
-	 * Remove leading and tailing quotes from a given string
+	 * Remove leading and tailing whitespaces from a given string
 	 * @param str  string input
-	 * @param quotes  quoting characters
-	 * @return a new string with all quotes in "quote" removed
+	 * @param ws  whitespace characters in regex
+	 * @return a new string with all leading/tailing whitespaces trimmed
 	 */
-	static string stripQuotes(const string& str, const string& quotes = "\"'");
+	static string trim(const string& str, const string& ws = " \t\n\r\0\v");
 
 	/**
 	 * Remove leading and tailing quotes from a given string
 	 * @param str  string input
-	 * @param quote  quoting character
-	 * @return a new string with all quotes in "quote" removed
+	 * @param quotes  quoting characters in regex
+	 * @return a new string with all heading/tailing quotes removed
 	 */
-	static string stripQuotes(const string& str, char quote = '"');
+	static string stripQuotes(const string& str, const string& quotes = "\"'");
 
 	/**
 	 * check whether a string contains any white space characters

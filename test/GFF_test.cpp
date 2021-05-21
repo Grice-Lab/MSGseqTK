@@ -30,7 +30,7 @@ int main() {
 	gtfout << gtf;
 	if(gtfout.str() != gtfinstr) {
 		cerr << "Unmatched gtfout:" << endl << gtfout.str() << endl;
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	GFF gff3(GFF::GFF3);

@@ -18,7 +18,7 @@ void TSVRecord::parse(const string& line, const string& sep, char quote) {
 	boost::split(fields, line, boost::is_any_of(sep));
 	if(quote != '\0') { /* quote requested */
 		for(string& val : fields)
-			val = StringUtils::stripQuotes(val, quote);
+			val = StringUtils::stripQuotes(val, string() + quote);
 	}
 }
 

@@ -87,8 +87,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-check_PROGRAMS = GFF_test$(EXEEXT)
-TESTS = GFF_test$(EXEEXT)
+check_PROGRAMS = StringUtils_test$(EXEEXT) GFF_test$(EXEEXT)
+TESTS = StringUtils_test$(EXEEXT) GFF_test$(EXEEXT)
 subdir = test
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -112,6 +112,9 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_StringUtils_test_OBJECTS = StringUtils_test.$(OBJEXT)
+StringUtils_test_OBJECTS = $(am_StringUtils_test_OBJECTS)
+StringUtils_test_DEPENDENCIES = $(top_srcdir)/libEGUtil.a
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -127,7 +130,8 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/GFF_test.Po
+am__depfiles_remade = ./$(DEPDIR)/GFF_test.Po \
+	./$(DEPDIR)/StringUtils_test.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -147,8 +151,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(GFF_test_SOURCES)
-DIST_SOURCES = $(GFF_test_SOURCES)
+SOURCES = $(GFF_test_SOURCES) $(StringUtils_test_SOURCES)
+DIST_SOURCES = $(GFF_test_SOURCES) $(StringUtils_test_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -512,6 +516,10 @@ AM_CXXFLAGS = \
 -I$(top_srcdir) \
 -I$(top_srcdir)/UCSC
 
+StringUtils_test_SOURCES = StringUtils_test.cpp
+StringUtils_test_LDADD = \
+$(top_srcdir)/libEGUtil.a
+
 GFF_test_SOURCES = GFF_test.cpp
 GFF_test_LDADD = \
 $(top_srcdir)/UCSC/libEGUCSC.a \
@@ -564,6 +572,10 @@ GFF_test$(EXEEXT): $(GFF_test_OBJECTS) $(GFF_test_DEPENDENCIES) $(EXTRA_GFF_test
 	@rm -f GFF_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(GFF_test_OBJECTS) $(GFF_test_LDADD) $(LIBS)
 
+StringUtils_test$(EXEEXT): $(StringUtils_test_OBJECTS) $(StringUtils_test_DEPENDENCIES) $(EXTRA_StringUtils_test_DEPENDENCIES) 
+	@rm -f StringUtils_test$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(StringUtils_test_OBJECTS) $(StringUtils_test_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -571,6 +583,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GFF_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/StringUtils_test.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -801,6 +814,13 @@ recheck: all $(check_PROGRAMS)
 	        am__force_recheck=am--force-recheck \
 	        TEST_LOGS="$$log_list"; \
 	exit $$?
+StringUtils_test.log: StringUtils_test$(EXEEXT)
+	@p='StringUtils_test$(EXEEXT)'; \
+	b='StringUtils_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 GFF_test.log: GFF_test$(EXEEXT)
 	@p='GFF_test$(EXEEXT)'; \
 	b='GFF_test'; \
@@ -902,6 +922,7 @@ clean-am: clean-checkPROGRAMS clean-generic clean-libtool \
 
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/GFF_test.Po
+	-rm -f ./$(DEPDIR)/StringUtils_test.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -948,6 +969,7 @@ installcheck-am:
 
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/GFF_test.Po
+	-rm -f ./$(DEPDIR)/StringUtils_test.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

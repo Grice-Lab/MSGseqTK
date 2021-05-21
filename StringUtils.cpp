@@ -29,6 +29,7 @@
 #include <iostream>
 #include <climits>
 #include <array>
+#include <regex>
 #include "StringUtils.h"
 
 namespace EGriceLab {
@@ -100,27 +101,23 @@ string StringUtils::basename(string path, string suffix) {
 	return path;
 }
 
-string StringUtils::stripQuotes(const string& str, const string& quotes) {
+string StringUtils::trim(const string& str, const string& ws) {
 	string newStr;
 	newStr.reserve(str.length());
-	for(string::const_iterator it = str.begin(); it != str.end(); ++it) {
-		if((it == str.begin() || it == str.end() - 1) && /* leading or tailing character */
-				quotes.find(*it) != string::npos) /* is a quote character */
-			continue;
-		newStr.push_back(*it);
-	}
+	/* construct re */
+	std::regex re("(?:^[" + ws + "]+)|(?:[" + ws + "]+$)");
+	/* strip heading/tailing quotes */
+	newStr = std::regex_replace(str, re, "");
 	return newStr;
 }
 
-string StringUtils::stripQuotes(const string& str, char quote) {
+string StringUtils::stripQuotes(const string& str, const string& quotes) {
 	string newStr;
 	newStr.reserve(str.length());
-	for(string::const_iterator it = str.begin(); it != str.end(); ++it) {
-		if((it == str.begin() || it == str.end() - 1) && /* leading or tailing character */
-				*it == quote) /* is the quote character */
-			continue;
-		newStr.push_back(*it);
-	}
+	/* construct regex */
+	std::regex re("(?:^[" + quotes + "]+)|(?:[" + quotes + "]+$)");
+	/* strip heading/tailing quotes */
+	newStr = std::regex_replace(str, re, "");
 	return newStr;
 }
 
