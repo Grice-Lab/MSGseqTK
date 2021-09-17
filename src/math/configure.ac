@@ -30,6 +30,8 @@ AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 
 # Checks for autoconf-archive macros
+# Checks for autoconf-archive macros
+AX_CXX_COMPILE_STDCXX(11)
 AX_BOOST_BASE([1.50.0])
 
 # Checks for library functions.
