@@ -1,6 +1,11 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
-AM_CFLAGS = -I$(top_srcdir)/include
+AM_CFLAGS = -I$(top_srcdir)/include \
+$(OPENMP_CFLAGS)
+
+AM_CPPFLAGS = \
+$(OPENMP_CFLAGS)
+
 noinst_PROGRAMS = bwt mksary sasearch suftest unbwt
 
 if BUILD64

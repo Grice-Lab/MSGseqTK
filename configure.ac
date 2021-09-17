@@ -1,16 +1,17 @@
 AC_PREREQ([2.69])
-AC_INIT([libdivsufsort], [2.0.0], [e00011027@gmail.com])
+AC_INIT([libdivsufsort],[2.0.0],[e00011027@gmail.com])
 AC_CONFIG_SRCDIR([lib/utils.c])
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
 AC_PROG_CC
-AM_INIT_AUTOMAKE()
+AM_INIT_AUTOMAKE
+AM_MAINTAINER_MODE
 
 # Checks for libraries.
 
 # Checks for header files.
-AC_CHECK_HEADERS([fcntl.h inttypes.h memory.h stddef.h stdint.h stdlib.h string.h strings.h])
+AC_CHECK_HEADERS
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
@@ -23,6 +24,7 @@ AC_C_INLINE
 #AC_FUNC_MALLOC # ignored to avoid cross-compilation problems
 AC_CHECK_FUNCS([malloc])
 AC_PROG_RANLIB
+LT_INIT
 
 # customized macros
 AC_ARG_ENABLE([build64],
@@ -33,4 +35,7 @@ AC_ARG_ENABLE([build64],
 AM_CONDITIONAL([BUILD64], [test "x$enable_build64" = "xyes"])
 
 AC_CONFIG_FILES([Makefile lib/Makefile examples/Makefile])
+
+AC_OPENMP
+
 AC_OUTPUT
