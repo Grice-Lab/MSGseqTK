@@ -60,9 +60,9 @@ ostream& GFF::save(ostream& out) const {
 	out.write((const char *) &frame, sizeof(int));
 	size_t nAttr = numAttrs();
 	out.write((const char *) &nAttr, sizeof(size_t));
-	for(attr_map::const_iterator pair = attrValues.begin(); pair != attrValues.end(); ++pair) {
-		StringUtils::saveString(pair->first, out);
-		StringUtils::saveString(pair->second, out);
+	for(const attr_map::value_type& pair : attrValues) {
+		StringUtils::saveString(pair.first, out);
+		StringUtils::saveString(pair.second, out);
 	}
 	return out;
 }
@@ -123,11 +123,12 @@ void GFF::readGTFAttributes(const string& attrStr) {
 
 string GFF::writeGTFAttributes() const {
 	string attrStr;
-	const vector<string>& attrNames = getAttrNames();
-	for(vector<string>::const_iterator name = attrNames.begin(); name != attrNames.end(); ++name) {
-		if(!attrStr.empty()) /* non-first */
-			attrStr += "; ";
-		attrStr += (*name) + " \"" + getAttr(*name) + "\"";
+	for(const string& name : getAttrNames()) {
+		if(!attrStr.empty()) { /* non-first */
+			attrStr += GTF_ATTR_SEP;
+			attrStr += GTF_TAG_SEP;
+		}
+		attrStr += name + GTF_TAG_SEP + GTF_QUOTE + getAttr(name) + GTF_QUOTE;
 	}
 	return attrStr;
 }
@@ -142,11 +143,10 @@ void GFF::readGFF3Attributes(const string& attrStr) {
 
 string GFF::writeGFF3Attributes() const {
 	string attrStr;
-	const vector<string>& attrNames = getAttrNames();
-	for(vector<string>::const_iterator name = attrNames.begin(); name != attrNames.end(); ++name) {
+	for(const string& name : getAttrNames()) {
 		if(!attrStr.empty()) /* non-first */
-			attrStr += ";";
-		attrStr += (*name) + "=" + getAttr(*name);
+			attrStr += GFF3_ATTR_SEP;
+		attrStr += name + GFF3_TAG_SEP + getAttr(name);
 	}
 	return attrStr;
 }

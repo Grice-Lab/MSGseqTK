@@ -236,6 +236,12 @@ public:
 	/* class constants */
 	static const char COMMENT_CHAR = '#';
 	static const char SEP = '\t';
+	static const char GTF_QUOTE = '"';
+	static const char GTF_ATTR_SEP = ';';
+	static const char GFF3_ATTR_SEP = ';';
+	static const char GTF_TAG_SEP = ' ';
+	static const char GFF3_TAG_SEP = '=';
+
 	static const string GFF_SUFFIX;
 	static const string GTF_SUFFIX;
 	static const string GFF3_SUFFIX;
