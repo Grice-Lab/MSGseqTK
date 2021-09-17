@@ -25,6 +25,7 @@ config.status
 **/config.status
 **/stamp-h1
 **/test-driver
+**/confdefs.h
 # Ignore libtool generated files
 **/ltmain.sh
 **/missing
