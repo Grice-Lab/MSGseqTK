@@ -94,9 +94,9 @@ size_t WaveletTreeRRR::rank(size_t s, size_t i) const {
 	if(i >= n)
 		return -1;
 	size_t start = 0;
-	size_t r = 0;
+	size_t r = -1;
 
-	for(size_t level = 0; level < height; ++level) {
+	for(size_t level = 0; r != 0 && level < height; ++level) {
 		size_t masked = (s >> (height - level - 1)) << (height - level - 1);
 		size_t before = 0;
 		if (start > 0)
@@ -112,8 +112,6 @@ size_t WaveletTreeRRR::rank(size_t s, size_t i) const {
 			masked += (1 << (height - level - 1));
 			i = r + start - 1;
 		}
-		if(r == 0)
-			break;
 	}
 	return r;
 }
