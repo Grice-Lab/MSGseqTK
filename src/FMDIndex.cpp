@@ -144,7 +144,7 @@ DNAseq FMDIndex::getSeq() const {
 	/* get Seq by LF-mapping transverse */
 	const int64_t N = length();
 	DNAseq seq(N, 0);
-#pragma omp parallel for schedule(dynamic, 4)
+#pragma omp parallel for schedule(dynamic)
 	for(int64_t i = 0; i < numGaps(); ++i) { // i-th BWT segment
 		int64_t sa = getGapSA(i); // end SA value
 		seq[sa] = 0;
@@ -194,7 +194,7 @@ FMDIndex& FMDIndex::buildSA(int saSampleRate) {
 	SAsampled.clear();
 	SAsampled.resize(SAidx.numOnes()); // enough to hold both peroid sampling and gaps
 	/* build SAsampled in the 2nd pass */
-#pragma omp parallel for schedule(dynamic, 4)
+#pragma omp parallel for schedule(dynamic)
 	for(int64_t i = 0; i < numGaps(); ++i) { // the i-th BWT segment
 		int64_t sa = getGapSA(i); // end SA value
 		nt16_t b = bwt[i];
@@ -326,7 +326,7 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 BitStr32 FMDIndex::buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs) {
 	const size_t N = lhs.length() + rhs.length();
 	BitStr32 bstrM(N);
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic)
 	for(int64_t i = 0; i < lhs.numGaps(); ++i) { // the i-th BWT segment of lhs
 		nt16_t b = lhs.accessBWT(i);
 		assert(b != 0);
