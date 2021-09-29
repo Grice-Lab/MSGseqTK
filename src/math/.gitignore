@@ -12,7 +12,9 @@
 config.log
 config.status
 **/Makefile.in
-#**/aclocal.m4
+**/aclocal.m4
+**/libtool.m4
+**/lt*.m4
 **/autom4te.cache
 **/autom4te.cache
 **/config.cache

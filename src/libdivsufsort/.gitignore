@@ -46,7 +46,9 @@ config.status
 **/config.h
 **/config.h.in
 **/Makefile.in
-#**/aclocal.m4
+**/aclocal.m4
+**/libtool.m4
+**/lt*.m4
 **/missing
 **/ltmain.sh
 **/compile
