@@ -212,7 +212,7 @@ public:
 	 * @return value represented by these bits
 	 */
 	size_t getValue(size_type start, size_type len) const {
-		assert(len <= wid);
+//		assert(len <= wid);
 		start *= len; // use bit
 		size_type i = start / wid;
 		size_type j = start % wid;
