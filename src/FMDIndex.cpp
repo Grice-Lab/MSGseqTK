@@ -326,7 +326,7 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 BitStr32 FMDIndex::buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs) {
 	const size_t N = lhs.length() + rhs.length();
 	BitStr32 bstrM(N);
-#pragma omp parallel for schedule(dynamic, 4)
+#pragma omp parallel for
 	for(int64_t i = 0; i < lhs.numGaps(); ++i) { // the i-th BWT segment of lhs
 		nt16_t b = lhs.accessBWT(i);
 		assert(b != 0);
@@ -347,55 +347,8 @@ DNAseq FMDIndex::mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, const BitStr
 	const size_t N = lhs.length() + rhs.length();
 	assert(N == bstrM.length());
 	DNAseq bwtM(N, 0); // merged BWT
-#ifndef _OPENMP
 	for(size_t i = 0, j = 0, k = 0; k < N; ++k)
 		bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
-#else
-	int nThreads = 1;
-#pragma omp parallel
-	{
-		nThreads = omp_get_num_threads();
-	}
-	if(1 == nThreads) { // no parallelzation needed
-		for(size_t i = 0, j = 0, k = 0; k < N; ++k)
-			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
-	}
-	else {
-		BitSeqGGMN bsM(bstrM);
-#pragma omp parallel for
-		for(size_t k = 0; k < N; ++k) {
-			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(bsM.rank1(k) - 1) : rhs.accessBWT(bsM.rank0(k) - 1);
-		}
-	}
-#endif
-	return bwtM;
-}
-
-DNAseq FMDIndex::mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, BitStr32&& bstrM) {
-	const size_t N = lhs.length() + rhs.length();
-	assert(N == bstrM.length());
-	DNAseq bwtM(N, 0); // merged BWT
-#ifndef _OPENMP
-	for(size_t i = 0, j = 0, k = 0; k < N; ++k)
-		bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
-#else
-	int nThreads = 1;
-#pragma omp parallel
-	{
-		nThreads = omp_get_num_threads();
-	}
-	if(1 == nThreads) { // no parallelzation needed
-		for(size_t i = 0, j = 0, k = 0; k < N; ++k)
-			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
-	}
-	else {
-		BitSeqGGMN bsM(bstrM);
-#pragma omp parallel for
-		for(size_t k = 0; k < N; ++k) {
-			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(bsM.rank1(k) - 1) : rhs.accessBWT(bsM.rank0(k) - 1);
-		}
-	}
-#endif
 	return bwtM;
 }
 

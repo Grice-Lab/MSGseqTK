@@ -283,9 +283,6 @@ protected:
 	/** merge two DNAseq by an interleaving bitvector, use parallelization optionally */
 	static DNAseq mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, const BitStr32& bstrM);
 
-	/** merge two DNAseq by an interleaving bitvector, use parallelization optionally, bstrM will be moved */
-	static DNAseq mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, BitStr32&& bstrM);
-
 	/** merge two gapSA by prepending the rhs to the lhs with a shift */
 	static GAParr_t mergeGap(const FMDIndex& lhs, const FMDIndex& rhs);
 
