@@ -394,8 +394,8 @@ void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize, int saSa
 			DNAseq blockSeq = mtg.getBDSeq(blockStart, blockEnd);
 //			assert(blockSeq.back() == 0);
 			fmdidx = FMDIndex(blockSeq, false) + fmdidx; /* prepend new FMDIndex, whose SA is never built */
-			if(blockStart > 0) // not the final FMDindex
-				fmdidx.clearBWT(); // clear RAM before next merge
+//			if(blockStart > 0) // not the final FMDindex
+//				fmdidx.clearBWT(); // clear RAM before next merge
 			// clear seq to save RAM
 			mtg.clearSeq(blockStart, blockEnd);
 			// update
