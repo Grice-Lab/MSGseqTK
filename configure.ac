@@ -49,20 +49,11 @@ AC_CONFIG_FILES([Makefile
 				 src/Makefile
 				 test/Makefile])
 
-AC_CONFIG_SUBDIRS([src/util
+AC_CONFIG_SUBDIRS([src/libdivsufsort
+									 src/util
                    src/SAMtools
                    src/math
                    src/libsds])
-                   
-AX_SUBDIRS_CONFIGURE([src/libdivsufsort],
-[--enable-build64],
-[],
-[],
-[]
-)
-
-AC_SUBST(LIBDIVSUFSORT_PKG_NAME, libdivsufsort64)
-AC_DEFINE([BUILD_DIVSUFSORT64], [1], [always build a 64 bits version of libdivsufsort])
 
 AC_OPENMP
 
