@@ -51,6 +51,7 @@ config.status
 **/lt*.m4
 **/missing
 **/ltmain.sh
+**/libtool
 **/compile
 **/depcomp
 **/stamp-h1

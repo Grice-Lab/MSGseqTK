@@ -1426,7 +1426,8 @@ Optional Features:
   --enable-fast-install[=PKGS]
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
-  --enable-build64        build a 64 bits version library
+  --disable-build64       build a 32 bits version library instead of 64 bits
+                          version
   --disable-openmp        do not use OpenMP
 
 Optional Packages:
@@ -12382,13 +12383,17 @@ CC=$lt_save_CC
 # Check whether --enable-build64 was given.
 if test "${enable_build64+set}" = set; then :
   enableval=$enable_build64;
+$as_echo "#define BUILD_DIVSUFSORT64 0" >>confdefs.h
+
+else
+
 $as_echo "#define BUILD_DIVSUFSORT64 1" >>confdefs.h
 
 
 fi
 
 
- if test "x$enable_build64" = "xyes"; then
+ if test "x$enable_build64" != "xno"; then
   BUILD64_TRUE=
   BUILD64_FALSE='#'
 else
