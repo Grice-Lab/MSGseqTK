@@ -21,7 +21,6 @@ AC_CHECK_HEADERS
 AC_CHECK_HEADER_STDBOOL
 
 AM_INIT_AUTOMAKE
-AM_MAINTAINER_MODE
 
 AC_LANG(C++)
 AC_PROG_CXX
@@ -55,8 +54,8 @@ AC_CONFIG_SUBDIRS([src/libdivsufsort
                    src/math
                    src/libsds])
 
-AC_DEFINE([BUILD_DIVSUFSORT64], [1], [always build a 64 bits version of libdivsufsort])
 AC_SUBST(LIBDIVSUFSORT_PKG_NAME, libdivsufsort64)
+AC_DEFINE([BUILD_DIVSUFSORT64], [1], [always build a 64 bits version of libdivsufsort])
 
 AC_OPENMP
 
