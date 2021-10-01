@@ -64,7 +64,7 @@ libMSGseqTK.a \
 util/UCSC/libEGUCSC.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libsds/src/libsds.la \
+libsds/src/libsds.a \
 $(BOOST_IOSTREAMS_LIB) \
 $(OPENMP_CXXFLAGS)
 
@@ -74,7 +74,7 @@ libMSGseqTK.a \
 util/UCSC/libEGUCSC.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libsds/src/libsds.la \
+libsds/src/libsds.a \
 $(BOOST_IOSTREAMS_LIB)
 
 msgseqtk_inspect_SOURCES = msgseqtk-inspect.cpp MSGseqTKEnv.cpp
@@ -83,7 +83,7 @@ libMSGseqTK.a \
 util/UCSC/libEGUCSC.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libsds/src/libsds.la \
+libsds/src/libsds.a \
 $(BOOST_IOSTREAMS_LIB)
 
 msgseqtk_mergedb_SOURCES = msgseqtk-mergedb.cpp MSGseqTKEnv.cpp
@@ -92,7 +92,7 @@ libMSGseqTK.a \
 util/UCSC/libEGUCSC.a \
 util/libEGUtil.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libsds/src/libsds.la \
+libsds/src/libsds.a \
 $(OPENMP_CXXFLAGS)
 
 msgseqtk_clean_SOURCES = msgseqtk-clean.cpp MSGseqTKEnv.cpp
@@ -102,7 +102,7 @@ util/UCSC/libEGUCSC.a \
 util/libEGUtil.a \
 math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libsds/src/libsds.la \
+libsds/src/libsds.a \
 $(BOOST_IOSTREAMS_LIB) \
 $(OPENMP_CXXFLAGS)
 
@@ -114,7 +114,7 @@ util/libEGUtil.a \
 SAMtools/libEGSAMtools.a \
 math/libEGMath.a \
 libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-libsds/src/libsds.la \
+libsds/src/libsds.a \
 $(BOOST_IOSTREAMS_LIB) \
 $(OPENMP_CXXFLAGS) \
 -lhts

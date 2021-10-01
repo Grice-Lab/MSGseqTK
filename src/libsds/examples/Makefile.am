@@ -23,7 +23,7 @@ ACLOCAL_AMFLAGS=-I ../m4
 hello_SOURCES= hello.c
 
 # Libraries for a.out
-hello_LDADD = $(top_srcdir)/src/libsds.la
+hello_LDADD = $(top_srcdir)/src/libsds.a
 
 # Linker options for a.out
 hello_LDFLAGS = -rpath `cd $(top_srcdir);pwd`/src/.libs
@@ -34,6 +34,6 @@ hello_CPPFLAGS = -I$(top_srcdir)/include
 
 hello2_SOURCES = hello.cpp
 
-hello2_LDADD = $(top_srcdir)/src/libsds.la
+hello2_LDADD = $(top_srcdir)/src/libsds.a
 
 hello2_CPPFLAGS = -I$(top_srcdir)/include 

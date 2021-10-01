@@ -54,7 +54,7 @@ FMDIndex_test_SOURCES = FMDIndex_test.cpp
 FMDIndex_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-$(top_srcdir)/src/libsds/src/libsds.la \
+$(top_srcdir)/src/libsds/src/libsds.a \
 $(top_srcdir)/src/util/libEGUtil.a
 
 Genome_test_SOURCES = Genome_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
@@ -67,7 +67,7 @@ SMEM_test_SOURCES = SMEM_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
 SMEM_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-$(top_srcdir)/src/libsds/src/libsds.la \
+$(top_srcdir)/src/libsds/src/libsds.a \
 $(top_srcdir)/src/util/libEGUtil.a \
 $(top_srcdir)/src/util/UCSC/libEGUCSC.a
 
@@ -75,7 +75,7 @@ SeedChain_test_SOURCES = SeedChain_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
 SeedChain_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-$(top_srcdir)/src/libsds/src/libsds.la \
+$(top_srcdir)/src/libsds/src/libsds.a \
 $(top_srcdir)/src/util/libEGUtil.a \
 $(top_srcdir)/src/util/UCSC/libEGUCSC.a
 
@@ -83,7 +83,7 @@ Alignment_test_SOURCES = Alignment_test.cpp
 Alignment_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \
-$(top_srcdir)/src/libsds/src/libsds.la \
+$(top_srcdir)/src/libsds/src/libsds.a \
 $(top_srcdir)/src/util/libEGUtil.a \
 $(top_srcdir)/src/util/UCSC/libEGUCSC.a \
 $(top_srcdir)/src/SAMtools/libEGSAMtools.a \

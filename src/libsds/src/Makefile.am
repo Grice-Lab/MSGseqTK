@@ -1,14 +1,13 @@
-#######################################
-# The list of libraries we are building seperated by spaces.
-# The 'lib_' indicates that these build products will be installed
-# in the $(libdir) directory. For example /usr/lib
-lib_LTLIBRARIES = libsds.la
+# This is the Makefile for the EGriceLab::Math library
+ACLOCAL_AMFLAGS = -I m4
+
+lib_LIBRARIES = libsds.a
 
 #######################################
 # Build information for each library
 
 # Sources for libsds
-libsds_la_SOURCES = \
+libsds_a_SOURCES = \
 BitSeq.cpp \
 BitSeqGGMN.cpp \
 BitSeqRRR.cpp \
@@ -16,9 +15,8 @@ Seq.cpp \
 WaveletTreeRRR.cpp
 
 # Linker options libTestProgram
-libsds_la_LDFLAGS = 
+libsds_a_LDFLAGS =
 
 # Compiler options. Here we are adding the include directory
 # to be searched for headers included in the source code.
-libsds_la_CPPFLAGS = -I$(top_srcdir)/include
-
+libsds_a_CPPFLAGS = -I$(top_srcdir)/include
