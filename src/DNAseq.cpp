@@ -6,7 +6,6 @@
  */
 #include <algorithm>
 #include <cassert>
-#include <htslib/sam.h>
 #include "DNAseq.h"
 
 namespace EGriceLab {
@@ -49,7 +48,7 @@ DNAseq nt16Decode(size_t L, const DNAseq& seqNt16) {
 	assert(seqNt16.length() == (L + 1) / 2);
 	DNAseq seq(L, 0); // 0 init a DNAseq
 	for(size_t i = 0; i < L; ++i)
-		seq[i] = bam_seqi(seqNt16, i);
+		seq[i] = seqNt16[i >> 1] >> ((~i & 1) << 2) & 0xf;
 	return seq;
 }
 
