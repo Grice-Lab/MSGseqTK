@@ -207,7 +207,6 @@ int main(int argc, char* argv[]) {
 	}
 	infoLog << "Building final Suffix-Array" << endl;
 	fmdidx.buildSA(saSampleRate);
-	fmdidx.clearBWT(); // clear uncompressed BWT
 
 	infoLog << "Database merged. # of genomes: " << mtg.numGenomes() << " # of bases: " << fmdidx.length() << endl;
 	infoLog << "Saving database files ..." << endl;

@@ -29,7 +29,6 @@ int main() {
 	mtg1.updateIndex();
 	FMDIndex fmdidx1(mtg1.getBDSeq(), false);
 	fmdidx1.buildSA();
-	fmdidx1.clearBWT();
 	bdSeq += mtg1.getBDSeq();
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl << "mtg1.getBDSeq():" << endl << mtg1.getBDSeq() << endl;
@@ -45,7 +44,6 @@ int main() {
 	mtg2.updateIndex();
 	FMDIndex fmdidx2(mtg2.getBDSeq(), false);
 	fmdidx2.buildSA();
-	fmdidx2.clearBWT();
 	bdSeq += mtg2.getBDSeq();
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
 	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl << "mtg2.getBDSeq():" << endl << mtg2.getBDSeq() << endl;
@@ -55,7 +53,6 @@ int main() {
 //	FMDIndex fmdidx = FMDIndex(mtg.getBDSeq(), true);
 	MetaGenome mtg = mtg1 + mtg2;
 	fmdidx.buildSA();
-	fmdidx.clearBWT();
 	cout << "fmdidx.getBWT():" << endl << fmdidx.getBWT() << endl;
 	cout << "fmdidx.getSeq():" << endl << fmdidx.getSeq() << endl;
 	cout << "mtg.getBDSeq():" << endl << mtg.getBDSeq() << endl;

@@ -63,11 +63,6 @@ public:
 	explicit FMDIndex(const DNAseq& seq, bool keepSA = true, int saSampleRate = SA_SAMPLE_RATE);
 
 	/* member methods */
-	/** test whether contains uncompressed BWT */
-	bool hasBWT() const {
-		return !bwt.empty();
-	}
-
 	/** test whether contains SA */
 	bool hasSA() const {
 		return !SAidx.empty();
@@ -86,12 +81,6 @@ public:
 	/** get the encoded BWT of the original seq */
 	DNAseq getBWT() const;
 
-	/** clear uncompressed BWT */
-	FMDIndex& clearBWT() {
-		bwt.clear();
-		return *this;
-	}
-
 	/** clear SA */
 	FMDIndex& clearSA() {
 		SAidx.reset();
@@ -104,7 +93,7 @@ public:
 
 	/** access BWT at given position */
 	nt16_t accessBWT(int64_t i) const {
-		return hasBWT() ? bwt[i] : bwtRRR.access(i);
+		return bwtRRR.access(i);
 	}
 
 	/*
@@ -290,7 +279,7 @@ protected:
 private:
 	BCarray_t B = { };  // combined base count
 	BCarray_t C = { };  // combined cumulative count
-	DNAseq bwt; // uncompressed bwt
+//	DNAseq bwt; // uncompressed bwt
 	WaveletTreeRRR bwtRRR; /* Wavelet-Tree transformed BWT string for combined seq */
 	GAParr_t gapSA; /* SA values for gaps */
 	BitSeqRRR SAidx; /* BitSeq index telling whether a SA was sampled */

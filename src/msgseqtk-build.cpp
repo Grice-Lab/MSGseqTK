@@ -377,7 +377,7 @@ int main(int argc, char* argv[]) {
 
 void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx, int saSampleRate) {
 	infoLog << "Building FMD-index" << endl;
-	fmdidx = FMDIndex(mtg.getBDSeq(), true, saSampleRate).clearBWT(); // build whole metagenome FMDIndex in one step
+	fmdidx = FMDIndex(mtg.getBDSeq(), true, saSampleRate); // build whole metagenome FMDIndex in one step
 }
 
 void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize, int saSampleRate) {
@@ -394,8 +394,6 @@ void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize, int saSa
 			DNAseq blockSeq = mtg.getBDSeq(blockStart, blockEnd);
 //			assert(blockSeq.back() == 0);
 			fmdidx = FMDIndex(blockSeq, false) + fmdidx; /* prepend new FMDIndex, whose SA is never built */
-//			if(blockStart > 0) // not the final FMDindex
-//				fmdidx.clearBWT(); // clear RAM before next merge
 			// clear seq to save RAM
 			mtg.clearSeq(blockStart, blockEnd);
 			// update
@@ -405,5 +403,4 @@ void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize, int saSa
 	}
 	infoLog << "Building final Suffix-Array" << endl;
 	fmdidx.buildSA(saSampleRate);
-	fmdidx.clearBWT(); // clear uncompressed BWT
 }
