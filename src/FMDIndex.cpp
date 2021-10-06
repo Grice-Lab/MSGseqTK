@@ -343,10 +343,27 @@ DNAseq FMDIndex::mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, const BitStr
 	const size_t N = lhs.length() + rhs.length();
 	assert(N == bstrM.length());
 	DNAseq bwtM(N, 0); // merged BWT
-	size_t i = 0;
-	size_t j = 0;
-	for(size_t k = 0; k < N; ++k)
+#ifndef _OPENMP
+	for(size_t i = 0, j = 0, k = 0; k < N; ++k)
 		bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
+#else
+	int nThreads = 1;
+#pragma omp parallel
+	{
+		nThreads = omp_get_num_threads();
+	}
+	if(1 == nThreads) { // no parallelzation needed
+		for(size_t i = 0, j = 0, k = 0; k < N; ++k)
+			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
+	}
+	else {
+		BitSeqGGMN bsM(bstrM);
+#pragma omp parallel for schedule(dynamic, 4)
+		for(size_t k = 0; k < N; ++k) {
+			bwtM[k] = bstrM.test(k) ? lhs.accessBWT(bsM.rank1(k) - 1) : rhs.accessBWT(bsM.rank0(k) - 1);
+		}
+	}
+#endif
 	return bwtM;
 }
 
