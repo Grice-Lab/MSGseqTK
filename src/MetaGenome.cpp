@@ -9,6 +9,7 @@
 #include <sstream>
 #include <utility>
 #include <boost/lexical_cast.hpp>
+#include <cassert>
 #include "MetaGenome.h"
 #include "StringUtils.h"
 #include "ProgEnv.h"
@@ -42,6 +43,12 @@ ostream& MetaGenome::save(ostream& out) const {
 	return out;
 }
 
+ostream& MetaGenome::saveSeq(ostream& out) const {
+	for(const Genome& genome : genomes)
+		genome.saveSeq(out);
+	return out;
+}
+
 istream& MetaGenome::load(istream& in) {
 	/* load basic info */
 	size_t NG = 0;
@@ -52,6 +59,21 @@ istream& MetaGenome::load(istream& in) {
 	/* update index */
 	updateIndex();
 	return in;
+}
+
+istream& MetaGenome::loadSeq(istream& in) {
+	for(Genome& genome : genomes)
+		genome.loadSeq(in);
+	return in;
+}
+
+DNAseq MetaGenome::loadSeq(size_t tid, istream& in) const {
+	const int64_t tLen = getChrom(tid).len;
+	DNAseq tSeq(tLen, 0); // zero init
+	in.seekg(getChromStart(tid)); // seek binary input to tid start
+	StringUtils::loadString(tSeq, in, tLen);
+	assert(0 == in.get());
+	return tSeq;
 }
 
 MetaGenome& MetaGenome::operator+=(const MetaGenome& other) {

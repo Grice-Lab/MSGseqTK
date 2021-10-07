@@ -89,12 +89,12 @@ void printUsage(const string& progName) {
 /**
  * build the FMD-index build in one general block, which should not exceeding the DEFAULT_BLOCK_SIZE
  */
-void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx, int saSampleRate);
+void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, int saSampleRate);
 
 /**
  * build the FMD-index incrementally, it will also shrink the MetaGenome on-the-fly to save RAM
  */
-void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize, int saSampleRate);
+void buildFMDIndex(MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blockSize, int saSampleRate);
 
 int main(int argc, char* argv[]) {
 	/* variable declarations */
@@ -103,10 +103,10 @@ int main(int argc, char* argv[]) {
 	map<string, string> genomeId2Fn;
 
 	string dbName, oldDBName;
-	string listFn, mtgFn, fmdidxFn;
+	string listFn, mtgFn, mgsFn, fmdidxFn;
 
-	ifstream listIn, mtgIn, fmdidxIn;
-	ofstream mtgOut, fmdidxOut;
+	ifstream listIn, mtgIn, mgsIn, fmdidxIn;
+	ofstream mtgOut, mgsOut, fmdidxOut;
 
 	const SeqIO::FORMAT fmt = SeqIO::FASTA; // always use fasta format
 
@@ -230,11 +230,18 @@ int main(int argc, char* argv[]) {
 
 	/* open output */
 	mtgFn = dbName + METAGENOME_FILE_SUFFIX;
+	mgsFn = dbName + METAGENOME_SEQ_FILE_SUFFIX;
 	fmdidxFn = dbName + FMDINDEX_FILE_SUFFIX;
 
 	mtgOut.open(mtgFn.c_str(), ios_base::binary);
 	if(!mtgOut.is_open()) {
 		cerr << "Unable to write to '" << mtgFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+
+	mgsOut.open(mgsFn.c_str(), ios_base::binary);
+	if(!mgsOut.is_open()) {
+		cerr << "Unable to write to '" << mgsFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -252,11 +259,18 @@ int main(int argc, char* argv[]) {
 		infoLog << "Loading old database '" << oldDBName << "'" << endl;
 		/* set oldDBName */
 		mtgFn = oldDBName + METAGENOME_FILE_SUFFIX;
+		mgsFn = oldDBName + METAGENOME_SEQ_FILE_SUFFIX;
 		fmdidxFn = oldDBName + FMDINDEX_FILE_SUFFIX;
 
 		mtgIn.open(mtgFn.c_str(), ios_base::binary);
+		mgsIn.open(mgsFn.c_str(), ios_base::binary);
 		if(!mtgIn.is_open()) {
 			cerr << "Unable to open old database file '" << mtgFn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
+
+		if(!mgsIn.is_open()) {
+			cerr << "Unable to open old database file '" << mgsFn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
 
@@ -266,6 +280,7 @@ int main(int argc, char* argv[]) {
 			return EXIT_FAILURE;
 		}
 
+		/* load MetaGenome */
 		loadProgInfo(mtgIn);
 		if(!mtgIn.bad())
 			mtg.load(mtgIn);
@@ -274,6 +289,15 @@ int main(int argc, char* argv[]) {
 			return EXIT_FAILURE;
 		}
 
+		/* load MetaGenome seq */
+		if(!mgsIn.bad())
+			mtg.loadSeq(mgsIn);
+		if(!mgsIn.bad()) {
+			cerr << "Unable to load '" << mgsFn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
+
+		/* load FMD-index */
 		loadProgInfo(fmdidxIn);
 		if(!fmdidxIn.bad())
 			fmdidx.load(fmdidxIn);
@@ -284,8 +308,10 @@ int main(int argc, char* argv[]) {
 
 		/* reset */
 		mtgIn.close();
+		mgsIn.close();
 		fmdidxIn.close();
 		mtgFn = dbName + METAGENOME_FILE_SUFFIX;
+		mgsFn = dbName + METAGENOME_SEQ_FILE_SUFFIX;
 		fmdidxFn = dbName + FMDINDEX_FILE_SUFFIX;
 	}
 
@@ -342,21 +368,37 @@ int main(int argc, char* argv[]) {
 		return EXIT_SUCCESS;
 	}
 
-	/* save MetaGenome */
+	/* save MetaGenome and seq */
 	saveProgInfo(mtgOut);
 	mtg.save(mtgOut);
 	if(mtgOut.bad()) {
 		cerr << "Unable to save MetaGenome: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
-	infoLog << "MetaGenome of " << mtg.BDSize() << " bases saved to '" << mtgFn << "'" << endl;
+	infoLog << "MetaGenome of " << mtg.numGenomes() << " genomes of " << mtg.numChroms()
+			<< " chromosomes saved to '" << mtgFn << "'" << endl;
+
+	mtg.saveSeq(mgsOut);
+	if(mgsOut.bad()) {
+		cerr << "Unable to save MetaGenome seq: " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	infoLog << "MetaGenome seq of " << mtg.size() << " bases saved to '" << mgsFn << "'" << endl;
+	mgsOut.close();
 
 	const int64_t mtgSize = mtg.BDSize(); // store old size
+	mtg.clearSeq(); // clear MetaGenome seq to save memory
+	/* re-open saved binary MetaGenome seq file */
+	mgsIn.open(mgsFn.c_str(), ios_base::binary);
+	if(!mgsIn.is_open()) {
+		cerr << "Unable to open saved MetaGenome seq file '" << mgsFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
 	/* build FMD-index */
 	if(mtg.BDSize() <= blockSize) // we can build the FMD-index in one step
-		buildFMDIndex(mtg, fmdidx, saSampleRate);
+		buildFMDIndex(mtg, mgsIn, fmdidx, saSampleRate);
 	else // build the FMD-index incrementally
-		buildFMDIndex(mtg, fmdidx, blockSize, saSampleRate);
+		buildFMDIndex(mtg, mgsIn, fmdidx, blockSize, saSampleRate);
 	assert(mtgSize == fmdidx.length());
 
 	/* save FMDIndex */
@@ -370,17 +412,18 @@ int main(int argc, char* argv[]) {
 
 	if(!oldDBName.empty())
 		infoLog << "Database updated. Newly added # of genomes: " << nProcessed <<
-		" Total # of genomes: " << mtg.numGenomes() << " size: " << mtgSize << endl;
+		" Total # of genomes: " << mtg.numGenomes() << " BD-size: " << mtgSize << endl;
 	else
-		infoLog << "Database built. Total # of genomes: " << mtg.numGenomes() << " size: " << mtgSize << endl;
+		infoLog << "Database built. Total # of genomes: " << mtg.numGenomes() << " BD-size: " << mtgSize << endl;
 }
 
-void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx, int saSampleRate) {
+void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, int saSampleRate) {
 	infoLog << "Building FMD-index" << endl;
+	DNAseq bdSeq = mtg.loadBDSeq(mgsIn);
 	fmdidx = FMDIndex(mtg.getBDSeq(), true, saSampleRate); // build whole metagenome FMDIndex in one step
 }
 
-void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize, int saSampleRate) {
+void buildFMDIndex(MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blockSize, int saSampleRate) {
 	infoLog << "Building FMD-index incrementally" << endl;
 	const size_t NC = mtg.numChroms();
 	size_t blockId = 0;
@@ -391,11 +434,9 @@ void buildFMDIndex(MetaGenome& mtg, FMDIndex& fmdidx, size_t blockSize, int saSa
 		/* process block, if large enough */
 		if(mtg.getChromBDLoc(blockStart, blockEnd).length() >= blockSize || blockStart == 0) { /* first chrom or block is full */
 			infoLog << "Adding " << (blockEnd - blockStart) << " chroms in block " << ++blockId << " into FMD-index" << endl;
-			DNAseq blockSeq = mtg.getBDSeq(blockStart, blockEnd);
+			DNAseq blockSeq = mtg.loadBDSeq(blockStart, blockEnd, mgsIn);
 //			assert(blockSeq.back() == 0);
 			fmdidx = FMDIndex(blockSeq, false) + fmdidx; /* prepend new FMDIndex, whose SA is never built */
-			// clear seq to save RAM
-			mtg.clearSeq(blockStart, blockEnd);
 			// update
 			blockEnd = blockStart;
 			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;

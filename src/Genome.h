@@ -38,29 +38,45 @@ public:
 		Chrom() = default;
 
 		/** construct from given values */
-		Chrom(const string& name, const DNAseq& seq) : name(name), seq(seq)
+		Chrom(const string& name, const DNAseq& seq) : name(name), len(seq.length()), seq(seq)
 		{  }
 
 		/* member methods */
-		size_t size() const {
-			return seq.length();
+		int64_t length() const {
+			return len;
+		}
+
+		int64_t size() const {
+			return length();
 		}
 
 		bool empty() const {
 			return seq.empty();
 		}
 
+		/** clear seq of this chrom */
+		void clearSeq() {
+			seq.clear();
+		}
+
 		/** save this Chrom to binary output */
 		ostream& save(ostream& out) const;
 
+		/** save this Chrom seq to binary output */
+		ostream& saveSeq(ostream& out) const;
+
 		/** load a Chrom from binary input */
 		istream& load(istream& in);
+
+		/** load a Chrom seq from binary input */
+		istream& loadSeq(istream& in);
 
 		/* non-member functions */
 		friend bool operator==(const Chrom& lhs, const Chrom& rhs);
 
 		/* member fields */
 		string name;
+		int64_t len = 0;
 		DNAseq seq;
 	};
 
@@ -119,7 +135,7 @@ public:
 	}
 
 	/** get the overall size of this genome */
-	size_t size() const;
+	int64_t size() const;
 
 	/** add a new chrom object at the end */
 	void addChrom(const Chrom& chr) {
@@ -129,6 +145,12 @@ public:
 	/** add a new chromosome with given name and size */
 	void addChrom(const string& chrName, const DNAseq& chrSeq) {
 		addChrom(Chrom(chrName, chrSeq));
+	}
+
+	/** clear seq of each chromosome */
+	void clearSeq() {
+		for(Chrom& chr : chroms)
+			chr.clearSeq();
 	}
 
 	/**
@@ -141,8 +163,14 @@ public:
 	/** save this object to binary output */
 	ostream& save(ostream& out) const;
 
+	/** save seq to binary output */
+	ostream& saveSeq(ostream& out) const;
+
 	/** load an object from binary input */
 	istream& load(istream& in);
+
+	/** load seq from binary input */
+	istream& loadSeq(istream& in);
 
 	/* non-member functions */
 	/* relationship operators */

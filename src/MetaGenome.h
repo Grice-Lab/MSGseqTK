@@ -347,62 +347,70 @@ public:
 		return getChrom(tid).seq;
 	}
 
-	/** get a block seq by tid range */
-	DNAseq getSeq(size_t start, size_t end) const {
-		assert(start < end);
-		DNAseq blockSeq;
-		blockSeq.reserve(getChromEnd(end - 1) - getChromStart(start));
-		for(size_t i = start; i < end; ++i)
-			blockSeq += getSeq(i);
-		return blockSeq;
-	}
-
-	/** get the entire metagenome seq */
+	/** get the entire metagenome seq, seperated by GAP_BASE */
 	DNAseq getSeq() const {
-		return getSeq(0, numChroms());
-	}
-
-	/** get bi-directional seq by tid */
-	DNAseq getBDSeq(size_t tid) const {
-		return getBDSeq(getSeq(tid));
-	}
-
-	/** get a BD block seq by tid range */
-	DNAseq getBDSeq(size_t start, size_t end) const {
-		assert(start < end);
 		DNAseq seq;
-		seq.reserve(getChromBDEnd(end - 1) - getChromBDStart(start));
-		for(size_t tid = start; tid < end; ++tid)
-			seq += getBDSeq(tid);
+		seq.reserve(size());
+		for(size_t i = 0; i < numChroms(); ++i)
+			seq += getSeq(i) + DNAalphabet::GAP_BASE;
+		return seq;
+	}
+
+	/** get the entire bi-directinal seq of the entire MetaGenome */
+	DNAseq getBDSeq() const {
+		DNAseq seq;
+		seq.reserve(BDSize());
+		for(size_t tid = 0; tid < numChroms(); ++tid)
+			seq += getBDSeq(getSeq(tid));
+		return seq;
+	}
+
+	/** load seq of given tid from binary input */
+	DNAseq loadSeq(size_t tid, istream& in) const;
+
+	/** load bi-directional seq of given tid from binary input */
+	DNAseq loadBDSeq(size_t tid, istream& in) const {
+		return getBDSeq(loadSeq(tid, in));
+	}
+
+	/** load a BD block seq by tid range */
+	DNAseq loadBDSeq(size_t tStart, size_t tEnd, istream& in) const {
+		assert(tStart < tEnd);
+		DNAseq seq;
+		seq.reserve(getChromBDEnd(tEnd - 1) - getChromBDStart(tStart));
+		for(size_t tid = tStart; tid < tEnd; ++tid)
+			seq += loadBDSeq(tid, in);
 		return seq;
 	}
 
 	/** get concatenated bi-directional seq of the entire MetaGenome */
-	DNAseq getBDSeq() const {
-		return getBDSeq(0, numChroms());
+	DNAseq loadBDSeq(istream& in) const {
+		return loadBDSeq(0, numChroms(), in);
 	}
+
 
 	/** clear seq of given tid */
 	void clearSeq(size_t tid) {
 		getChrom(tid).seq.clear();
 	}
 
-	/** clear seq of given region */
-	void clearSeq(size_t start, size_t end) {
-		for(size_t tid = start; tid < end; ++tid)
-			clearSeq(tid);
-	}
-
 	/** clear all seqs */
 	void clearSeq() {
-		clearSeq(0, numChroms());
+		for(Genome& genome : genomes)
+			genome.clearSeq();
 	}
 
-	/** save this object to binary outputs */
+	/** save this object to binary output */
 	ostream& save(ostream& out) const;
+
+	/** save metagenome seq to binary output */
+	ostream& saveSeq(ostream& out) const;
 
 	/** load an object from binary inputs */
 	istream& load(istream& in);
+
+	/** load metagenome seq from binary input */
+	istream& loadSeq(istream& in);
 
 	/**
 	 * update all index, should be called if any containing Genome/Chrom changes

@@ -20,13 +20,24 @@ const string Genome::REPLACEMENT_STR = ".";
 
 ostream& Genome::Chrom::save(ostream& out) const {
 	StringUtils::saveString(name, out);
-	StringUtils::saveString(seq, out);
+	out.write((const char*) &len, sizeof(int64_t));
+	return out;
+}
+
+ostream& Genome::Chrom::saveSeq(ostream& out) const {
+	StringUtils::saveString(seq, out, len + 1); // include null terminal
 	return out;
 }
 
 istream& Genome::Chrom::load(istream& in) {
 	StringUtils::loadString(name, in);
-	StringUtils::loadString(seq, in);
+	in.read((char*) &len, sizeof(int64_t));
+	return in;
+}
+
+istream& Genome::Chrom::loadSeq(istream& in) {
+	StringUtils::loadString(seq, in, len);
+	assert(0 == in.get());
 	return in;
 }
 
@@ -45,8 +56,14 @@ ostream& Genome::save(ostream& out) const {
 	StringUtils::saveString(name, out);
 	size_t NC = numChroms();
 	out.write((const char*) &NC, sizeof(size_t));
-	for(const Chrom& chr : chroms)
+	for(Chrom chr : chroms)
 		chr.save(out);
+	return out;
+}
+
+ostream& Genome::saveSeq(ostream& out) const {
+	for(const Chrom& chr : chroms)
+		chr.saveSeq(out);
 	return out;
 }
 
@@ -61,8 +78,14 @@ istream& Genome::load(istream& in) {
 	return in;
 }
 
-size_t Genome::size() const {
-	size_t len = 0;
+istream& Genome::loadSeq(istream& in) {
+	for(Chrom& chr : chroms)
+		chr.loadSeq(in);
+	return in;
+}
+
+int64_t Genome::size() const {
+	int64_t len = 0;
 	for(const Chrom& chr : chroms)
 		len += chr.size();
 	return len;
