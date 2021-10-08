@@ -180,12 +180,14 @@ int64_t* FMDIndex::buildBWT(const DNAseq& seq) {
 FMDIndex& FMDIndex::buildSA(int saSampleRate) {
 	const int64_t N = length();
 	/* build the bitstr in the 1st pass */
-	BitStr32 bstr(N);
-	for(size_t i = 0; i < N; ++i) {
-		if(i % saSampleRate == 0 || accessBWT(i) == 0) /* sample at all null characters */
-			bstr.set(i);
-	}
-	SAidx = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
+	{
+		BitStr32 bstr(N);
+		for(size_t i = 0; i < N; ++i) {
+			if(i % saSampleRate == 0 || accessBWT(i) == 0) /* sample at all null characters */
+				bstr.set(i);
+		}
+		SAidx = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
+	} /* intermediate bstr will be destoyed */
 
 	SAsampled.clear();
 	SAsampled.resize(SAidx.numOnes()); // enough to hold both peroid sampling and gaps
@@ -195,11 +197,11 @@ FMDIndex& FMDIndex::buildSA(int saSampleRate) {
 		int64_t sa = getGapSA(i); // end SA value
 		nt16_t b = accessBWT(i);
 		SAsampled[SAidx.rank1(i) - 1] = sa--; // end is always null and sampled
-		for(int64_t j = i; b != 0; b = accessBWT(j)) {
+		for(int64_t j = i; b != 0; --sa) {
 			j = LF(b, j) - 1; // LF-mapping
-			if(SAidx.test(j))
+			b = accessBWT(j); // update b
+			if(j % saSampleRate == 0 || b == 0)
 				SAsampled[SAidx.rank1(j) - 1] = sa;
-			sa--;
 		}
 	}
 	return *this;

@@ -57,6 +57,7 @@ public:
 		/** clear seq of this chrom */
 		void clearSeq() {
 			seq.clear();
+			seq.shrink_to_fit(); // reclaim the memory
 		}
 
 		/** save this Chrom to binary output */
