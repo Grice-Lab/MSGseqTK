@@ -420,7 +420,7 @@ int main(int argc, char* argv[]) {
 void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, int saSampleRate) {
 	infoLog << "Building FMD-index" << endl;
 	DNAseq bdSeq = mtg.loadBDSeq(mgsIn);
-	fmdidx = FMDIndex(mtg.getBDSeq(), true, saSampleRate); // build whole metagenome FMDIndex in one step
+	fmdidx = FMDIndex(bdSeq, true, saSampleRate).clearBWT(); // build whole metagenome FMDIndex in one step
 }
 
 void buildFMDIndex(MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blockSize, int saSampleRate) {
@@ -436,12 +436,12 @@ void buildFMDIndex(MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blo
 			infoLog << "Adding " << (blockEnd - blockStart) << " chroms in block " << ++blockId << " into FMD-index" << endl;
 			DNAseq blockSeq = mtg.loadBDSeq(blockStart, blockEnd, mgsIn);
 //			assert(blockSeq.back() == 0);
-			fmdidx = FMDIndex(blockSeq, false) + fmdidx; /* prepend new FMDIndex, whose SA is never built */
+			fmdidx = FMDIndex(blockSeq, false, saSampleRate) + fmdidx; /* prepend new FMDIndex, whose SA is never built */
 			// update
 			blockEnd = blockStart;
 			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;
 		}
 	}
 	infoLog << "Building final Suffix-Array" << endl;
-	fmdidx.buildSA(saSampleRate);
+	fmdidx.buildSA(saSampleRate).clearBWT();
 }

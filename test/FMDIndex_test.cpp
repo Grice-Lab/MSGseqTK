@@ -29,7 +29,7 @@ int main() {
 	DNAseq seq1 = MetaGenome::getBDSeq(dna::encode("GTAGCATAGAG"));
 	seqM1 += seq1;
 	cout << "seqM1:" << endl << seqM1 << endl;
-	fmdidx1 += FMDIndex(seq1, false);
+	fmdidx1 += FMDIndex(seq1);
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
@@ -56,7 +56,7 @@ int main() {
 	DNAseq seq2 = MetaGenome::getBDSeq(dna::encode("GTAGCATCGAG"));
 	seqM1 += seq2;
 	cout << "seqM1:" << endl << seqM1 << endl;
-	fmdidx1 += FMDIndex(seq2, false);
+	fmdidx1 += FMDIndex(seq2);
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
@@ -83,7 +83,7 @@ int main() {
 	DNAseq seq3 = MetaGenome::getBDSeq(dna::encode("GTAGCATGGAG"));
 	seqM1 += seq3;
 	cout << "seqM1:" << endl << seqM1 << endl;
-	fmdidx1 += FMDIndex(seq3, false);
+	fmdidx1 += FMDIndex(seq3);
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
@@ -111,7 +111,7 @@ int main() {
 	DNAseq seq4 = MetaGenome::getBDSeq(dna::encode("GTAGCATTGAG"));
 	seqM1 += seq4;
 	cout << "seqM1:" << endl << seqM1 << endl;
-	fmdidx1 += FMDIndex(seq4, false);
+	fmdidx1 += FMDIndex(seq4);
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
@@ -139,7 +139,7 @@ int main() {
 	DNAseq seq5 = MetaGenome::getBDSeq(dna::encode("GTAGCAACTAG"));
 	seqM2 = seq5 + seqM2;
 	cout << "seqM2:" << endl << seqM2 << endl;
-	fmdidx2 = FMDIndex(seq5, false) + fmdidx2;
+	fmdidx2 = FMDIndex(seq5) + fmdidx2;
 	fmdidx2.buildSA();
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
@@ -166,7 +166,7 @@ int main() {
 	DNAseq seq6 = MetaGenome::getBDSeq(dna::encode("GTAGCACCTAG"));
 	seqM2 = seq6 + seqM2;
 	cout << "seqM2:" << endl << seqM2 << endl;
-	fmdidx2 = FMDIndex(seq6, false) + fmdidx2;
+	fmdidx2 = FMDIndex(seq6) + fmdidx2;
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
 	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl;
@@ -193,7 +193,7 @@ int main() {
 	DNAseq seq7 = MetaGenome::getBDSeq(dna::encode("GTAGCAGCTAC"));
 	seqM2 = seq7 + seqM2;
 	cout << "seqM2:" << endl << seqM2 << endl;
-	fmdidx2 = FMDIndex(seq7, false) + fmdidx2;
+	fmdidx2 = FMDIndex(seq7) + fmdidx2;
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
 	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl;
@@ -220,7 +220,7 @@ int main() {
 	DNAseq seq8 = MetaGenome::getBDSeq(dna::encode("GTAGCATCTAC"));
 	seqM2 = seq8 + seqM2;
 	cout << "seqM2:" << endl << seqM2 << endl;
-	fmdidx2 = FMDIndex(seq8, false) + fmdidx2;
+	fmdidx2 = FMDIndex(seq8) + fmdidx2;
 	cout << "fmdidx2.length(): " << fmdidx2.length() << endl;
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
 	cout << "fmdidx2.getSeq():" << endl << fmdidx2.getSeq() << endl;

@@ -30,7 +30,7 @@ int main() {
 	mtg.updateIndex();
 
 	const DNAseq& genomeSeq = mtg.getSeq();
-	FMDIndex fmdidx = FMDIndex(mtg.getBDSeq(), true);
+	FMDIndex fmdidx = FMDIndex(mtg.getBDSeq()).buildSA();
 	assert(mtg.BDSize() == fmdidx.length());
 
 	PrimarySeq read("ACGTAGTA", "seq1");

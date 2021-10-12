@@ -59,10 +59,23 @@ public:
 	/** Construct an FMDIndex from a given DNAseq
 	 * it will build the counts and BWT,
 	 * and optionally build the SA (SAidx and SAsampled)
+	 * it will also try to clear the seq to save memory
 	 */
-	explicit FMDIndex(const DNAseq& seq, bool keepSA = true, int saSampleRate = SA_SAMPLE_RATE);
+	explicit FMDIndex(DNAseq& seq, bool buildSAsampled = false, int saSampleRate = SA_SAMPLE_RATE) {
+		build(seq, buildSAsampled, saSampleRate);
+	}
+
+	/** rvalue version of constructing an FMDIndex */
+	explicit FMDIndex(DNAseq&& seq, bool buildSAsampled = false, int saSampleRate = SA_SAMPLE_RATE) {
+		build(seq, buildSAsampled, saSampleRate);
+	}
 
 	/* member methods */
+	/** test whether contains uncompressed BWT */
+	bool hasBWT() const {
+		return !bwt.empty();
+	}
+
 	/** test whether contains SA */
 	bool hasSA() const {
 		return !SAidx.empty();
@@ -81,7 +94,14 @@ public:
 	/** get the encoded BWT of the original seq */
 	DNAseq getBWT() const;
 
-	/** clear SA */
+	/** clear uncompressed BWT */
+	FMDIndex& clearBWT() {
+		bwt.clear();
+		bwt.shrink_to_fit();
+		return *this;
+	}
+
+	/** clear SAsampled */
 	FMDIndex& clearSA() {
 		SAidx.reset();
 		SAsampled.clear();
@@ -188,7 +208,7 @@ public:
 	 */
 	istream& load(istream& in);
 
-	/** build SAidx and SAsampled */
+	/** build SAidx and SAsampled on the fly */
 	FMDIndex& buildSA(int saSampleRate = SA_SAMPLE_RATE);
 
 public:
@@ -244,27 +264,29 @@ public:
 	}
 
 	/* non-member functions */
-	friend FMDIndex operator+(const FMDIndex& lhs, const FMDIndex& rhs);
+	friend FMDIndex operator+(FMDIndex lhs, const FMDIndex& rhs);
 
 protected:
 	/* helper methods */
+	/** build FMDIndex from a given seq, including counts, SA, BWT but not SAidx and SAsampled */
+	void build(DNAseq& seq, bool buildSA, int saSampleRate);
+
+	/** build FMDIndex from a given seq, including counts, SA, BWT but not SAidx and SAsampled, rvalue version */
+	void build(DNAseq&& seq, bool buildSA, int saSampleRate);
+
 	/**
 	 * build alphabet counts from a DNAseq
 	 */
 	void buildCounts(const DNAseq& seq);
 
-	/** build BWT uncompressed and compressed,
-	 * @return a newly allocated temporary SA (suffix array used during BWT build
-	 */
+	/** build SA and BWT and gapSA from a given seq */
 	int64_t* buildBWT(const DNAseq& seq);
 
-	/** build GAP SA and index */
+	/** build gapSA */
 	void buildGap(const int64_t* SA);
 
-	/**
-	 * build SAidx and SAsampled with given internal SA, which are available during direct construction
-	 */
-	void buildSA(const int64_t* SA, int saSampleRate = SA_SAMPLE_RATE);
+	/** build SAidx and SAsampled with given SA */
+	FMDIndex& buildSA(const int64_t* SA, int saSampleRate = SA_SAMPLE_RATE);
 
 	/** build interleaving BitVector for two FMD-index, use parallelization optionally */
 	static BitStr32 buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs);
@@ -279,7 +301,7 @@ protected:
 private:
 	BCarray_t B = { };  // combined base count
 	BCarray_t C = { };  // combined cumulative count
-//	DNAseq bwt; // uncompressed bwt
+	DNAseq bwt; // uncompressed bwt
 	WaveletTreeRRR bwtRRR; /* Wavelet-Tree transformed BWT string for combined seq */
 	GAParr_t gapSA; /* SA values for gaps */
 	BitSeqRRR SAidx; /* BitSeq index telling whether a SA was sampled */
@@ -292,10 +314,9 @@ public:
 	static const int64_t MAX_LENGTH = std::numeric_limits<int64_t>::max();
 };
 
-inline FMDIndex operator+(const FMDIndex& lhs, const FMDIndex& rhs) {
-	FMDIndex fmdidxM(lhs);
-	fmdidxM += rhs;
-	return fmdidxM;
+inline FMDIndex operator+(FMDIndex lhs, const FMDIndex& rhs) {
+	lhs += rhs;
+	return lhs;
 }
 
 } /* namespace MSGSeqClean */

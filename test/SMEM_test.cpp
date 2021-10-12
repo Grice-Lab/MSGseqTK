@@ -27,7 +27,7 @@ int main() {
 	MetaGenome mtg1;
 	mtg1.addGenome(g1);
 	mtg1.updateIndex();
-	FMDIndex fmdidx1(mtg1.getBDSeq(), false);
+	FMDIndex fmdidx1(mtg1.getBDSeq());
 	fmdidx1.buildSA();
 	bdSeq += mtg1.getBDSeq();
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
@@ -42,7 +42,7 @@ int main() {
 	MetaGenome mtg2;
 	mtg2.addGenome(g2);
 	mtg2.updateIndex();
-	FMDIndex fmdidx2(mtg2.getBDSeq(), false);
+	FMDIndex fmdidx2(mtg2.getBDSeq());
 	fmdidx2.buildSA();
 	bdSeq += mtg2.getBDSeq();
 	cout << "fmdidx2.getBWT():" << endl << fmdidx2.getBWT() << endl;
