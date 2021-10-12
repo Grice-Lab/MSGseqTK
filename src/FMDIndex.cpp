@@ -126,17 +126,12 @@ FMDIndex& FMDIndex::operator+=(const FMDIndex& other) {
 		return *this;
 	}
 
-	std::cerr << "before mergeing bwt.length: " << bwt.length() << " bwtRRR.length: " << bwtRRR.length()
-			<< " SAidx.length: " << SAidx.length() << " SAsapled.length: " << SAsampled.length() << std::endl;
     /* merge gap info */
     gapSA = mergeGap(*this, other);
 
 	/* merge BWTs */
 	bwt = mergeBWT(*this, other, buildInterleavingBS(*this, other)); // update uncompressed BWT
     bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
-
-	std::cerr << "after mergeing bwt.length: " << bwt.length() << " bwtRRR.length: " << bwtRRR.length()
-			<< " SAidx.length: " << SAidx.length() << " SAsapled.length: " << SAsampled.length() << std::endl;
 
 	/* merge counts */
 	for(int64_t i = 0; i <= DNAalphabet::NT16_MAX; ++i) {
