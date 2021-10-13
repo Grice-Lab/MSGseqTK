@@ -25,15 +25,6 @@ AC_CHECK_FUNCS([malloc])
 AC_PROG_RANLIB
 LT_INIT
 
-# customized macros
-AC_ARG_ENABLE([build64],
-	AS_HELP_STRING([--disable-build64], [build a 32 bits version library instead of 64 bits version]),
-	[AC_DEFINE([BUILD_DIVSUFSORT64], [0], [build a 32 bits version of libdivsufsort])],
-	[AC_DEFINE([BUILD_DIVSUFSORT64], [1], [build a 64 bits version of libdivsufsort])]
-)
-
-AM_CONDITIONAL([BUILD64], [test "x$enable_build64" != "xno"])
-
 AC_CONFIG_FILES([Makefile lib/Makefile examples/Makefile])
 
 AC_OPENMP

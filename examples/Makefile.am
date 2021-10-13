@@ -11,13 +11,14 @@ bwt \
 mksary \
 sasearch \
 suftest \
-unbwt
+unbwt \
+bwt64 \
+mksary64 \
+sasearch64 \
+suftest64 \
+unbwt64
 
-if BUILD64
-PKG_NAME=libdivsufsort64
-else
 PKG_NAME=libdivsufsort
-endif
 
 bwt_SOURCES = bwt.c
 bwt_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
@@ -34,9 +35,29 @@ suftest_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
 unbwt_SOURCES = unbwt.c
 unbwt_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
 
+bwt64_SOURCES = bwt64.c
+bwt64_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
+
+mksary64_SOURCES = mksary64.c
+mksary64_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
+
+sasearch64_SOURCES = sasearch64.c
+sasearch64_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
+
+suftest64_SOURCES = suftest64.c
+suftest64_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
+
+unbwt64_SOURCES = unbwt64.c
+unbwt64_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
+
 TESTS = \
 bwt \
 mksary \
 sasearch \
 suftest \
-unbwt
+unbwt \
+bwt64 \
+mksary64 \
+sasearch64 \
+suftest64 \
+unbwt64

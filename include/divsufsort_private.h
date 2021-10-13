@@ -58,29 +58,9 @@ extern "C" {
 #  include <stdint.h>
 # endif
 #endif
-#if defined(BUILD_DIVSUFSORT64)
-# include "divsufsort64.h"
-# ifndef SAIDX_T
-#  define SAIDX_T
-#  define saidx_t saidx64_t
-# endif /* SAIDX_T */
-# ifndef PRIdSAIDX_T
-#  define PRIdSAIDX_T PRIdSAIDX64_T
-# endif /* PRIdSAIDX_T */
-# define divsufsort divsufsort64
-# define divbwt divbwt64
-# define divsufsort_version divsufsort64_version
-# define bw_transform bw_transform64
-# define inverse_bw_transform inverse_bw_transform64
-# define sufcheck sufcheck64
-# define sa_search sa_search64
-# define sa_simplesearch sa_simplesearch64
-# define sssort sssort64
-# define trsort trsort64
-#else
-# include "divsufsort.h"
-#endif
 
+# include "divsufsort.h"
+# include "divsufsort64.h"
 
 /*- Constants -*/
 #if !defined(UINT8_MAX)
@@ -117,28 +97,24 @@ extern "C" {
 #endif
 /* minstacksize = log(SS_BLOCKSIZE) / log(3) * 2 */
 #if SS_BLOCKSIZE == 0
-# if defined(BUILD_DIVSUFSORT64)
-#  define SS_MISORT_STACKSIZE (96)
-# else
-#  define SS_MISORT_STACKSIZE (64)
-# endif
+# define SS_MISORT_STACKSIZE64 (96)
+# define SS_MISORT_STACKSIZE (64)
 #elif SS_BLOCKSIZE <= 4096
 # define SS_MISORT_STACKSIZE (16)
+# define SS_MISORT_STACKSIZE64 (16)
 #else
 # define SS_MISORT_STACKSIZE (24)
+# define SS_MISORT_STACKSIZE64 (24)
 #endif
-#if defined(BUILD_DIVSUFSORT64)
-# define SS_SMERGE_STACKSIZE (64)
-#else
+
+# define SS_SMERGE_STACKSIZE64 (64)
 # define SS_SMERGE_STACKSIZE (32)
-#endif
+
 /* for trsort.c */
 #define TR_INSERTIONSORT_THRESHOLD (8)
-#if defined(BUILD_DIVSUFSORT64)
-# define TR_STACKSIZE (96)
-#else
+
+# define TR_STACKSIZE64 (96)
 # define TR_STACKSIZE (64)
-#endif
 
 
 /*- Macros -*/
@@ -195,10 +171,19 @@ sssort(const sauchar_t *Td, const saidx_t *PA,
        saidx_t *first, saidx_t *last,
        saidx_t *buf, saidx_t bufsize,
        saidx_t depth, saidx_t n, saint_t lastsuffix);
+
+void
+sssort64(const sauchar_t *Td, const saidx64_t *PA,
+       saidx64_t *first, saidx64_t *last,
+	   saidx64_t *buf, saidx64_t bufsize,
+	   saidx64_t depth, saidx64_t n, saint_t lastsuffix);
+
 /* trsort.c */
 void
 trsort(saidx_t *ISA, saidx_t *SA, saidx_t n, saidx_t depth);
 
+void
+trsort64(saidx64_t *ISA, saidx64_t *SA, saidx64_t n, saidx64_t depth);
 
 #ifdef __cplusplus
 } /* extern "C" */
