@@ -37,7 +37,8 @@
 **/.project
 **/.settings
 # Ignore Autotools and libtools automatically genereated files
-#**/Makefile
+**/configure
+**/Makefile
 **/autom4te.cache/**
 config.log
 config.status
@@ -66,3 +67,4 @@ config.status
 # Ignore test temporaries
 **/*.trs
 **/*.swp
+**/test-driver

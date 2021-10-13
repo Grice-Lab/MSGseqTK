@@ -6,7 +6,12 @@ $(OPENMP_CFLAGS)
 AM_CPPFLAGS = \
 $(OPENMP_CFLAGS)
 
-noinst_PROGRAMS = bwt mksary sasearch suftest unbwt
+check_PROGRAMS = \
+bwt \
+mksary \
+sasearch \
+suftest \
+unbwt
 
 if BUILD64
 PKG_NAME=libdivsufsort64
@@ -29,3 +34,9 @@ suftest_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
 unbwt_SOURCES = unbwt.c
 unbwt_LDADD = $(top_srcdir)/lib/${PKG_NAME}.a
 
+TESTS = \
+bwt \
+mksary \
+sasearch \
+suftest \
+unbwt
