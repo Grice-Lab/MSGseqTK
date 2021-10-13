@@ -433,10 +433,10 @@ void buildFMDIndex(MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blo
 		blockStart = i - 1; // update blockStart
 		/* process block, if large enough */
 		if(mtg.getChromBDLoc(blockStart, blockEnd).length() >= blockSize || blockStart == 0) { /* first chrom or block is full */
-			infoLog << "Adding " << (blockEnd - blockStart) << " chroms in block " << ++blockId << " into FMD-index" << endl;
 			DNAseq blockSeq = mtg.loadBDSeq(blockStart, blockEnd, mgsIn);
-//			assert(blockSeq.back() == 0);
-			fmdidx = FMDIndex(blockSeq, false, saSampleRate) + fmdidx; /* prepend new FMDIndex, whose SA is never built */
+			infoLog << "Adding " << (blockEnd - blockStart) << " chroms of "
+					<< blockSeq.length() << " bps in block " << ++blockId << " into FMD-index" << endl;
+			fmdidx.prepend(FMDIndex(blockSeq, false, saSampleRate)); /* prepend new FMDIndex, whose SA is never built */
 			// update
 			blockEnd = blockStart;
 			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;

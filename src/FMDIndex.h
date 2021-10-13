@@ -237,7 +237,15 @@ public:
 	 * it does not update the SA (SAidx and SAsampled) automatically to save unnecessary update,
 	 * you will need to call buildSA() yourself
 	 */
-	FMDIndex& operator+=(const FMDIndex& other);
+	FMDIndex& append(const FMDIndex& other);
+
+	/** append another FMDindex to this one, alias to append */
+	FMDIndex& operator+=(const FMDIndex& other) {
+		return append(other);
+	}
+
+	/** prepend another FMDindex to this FMDindex */
+	FMDIndex& prepend(const FMDIndex& other);
 
 	/** locate all matches to given pattern */
 	vector<GLoc> locateAll(const DNAseq& pattern, GLoc::STRAND strand = GLoc::FWD) const {

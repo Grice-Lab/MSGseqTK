@@ -118,7 +118,7 @@ int64_t FMDIndex::count(const DNAseq& pattern) const {
     return std::max<int64_t>(s, 0);
 }
 
-FMDIndex& FMDIndex::operator+=(const FMDIndex& other) {
+FMDIndex& FMDIndex::append(const FMDIndex& other) {
 	if(!other.isInitiated()) /* cannot merge */
 		return *this;
 	if(!isInitiated()) {
@@ -131,6 +131,30 @@ FMDIndex& FMDIndex::operator+=(const FMDIndex& other) {
 
 	/* merge BWTs */
 	bwt = mergeBWT(*this, other, buildInterleavingBS(*this, other)); // update uncompressed BWT
+    bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+
+	/* merge counts */
+	for(int64_t i = 0; i <= DNAalphabet::NT16_MAX; ++i) {
+		B[i] += other.B[i];
+		C[i] += other.C[i];
+	}
+
+	return *this;
+}
+
+FMDIndex& FMDIndex::prepend(const FMDIndex& other) {
+	if(!other.isInitiated()) /* cannot merge */
+		return *this;
+	if(!isInitiated()) {
+		*this = other;
+		return *this;
+	}
+
+    /* merge gap info */
+    gapSA = mergeGap(other, *this);
+
+	/* merge BWTs */
+	bwt = mergeBWT(other, *this, buildInterleavingBS(other, *this)); // update uncompressed BWT
     bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
 
 	/* merge counts */
@@ -358,30 +382,12 @@ BitStr32 FMDIndex::buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs)
 }
 
 DNAseq FMDIndex::mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, const BitStr32& bstrM) {
+	assert(lhs.hasBWT() && rhs.hasBWT());
 	const size_t N = lhs.length() + rhs.length();
 	assert(N == bstrM.length());
 	DNAseq bwtM(N, 0); // merged BWT
-//#ifndef _OPENMP
 	for(size_t i = 0, j = 0, k = 0; k < N; ++k)
 		bwtM[k] = bstrM.test(k) ? lhs.bwt[i++] : rhs.bwt[j++];
-//#else
-//	int nThreads = 1;
-//#pragma omp parallel
-//	{
-//		nThreads = omp_get_num_threads();
-//	}
-//	if(1 == nThreads) { // no parallelzation needed
-//		for(size_t i = 0, j = 0, k = 0; k < N; ++k)
-//			bwtM[k] = bstrM.test(k) ? lhs.bwt[i++] : rhs.bwt[j++];
-//	}
-//	else {
-//		BitSeqGGMN bsM(bstrM);
-//#pragma omp parallel for schedule(dynamic, 4)
-//		for(size_t k = 0; k < N; ++k) {
-//			bwtM[k] = bstrM.test(k) ? lhs.bwt[bsM.rank1(k) - 1] : rhs.bwt[bsM.rank0(k) - 1];
-//		}
-//	}
-//#endif
 	return bwtM;
 }
 
