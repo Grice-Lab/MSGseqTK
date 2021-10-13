@@ -47,7 +47,26 @@ static INLINE
 saint_t
 ss_ilg(saidx_t n) {
 #if SS_BLOCKSIZE == 0
-# if defined(BUILD_DIVSUFSORT64)
+  return (n & 0xffff0000) ?
+          ((n & 0xff000000) ?
+            24 + lg_table[(n >> 24) & 0xff] :
+            16 + lg_table[(n >> 16) & 0xff]) :
+          ((n & 0x0000ff00) ?
+             8 + lg_table[(n >>  8) & 0xff] :
+             0 + lg_table[(n >>  0) & 0xff]);
+#elif SS_BLOCKSIZE < 256
+  return lg_table[n];
+#else
+  return (n & 0xff00) ?
+          8 + lg_table[(n >> 8) & 0xff] :
+          0 + lg_table[(n >> 0) & 0xff];
+#endif
+}
+
+static INLINE
+saint_t
+ss_ilg64(saidx64_t n) {
+#if SS_BLOCKSIZE == 0
   return (n >> 32) ?
           ((n >> 48) ?
             ((n >> 56) ?
@@ -63,15 +82,6 @@ ss_ilg(saidx_t n) {
             ((n & 0x0000ff00) ?
                8 + lg_table[(n >>  8) & 0xff] :
                0 + lg_table[(n >>  0) & 0xff]));
-# else
-  return (n & 0xffff0000) ?
-          ((n & 0xff000000) ?
-            24 + lg_table[(n >> 24) & 0xff] :
-            16 + lg_table[(n >> 16) & 0xff]) :
-          ((n & 0x0000ff00) ?
-             8 + lg_table[(n >>  8) & 0xff] :
-             0 + lg_table[(n >>  0) & 0xff]);
-# endif
 #elif SS_BLOCKSIZE < 256
   return lg_table[n];
 #else
@@ -131,6 +141,33 @@ ss_isqrt(saidx_t x) {
   return (x < (y * y)) ? y - 1 : y;
 }
 
+static INLINE
+saidx64_t
+ss_isqrt64(saidx64_t x) {
+  saidx64_t y, e;
+
+  if(x >= (SS_BLOCKSIZE * SS_BLOCKSIZE)) { return SS_BLOCKSIZE; }
+  e = (x & 0xffff0000) ?
+        ((x & 0xff000000) ?
+          24 + lg_table[(x >> 24) & 0xff] :
+          16 + lg_table[(x >> 16) & 0xff]) :
+        ((x & 0x0000ff00) ?
+           8 + lg_table[(x >>  8) & 0xff] :
+           0 + lg_table[(x >>  0) & 0xff]);
+
+  if(e >= 16) {
+    y = sqq_table[x >> ((e - 6) - (e & 1))] << ((e >> 1) - 7);
+    if(e >= 24) { y = (y + 1 + x / y) >> 1; }
+    y = (y + 1 + x / y) >> 1;
+  } else if(e >= 8) {
+    y = (sqq_table[x >> ((e - 6) - (e & 1))] >> (7 - (e >> 1))) + 1;
+  } else {
+    return sqq_table[x] >> 4;
+  }
+
+  return (x < (y * y)) ? y - 1 : y;
+}
+
 #endif /* SS_BLOCKSIZE != 0 */
 
 
@@ -157,6 +194,25 @@ ss_compare(const sauchar_t *T,
         (U2 < U2n ? -1 : 0);
 }
 
+static INLINE
+saint_t
+ss_compare64(const sauchar_t *T,
+           const saidx64_t *p1, const saidx64_t *p2,
+           saidx64_t depth) {
+  const sauchar_t *U1, *U2, *U1n, *U2n;
+
+  for(U1 = T + depth + *p1,
+      U2 = T + depth + *p2,
+      U1n = T + *(p1 + 1) + 2,
+      U2n = T + *(p2 + 1) + 2;
+      (U1 < U1n) && (U2 < U2n) && (*U1 == *U2);
+      ++U1, ++U2) {
+  }
+
+  return U1 < U1n ?
+        (U2 < U2n ? *U1 - *U2 : 1) :
+        (U2 < U2n ? -1 : 0);
+}
 
 /*---------------------------------------------------------------------------*/
 
@@ -181,6 +237,24 @@ ss_insertionsort(const sauchar_t *T, const saidx_t *PA,
   }
 }
 
+static
+void
+ss_insertionsort64(const sauchar_t *T, const saidx64_t *PA,
+                 saidx64_t *first, saidx64_t *last, saidx64_t depth) {
+  saidx64_t *i, *j;
+  saidx64_t t;
+  saint_t r;
+
+  for(i = last - 2; first <= i; --i) {
+    for(t = *i, j = i + 1; 0 < (r = ss_compare64(T, PA + t, PA + *j, depth));) {
+      do { *(j - 1) = *j; } while((++j < last) && (*j < 0));
+      if(last <= j) { break; }
+    }
+    if(r == 0) { *j = ~*j; }
+    *(j - 1) = t;
+  }
+}
+
 #endif /* (SS_BLOCKSIZE != 1) && (SS_INSERTIONSORT_THRESHOLD != 1) */
 
 
@@ -194,6 +268,22 @@ ss_fixdown(const sauchar_t *Td, const saidx_t *PA,
            saidx_t *SA, saidx_t i, saidx_t size) {
   saidx_t j, k;
   saidx_t v;
+  saint_t c, d, e;
+
+  for(v = SA[i], c = Td[PA[v]]; (j = 2 * i + 1) < size; SA[i] = SA[k], i = k) {
+    d = Td[PA[SA[k = j++]]];
+    if(d < (e = Td[PA[SA[j]]])) { k = j; d = e; }
+    if(d <= c) { break; }
+  }
+  SA[i] = v;
+}
+
+static INLINE
+void
+ss_fixdown64(const sauchar_t *Td, const saidx64_t *PA,
+           saidx64_t *SA, saidx64_t i, saidx64_t size) {
+  saidx64_t j, k;
+  saidx64_t v;
   saint_t c, d, e;
 
   for(v = SA[i], c = Td[PA[v]]; (j = 2 * i + 1) < size; SA[i] = SA[k], i = k) {
@@ -226,6 +316,26 @@ ss_heapsort(const sauchar_t *Td, const saidx_t *PA, saidx_t *SA, saidx_t size) {
   }
 }
 
+static
+void
+ss_heapsort64(const sauchar_t *Td, const saidx64_t *PA, saidx64_t *SA, saidx64_t size) {
+  saidx64_t i, m;
+  saidx64_t t;
+
+  m = size;
+  if((size % 2) == 0) {
+    m--;
+    if(Td[PA[SA[m / 2]]] < Td[PA[SA[m]]]) { SWAP(SA[m], SA[m / 2]); }
+  }
+
+  for(i = m / 2 - 1; 0 <= i; --i) { ss_fixdown64(Td, PA, SA, i, m); }
+  if((size % 2) == 0) { SWAP(SA[0], SA[m]); ss_fixdown64(Td, PA, SA, 0, m); }
+  for(i = m - 1; 0 < i; --i) {
+    t = SA[0], SA[0] = SA[i];
+    ss_fixdown64(Td, PA, SA, 0, i);
+    SA[i] = t;
+  }
+}
 
 /*---------------------------------------------------------------------------*/
 
@@ -243,12 +353,39 @@ ss_median3(const sauchar_t *Td, const saidx_t *PA,
   return v2;
 }
 
+static INLINE
+saidx64_t *
+ss_median364(const sauchar_t *Td, const saidx64_t *PA,
+           saidx64_t *v1, saidx64_t *v2, saidx64_t *v3) {
+  saidx64_t *t;
+  if(Td[PA[*v1]] > Td[PA[*v2]]) { SWAP(v1, v2); }
+  if(Td[PA[*v2]] > Td[PA[*v3]]) {
+    if(Td[PA[*v1]] > Td[PA[*v3]]) { return v1; }
+    else { return v3; }
+  }
+  return v2;
+}
+
 /* Returns the median of five elements. */
 static INLINE
 saidx_t *
 ss_median5(const sauchar_t *Td, const saidx_t *PA,
            saidx_t *v1, saidx_t *v2, saidx_t *v3, saidx_t *v4, saidx_t *v5) {
   saidx_t *t;
+  if(Td[PA[*v2]] > Td[PA[*v3]]) { SWAP(v2, v3); }
+  if(Td[PA[*v4]] > Td[PA[*v5]]) { SWAP(v4, v5); }
+  if(Td[PA[*v2]] > Td[PA[*v4]]) { SWAP(v2, v4); SWAP(v3, v5); }
+  if(Td[PA[*v1]] > Td[PA[*v3]]) { SWAP(v1, v3); }
+  if(Td[PA[*v1]] > Td[PA[*v4]]) { SWAP(v1, v4); SWAP(v3, v5); }
+  if(Td[PA[*v3]] > Td[PA[*v4]]) { return v4; }
+  return v3;
+}
+
+static INLINE
+saidx64_t *
+ss_median564(const sauchar_t *Td, const saidx64_t *PA,
+           saidx64_t *v1, saidx64_t *v2, saidx64_t *v3, saidx64_t *v4, saidx64_t *v5) {
+  saidx64_t *t;
   if(Td[PA[*v2]] > Td[PA[*v3]]) { SWAP(v2, v3); }
   if(Td[PA[*v4]] > Td[PA[*v5]]) { SWAP(v4, v5); }
   if(Td[PA[*v2]] > Td[PA[*v4]]) { SWAP(v2, v4); SWAP(v3, v5); }
@@ -283,6 +420,29 @@ ss_pivot(const sauchar_t *Td, const saidx_t *PA, saidx_t *first, saidx_t *last) 
   return ss_median3(Td, PA, first, middle, last);
 }
 
+static INLINE
+saidx64_t *
+ss_pivot64(const sauchar_t *Td, const saidx64_t *PA, saidx64_t *first, saidx64_t *last) {
+  saidx64_t *middle;
+  saidx64_t t;
+
+  t = last - first;
+  middle = first + t / 2;
+
+  if(t <= 512) {
+    if(t <= 32) {
+      return ss_median364(Td, PA, first, middle, last - 1);
+    } else {
+      t >>= 2;
+      return ss_median564(Td, PA, first, first + t, middle, last - 1 - t, last - 1);
+    }
+  }
+  t >>= 3;
+  first  = ss_median364(Td, PA, first, first + t, first + (t << 1));
+  middle = ss_median364(Td, PA, middle - t, middle, middle + t);
+  last   = ss_median364(Td, PA, last - 1 - (t << 1), last - 1 - t, last - 1);
+  return ss_median364(Td, PA, first, middle, last);
+}
 
 /*---------------------------------------------------------------------------*/
 
@@ -293,6 +453,24 @@ ss_partition(const saidx_t *PA,
                     saidx_t *first, saidx_t *last, saidx_t depth) {
   saidx_t *a, *b;
   saidx_t t;
+  for(a = first - 1, b = last;;) {
+    for(; (++a < b) && ((PA[*a] + depth) >= (PA[*a + 1] + 1));) { *a = ~*a; }
+    for(; (a < --b) && ((PA[*b] + depth) <  (PA[*b + 1] + 1));) { }
+    if(b <= a) { break; }
+    t = ~*b;
+    *b = *a;
+    *a = t;
+  }
+  if(first < a) { *first = ~*first; }
+  return a;
+}
+
+static INLINE
+saidx64_t *
+ss_partition64(const saidx64_t *PA,
+                    saidx64_t *first, saidx64_t *last, saidx64_t depth) {
+  saidx64_t *a, *b;
+  saidx64_t t;
   for(a = first - 1, b = last;;) {
     for(; (++a < b) && ((PA[*a] + depth) >= (PA[*a + 1] + 1));) { *a = ~*a; }
     for(; (a < --b) && ((PA[*b] + depth) <  (PA[*b + 1] + 1));) { }
@@ -441,6 +619,142 @@ ss_mintrosort(const sauchar_t *T, const saidx_t *PA,
 #undef STACK_SIZE
 }
 
+/* Multikey introsort for medium size groups, 64bit version */
+static
+void
+ss_mintrosort64(const sauchar_t *T, const saidx64_t *PA,
+              saidx64_t *first, saidx64_t *last,
+              saidx64_t depth) {
+#define STACK_SIZE SS_MISORT_STACKSIZE64
+  struct { saidx64_t *a, *b, c; saidx64_t d; } stack[STACK_SIZE];
+  const sauchar_t *Td;
+  saidx64_t *a, *b, *c, *d, *e, *f;
+  saidx64_t s, t;
+  saint_t ssize;
+  saint_t limit;
+  saint_t v, x = 0;
+
+  for(ssize = 0, limit = ss_ilg64(last - first);;) {
+
+    if((last - first) <= SS_INSERTIONSORT_THRESHOLD) {
+#if 1 < SS_INSERTIONSORT_THRESHOLD
+      if(1 < (last - first)) { ss_insertionsort64(T, PA, first, last, depth); }
+#endif
+      STACK_POP(first, last, depth, limit);
+      continue;
+    }
+
+    Td = T + depth;
+    if(limit-- == 0) { ss_heapsort64(Td, PA, first, last - first); }
+    if(limit < 0) {
+      for(a = first + 1, v = Td[PA[*first]]; a < last; ++a) {
+        if((x = Td[PA[*a]]) != v) {
+          if(1 < (a - first)) { break; }
+          v = x;
+          first = a;
+        }
+      }
+      if(Td[PA[*first] - 1] < v) {
+        first = ss_partition64(PA, first, a, depth);
+      }
+      if((a - first) <= (last - a)) {
+        if(1 < (a - first)) {
+          STACK_PUSH(a, last, depth, -1);
+          last = a, depth += 1, limit = ss_ilg64(a - first);
+        } else {
+          first = a, limit = -1;
+        }
+      } else {
+        if(1 < (last - a)) {
+          STACK_PUSH(first, a, depth + 1, ss_ilg64(a - first));
+          first = a, limit = -1;
+        } else {
+          last = a, depth += 1, limit = ss_ilg64(a - first);
+        }
+      }
+      continue;
+    }
+
+    /* choose pivot */
+    a = ss_pivot64(Td, PA, first, last);
+    v = Td[PA[*a]];
+    SWAP(*first, *a);
+
+    /* partition */
+    for(b = first; (++b < last) && ((x = Td[PA[*b]]) == v);) { }
+    if(((a = b) < last) && (x < v)) {
+      for(; (++b < last) && ((x = Td[PA[*b]]) <= v);) {
+        if(x == v) { SWAP(*b, *a); ++a; }
+      }
+    }
+    for(c = last; (b < --c) && ((x = Td[PA[*c]]) == v);) { }
+    if((b < (d = c)) && (x > v)) {
+      for(; (b < --c) && ((x = Td[PA[*c]]) >= v);) {
+        if(x == v) { SWAP(*c, *d); --d; }
+      }
+    }
+    for(; b < c;) {
+      SWAP(*b, *c);
+      for(; (++b < c) && ((x = Td[PA[*b]]) <= v);) {
+        if(x == v) { SWAP(*b, *a); ++a; }
+      }
+      for(; (b < --c) && ((x = Td[PA[*c]]) >= v);) {
+        if(x == v) { SWAP(*c, *d); --d; }
+      }
+    }
+
+    if(a <= d) {
+      c = b - 1;
+
+      if((s = a - first) > (t = b - a)) { s = t; }
+      for(e = first, f = b - s; 0 < s; --s, ++e, ++f) { SWAP(*e, *f); }
+      if((s = d - c) > (t = last - d - 1)) { s = t; }
+      for(e = b, f = last - s; 0 < s; --s, ++e, ++f) { SWAP(*e, *f); }
+
+      a = first + (b - a), c = last - (d - c);
+      b = (v <= Td[PA[*a] - 1]) ? a : ss_partition64(PA, a, c, depth);
+
+      if((a - first) <= (last - c)) {
+        if((last - c) <= (c - b)) {
+          STACK_PUSH(b, c, depth + 1, ss_ilg64(c - b));
+          STACK_PUSH(c, last, depth, limit);
+          last = a;
+        } else if((a - first) <= (c - b)) {
+          STACK_PUSH(c, last, depth, limit);
+          STACK_PUSH(b, c, depth + 1, ss_ilg64(c - b));
+          last = a;
+        } else {
+          STACK_PUSH(c, last, depth, limit);
+          STACK_PUSH(first, a, depth, limit);
+          first = b, last = c, depth += 1, limit = ss_ilg64(c - b);
+        }
+      } else {
+        if((a - first) <= (c - b)) {
+          STACK_PUSH(b, c, depth + 1, ss_ilg64(c - b));
+          STACK_PUSH(first, a, depth, limit);
+          first = c;
+        } else if((last - c) <= (c - b)) {
+          STACK_PUSH(first, a, depth, limit);
+          STACK_PUSH(b, c, depth + 1, ss_ilg64(c - b));
+          first = c;
+        } else {
+          STACK_PUSH(first, a, depth, limit);
+          STACK_PUSH(c, last, depth, limit);
+          first = b, last = c, depth += 1, limit = ss_ilg64(c - b);
+        }
+      }
+    } else {
+      limit += 1;
+      if(Td[PA[*first] - 1] < v) {
+        first = ss_partition64(PA, first, last, depth);
+        limit = ss_ilg64(last - first);
+      }
+      depth += 1;
+    }
+  }
+#undef STACK_SIZE
+}
+
 #endif /* (SS_BLOCKSIZE == 0) || (SS_INSERTIONSORT_THRESHOLD < SS_BLOCKSIZE) */
 
 
@@ -459,12 +773,59 @@ ss_blockswap(saidx_t *a, saidx_t *b, saidx_t n) {
 
 static INLINE
 void
+ss_blockswap64(saidx64_t *a, saidx64_t *b, saidx64_t n) {
+  saidx64_t t;
+  for(; 0 < n; --n, ++a, ++b) {
+    t = *a, *a = *b, *b = t;
+  }
+}
+
+static INLINE
+void
 ss_rotate(saidx_t *first, saidx_t *middle, saidx_t *last) {
   saidx_t *a, *b, t;
   saidx_t l, r;
   l = middle - first, r = last - middle;
   for(; (0 < l) && (0 < r);) {
     if(l == r) { ss_blockswap(first, middle, l); break; }
+    if(l < r) {
+      a = last - 1, b = middle - 1;
+      t = *a;
+      do {
+        *a-- = *b, *b-- = *a;
+        if(b < first) {
+          *a = t;
+          last = a;
+          if((r -= l + 1) <= l) { break; }
+          a -= 1, b = middle - 1;
+          t = *a;
+        }
+      } while(1);
+    } else {
+      a = first, b = middle;
+      t = *a;
+      do {
+        *a++ = *b, *b++ = *a;
+        if(last <= b) {
+          *a = t;
+          first = a + 1;
+          if((l -= r + 1) <= r) { break; }
+          a += 1, b = middle;
+          t = *a;
+        }
+      } while(1);
+    }
+  }
+}
+
+static INLINE
+void
+ss_rotate64(saidx64_t *first, saidx64_t *middle, saidx64_t *last) {
+  saidx64_t *a, *b, t;
+  saidx64_t l, r;
+  l = middle - first, r = last - middle;
+  for(; (0 < l) && (0 < r);) {
+    if(l == r) { ss_blockswap64(first, middle, l); break; }
     if(l < r) {
       a = last - 1, b = middle - 1;
       t = *a;
@@ -537,6 +898,45 @@ ss_inplacemerge(const sauchar_t *T, const saidx_t *PA,
   }
 }
 
+static
+void
+ss_inplacemerge64(const sauchar_t *T, const saidx64_t *PA,
+                saidx64_t *first, saidx64_t *middle, saidx64_t *last,
+                saidx64_t depth) {
+  const saidx64_t *p;
+  saidx64_t *a, *b;
+  saidx64_t len, half;
+  saint_t q, r;
+  saint_t x;
+
+  for(;;) {
+    if(*(last - 1) < 0) { x = 1; p = PA + ~*(last - 1); }
+    else                { x = 0; p = PA +  *(last - 1); }
+    for(a = first, len = middle - first, half = len >> 1, r = -1;
+        0 < len;
+        len = half, half >>= 1) {
+      b = a + half;
+      q = ss_compare64(T, PA + ((0 <= *b) ? *b : ~*b), p, depth);
+      if(q < 0) {
+        a = b + 1;
+        half -= (len & 1) ^ 1;
+      } else {
+        r = q;
+      }
+    }
+    if(a < middle) {
+      if(r == 0) { *a = ~*a; }
+      ss_rotate64(a, middle, last);
+      last -= middle - a;
+      middle = a;
+      if(first == middle) { break; }
+    }
+    --last;
+    if(x != 0) { while(*--last < 0) { } }
+    if(middle == last) { break; }
+  }
+}
+
 
 /*---------------------------------------------------------------------------*/
 
@@ -555,6 +955,56 @@ ss_mergeforward(const sauchar_t *T, const saidx_t *PA,
 
   for(t = *(a = first), b = buf, c = middle;;) {
     r = ss_compare(T, PA + *b, PA + *c, depth);
+    if(r < 0) {
+      do {
+        *a++ = *b;
+        if(bufend <= b) { *bufend = t; return; }
+        *b++ = *a;
+      } while(*b < 0);
+    } else if(r > 0) {
+      do {
+        *a++ = *c, *c++ = *a;
+        if(last <= c) {
+          while(b < bufend) { *a++ = *b, *b++ = *a; }
+          *a = *b, *b = t;
+          return;
+        }
+      } while(*c < 0);
+    } else {
+      *c = ~*c;
+      do {
+        *a++ = *b;
+        if(bufend <= b) { *bufend = t; return; }
+        *b++ = *a;
+      } while(*b < 0);
+
+      do {
+        *a++ = *c, *c++ = *a;
+        if(last <= c) {
+          while(b < bufend) { *a++ = *b, *b++ = *a; }
+          *a = *b, *b = t;
+          return;
+        }
+      } while(*c < 0);
+    }
+  }
+}
+
+/* Merge-forward with internal buffer, 64bit version */
+static
+void
+ss_mergeforward64(const sauchar_t *T, const saidx64_t *PA,
+                saidx64_t *first, saidx64_t *middle, saidx64_t *last,
+                saidx64_t *buf, saidx64_t depth) {
+  saidx64_t *a, *b, *c, *bufend;
+  saidx64_t t;
+  saint_t r;
+
+  bufend = buf + (middle - first) - 1;
+  ss_blockswap64(buf, first, middle - first);
+
+  for(t = *(a = first), b = buf, c = middle;;) {
+    r = ss_compare64(T, PA + *b, PA + *c, depth);
     if(r < 0) {
       do {
         *a++ = *b;
@@ -612,6 +1062,65 @@ ss_mergebackward(const sauchar_t *T, const saidx_t *PA,
   else                  { p2 = PA +  *(middle - 1); }
   for(t = *(a = last - 1), b = bufend, c = middle - 1;;) {
     r = ss_compare(T, p1, p2, depth);
+    if(0 < r) {
+      if(x & 1) { do { *a-- = *b, *b-- = *a; } while(*b < 0); x ^= 1; }
+      *a-- = *b;
+      if(b <= buf) { *buf = t; break; }
+      *b-- = *a;
+      if(*b < 0) { p1 = PA + ~*b; x |= 1; }
+      else       { p1 = PA +  *b; }
+    } else if(r < 0) {
+      if(x & 2) { do { *a-- = *c, *c-- = *a; } while(*c < 0); x ^= 2; }
+      *a-- = *c, *c-- = *a;
+      if(c < first) {
+        while(buf < b) { *a-- = *b, *b-- = *a; }
+        *a = *b, *b = t;
+        break;
+      }
+      if(*c < 0) { p2 = PA + ~*c; x |= 2; }
+      else       { p2 = PA +  *c; }
+    } else {
+      if(x & 1) { do { *a-- = *b, *b-- = *a; } while(*b < 0); x ^= 1; }
+      *a-- = ~*b;
+      if(b <= buf) { *buf = t; break; }
+      *b-- = *a;
+      if(x & 2) { do { *a-- = *c, *c-- = *a; } while(*c < 0); x ^= 2; }
+      *a-- = *c, *c-- = *a;
+      if(c < first) {
+        while(buf < b) { *a-- = *b, *b-- = *a; }
+        *a = *b, *b = t;
+        break;
+      }
+      if(*b < 0) { p1 = PA + ~*b; x |= 1; }
+      else       { p1 = PA +  *b; }
+      if(*c < 0) { p2 = PA + ~*c; x |= 2; }
+      else       { p2 = PA +  *c; }
+    }
+  }
+}
+
+/* Merge-backward with internal buffer, 64bit version */
+static
+void
+ss_mergebackward64(const sauchar_t *T, const saidx64_t *PA,
+                 saidx64_t *first, saidx64_t *middle, saidx64_t *last,
+                 saidx64_t *buf, saidx64_t depth) {
+  const saidx64_t *p1, *p2;
+  saidx64_t *a, *b, *c, *bufend;
+  saidx64_t t;
+  saint_t r;
+  saint_t x;
+
+  bufend = buf + (last - middle) - 1;
+  ss_blockswap64(buf, middle, last - middle);
+
+  x = 0;
+  if(*bufend < 0)       { p1 = PA + ~*bufend; x |= 1; }
+  else                  { p1 = PA +  *bufend; }
+  if(*(middle - 1) < 0) { p2 = PA + ~*(middle - 1); x |= 2; }
+  else                  { p2 = PA +  *(middle - 1); }
+  for(t = *(a = last - 1), b = bufend, c = middle - 1;;) {
+    r = ss_compare64(T, p1, p2, depth);
     if(0 < r) {
       if(x & 1) { do { *a-- = *b, *b-- = *a; } while(*b < 0); x ^= 1; }
       *a-- = *b;
@@ -736,6 +1245,93 @@ ss_swapmerge(const sauchar_t *T, const saidx_t *PA,
 #undef STACK_SIZE
 }
 
+/* D&C based merge, 64bit version */
+static
+void
+ss_swapmerge64(const sauchar_t *T, const saidx64_t *PA,
+             saidx64_t *first, saidx64_t *middle, saidx64_t *last,
+             saidx64_t *buf, saidx64_t bufsize, saidx64_t depth) {
+#define STACK_SIZE SS_SMERGE_STACKSIZE64
+#define GETIDX64(a) ((0 <= (a)) ? (a) : (~(a)))
+#define MERGE_CHECK64(a, b, c)\
+  do {\
+    if(((c) & 1) ||\
+       (((c) & 2) && (ss_compare64(T, PA + GETIDX64(*((a) - 1)), PA + *(a), depth) == 0))) {\
+      *(a) = ~*(a);\
+    }\
+    if(((c) & 4) && ((ss_compare64(T, PA + GETIDX64(*((b) - 1)), PA + *(b), depth) == 0))) {\
+      *(b) = ~*(b);\
+    }\
+  } while(0)
+  struct { saidx64_t *a, *b, *c; saint_t d; } stack[STACK_SIZE];
+  saidx64_t *l, *r, *lm, *rm;
+  saidx64_t m, len, half;
+  saint_t ssize;
+  saint_t check, next;
+
+  for(check = 0, ssize = 0;;) {
+    if((last - middle) <= bufsize) {
+      if((first < middle) && (middle < last)) {
+        ss_mergebackward64(T, PA, first, middle, last, buf, depth);
+      }
+      MERGE_CHECK64(first, last, check);
+      STACK_POP(first, middle, last, check);
+      continue;
+    }
+
+    if((middle - first) <= bufsize) {
+      if(first < middle) {
+        ss_mergeforward64(T, PA, first, middle, last, buf, depth);
+      }
+      MERGE_CHECK64(first, last, check);
+      STACK_POP(first, middle, last, check);
+      continue;
+    }
+
+    for(m = 0, len = MIN(middle - first, last - middle), half = len >> 1;
+        0 < len;
+        len = half, half >>= 1) {
+      if(ss_compare64(T, PA + GETIDX64(*(middle + m + half)),
+                       PA + GETIDX64(*(middle - m - half - 1)), depth) < 0) {
+        m += half + 1;
+        half -= (len & 1) ^ 1;
+      }
+    }
+
+    if(0 < m) {
+      lm = middle - m, rm = middle + m;
+      ss_blockswap64(lm, middle, m);
+      l = r = middle, next = 0;
+      if(rm < last) {
+        if(*rm < 0) {
+          *rm = ~*rm;
+          if(first < lm) { for(; *--l < 0;) { } next |= 4; }
+          next |= 1;
+        } else if(first < lm) {
+          for(; *r < 0; ++r) { }
+          next |= 2;
+        }
+      }
+
+      if((l - first) <= (last - r)) {
+        STACK_PUSH(r, rm, last, (next & 3) | (check & 4));
+        middle = lm, last = l, check = (check & 3) | (next & 4);
+      } else {
+        if((next & 2) && (r == middle)) { next ^= 6; }
+        STACK_PUSH(first, lm, l, (check & 3) | (next & 4));
+        first = r, middle = rm, check = (next & 3) | (check & 4);
+      }
+    } else {
+      if(ss_compare64(T, PA + GETIDX64(*(middle - 1)), PA + *middle, depth) == 0) {
+        *middle = ~*middle;
+      }
+      MERGE_CHECK64(first, last, check);
+      STACK_POP(first, middle, last, check);
+    }
+  }
+#undef STACK_SIZE
+}
+
 #endif /* SS_BLOCKSIZE != 0 */
 
 
@@ -808,6 +1404,78 @@ sssort(const sauchar_t *T, const saidx_t *PA,
     saidx_t PAi[2]; PAi[0] = PA[*(first - 1)], PAi[1] = n - 2;
     for(a = first, i = *(first - 1);
         (a < last) && ((*a < 0) || (0 < ss_compare(T, &(PAi[0]), PA + *a, depth)));
+        ++a) {
+      *(a - 1) = *a;
+    }
+    *(a - 1) = i;
+  }
+}
+
+/* Substring sort, 64bit version */
+void
+sssort64(const sauchar_t *T, const saidx64_t *PA,
+       saidx64_t *first, saidx64_t *last,
+       saidx64_t *buf, saidx64_t bufsize,
+       saidx64_t depth, saidx64_t n, saint_t lastsuffix) {
+  saidx64_t *a;
+#if SS_BLOCKSIZE != 0
+  saidx64_t *b, *middle, *curbuf;
+  saidx64_t j, k, curbufsize, limit;
+#endif
+  saidx64_t i;
+
+  if(lastsuffix != 0) { ++first; }
+
+#if SS_BLOCKSIZE == 0
+  ss_mintrosort64(T, PA, first, last, depth);
+#else
+  if((bufsize < SS_BLOCKSIZE) &&
+      (bufsize < (last - first)) &&
+      (bufsize < (limit = ss_isqrt64(last - first)))) {
+    if(SS_BLOCKSIZE < limit) { limit = SS_BLOCKSIZE; }
+    buf = middle = last - limit, bufsize = limit;
+  } else {
+    middle = last, limit = 0;
+  }
+  for(a = first, i = 0; SS_BLOCKSIZE < (middle - a); a += SS_BLOCKSIZE, ++i) {
+#if SS_INSERTIONSORT_THRESHOLD < SS_BLOCKSIZE
+    ss_mintrosort64(T, PA, a, a + SS_BLOCKSIZE, depth);
+#elif 1 < SS_BLOCKSIZE
+    ss_insertionsort64(T, PA, a, a + SS_BLOCKSIZE, depth);
+#endif
+    curbufsize = last - (a + SS_BLOCKSIZE);
+    curbuf = a + SS_BLOCKSIZE;
+    if(curbufsize <= bufsize) { curbufsize = bufsize, curbuf = buf; }
+    for(b = a, k = SS_BLOCKSIZE, j = i; j & 1; b -= k, k <<= 1, j >>= 1) {
+      ss_swapmerge64(T, PA, b - k, b, b + k, curbuf, curbufsize, depth);
+    }
+  }
+#if SS_INSERTIONSORT_THRESHOLD < SS_BLOCKSIZE
+  ss_mintrosort64(T, PA, a, middle, depth);
+#elif 1 < SS_BLOCKSIZE
+  ss_insertionsort64(T, PA, a, middle, depth);
+#endif
+  for(k = SS_BLOCKSIZE; i != 0; k <<= 1, i >>= 1) {
+    if(i & 1) {
+      ss_swapmerge64(T, PA, a - k, a, middle, buf, bufsize, depth);
+      a -= k;
+    }
+  }
+  if(limit != 0) {
+#if SS_INSERTIONSORT_THRESHOLD < SS_BLOCKSIZE
+    ss_mintrosort64(T, PA, middle, last, depth);
+#elif 1 < SS_BLOCKSIZE
+    ss_insertionsort64(T, PA, middle, last, depth);
+#endif
+    ss_inplacemerge64(T, PA, first, middle, last, depth);
+  }
+#endif
+
+  if(lastsuffix != 0) {
+    /* Insert last type B* suffix. */
+    saidx64_t PAi[2]; PAi[0] = PA[*(first - 1)], PAi[1] = n - 2;
+    for(a = first, i = *(first - 1);
+        (a < last) && ((*a < 0) || (0 < ss_compare64(T, &(PAi[0]), PA + *a, depth)));
         ++a) {
       *(a - 1) = *a;
     }
