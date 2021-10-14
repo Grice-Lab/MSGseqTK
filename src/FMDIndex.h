@@ -319,7 +319,7 @@ private:
 public:
 	static const int RRR_SAMPLE_RATE = 32; /* RRR sample rate for BWT */
 	static const int SA_SAMPLE_RATE = 32;  /* sample rate for SA */
-	static const int64_t MAX_LENGTH = std::numeric_limits<int64_t>::max();
+	static const int64_t MAX_LENGTH = INT64_MAX;
 };
 
 inline FMDIndex operator+(FMDIndex lhs, const FMDIndex& rhs) {
