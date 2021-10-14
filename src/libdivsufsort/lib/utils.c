@@ -140,7 +140,7 @@ bw_transform64(const sauchar_t *T, sauchar_t *U, saidx64_t *SA,
   }
 
   if((A = SA) == NULL) {
-    i = divbwt(T, U, NULL, n);
+    i = divbwt64(T, U, NULL, n);
     if(0 <= i) { *idx = i; i = 0; }
     return (saint_t)i;
   }
