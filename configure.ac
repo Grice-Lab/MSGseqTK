@@ -54,8 +54,7 @@ AC_CONFIG_SUBDIRS([src/libdivsufsort
                    src/math
                    src/libsds])
 
-AC_SUBST(LIBDIVSUFSORT_PKG_NAME, libdivsufsort64)
-AC_DEFINE([BUILD_DIVSUFSORT64], [1], [always build a 64 bits version of libdivsufsort])
+AC_SUBST(LIBDIVSUFSORT_PKG_NAME, libdivsufsort)
 
 AC_OPENMP
 

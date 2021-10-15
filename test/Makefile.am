@@ -35,8 +35,6 @@ SMEM_test \
 SeedChain_test \
 Alignment_test
 
-LIBDIVSUFSORT_PKG_NAME=libdivsufsort64
-
 DNAseq_test_SOURCES = DNAseq_test.cpp
 DNAseq_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a
