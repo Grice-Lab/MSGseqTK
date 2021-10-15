@@ -26,27 +26,52 @@ using EGriceLab::libSDS::BitStr32;
 using EGriceLab::libSDS::BitSeqGGMN; // useful for temporary and fast BitSeq solution
 
 void FMDIndex::build(DNAseq& seq, bool buildSAsampled, int saSampleRate) {
-	if(seq.length() > MAX_LENGTH)
+	const int64_t N = seq.length();
+	if(N > MAX_LENGTH)
 		throw std::length_error("DNAseq length exceeding the max allowed length");
-	buildCounts(seq); // build count
-	const int64_t* SA = buildBWT(seq); // build BWT
+	/* build counts */
+	buildCounts(seq);
+
+	/* build SA */
+	int64_t* SA = new int64_t[N];
+    saint_t errn = divsufsort64((const uint8_t*) seq.c_str(), (saidx64_t*) SA, N); // string.c_str guarantee a null terminal
+	if(errn != 0)
+		throw std::runtime_error("Error: Cannot build suffix-array on input DNAseq");
+
+	/* build BWT */
+	buildBWT(N, seq, SA); // build BWT
 	/* free seq storage */
 	seq.clear();
 	seq.shrink_to_fit();
-	buildGap(SA); // build Gap
+	/* build Gap */
+	buildGap(SA);
+	/* build SA sample, if requested */
 	if(buildSAsampled)
 		buildSA(SA, saSampleRate);
 	delete[] SA; // delete temporary
 }
 
 void FMDIndex::build(DNAseq&& seq, bool buildSAsampled, int saSampleRate) {
-	if(seq.length() > MAX_LENGTH)
+	const int64_t N = seq.length();
+	if(N > MAX_LENGTH)
 		throw std::length_error("DNAseq length exceeding the max allowed length");
-	buildCounts(seq); // build count
-	const int64_t* SA = buildBWT(seq); // build BWT
+	/* build counts */
+	buildCounts(seq);
+
+	/* build SA */
+	int64_t* SA = new int64_t[N];
+    saint_t errn = divsufsort64((const uint8_t*) seq.c_str(), (saidx64_t*) SA, N); // string.c_str guarantee a null terminal
+	if(errn != 0)
+		throw std::runtime_error("Error: Cannot build suffix-array on input DNAseq");
+
+	/* build BWT */
+	buildBWT(N, seq, SA); // build BWT
 	/* free seq storage */
 	seq.clear();
 	seq.shrink_to_fit();
+	/* build Gap */
+	buildGap(SA);
+	/* build SA sample, if requested */
 	if(buildSAsampled)
 		buildSA(SA, saSampleRate);
 	delete[] SA; // delete temporary
@@ -195,25 +220,16 @@ DNAseq FMDIndex::getSeq() const {
 	return seq;
 }
 
-int64_t* FMDIndex::buildBWT(const DNAseq& seq) {
+void FMDIndex::buildBWT(int64_t N, const DNAseq& seq, const int64_t* SA) {
 	assert(seq.back() == 0); // must be null-terminated
-	const size_t N = seq.length();
-	/* construct SA */
-	int64_t* SA = new int64_t[N];
-    int64_t errn = divsufsort((const uint8_t*) seq.c_str(), (saidx_t*) SA, N); // string.c_str guarantee a null terminal
-	if(errn != 0)
-		throw std::runtime_error("Error: Cannot build suffix-array on DNAseq");
-
+	assert(N == seq.length());
 	/* build uncompressed bwt */
 	bwt.resize(N);
 #pragma omp parallel for
 	for(size_t i = 0; i < N; ++i)
 		bwt[i] = SA[i] == 0 ? 0 : seq[SA[i] - 1];
-
 	/* build BWTRRR */
     bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
-
-	return SA;
 }
 
 void FMDIndex::buildGap(const int64_t* SA) {
