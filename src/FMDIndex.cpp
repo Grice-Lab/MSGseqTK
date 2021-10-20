@@ -285,6 +285,13 @@ FMDIndex& FMDIndex::buildSA(int saSampleRate) {
 	return *this;
 }
 
+size_t FMDIndex::getBytes() const {
+	return sizeof(B) + sizeof(C) + sizeof(DNAseq::value_type) * bwt.size() +
+			bwtRRR.getBytes() + sizeof(GAParr_t::value_type) * gapSA.size() +
+			SAidx.getBytes() + sizeof(SAarr_t::value_type) * SAsampled.size() +
+			sizeof(this);
+}
+
 int64_t FMDIndex::accessSA(int64_t i) const {
 	int64_t dist = 0;
 	while(!SAidx.access(i)) {

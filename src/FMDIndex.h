@@ -210,6 +210,9 @@ public:
 	/** build SAidx and SAsampled on the fly */
 	FMDIndex& buildSA(int saSampleRate = SA_SAMPLE_RATE);
 
+	 /* get the size of this FMD-index in bytes */
+	size_t getBytes() const;
+
 public:
 	/**
 	 * backward extension of a bi-interval [p, q, s]

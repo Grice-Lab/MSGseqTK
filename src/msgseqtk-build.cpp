@@ -439,7 +439,7 @@ void buildFMDIndex(MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blo
 			fmdidx.prepend(FMDIndex(blockSeq, false, saSampleRate)); /* prepend new FMDIndex, whose SA is never built */
 			// update
 			blockEnd = blockStart;
-			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;
+			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << " byte: " << fmdidx.getBytes() << endl;
 		}
 	}
 	infoLog << "Building final Suffix-Array" << endl;
