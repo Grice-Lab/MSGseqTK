@@ -443,5 +443,7 @@ void buildFMDIndex(MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blo
 		}
 	}
 	infoLog << "Building final Suffix-Array" << endl;
-	fmdidx.buildSA(saSampleRate).clearBWT();
+	fmdidx.buildSA(saSampleRate);
+	infoLog << "Final FMD-index byte: " << fmdidx.getBytes() << endl;
+	fmdidx.clearBWT();
 }
