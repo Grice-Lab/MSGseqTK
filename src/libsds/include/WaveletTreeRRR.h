@@ -116,6 +116,9 @@ public:
 		Seq::reset();
 	}
 
+	/** get the size of the structure in bytes */
+	virtual size_t getBytes() const;
+
 	/** get count of given symbol */
 	virtual size_t getCount(size_t s) const {
 		return OCC[s + 1] - OCC[s] + 1;
@@ -198,7 +201,7 @@ inline void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
 	/* build basic fields */
 	n = src.length();
 	sigma = max - min + 1;
-	height = bits(max + 1);
+	height = bits(max);
 	OCC.resize(max + 2); /* 1-based occurence is dummy position */
 	/* get original OCC */
 	OCC[0] = 0;

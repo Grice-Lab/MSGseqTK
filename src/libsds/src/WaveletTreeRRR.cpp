@@ -47,6 +47,14 @@ istream& WaveletTreeRRR::load(istream& in) {
 	return in;
 }
 
+size_t WaveletTreeRRR::getBytes() const {
+	size_t nBytes = Seq::getBytes() + sizeof(height) + sizeof(wid) + sizeof(min) + sizeof(max) + sizeof(sample_rate) +
+			sizeof(size_t) * OCC.size() + sizeof(this);
+	for(const BitSeqRRR& bseq : bseqs)
+		nBytes += bseq.getBytes();
+	return nBytes;
+}
+
 size_t WaveletTreeRRR::access(size_t i) const {
 	size_t s = 0;
 	size_t start = 0;

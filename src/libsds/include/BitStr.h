@@ -411,7 +411,9 @@ public:
 
 	/** get required storage size of BitStr in bytes */
 	size_t getBytes() const {
-		return sizeof(wid) + sizeof(nB) + sizeof(n), sizeof(data) + sizeof(this);
+		return sizeof(wid) + sizeof(nB) + sizeof(n) +
+				sizeof(uIntType) * data.size() +
+				sizeof(this);
 	}
 
 	/* member fields */
