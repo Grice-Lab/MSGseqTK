@@ -156,6 +156,7 @@ FMDIndex& FMDIndex::append(const FMDIndex& other) {
 
 	/* merge BWTs */
 	bwt = mergeBWT(*this, other, buildInterleavingBS(*this, other)); // update uncompressed BWT
+	bwtRRR.reset();
     bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
 
 	/* merge counts */
@@ -180,6 +181,7 @@ FMDIndex& FMDIndex::prepend(const FMDIndex& other) {
 
 	/* merge BWTs */
 	bwt = mergeBWT(other, *this, buildInterleavingBS(other, *this)); // update uncompressed BWT
+	bwtRRR.reset();
     bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
 
 	/* merge counts */
