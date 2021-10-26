@@ -94,7 +94,7 @@ void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, int 
 /**
  * build the FMD-index incrementally, it will also shrink the MetaGenome on-the-fly to save RAM
  */
-void buildFMDIndex(MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blockSize, int saSampleRate);
+void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blockSize, int saSampleRate);
 
 int main(int argc, char* argv[]) {
 	/* variable declarations */
@@ -423,7 +423,7 @@ void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, int 
 	fmdidx = FMDIndex(bdSeq, true, saSampleRate).clearBWT(); // build whole metagenome FMDIndex in one step
 }
 
-void buildFMDIndex(MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blockSize, int saSampleRate) {
+void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blockSize, int saSampleRate) {
 	infoLog << "Building FMD-index incrementally" << endl;
 	const size_t NC = mtg.numChroms();
 	size_t blockId = 0;
@@ -433,7 +433,9 @@ void buildFMDIndex(MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blo
 		blockStart = i - 1; // update blockStart
 		/* process block, if large enough */
 		if(mtg.getChromBDLoc(blockStart, blockEnd).length() >= blockSize || blockStart == 0) { /* first chrom or block is full */
+//			DNAseq blockSeq = mtg.loadBDSeq(blockStart, blockEnd, mgsIn);
 			DNAseq blockSeq = mtg.loadBDSeq(blockStart, blockEnd, mgsIn);
+
 			infoLog << "Adding " << (blockEnd - blockStart) << " chroms of "
 					<< blockSeq.length() << " bps in block " << ++blockId << " into FMD-index" << endl;
 			fmdidx.prepend(FMDIndex(blockSeq, false, saSampleRate)); /* prepend new FMDIndex, whose SA is never built */

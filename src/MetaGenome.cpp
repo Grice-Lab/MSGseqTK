@@ -76,6 +76,18 @@ DNAseq MetaGenome::loadSeq(size_t tid, istream& in) const {
 	return tSeq;
 }
 
+DNAseq MetaGenome::getBDSeq(DNAseq seq) {
+	dna::toBasic(seq); // use only non-ambiguous bases
+	const int64_t L = seq.length();
+	/* enlarge the input seq, filled with 0 (Ns) */
+	seq.resize(2 * (L + 1));
+	/* copy it self to the second part */
+	std::copy_n(seq.begin(), L, seq.begin() + L + 1);
+	/* revcom the second harf of the seq */
+	dna::revcom(seq.begin() + L + 1, seq.begin() + 2 * L + 1);
+	return seq;
+}
+
 MetaGenome& MetaGenome::operator+=(const MetaGenome& other) {
 	genomes.insert(genomes.end(), other.genomes.begin(), other.genomes.end());
 	updateIndex();

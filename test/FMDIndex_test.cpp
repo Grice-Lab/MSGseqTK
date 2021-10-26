@@ -81,9 +81,9 @@ int main() {
 		return EXIT_FAILURE;
 
 	DNAseq seq3 = MetaGenome::getBDSeq(dna::encode("GTAGCATGGAG"));
-	seqM1 += seq3;
+	seqM1 = seq3 + seqM1;
 	cout << "seqM1:" << endl << seqM1 << endl;
-	fmdidx1 += FMDIndex(seq3);
+	fmdidx1.prepend(FMDIndex(seq3));
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;
@@ -109,9 +109,9 @@ int main() {
 		return EXIT_FAILURE;
 
 	DNAseq seq4 = MetaGenome::getBDSeq(dna::encode("GTAGCATTGAG"));
-	seqM1 += seq4;
+	seqM1 = seq4 + seqM1;
 	cout << "seqM1:" << endl << seqM1 << endl;
-	fmdidx1 += FMDIndex(seq4);
+	fmdidx1.prepend(FMDIndex(seq4));
 	cout << "fmdidx1.length(): " << fmdidx1.length() << endl;
 	cout << "fmdidx1.getBWT():" << endl << fmdidx1.getBWT() << endl;
 	cout << "fmdidx1.getSeq():" << endl << fmdidx1.getSeq() << endl;

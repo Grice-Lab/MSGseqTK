@@ -368,7 +368,7 @@ public:
 	/** load seq of given tid from binary input */
 	DNAseq loadSeq(size_t tid, istream& in) const;
 
-	/** load bi-directional seq of given tid from binary input */
+	/** load bi-directional seq of given tid from binary input, only basic bases allowed */
 	DNAseq loadBDSeq(size_t tid, istream& in) const {
 		return getBDSeq(loadSeq(tid, in));
 	}
@@ -376,11 +376,11 @@ public:
 	/** load a BD block seq by tid range */
 	DNAseq loadBDSeq(size_t tStart, size_t tEnd, istream& in) const {
 		assert(tStart < tEnd);
-		DNAseq seq;
-		seq.reserve(getChromBDEnd(tEnd - 1) - getChromBDStart(tStart));
+		DNAseq bdSeq;
+		bdSeq.reserve(getChromBDEnd(tEnd - 1) - getChromBDStart(tStart));
 		for(size_t tid = tStart; tid < tEnd; ++tid)
-			seq += loadBDSeq(tid, in);
-		return seq;
+			bdSeq += loadBDSeq(tid, in);
+		return bdSeq;
 	}
 
 	/** get concatenated bi-directional seq of the entire MetaGenome */
@@ -451,12 +451,9 @@ public:
 	}
 
 	/** get bi-directional seq for a given seq
-	 * with forward and revcom seq separated by N
+	 * with forward and revcom seq separated by N, and all seq transfered to basic bases
 	 */
-	static DNAseq getBDSeq(const DNAseq& seq) {
-		const DNAseq& bdSeq = dna::toBasic(seq);
-		return bdSeq + DNAalphabet::GAP_BASE + dna::revcom(bdSeq) + DNAalphabet::GAP_BASE;
-	}
+	static DNAseq getBDSeq(DNAseq seq);
 };
 
 inline bool operator==(const MetaGenome& lhs, const MetaGenome& rhs) {

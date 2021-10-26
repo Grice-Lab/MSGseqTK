@@ -48,7 +48,7 @@ SeqIO_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/util/libEGUtil.a
 
-FMDIndex_test_SOURCES = FMDIndex_test.cpp
+FMDIndex_test_SOURCES = FMDIndex_test.cpp $(top_srcdir)/src/MSGseqTKEnv.cpp
 FMDIndex_test_LDADD = \
 $(top_srcdir)/src/libMSGseqTK.a \
 $(top_srcdir)/src/libdivsufsort/lib/${LIBDIVSUFSORT_PKG_NAME}.a \

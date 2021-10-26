@@ -294,10 +294,22 @@ protected:
 	/** build gapSA */
 	void buildGap(const int64_t* SA);
 
+	/** append another FMD-index BWT to this */
+	FMDIndex& appendBWT(const FMDIndex& other, const BitStr32& bstrM);
+
+	/** prepend another FMD-index BWT to this */
+	FMDIndex& prependBWT(const FMDIndex& other, const BitStr32& bstrM);
+
+	/** append another FMD-index Gap to this */
+	FMDIndex& appendGap(const FMDIndex& other);
+
+	/** prepend another FMD-index Gap to this */
+	FMDIndex& prependGap(const FMDIndex& other);
+
 	/** build SAidx and SAsampled with given SA */
 	FMDIndex& buildSA(const int64_t* SA, int saSampleRate = SA_SAMPLE_RATE);
 
-	/** build interleaving BitVector for two FMD-index, use parallelization optionally */
+	/** build interleaving BitVector for two FMD-index */
 	static BitStr32 buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs);
 
 	/** merge two DNAseq by an interleaving bitvector, use parallelization optionally */

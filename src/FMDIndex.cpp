@@ -152,10 +152,10 @@ FMDIndex& FMDIndex::append(const FMDIndex& other) {
 	}
 
     /* merge gap info */
-    gapSA = mergeGap(*this, other);
+    appendGap(other);
 
 	/* merge BWTs */
-	bwt = mergeBWT(*this, other, buildInterleavingBS(*this, other)); // update uncompressed BWT
+	appendBWT(other, buildInterleavingBS(*this, other)); // update uncompressed BWT
 	bwtRRR.reset();
     bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
 
@@ -177,10 +177,12 @@ FMDIndex& FMDIndex::prepend(const FMDIndex& other) {
 	}
 
     /* merge gap info */
-    gapSA = mergeGap(other, *this);
+    prependGap(other);
 
 	/* merge BWTs */
-	bwt = mergeBWT(other, *this, buildInterleavingBS(other, *this)); // update uncompressed BWT
+	prependBWT(other, buildInterleavingBS(other, *this)); // update uncompressed BWT
+//	bwt = mergeBWT(other, *this, buildInterleavingBS(other, *this)); // update uncompressed BWT
+
 	bwtRRR.reset();
     bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
 
@@ -260,7 +262,7 @@ FMDIndex& FMDIndex::buildSA(const int64_t* SA, int saSampleRate) {
 
 FMDIndex& FMDIndex::buildSA(int saSampleRate) {
 	const int64_t N = length();
-	assert(bwt.length() == N);
+	assert(hasBWT());
 	{
 		/* build the bitstr in the 1st pass */
 		BitStr32 bstr(N);
@@ -386,8 +388,8 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 }
 
 BitStr32 FMDIndex::buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs) {
-	assert(lhs.hasBWT() && rhs.hasBWT());
-	const size_t N = lhs.length() + rhs.length();
+	assert(lhs.hasBWT());
+	const int64_t N = lhs.length() + rhs.length();
 	BitStr32 bstrM(N);
 #pragma omp parallel for schedule(dynamic)
 	for(int64_t i = 0; i < lhs.numGaps(); ++i) { // the i-th BWT segment of lhs
@@ -408,24 +410,87 @@ BitStr32 FMDIndex::buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs)
 
 DNAseq FMDIndex::mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, const BitStr32& bstrM) {
 	assert(lhs.hasBWT() && rhs.hasBWT());
-	const size_t N = lhs.length() + rhs.length();
+	const int64_t N = lhs.length() + rhs.length();
 	assert(N == bstrM.length());
 	DNAseq bwtM(N, 0); // merged BWT
-	for(size_t i = 0, j = 0, k = 0; k < N; ++k)
+	for(int64_t i = 0, j = 0, k = 0; k < N; ++k)
 		bwtM[k] = bstrM.test(k) ? lhs.bwt[i++] : rhs.bwt[j++];
 	return bwtM;
+}
+
+FMDIndex& FMDIndex::appendBWT(const FMDIndex& other, const BitStr32& bstrM) {
+	assert(hasBWT() && other.hasBWT());
+	const int64_t N1 = length();
+	const int64_t N2 = other.length();
+	const int64_t N = N1 + N2;
+	assert(N == bstrM.length());
+	bwt.resize(N); // extend current bwt
+	/* re-locate this bwt */
+	for(int64_t k = N - 1, i = N1 - 1; k >= 0; --k)
+		if(bstrM.test(k))
+			bwt[k] = bwt[i--];
+	/* insert other bwt */
+	for(int64_t k = 0, j = 0; k < N; ++k)
+		if(!bstrM.test(k))
+			bwt[k] = other.bwt[j++];
+	return *this;
+}
+
+FMDIndex& FMDIndex::prependBWT(const FMDIndex& other, const BitStr32& bstrM) {
+	assert(hasBWT() && other.hasBWT());
+	const int64_t N1 = other.length();
+	const int64_t N2 = length();
+	const int64_t N = N1 + N2;
+	assert(N == bstrM.length());
+	bwt.resize(N); // extend current bwt
+	/* re-locate this bwt */
+	for(int64_t k = N - 1, j = N2 - 1; k >= 0; --k)
+		if(!bstrM.test(k))
+			bwt[k] = bwt[j--];
+	/* insert other bwt */
+	for(int64_t k = 0, i = 0; k < N; ++k)
+		if(bstrM.test(k))
+			bwt[k] = other.bwt[i++];
+	return *this;
 }
 
 FMDIndex::GAParr_t FMDIndex::mergeGap(const FMDIndex& lhs, const FMDIndex& rhs) {
 	const int64_t N1 = lhs.numGaps();
 	const int64_t N2 = rhs.numGaps();
-	GAParr_t gapM(N1 + N2, 0); // init with 0s
+	const int64_t N = N1 + N2;
+	GAParr_t gapM(N, 0); // init with 0s
 	/* copy rhs gaps with shift */
 	std::transform(rhs.gapSA.begin(), rhs.gapSA.end(), gapM.begin(),
 			[&] (GAParr_t::value_type pos) { return pos + lhs.length(); } );
 	/* copy lhs gaps */
 	std::copy(lhs.gapSA.begin(), lhs.gapSA.end(), gapM.begin() + N2);
 	return gapM;
+}
+
+FMDIndex& FMDIndex::appendGap(const FMDIndex& other) {
+	const int64_t N1 = numGaps();
+	const int64_t N2 = other.numGaps();
+	const int64_t N = N1 + N2;
+	gapSA.resize(N);
+	/* move this gaps to the end */
+	std::copy_n(gapSA.begin(), N1, gapSA.begin() + N2);
+	/* copy other gaps with shift */
+	std::transform(other.gapSA.begin(), other.gapSA.end(), gapSA.begin(),
+			[&] (GAParr_t::value_type pos) { return pos + length(); } );
+	return *this;
+}
+
+FMDIndex& FMDIndex::prependGap(const FMDIndex& other) {
+	const int64_t N1 = other.numGaps();
+	const int64_t N2 = numGaps();
+	const int64_t N = N1 + N2;
+	gapSA.resize(N);
+	/* transfer this gaps with shift */
+	std::transform(gapSA.begin(), gapSA.end(), gapSA.begin(),
+			[&] (GAParr_t::value_type pos) { return pos + other.length(); } );
+	/* copy other gaps to the end */
+	std::copy(other.gapSA.begin(), other.gapSA.end(), gapSA.begin() + N2);
+	return *this;
 }
 
 } /* namespace MSGSeqClean */

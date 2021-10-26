@@ -37,11 +37,17 @@ bool isValid(const DNAseq& seq, DNAseq::size_type i) {
 	return DNAalphabet::isValid(seq[i]);
 }
 
+/** test whether the a given sequence region is valid */
+inline
+bool isValid(DNAseq::const_iterator first, DNAseq::const_iterator last) {
+	return std::all_of(first, last,
+			[](DNAseq::value_type b) { return DNAalphabet::isValid(b); });
+}
+
 /** test whether the whole sequence is valid */
 inline
 bool isValid(const DNAseq& seq) {
-	return std::all_of(seq.begin(), seq.end(),
-			[](DNAseq::value_type b) { return DNAalphabet::isValid(b); });
+	return isValid(seq.begin(), seq.end());
 }
 
 /** test whether position i is a valid base (non-gap) */
@@ -50,24 +56,48 @@ bool isBase(const DNAseq& seq, DNAseq::size_type i) {
 	return DNAalphabet::isBase(seq[i]);
 }
 
+/** test whether a given sequence region is all base, no gap */
+inline
+bool isBase(DNAseq::const_iterator first, DNAseq::const_iterator last) {
+	return std::all_of(first, last,
+			[](DNAseq::value_type b) { return DNAalphabet::isBase(b); });
+}
+
 /** test whether the whole sequence is all base, no gap */
 inline
 bool isBase(const DNAseq& seq) {
-	return std::all_of(seq.begin(), seq.end(),
-			[](DNAseq::value_type b) { return DNAalphabet::isBase(b); });
+	return isBase(seq.begin(), seq.end());
+}
+
+/** test whether a given base in seq is gap */
+inline
+bool isGap(const DNAseq& seq, DNAseq::size_type i) {
+	return DNAalphabet::isGap(seq[i]);
+}
+
+/** test whether a given seq region has any gaps */
+inline
+bool isGap(DNAseq::const_iterator first, DNAseq::const_iterator last) {
+	return std::any_of(first, last,
+			[](DNAseq::value_type b) { return DNAalphabet::isGap(b); });
 }
 
 /** test whether any base is gap */
 inline
-bool hasGap(const DNAseq& seq) {
-	return std::any_of(seq.begin(), seq.end(),
-			[](DNAseq::value_type b) { return DNAalphabet::isGap(b); });
+bool isGap(const DNAseq& seq) {
+	return isGap(seq.begin(), seq.end());
+}
+
+/** reverse a given region of a seq */
+inline
+void reverse(DNAseq::iterator first, DNAseq::iterator last) {
+	std::reverse(first, last);
 }
 
 /** reverse this a DNAseq */
 inline
 DNAseq& reverse(DNAseq& seq) {
-	std::reverse(seq.begin(), seq.end());
+	reverse(seq.begin(), seq.end());
 	return seq;
 }
 
@@ -78,11 +108,17 @@ DNAseq reverse(const DNAseq& seq) {
 	return reverse(rSeq);
 }
 
+/** complement a given region of a seq */
+inline
+void complement(DNAseq::iterator first, DNAseq::iterator last) {
+	for(DNAseq::iterator it = first; it != last; ++it)
+		*it = DNAalphabet::complement(*it);
+}
+
 /** Get a complement of a DNAseq */
 inline
 DNAseq& complement(DNAseq& seq) {
-	for(DNAseq::value_type& b: seq)
-		b = DNAalphabet::complement(b);
+	complement(seq.begin(), seq.end());
 	return seq;
 }
 
@@ -93,10 +129,18 @@ DNAseq complement(const DNAseq& seq) {
 	return complement(cSeq);
 }
 
+/** reverse complement a region of a seq */
+inline
+void revcom(DNAseq::iterator first, DNAseq::iterator last) {
+	reverse(first, last);
+	complement(first, last);
+}
+
 /** reverse complement a DNAseq */
 inline
 DNAseq& revcom(DNAseq& seq) {
-	return complement(reverse(seq));
+	revcom(seq.begin(), seq.end());
+	return seq;
 }
 
 /**
