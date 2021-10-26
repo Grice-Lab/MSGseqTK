@@ -180,6 +180,34 @@ public:
 	}
 
 	/**
+	 * load data from a binary input to given basic_string, override any old data,
+	 * it will directly access the string memory since in C++11, strings are guaranteed to be stored linearly
+	 * @param dest  destination
+	 * @param in  input
+	 * @param number basic_string to load
+	 * @return  whether loading was successful
+	 */
+	static istream& loadString(basic_string<uint8_t>& dest, istream& in, size_t length) {
+		dest.resize(length);
+		in.read(reinterpret_cast<char*>(const_cast<uint8_t*>(dest.data())), length * sizeof(uint8_t));
+		return in;
+	}
+
+	/**
+	 * load data from a binary input to given basic_string, override any old data,
+	 * it will directly access the string memory since in C++11, strings are guaranteed to be stored linearly
+	 * @param dest  destination
+	 * @param in  input
+	 * @param number basic_string to load
+	 * @return  whether loading was successful
+	 */
+	static istream& loadString(string& dest, istream& in, size_t length) {
+		dest.resize(length);
+		in.read(const_cast<char*>(dest.data()), length * sizeof(char));
+		return in;
+	}
+
+	/**
 	 * load data from a binary input to given string, using prepend length
 	 * @param dest  destination
 	 * @param in  input
