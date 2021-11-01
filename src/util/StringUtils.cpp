@@ -158,6 +158,18 @@ string StringUtils::removeEnd(const string& str, const string& suffix) {
 	return strN;
 }
 
+istream& StringUtils::loadString(basic_string<uint8_t>& dest, istream& in, size_t length) {
+	dest.resize(length);
+	in.read(reinterpret_cast<char*>(const_cast<uint8_t*>(dest.data())), length * sizeof(uint8_t));
+	return in;
+}
+
+istream& StringUtils::loadString(string& dest, istream& in, size_t length) {
+	dest.resize(length);
+	in.read(const_cast<char*>(dest.data()), length * sizeof(char));
+	return in;
+}
+
 string StringUtils::common(string str1, string str2) {
 	/* sort input strings */
 	std::sort(str1.begin(), str1.end());

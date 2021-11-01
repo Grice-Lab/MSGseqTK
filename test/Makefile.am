@@ -37,11 +37,13 @@ Alignment_test
 
 DNAseq_test_SOURCES = DNAseq_test.cpp
 DNAseq_test_LDADD = \
-$(top_srcdir)/src/libMSGseqTK.a
+$(top_srcdir)/src/libMSGseqTK.a \
+$(top_srcdir)/src/util/libEGUtil.a
 
 PrimarySeq_test_SOURCES = PrimarySeq_test.cpp
 PrimarySeq_test_LDADD = \
-$(top_srcdir)/src/libMSGseqTK.a
+$(top_srcdir)/src/libMSGseqTK.a \
+$(top_srcdir)/src/util/libEGUtil.a
 
 SeqIO_test_SOURCES = SeqIO_test.cpp
 SeqIO_test_LDADD = \

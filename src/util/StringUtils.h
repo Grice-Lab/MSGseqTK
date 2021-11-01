@@ -187,11 +187,7 @@ public:
 	 * @param number basic_string to load
 	 * @return  whether loading was successful
 	 */
-	static istream& loadString(basic_string<uint8_t>& dest, istream& in, size_t length) {
-		dest.resize(length);
-		in.read(reinterpret_cast<char*>(const_cast<uint8_t*>(dest.data())), length * sizeof(uint8_t));
-		return in;
-	}
+	static istream& loadString(basic_string<uint8_t>& dest, istream& in, size_t length);
 
 	/**
 	 * load data from a binary input to given basic_string, override any old data,
@@ -201,11 +197,7 @@ public:
 	 * @param number basic_string to load
 	 * @return  whether loading was successful
 	 */
-	static istream& loadString(string& dest, istream& in, size_t length) {
-		dest.resize(length);
-		in.read(const_cast<char*>(dest.data()), length * sizeof(char));
-		return in;
-	}
+	static istream& loadString(string& dest, istream& in, size_t length);
 
 	/**
 	 * load data from a binary input to given string, using prepend length
