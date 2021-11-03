@@ -147,33 +147,7 @@ private:
 	 * @param offset  offset relative to the original symbol
 	 */
 	template<typename uIntType>
-	void build_level(vector<BitStr32>& bstrs, const basic_string<uIntType>& sym, size_t level, size_t offset = 0) {
-		if(level == height)
-			return;
-	//	fprintf(stderr, "buidling level %d offset: %d\n", level, offset);
-
-		basic_string<uIntType> left;
-		basic_string<uIntType> right;
-		BitStr32& bs = bstrs[level];
-		left.reserve(sym.length());
-		right.reserve(sym.length());
-
-		assert(bs.length() == n);
-
-		for (size_t i = 0; i < sym.length(); ++i) {
-			if(test(sym[i], level)) {
-				bs.set(i + offset);
-				right.push_back(sym[i]);
-			}
-			else {
-				left.push_back(sym[i]);
-			}
-		}
-
-		/* build level recursevely */
-		build_level(bstrs, left, level + 1, offset);
-		build_level(bstrs, right, level + 1, offset + left.length());
-	}
+	void build_level(vector<BitStr32>& bstrs, const basic_string<uIntType>& sym,size_t level, size_t offset = 0);
 
 	/* member fields */
 private:
@@ -203,6 +177,7 @@ inline void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
 	sigma = max - min + 1;
 	height = bits(max);
 	OCC.resize(max + 2); /* 1-based occurence is dummy position */
+
 	/* get original OCC */
 	OCC[0] = 0;
 	for (uIntType ch : src)
@@ -225,6 +200,37 @@ inline void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
 	/* build cumulative OCC */
 	for(size_t i = 1; i <= max + 1; ++i)
 		OCC[i] += OCC[i - 1];
+}
+
+template<typename uIntType>
+inline void WaveletTreeRRR::build_level(vector<BitStr32>& bstrs, const basic_string<uIntType>& sym,
+		size_t level, size_t offset) {
+	if(level == height)
+		return;
+	const size_t N = sym.length();
+	BitStr32& bs = bstrs[level];
+
+	assert(bs.length() == n);
+
+	size_t nbits = 0;
+	for (size_t i = 0; i < N; ++i) {
+		if(test(sym[i], level)) {
+			bs.set(i + offset);
+			nbits++;
+		}
+	}
+
+	basic_string<uIntType> left(N - nbits, 0);
+	basic_string<uIntType> right(nbits, 0);
+	for(size_t k = 0, i = 0, j = 0; k < N; ++k)
+		if(test(sym[k], level))
+			right[j++] = sym[k];
+		else
+			left[i++] = sym[k];
+
+	/* build level recursevely */
+	build_level(bstrs, left, level + 1, offset);
+	build_level(bstrs, right, level + 1, offset + left.length());
 }
 
 inline bool operator==(const WaveletTreeRRR& lhs, const WaveletTreeRRR& rhs) {
