@@ -52,6 +52,20 @@ public:
 		build(src);
 	}
 
+	/**
+	 * build a WaveletTree from a std::basic_string of any type in any alphabet, non-const version
+	 * @param src  copy of input string
+	 */
+	template<typename uIntType>
+	WaveletTreeRRR(basic_string<uIntType>& src, size_t min = -1, size_t max = -1, size_t sample_rate = BitSeqRRR::DEFAULT_SAMPLE_RATE)
+	: wid(sizeof(uIntType) * Wb), min(min), max(max), sample_rate(sample_rate) {
+		if(this->min == -1)
+			this->min = *std::min_element(src.begin(), src.end());
+		if(this->max == -1)
+			this->max = *std::max_element(src.begin(), src.end());
+		build(src);
+	}
+
 	/* member methods */
 	/** test whether the i-th bit of val is set */
 	bool test(size_t val, size_t i) const {
@@ -141,6 +155,12 @@ private:
 	void build(const basic_string<uIntType>& src);
 
 	/**
+	 * build the basic fields from a copy of the input string, non-cost version
+	 */
+	template<typename uIntType>
+	void build(basic_string<uIntType>& src);
+
+	/**
 	 * recursively build Wavelet Tree bstrs of given level
 	 * @param sym  (encoded) input symbol substring at given level
 	 * @param level  level to build
@@ -148,6 +168,15 @@ private:
 	 */
 	template<typename uIntType>
 	void build_level(vector<BitStr32>& bstrs, const basic_string<uIntType>& sym,size_t level, size_t offset = 0);
+
+	/**
+	 * recursively build Wavelet Tree bstrs of given level, non-const version
+	 * @param sym  (encoded) input symbol substring at given level
+	 * @param level  level to build
+	 * @param offset  offset relative to the original symbol
+	 */
+	template<typename uIntType>
+	void build_level(vector<BitStr32>& bstrs, basic_string<uIntType>& sym,size_t level, size_t offset = 0);
 
 	/* member fields */
 private:
@@ -172,6 +201,38 @@ public:
 
 template<typename uIntType>
 inline void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
+	/* build basic fields */
+	n = src.length();
+	sigma = max - min + 1;
+	height = bits(max);
+	OCC.resize(max + 2); /* 1-based occurence is dummy position */
+
+	/* get original OCC */
+	OCC[0] = 0;
+	for (uIntType ch : src)
+        OCC[ch + 1]++; /* avoid zeros in OCC */
+
+	/* construct intermediate BitStrs */
+	vector<BitStr32> bstrs; /* intermediate BitStrs */
+	bstrs.reserve(height);
+	for(size_t i = 0; i < height; ++i)
+		bstrs.push_back(BitStr32(n));
+
+	/* build levels */
+	build_level(bstrs, src, 0);
+
+	/* build the BitSeqs from BitStrs */
+	bseqs.reserve(height);
+	for(const BitStr32& bs : bstrs)
+		bseqs.push_back(BitSeqRRR(bs, sample_rate));
+
+	/* build cumulative OCC */
+	for(size_t i = 1; i <= max + 1; ++i)
+		OCC[i] += OCC[i - 1];
+}
+
+template<typename uIntType>
+inline void WaveletTreeRRR::build(basic_string<uIntType>& src) {
 	/* build basic fields */
 	n = src.length();
 	sigma = max - min + 1;
@@ -229,8 +290,42 @@ inline void WaveletTreeRRR::build_level(vector<BitStr32>& bstrs, const basic_str
 			left[i++] = sym[k];
 
 	/* build level recursevely */
+	build_level(bstrs, static_cast<const basic_string<uIntType>&>(left), level + 1, offset);
+	build_level(bstrs, static_cast<const basic_string<uIntType>&>(right), level + 1, offset + left.length());
+}
+
+template<typename uIntType>
+inline void WaveletTreeRRR::build_level(vector<BitStr32>& bstrs, basic_string<uIntType>& sym,
+		size_t level, size_t offset) {
+	if(level == height)
+		return;
+	const size_t N = sym.length();
+	BitStr32& bs = bstrs[level];
+
+	assert(bs.length() == n);
+
+	size_t nbits = 0;
+	for (size_t i = 0; i < N; ++i) {
+		if(test(sym[i], level)) {
+			bs.set(i + offset);
+			nbits++;
+		}
+	}
+
+	basic_string<uIntType> left(N - nbits, 0);
+	basic_string<uIntType> right(nbits, 0);
+	for(size_t k = 0, i = 0, j = 0; k < N; ++k)
+		if(test(sym[k], level))
+			right[j++] = sym[k];
+		else
+			left[i++] = sym[k];
+	/* clear sym before go out of scope of the recursive call stack */
+	sym.clear();
+	sym.shrink_to_fit();
+
+	/* build level recursevely */
 	build_level(bstrs, left, level + 1, offset);
-	build_level(bstrs, right, level + 1, offset + left.length());
+	build_level(bstrs, right, level + 1, offset + N - nbits);
 }
 
 inline bool operator==(const WaveletTreeRRR& lhs, const WaveletTreeRRR& rhs) {

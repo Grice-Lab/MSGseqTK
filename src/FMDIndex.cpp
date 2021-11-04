@@ -151,8 +151,11 @@ FMDIndex& FMDIndex::append(const FMDIndex& other) {
 
 	/* merge BWTs */
 #ifndef _OPENMP
-    bwtRRR = WaveletTreeRRR(mergeBWT(*this, other, buildInterleavingBS(*this, other)),
-    		0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+	{
+		DNAseq bwt = mergeBWT(*this, other, buildInterleavingBS(*this, other));
+		bwtRRR.reset();
+		bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+	}
 #else
 	int nThreads = 1;
 #pragma omp parallel

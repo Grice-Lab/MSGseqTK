@@ -25,7 +25,8 @@ BitSeqGGMN::BitSeqGGMN(const BitStr32& bstr, size_t factor) : bstr(bstr) {
 	buildRank();
 }
 
-BitSeqGGMN::BitSeqGGMN(BitStr32&& bstr, size_t factor) : bstr(std::move(bstr)) {
+BitSeqGGMN::BitSeqGGMN(BitStr32&& bstr, size_t factor) {
+	this->bstr = bstr;
 	n = bstr.length();
 	ones = bstr.count();
 	if(factor == 0)
