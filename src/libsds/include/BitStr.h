@@ -191,6 +191,7 @@ public:
 		nB = 0;
 		n = 0;
 		data.clear();
+		data.shrink_to_fit();
 	}
 
 	/** get the underlying data in raw array */
