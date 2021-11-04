@@ -25,94 +25,36 @@ using std::vector;
 using EGriceLab::libSDS::BitStr32;
 using EGriceLab::libSDS::BitSeqGGMN; // useful for temporary and fast BitSeq solution
 
-void FMDIndex::build(DNAseq& seq, bool buildSAsampled, int saSampleRate) {
+int32_t* FMDIndex::build32(const DNAseq& seq) {
 	const int64_t N = seq.length();
 	/* build counts */
 	buildCounts(seq);
 
-	if(N > INT32_MAX) { /* use 64 bit build */
-		/* build SA */
-		int64_t* SA = new int64_t[N];
-		saint_t errn = divsufsort64((const uint8_t*) seq.c_str(), (saidx64_t*) SA, N); // string.c_str guarantee a null terminal
-		if(errn != 0)
-			throw std::runtime_error("Error: Cannot build suffix-array on input DNAseq");
+	/* build SA */
+	int32_t* SA = new int32_t[N];
+	saint_t errn = divsufsort((const uint8_t*) seq.c_str(), (saidx_t*) SA, static_cast<saidx_t>(N)); // string.c_str guarantee a null terminal
+	if(errn != 0)
+		throw std::runtime_error("Error: Cannot build suffix-array on input DNAseq");
 
-		/* build BWT */
-		buildBWT(N, seq, SA); // build BWT
-		/* free seq storage */
-		seq.clear();
-		seq.shrink_to_fit();
-		/* build Gap */
-		buildGap(SA);
-		/* build SA sample, if requested */
-		if(buildSAsampled)
-			buildSA(SA, saSampleRate);
-		delete[] SA; // delete temporary
-	}
-	else { /* N <= INT32_MAX */
-		/* build SA */
-		int32_t* SA = new int32_t[N];
-		saint_t errn = divsufsort((const uint8_t*) seq.c_str(), (saidx_t*) SA, static_cast<saidx_t>(N)); // string.c_str guarantee a null terminal
-		if(errn != 0)
-			throw std::runtime_error("Error: Cannot build suffix-array on input DNAseq");
-
-		/* build BWT */
-		buildBWT(N, seq, SA); // build BWT
-		/* free seq storage */
-		seq.clear();
-		seq.shrink_to_fit();
-		/* build Gap */
-		buildGap(SA);
-		/* build SA sample, if requested */
-		if(buildSAsampled)
-			buildSA(SA, saSampleRate);
-		delete[] SA; // delete temporary
-	}
+	/* build BWT */
+	buildBWT(N, seq, SA); // build BWT
+	return SA; // delete temporary
 }
 
-void FMDIndex::build(DNAseq&& seq, bool buildSAsampled, int saSampleRate) {
+int64_t* FMDIndex::build64(const DNAseq& seq) {
 	const int64_t N = seq.length();
+	assert(N <= INT32_MAX);
 	/* build counts */
 	buildCounts(seq);
+	/* build SA */
+	int64_t* SA = new int64_t[N];
+	saint_t errn = divsufsort64((const uint8_t*) seq.c_str(), (saidx64_t*) SA, N); // string.c_str guarantee a null terminal
+	if(errn != 0)
+		throw std::runtime_error("Error: Cannot build suffix-array on input DNAseq");
 
-	if(N > INT32_MAX) { /* use 64 bit build */
-		/* build SA */
-		int64_t* SA = new int64_t[N];
-		saint_t errn = divsufsort64((const uint8_t*) seq.c_str(), (saidx64_t*) SA, N); // string.c_str guarantee a null terminal
-		if(errn != 0)
-			throw std::runtime_error("Error: Cannot build suffix-array on input DNAseq");
-
-		/* build BWT */
-		buildBWT(N, seq, SA); // build BWT
-		/* free seq storage */
-		seq.clear();
-		seq.shrink_to_fit();
-		/* build Gap */
-		buildGap(SA);
-		/* build SA sample, if requested */
-		if(buildSAsampled)
-			buildSA(SA, saSampleRate);
-		delete[] SA; // delete temporary
-	}
-	else { /* N <= INT32_MAX */
-		/* build SA */
-		int32_t* SA = new int32_t[N];
-		saint_t errn = divsufsort((const uint8_t*) seq.c_str(), (saidx_t*) SA, static_cast<saidx_t>(N)); // string.c_str guarantee a null terminal
-		if(errn != 0)
-			throw std::runtime_error("Error: Cannot build suffix-array on input DNAseq");
-
-		/* build BWT */
-		buildBWT(N, seq, SA); // build BWT
-		/* free seq storage */
-		seq.clear();
-		seq.shrink_to_fit();
-		/* build Gap */
-		buildGap(SA);
-		/* build SA sample, if requested */
-		if(buildSAsampled)
-			buildSA(SA, saSampleRate);
-		delete[] SA; // delete temporary
-	}
+	/* build BWT */
+	buildBWT(N, seq, SA); // build BWT
+	return SA; // delete temporary
 }
 
 void FMDIndex::buildCounts(const DNAseq& seq) {

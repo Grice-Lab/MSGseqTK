@@ -61,15 +61,20 @@ public:
 	/** Construct an FMDIndex from a given DNAseq
 	 * it will build the counts and BWT,
 	 * and optionally build the SA (SAidx and SAsampled)
-	 * it will also try to clear the seq to save memory
 	 */
-	explicit FMDIndex(DNAseq& seq, bool buildSAsampled = false, int saSampleRate = SA_SAMPLE_RATE) {
-		build(seq, buildSAsampled, saSampleRate);
-	}
+	explicit FMDIndex(const DNAseq& seq, bool buildSAsampled = false, int saSampleRate = SA_SAMPLE_RATE);
 
-	explicit FMDIndex(DNAseq&& seq, bool buildSAsampled = false, int saSampleRate = SA_SAMPLE_RATE) {
-		build(seq, buildSAsampled, saSampleRate);
-	}
+	/** Construct an FMDIndex from a given DNAseq, non-const version
+	 * it will build the counts and BWT,
+	 * and optionally build the SA (SAidx and SAsampled)
+	 */
+	explicit FMDIndex(DNAseq& seq, bool buildSAsampled = false, int saSampleRate = SA_SAMPLE_RATE);
+
+	/** Construct an FMDIndex from a given DNAseq, rvalue version
+	 * it will build the counts and BWT,
+	 * and optionally build the SA (SAidx and SAsampled)
+	 */
+	explicit FMDIndex(DNAseq&& seq, bool buildSAsampled = false, int saSampleRate = SA_SAMPLE_RATE);
 
 	/* member methods */
 	/** test whether contains SA */
@@ -268,10 +273,11 @@ public:
 
 protected:
 	/* helper methods */
-	/** build FMDIndex from a given seq, including counts, SA, BWT but not SAidx and SAsampled */
-	void build(DNAseq& seq, bool buildSA, int saSampleRate);
+	/** build FMDIndex from a given seq, including counts, SA, BWT but not gapSA, SAidx and SAsampled using a 64bit SA */
+	int64_t* build64(const DNAseq& seq);
 
-	void build(DNAseq&& seq, bool buildSA, int saSampleRate);
+	/** build FMDIndex from a given seq, including counts, SA, BWT but not gapSA, SAidx and SAsampled using a 32bit SA */
+	int32_t* build32(const DNAseq& seq);
 
 	/**
 	 * build alphabet counts from a DNAseq
@@ -332,6 +338,68 @@ public:
 	static const int RRR_SAMPLE_RATE = 32; /* RRR sample rate for BWT */
 	static const int SA_SAMPLE_RATE = 32;  /* sample rate for SA */
 };
+
+inline FMDIndex::FMDIndex(const DNAseq& seq, bool buildSAsampled, int saSampleRate) {
+	const int64_t N = seq.length();
+	if(N > INT32_MAX) { /* use 64bit build */
+		int64_t* SA = build64(seq);
+		buildGap(SA);
+		if(buildSAsampled)
+			buildSA(SA, saSampleRate);
+		delete[] SA;
+	}
+	else { /* use 32bit build */
+		int32_t* SA = build32(seq);
+		buildGap(SA);
+		if(buildSAsampled)
+			buildSA(SA, saSampleRate);
+		delete[] SA;
+	}
+}
+
+inline FMDIndex::FMDIndex(DNAseq& seq, bool buildSAsampled, int saSampleRate) {
+	const int64_t N = seq.length();
+	if(N > INT32_MAX) { /* use 64bit build */
+		int64_t* SA = build64(seq);
+		seq.clear();
+		seq.shrink_to_fit();
+		buildGap(SA);
+		if(buildSAsampled)
+			buildSA(SA, saSampleRate);
+		delete[] SA;
+	}
+	else { /* use 32bit build */
+		int32_t* SA = build32(seq);
+		seq.clear();
+		seq.shrink_to_fit();
+		buildGap(SA);
+		if(buildSAsampled)
+			buildSA(SA, saSampleRate);
+		delete[] SA;
+	}
+}
+
+inline FMDIndex::FMDIndex(DNAseq&& seq, bool buildSAsampled, int saSampleRate) {
+	const int64_t N = seq.length();
+	if(N > INT32_MAX) { /* use 64bit build */
+		int64_t* SA = build64(seq);
+		seq.clear();
+		seq.shrink_to_fit();
+		buildGap(SA);
+		if(buildSAsampled)
+			buildSA(SA, saSampleRate);
+		delete[] SA;
+	}
+	else { /* use 32bit build */
+		int32_t* SA = build32(seq);
+		seq.clear();
+		seq.shrink_to_fit();
+		buildGap(SA);
+		if(buildSAsampled)
+			buildSA(SA, saSampleRate);
+		delete[] SA;
+	}
+}
 
 inline FMDIndex operator+(FMDIndex lhs, const FMDIndex& rhs) {
 	lhs += rhs;
