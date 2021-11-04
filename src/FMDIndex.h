@@ -281,8 +281,14 @@ protected:
 	/** build BWT fromm a given seq and SA */
 	void buildBWT(int64_t N, const DNAseq& seq, const int64_t* SA);
 
+	/** build BWT fromm a given seq and SA, 32bit version */
+	void buildBWT(int64_t N, const DNAseq& seq, const int32_t* SA);
+
 	/** build gapSA */
 	void buildGap(const int64_t* SA);
+
+	/** build gapSA, 32bit version */
+	void buildGap(const int32_t* SA);
 
 	/** append another FMD-index Gap to this */
 	FMDIndex& appendGap(const FMDIndex& other);
@@ -295,6 +301,9 @@ protected:
 
 	/** build SAidx and SAsampled with given SA */
 	FMDIndex& buildSA(const int64_t* SA, int saSampleRate = SA_SAMPLE_RATE);
+
+	/** build SAidx and SAsampled with given SA, 32bit version */
+	FMDIndex& buildSA(const int32_t* SA, int saSampleRate = SA_SAMPLE_RATE);
 
 	/** build interleaving BitVector for two FMD-index */
 	static BitStr32 buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs);
@@ -322,7 +331,6 @@ private:
 public:
 	static const int RRR_SAMPLE_RATE = 32; /* RRR sample rate for BWT */
 	static const int SA_SAMPLE_RATE = 32;  /* sample rate for SA */
-	static const int64_t MAX_LENGTH = INT64_MAX;
 };
 
 inline FMDIndex operator+(FMDIndex lhs, const FMDIndex& rhs) {

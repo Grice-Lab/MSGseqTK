@@ -18,7 +18,6 @@ bool isValidLocs(const DNAseq& seq, const DNAseq& pat, const vector<GLoc>& locs)
 
 int main() {
 	/* test part 1, basic and merging function */
-	cerr << "Max_length: " << FMDIndex::MAX_LENGTH << endl;
 	DNAseq seqM1, seqM2;
 	FMDIndex fmdidx1, fmdidx2;
 	saidx_t count1 = 0, count2 = 0;
