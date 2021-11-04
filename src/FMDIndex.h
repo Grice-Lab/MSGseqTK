@@ -24,6 +24,7 @@
 #include "GLoc.h"
 #include "divsufsort_private.h"
 #include "BitStr.h"
+#include "BitSeq.h"
 #include "BitSeqRRR.h"
 #include "WaveletTreeRRR.h"
 
@@ -33,6 +34,7 @@ using std::vector;
 using std::basic_string;
 using std::array;
 using EGriceLab::libSDS::BitStr32;
+using EGriceLab::libSDS::BitSeq;
 using EGriceLab::libSDS::BitSeqRRR;
 using EGriceLab::libSDS::Seq;
 using EGriceLab::libSDS::WaveletTreeRRR;
@@ -70,11 +72,6 @@ public:
 	}
 
 	/* member methods */
-	/** test whether contains uncompressed BWT */
-	bool hasBWT() const {
-		return !bwt.empty();
-	}
-
 	/** test whether contains SA */
 	bool hasSA() const {
 		return !SAidx.empty();
@@ -92,13 +89,6 @@ public:
 
 	/** get the encoded BWT of the original seq */
 	DNAseq getBWT() const;
-
-	/** clear uncompressed BWT */
-	FMDIndex& clearBWT() {
-		bwt.clear();
-		bwt.shrink_to_fit();
-		return *this;
-	}
 
 	/** clear SAsampled */
 	FMDIndex& clearSA() {
@@ -294,17 +284,14 @@ protected:
 	/** build gapSA */
 	void buildGap(const int64_t* SA);
 
-	/** append another FMD-index BWT to this */
-	FMDIndex& appendBWT(const FMDIndex& other, const BitStr32& bstrM);
-
-	/** prepend another FMD-index BWT to this */
-	FMDIndex& prependBWT(const FMDIndex& other, const BitStr32& bstrM);
-
 	/** append another FMD-index Gap to this */
 	FMDIndex& appendGap(const FMDIndex& other);
 
 	/** prepend another FMD-index Gap to this */
 	FMDIndex& prependGap(const FMDIndex& other);
+
+	/** merge counts with another FMD-index */
+	FMDIndex& mergeCount(const FMDIndex& other);
 
 	/** build SAidx and SAsampled with given SA */
 	FMDIndex& buildSA(const int64_t* SA, int saSampleRate = SA_SAMPLE_RATE);
@@ -312,8 +299,11 @@ protected:
 	/** build interleaving BitVector for two FMD-index */
 	static BitStr32 buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs);
 
-	/** merge two DNAseq by an interleaving bitvector, use parallelization optionally */
+	/** merge two DNAseq by an interleaving bitvector */
 	static DNAseq mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, const BitStr32& bstrM);
+
+	/** merge two DNAseq by an interleaving bitseq, support parallelization */
+	static DNAseq mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, const BitSeq& bsM);
 
 	/** merge two gapSA by prepending the rhs to the lhs with a shift */
 	static GAParr_t mergeGap(const FMDIndex& lhs, const FMDIndex& rhs);
@@ -322,7 +312,7 @@ protected:
 private:
 	BCarray_t B = { };  // combined base count
 	BCarray_t C = { };  // combined cumulative count
-	DNAseq bwt; // uncompressed bwt
+//	DNAseq bwt; // uncompressed bwt
 	WaveletTreeRRR bwtRRR; /* Wavelet-Tree transformed BWT string for combined seq */
 	GAParr_t gapSA; /* SA values for gaps */
 	BitSeqRRR SAidx; /* BitSeq index telling whether a SA was sampled */

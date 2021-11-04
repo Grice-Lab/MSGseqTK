@@ -109,7 +109,6 @@ bool FMDIndex::isBiDirectional() const {
 ostream& FMDIndex::save(ostream& out) const {
 	out.write((const char*) B.data(), B.size() * sizeof(BCarray_t::value_type));
 	out.write((const char*) C.data(), C.size() * sizeof(BCarray_t::value_type));
-	StringUtils::saveString(bwt, out);
 	bwtRRR.save(out);
 	StringUtils::saveString(gapSA, out);
 	SAidx.save(out);
@@ -120,7 +119,6 @@ ostream& FMDIndex::save(ostream& out) const {
 istream& FMDIndex::load(istream& in) {
 	in.read((char*) B.data(), B.size() * sizeof(BCarray_t::value_type));
 	in.read((char*) C.data(), C.size() * sizeof(BCarray_t::value_type));
-	StringUtils::loadString(bwt, in);
 	bwtRRR.load(in);
 	StringUtils::loadString(gapSA, in);
 	SAidx.load(in);
@@ -151,20 +149,33 @@ FMDIndex& FMDIndex::append(const FMDIndex& other) {
 		return *this;
 	}
 
-    /* merge gap info */
-    appendGap(other);
-
 	/* merge BWTs */
-	appendBWT(other, buildInterleavingBS(*this, other)); // update uncompressed BWT
-	bwtRRR.reset();
-    bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+#ifndef _OPENMP
+    bwtRRR = WaveletTreeRRR(mergeBWT(*this, other, buildInterleavingBS(*this, other)),
+    		0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+#else
+	int nThreads = 1;
+#pragma omp parallel
+	{
+		nThreads = omp_get_num_threads();
+	}
+	if(1 == nThreads) { // no parallelzation needed
+		DNAseq bwt = mergeBWT(*this, other, buildInterleavingBS(*this, other));
+		bwtRRR.reset();
+	    bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+	}
+	else {
+		DNAseq bwt = mergeBWT(*this, other, BitSeqGGMN(buildInterleavingBS(*this, other)));
+		bwtRRR.reset();
+	    bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+	}
+#endif
+
+    /* merge gap info */
+    prependGap(other);
 
 	/* merge counts */
-	for(int64_t i = 0; i <= DNAalphabet::NT16_MAX; ++i) {
-		B[i] += other.B[i];
-		C[i] += other.C[i];
-	}
-
+    mergeCount(other);
 	return *this;
 }
 
@@ -176,22 +187,36 @@ FMDIndex& FMDIndex::prepend(const FMDIndex& other) {
 		return *this;
 	}
 
+	/* merge BWTs */
+#ifndef _OPENMP
+	{
+		DNAseq bwt = mergeBWT(other, *this, buildInterleavingBS(other, *this));
+		bwtRRR.reset();
+		bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+	}
+#else
+	int nThreads = 1;
+#pragma omp parallel
+	{
+		nThreads = omp_get_num_threads();
+	}
+	if(1 == nThreads) { // no parallelzation needed
+		DNAseq bwt = mergeBWT(other, *this, buildInterleavingBS(other, *this));
+		bwtRRR.reset();
+	    bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+	}
+	else {
+		DNAseq bwt = mergeBWT(other, *this, BitSeqGGMN(buildInterleavingBS(other, *this)));
+		bwtRRR.reset();
+	    bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+	}
+#endif
+
     /* merge gap info */
     prependGap(other);
 
-	/* merge BWTs */
-	prependBWT(other, buildInterleavingBS(other, *this)); // update uncompressed BWT
-//	bwt = mergeBWT(other, *this, buildInterleavingBS(other, *this)); // update uncompressed BWT
-
-	bwtRRR.reset();
-    bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
-
 	/* merge counts */
-	for(int64_t i = 0; i <= DNAalphabet::NT16_MAX; ++i) {
-		B[i] += other.B[i];
-		C[i] += other.C[i];
-	}
-
+    mergeCount(other);
 	return *this;
 }
 
@@ -228,7 +253,7 @@ void FMDIndex::buildBWT(int64_t N, const DNAseq& seq, const int64_t* SA) {
 	assert(seq.back() == 0); // must be null-terminated
 	assert(N == seq.length());
 	/* build uncompressed bwt */
-	bwt.resize(N);
+	DNAseq bwt(N, 0);
 #pragma omp parallel for
 	for(size_t i = 0; i < N; ++i)
 		bwt[i] = SA[i] == 0 ? 0 : seq[SA[i] - 1];
@@ -244,13 +269,12 @@ void FMDIndex::buildGap(const int64_t* SA) {
 
 FMDIndex& FMDIndex::buildSA(const int64_t* SA, int saSampleRate) {
 	const int64_t N = length();
-	assert(bwt.length() == N);
 	BitStr32 bstr(N);
 	SAsampled.clear();
 	SAsampled.reserve(N / saSampleRate + numGaps()); // enough to hold both peroid sampling and gaps
 	size_t k = 0; // SAsampled size
 	for(size_t i = 0; i < N; ++i) {
-		if(i % saSampleRate == 0 || bwt[i] == 0) { /* sample at all null characters */
+		if(i % saSampleRate == 0 || accessBWT(i) == 0) { /* sample at all null characters */
 			bstr.set(i);
 			SAsampled.push_back(SA[i]);
 		}
@@ -262,13 +286,15 @@ FMDIndex& FMDIndex::buildSA(const int64_t* SA, int saSampleRate) {
 
 FMDIndex& FMDIndex::buildSA(int saSampleRate) {
 	const int64_t N = length();
-	assert(hasBWT());
+	DNAseq bwt(N, 0); // temporary storage of 1st-pass accessing values
 	{
 		/* build the bitstr in the 1st pass */
 		BitStr32 bstr(N);
 		for(size_t i = 0; i < N; ++i) {
-			if(i % saSampleRate == 0 || bwt[i] == 0) /* sample at all null characters */
+			nt16_t b = accessBWT(i);
+			if(i % saSampleRate == 0 || b == 0) /* sample at all null characters */
 				bstr.set(i);
+			bwt[i] = b;
 		}
 		SAidx = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
 	} /* intermediate bstr will be destoyed */
@@ -290,7 +316,7 @@ FMDIndex& FMDIndex::buildSA(int saSampleRate) {
 }
 
 size_t FMDIndex::getBytes() const {
-	return sizeof(B) + sizeof(C) + sizeof(DNAseq::value_type) * bwt.size() +
+	return sizeof(B) + sizeof(C) +
 			bwtRRR.getBytes() + sizeof(GAParr_t::value_type) * gapSA.size() +
 			SAidx.getBytes() + sizeof(SAarr_t::value_type) * SAsampled.size() +
 			sizeof(this);
@@ -388,17 +414,16 @@ int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
 }
 
 BitStr32 FMDIndex::buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs) {
-	assert(lhs.hasBWT());
 	const int64_t N = lhs.length() + rhs.length();
 	BitStr32 bstrM(N);
 #pragma omp parallel for schedule(dynamic)
 	for(int64_t i = 0; i < lhs.numGaps(); ++i) { // the i-th BWT segment of lhs
-		nt16_t b = lhs.bwt[i];
+		nt16_t b = lhs.accessBWT(i);
 		assert(b != 0);
 		int64_t RA = rhs.numGaps(); // position on rhs.BWT
 #pragma omp critical(WRITE_bstrM)
 		bstrM.set(i + RA);
-		for(int64_t j = i; b != 0; b = lhs.bwt[j]) { // j is position on lhs.BWT
+		for(int64_t j = i; b != 0; b = lhs.accessBWT(j)) { // j is position on lhs.BWT
 			j = lhs.LF(b, j) - 1; // LF-mapping on lhs
 			RA = rhs.LF(b, RA - 1); // LF-mapping on rhs
 #pragma omp critical(WRITE_bstrM)
@@ -409,49 +434,22 @@ BitStr32 FMDIndex::buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs)
 }
 
 DNAseq FMDIndex::mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, const BitStr32& bstrM) {
-	assert(lhs.hasBWT() && rhs.hasBWT());
 	const int64_t N = lhs.length() + rhs.length();
 	assert(N == bstrM.length());
 	DNAseq bwtM(N, 0); // merged BWT
-	for(int64_t i = 0, j = 0, k = 0; k < N; ++k)
-		bwtM[k] = bstrM.test(k) ? lhs.bwt[i++] : rhs.bwt[j++];
+	for(size_t i = 0, j = 0, k = 0; k < N; ++k)
+		bwtM[k] = bstrM.test(k) ? lhs.accessBWT(i++) : rhs.accessBWT(j++);
 	return bwtM;
 }
 
-FMDIndex& FMDIndex::appendBWT(const FMDIndex& other, const BitStr32& bstrM) {
-	assert(hasBWT() && other.hasBWT());
-	const int64_t N1 = length();
-	const int64_t N2 = other.length();
-	const int64_t N = N1 + N2;
-	assert(N == bstrM.length());
-	bwt.resize(N); // extend current bwt
-	/* re-locate this bwt */
-	for(int64_t k = N - 1, i = N1 - 1; k >= 0; --k)
-		if(bstrM.test(k))
-			bwt[k] = bwt[i--];
-	/* insert other bwt */
-	for(int64_t k = 0, j = 0; k < N; ++k)
-		if(!bstrM.test(k))
-			bwt[k] = other.bwt[j++];
-	return *this;
-}
-
-FMDIndex& FMDIndex::prependBWT(const FMDIndex& other, const BitStr32& bstrM) {
-	assert(hasBWT() && other.hasBWT());
-	const int64_t N1 = other.length();
-	const int64_t N2 = length();
-	const int64_t N = N1 + N2;
-	assert(N == bstrM.length());
-	bwt.resize(N); // extend current bwt
-	/* re-locate this bwt */
-	for(int64_t k = N - 1, j = N2 - 1; k >= 0; --k)
-		if(!bstrM.test(k))
-			bwt[k] = bwt[j--];
-	/* insert other bwt */
-	for(int64_t k = 0, i = 0; k < N; ++k)
-		if(bstrM.test(k))
-			bwt[k] = other.bwt[i++];
-	return *this;
+DNAseq FMDIndex::mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, const BitSeq& bsM) {
+	const int64_t N = lhs.length() + rhs.length();
+	assert(N == bsM.length());
+	DNAseq bwtM(N, 0); // merged BWT
+#pragma omp parallel for
+	for(size_t k = 0; k < N; ++k)
+		bwtM[k] = bsM.test(k) ? lhs.accessBWT(bsM.rank1(k) - 1) : rhs.accessBWT(bsM.rank0(k) - 1);
+	return bwtM;
 }
 
 FMDIndex::GAParr_t FMDIndex::mergeGap(const FMDIndex& lhs, const FMDIndex& rhs) {
@@ -490,6 +488,14 @@ FMDIndex& FMDIndex::prependGap(const FMDIndex& other) {
 			[&] (GAParr_t::value_type pos) { return pos + other.length(); } );
 	/* copy other gaps to the end */
 	std::copy(other.gapSA.begin(), other.gapSA.end(), gapSA.begin() + N2);
+	return *this;
+}
+
+FMDIndex& FMDIndex::mergeCount(const FMDIndex& other) {
+	for(int64_t i = 0; i <= DNAalphabet::NT16_MAX; ++i) {
+		B[i] += other.B[i];
+		C[i] += other.C[i];
+	}
 	return *this;
 }
 

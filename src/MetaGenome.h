@@ -374,14 +374,7 @@ public:
 	}
 
 	/** load a BD block seq by tid range */
-	DNAseq loadBDSeq(size_t tStart, size_t tEnd, istream& in) const {
-		assert(tStart < tEnd);
-		DNAseq bdSeq;
-		bdSeq.reserve(getChromBDEnd(tEnd - 1) - getChromBDStart(tStart));
-		for(size_t tid = tStart; tid < tEnd; ++tid)
-			bdSeq += loadBDSeq(tid, in);
-		return bdSeq;
-	}
+	DNAseq loadBDSeq(size_t tStart, size_t tEnd, istream& in) const;
 
 	/** get concatenated bi-directional seq of the entire MetaGenome */
 	DNAseq loadBDSeq(istream& in) const {

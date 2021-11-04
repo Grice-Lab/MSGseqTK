@@ -69,23 +69,25 @@ istream& MetaGenome::loadSeq(istream& in) {
 
 DNAseq MetaGenome::loadSeq(size_t tid, istream& in) const {
 	const int64_t tLen = getChrom(tid).len;
-	DNAseq tSeq(tLen, 0); // zero init
+	DNAseq tSeq;
 	in.seekg(getChromStart(tid)); // seek binary input to tid start
 	StringUtils::loadString(tSeq, in, tLen);
 	assert(0 == in.get());
 	return tSeq;
 }
 
+DNAseq MetaGenome::loadBDSeq(size_t tStart, size_t tEnd, istream& in) const {
+	assert(tStart < tEnd);
+	DNAseq bdSeq;
+	bdSeq.reserve(getChromBDEnd(tEnd - 1) - getChromBDStart(tStart));
+	for(size_t tid = tStart; tid < tEnd; ++tid)
+		bdSeq += loadBDSeq(tid, in);
+	return bdSeq;
+}
+
 DNAseq MetaGenome::getBDSeq(DNAseq seq) {
 	dna::toBasic(seq); // use only non-ambiguous bases
-	const int64_t L = seq.length();
-	/* enlarge the input seq, filled with 0 (Ns) */
-	seq.resize(2 * (L + 1));
-	/* copy it self to the second part */
-	std::copy_n(seq.begin(), L, seq.begin() + L + 1);
-	/* revcom the second harf of the seq */
-	dna::revcom(seq.begin() + L + 1, seq.begin() + 2 * L + 1);
-	return seq;
+	return seq + DNAalphabet::GAP_BASE + dna::revcom(static_cast<const DNAseq&>(seq)) + DNAalphabet::GAP_BASE;
 }
 
 MetaGenome& MetaGenome::operator+=(const MetaGenome& other) {

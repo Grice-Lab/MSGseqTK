@@ -96,6 +96,8 @@ void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, int 
  */
 void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blockSize, int saSampleRate);
 
+void process_mem_usage(double& vm_usage, double& resident_set);
+
 int main(int argc, char* argv[]) {
 	/* variable declarations */
 	vector<string> genomeIds; // genome ids in original order
@@ -420,7 +422,7 @@ int main(int argc, char* argv[]) {
 void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, int saSampleRate) {
 	infoLog << "Building FMD-index" << endl;
 	DNAseq bdSeq = mtg.loadBDSeq(mgsIn);
-	fmdidx = FMDIndex(bdSeq, true, saSampleRate).clearBWT(); // build whole metagenome FMDIndex in one step
+	fmdidx = FMDIndex(bdSeq, true, saSampleRate); // build whole metagenome FMDIndex in one step
 }
 
 void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blockSize, int saSampleRate) {
@@ -429,23 +431,68 @@ void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size
 	size_t blockId = 0;
 	size_t blockStart = 0; // block start index
 	size_t blockEnd = NC; // block end index
+	double vm, rss;
 	for(size_t i = NC; i > 0; --i) {
 		blockStart = i - 1; // update blockStart
 		/* process block, if large enough */
 		if(mtg.getChromBDLoc(blockStart, blockEnd).length() >= blockSize || blockStart == 0) { /* first chrom or block is full */
+			process_mem_usage(vm, rss);
+			cout << "before loading BDSeq" << endl << "VM: " << vm << "; RSS: " << rss << endl;
 //			DNAseq blockSeq = mtg.loadBDSeq(blockStart, blockEnd, mgsIn);
 			DNAseq blockSeq = mtg.loadBDSeq(blockStart, blockEnd, mgsIn);
 
+			process_mem_usage(vm, rss);
+			cout << "after loading BDSeq" << endl << "VM: " << vm << "; RSS: " << rss << endl;
 			infoLog << "Adding " << (blockEnd - blockStart) << " chroms of "
 					<< blockSeq.length() << " bps in block " << ++blockId << " into FMD-index" << endl;
 			fmdidx.prepend(FMDIndex(blockSeq, false, saSampleRate)); /* prepend new FMDIndex, whose SA is never built */
+			process_mem_usage(vm, rss);
+			cout << "after prepending BDSeq" << endl << "VM: " << vm << "; RSS: " << rss << endl;
 			// update
 			blockEnd = blockStart;
-			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << " byte: " << fmdidx.getBytes() << endl;
+			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;
 		}
 	}
 	infoLog << "Building final Suffix-Array" << endl;
 	fmdidx.buildSA(saSampleRate);
 	infoLog << "Final FMD-index byte: " << fmdidx.getBytes() << endl;
-	fmdidx.clearBWT();
+	process_mem_usage(vm, rss);
+	cout << "VM: " << vm << "; RSS: " << rss << endl;
+}
+
+void process_mem_usage(double& vm_usage, double& resident_set)
+{
+   using std::ios_base;
+   using std::ifstream;
+   using std::string;
+
+   vm_usage     = 0.0;
+   resident_set = 0.0;
+
+   // 'file' stat seems to give the most reliable results
+   //
+   ifstream stat_stream("/proc/self/stat",ios_base::in);
+
+   // dummy vars for leading entries in stat that we don't care about
+   //
+   string pid, comm, state, ppid, pgrp, session, tty_nr;
+   string tpgid, flags, minflt, cminflt, majflt, cmajflt;
+   string utime, stime, cutime, cstime, priority, nice;
+   string O, itrealvalue, starttime;
+
+   // the two fields we want
+   //
+   unsigned long vsize;
+   long rss;
+
+   stat_stream >> pid >> comm >> state >> ppid >> pgrp >> session >> tty_nr
+               >> tpgid >> flags >> minflt >> cminflt >> majflt >> cmajflt
+               >> utime >> stime >> cutime >> cstime >> priority >> nice
+               >> O >> itrealvalue >> starttime >> vsize >> rss; // don't care about the rest
+
+   stat_stream.close();
+
+   long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024; // in case x86-64 is configured to use 2MB pages
+   vm_usage     = vsize / 1024.0;
+   resident_set = rss * page_size_kb;
 }
