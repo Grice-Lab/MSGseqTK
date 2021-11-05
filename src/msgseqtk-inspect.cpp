@@ -73,8 +73,8 @@ void printUsage(const string& progName) {
 int main(int argc, char* argv[]) {
 	/* variable declarations */
 	string dbName;
-	string genomeFn, chromFn, seqFn, mtgFn, fmdidxFn;
-	ifstream mtgIn, fmdidxIn;
+	string genomeFn, chromFn, seqFn, mtgFn, mgsFn, fmdidxFn;
+	ifstream mtgIn, mgsIn, fmdidxIn;
 	ofstream genomeOut, chromOut;
 	boost::iostreams::filtering_ostream seqOut;
 
@@ -120,12 +120,19 @@ int main(int argc, char* argv[]) {
 	/* check options */
 	/* set dbName */
 	mtgFn = dbName + METAGENOME_FILE_SUFFIX;
+	mgsFn = dbName + METAGENOME_SEQ_FILE_SUFFIX;
 	fmdidxFn = dbName + FMDINDEX_FILE_SUFFIX;
 
 	/* open inputs */
 	mtgIn.open(mtgFn.c_str(), ios_base::binary);
 	if(!mtgIn.is_open()) {
 		cerr << "Unable to open '" << mtgFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+
+	mgsIn.open(mgsFn.c_str(), ios_base::binary);
+	if(!mgsIn.is_open()) {
+		cerr << "Unable to open '" << mgsFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -168,12 +175,18 @@ int main(int argc, char* argv[]) {
 	FMDIndex fmdidx;
 	MetaGenomeAnno mta;
 
-	infoLog << "Loading MetaGenome info ..." << endl;
+	infoLog << "Loading MetaGenome data ..." << endl;
 	loadProgInfo(mtgIn);
 	if(!mtgIn.bad())
 		mtg.load(mtgIn);
 	if(mtgIn.bad()) {
-		cerr << "Unable to load MetaGenome: " << ::strerror(errno) << endl;
+		cerr << "Unable to load MetaGenome info: " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	infoLog << "Loading MetaGenome seq ..." << endl;
+	mtg.loadSeq(mgsIn);
+	if(mgsIn.bad()) {
+		cerr << "Unable to load MetaGenome seq: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
