@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <sstream>
 #include <utility>
+#include <unordered_map>
+#include <unordered_set>
 #include <boost/lexical_cast.hpp>
 #include <cassert>
 #include "MetaGenome.h"
@@ -19,6 +21,8 @@ namespace EGriceLab {
 namespace MSGseqTK {
 using std::istringstream;
 using std::pair;
+using std::unordered_map;
+using std::unordered_set;
 
 size_t MetaGenome::size() const {
 	size_t size = 0;
@@ -90,9 +94,13 @@ DNAseq MetaGenome::getBDSeq(DNAseq seq) {
 	return seq + DNAalphabet::GAP_BASE + dna::revcom(static_cast<const DNAseq&>(seq)) + DNAalphabet::GAP_BASE;
 }
 
-MetaGenome& MetaGenome::operator+=(const MetaGenome& other) {
+MetaGenome& MetaGenome::append(const MetaGenome& other) {
 	genomes.insert(genomes.end(), other.genomes.begin(), other.genomes.end());
-	updateIndex();
+	return *this;
+}
+
+MetaGenome& MetaGenome::prepend(const MetaGenome& other) {
+	genomes.insert(genomes.begin(), other.genomes.begin(), other.genomes.end());
 	return *this;
 }
 
@@ -100,6 +108,45 @@ MetaGenome operator+(const MetaGenome& lhs, const MetaGenome& rhs) {
 	MetaGenome mtgM(lhs);
 	mtgM += rhs;
 	return mtgM;
+}
+
+size_t MetaGenome::renameRedundantGenomes() {
+	size_t n = 0;
+	map<string, size_t> id2ver; /* id to version  map */
+	for(Genome& genome : genomes) {
+		if(id2ver.count(genome.id) > 0) { /* this genome id already exists */
+			genome.id += "." + boost::lexical_cast<string>(id2ver[genome.id]);
+			n++;
+		}
+		id2ver[genome.id]++;
+	}
+	return n;
+}
+
+size_t MetaGenome::removeRedundantGenomes() {
+	size_t n = numGenomes();  /* old number of genomes */
+	unordered_set<string> ids; /* unique genome id set */
+	/* remove-erase redundnt genomes */
+	genomes.erase(std::remove_if(genomes.begin(), genomes.end(),
+			[&] (const Genome& genome)->bool { return !ids.insert(genome.id).second; }),
+			genomes.end());
+	return n - numGenomes(); /* return the difference */
+}
+
+size_t MetaGenome::renameRedundantChroms() {
+	size_t n = 0;
+	unordered_map<string, size_t> name2ver; /* id to version  map */
+	for(Genome& genome : genomes) {
+		for(Genome::Chrom& chr : genome.chroms) {
+			if(name2ver.count(chr.name) > 0) { /* this genome id already exists */
+				std::cerr << "found redundant chrom: " << chr.name << std::endl;
+				chr.name += "." + boost::lexical_cast<string>(name2ver.at(chr.name));
+				n++;
+			}
+			name2ver[chr.name]++;
+		}
+	}
+	return n;
 }
 
 void MetaGenome::updateIndex() {
@@ -131,18 +178,11 @@ void MetaGenome::updateIndex() {
 		int64_t cStart = 0;
 		int64_t cStart2 = 0;
 		size_t nid = 0; // # of chrom before in this genome
-		if(genomeId2Idx.count(genome.id) > 0) { // genome.id must be unique
-			cerr << "Error: Redundant genome " << genome.displayId() << " found in database" << endl;
-			abort();
-		}
+		assert(genomeId2Idx.count(genome.id) == 0); // genome.id must be unique
 		genomeIds.push_back(genome.id);
 		genomeId2Idx[genome.id] = gid;
 		for(Genome::Chrom& chr : genome.chroms) {
-			if(chromName2Idx.count(chr.name)) {
-				warningLog << "Non-unique chrom name '" << chr.name << "' from genome '" << genome.displayId() << "' found, ";
-				chr.name = getChromId(genome.id, chr.name);
-				warningLog << "replacing with '" << chr.name << "'" << endl;
-			}
+			assert(chromName2Idx.count(chr.name) == 0);
 			chromNames.push_back(chr.name);
 			chromName2Idx[chr.name] = cid;
 			chromIdx2GenomeIdx.push_back(gid);

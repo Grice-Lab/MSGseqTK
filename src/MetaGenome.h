@@ -300,38 +300,6 @@ public:
 		genomes.push_back(genome);
 	}
 
-//	/** get the last/top genome, const version */
-//	const Genome& topGenome() const {
-//		return genomes.back();
-//	}
-//
-//	/** get the last/top genome, non-const version */
-//	Genome& topGenome() {
-//		return genomes.back();
-//	}
-//
-//	/** pop the last/top genome */
-//	void popGenome() {
-//		genomes.pop_back();
-//	}
-//
-//	/** get the last/top chromsome, const version */
-//	const Genome::Chrom& topChrom() const {
-//		return genomes.back().chroms.back();
-//	}
-//
-//	/** get the last/top chromsome, non-const version */
-//	Genome::Chrom& topChrom() {
-//		return genomes.back().chroms.back();
-//	}
-//
-//	/** pop the last chorosome */
-//	void popChrom() {
-//		genomes.back().chroms.pop_back();
-//		if(genomes.back().chroms.empty()) // no more chromsomes
-//			genomes.pop_back();
-//	}
-
 	/** get chromosome given chrIdx */
 	const Genome::Chrom& getChrom(size_t tid) const {
 		return getGenome(getGenomeIdxByChromIdx(tid)).getChrom(getChromNbefore(tid));
@@ -393,6 +361,24 @@ public:
 			genome.clearSeq();
 	}
 
+	/**
+	 * rename redundant genomes that have identical genomeIDs
+	 * @return  number of genomes renamed
+	 */
+	size_t renameRedundantGenomes();
+
+	/**
+	 * remove redundant genomes that have identical genomeIDs
+	 * @return  number of non-redundant genomes removed
+	 */
+	size_t removeRedundantGenomes();
+
+	/**
+	 * rename redundant chromosomes that have identical names
+	 * @return  number of genomes renamed
+	 */
+	size_t renameRedundantChroms();
+
 	/** save this object to binary output */
 	ostream& save(ostream& out) const;
 
@@ -411,10 +397,16 @@ public:
 	 */
 	void updateIndex();
 
-	/** merge this MetaGenome with another one,
-	 * with its name unchanged
-	 */
-	MetaGenome& operator+=(const MetaGenome& other);
+	/** append another MetaGenome after this MetaGenome */
+	MetaGenome& append(const MetaGenome& other);
+
+	/** prepend another MetaGenome before this MetaGenome */
+	MetaGenome& prepend(const MetaGenome& other);
+
+	/** merge this MetaGenome with another one, equal to append */
+	MetaGenome& operator+=(const MetaGenome& other) {
+		return append(other);
+	}
 
 	/* non-member operators */
 	/** concate two MetaGenomes and return a new copy */

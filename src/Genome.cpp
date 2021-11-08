@@ -6,6 +6,8 @@
  */
 
 #include <boost/algorithm/string.hpp>
+#include <unordered_set>
+#include <algorithm>
 #include "MSGseqTKConst.h"
 #include "Genome.h"
 #include "ProgEnv.h"
@@ -13,7 +15,7 @@
 
 namespace EGriceLab {
 namespace MSGseqTK {
-
+using std::unordered_set;
 const std::regex Genome::INVALID_NAMEPREFIX_PATTERN = std::regex("^[^\\w.:^*$@!+?-|]+");
 const std::regex Genome::INVALID_NAME_PATTERN = std::regex("[^\\w.:^*$@!+?-|]+");
 const string Genome::REPLACEMENT_STR = ".";
@@ -39,6 +41,16 @@ istream& Genome::Chrom::loadSeq(istream& in) {
 	StringUtils::loadString(seq, in, len);
 	assert(0 == in.get());
 	return in;
+}
+
+size_t Genome::removeRedundantChroms() {
+	size_t n = numChroms(); /* old number of chromosomes */
+	unordered_set<string> names; /* unique chrom name set */
+	/* remove-erase redundnt chromsomes */
+	chroms.erase(std::remove_if(chroms.begin(), chroms.end(),
+			[&] (const Chrom& chr)->bool { return ! names.insert(chr.name).second; }),
+			chroms.end());
+	return n - numChroms();
 }
 
 size_t Genome::getChromIndex(int64_t loc) const {

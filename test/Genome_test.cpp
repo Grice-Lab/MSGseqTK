@@ -108,9 +108,18 @@ int main() {
 		return EXIT_FAILURE;
 	}
 
-	mtg2.getGenome(0).setId("g1N");
-	mtg2.getGenome(1).setId("g2N");
 	MetaGenome mtg = mtg1 + mtg2;
+	cout << "mtg1 and mtg2 merged" << endl;
+	/* check genome redundancy */
+	size_t nGenome = mtg.renameRedundantGenomes();
+	if(nGenome > 0)
+		cout << "Renamed " << nGenome << " genome ids at metagenome level due to redundancy" << endl;
+
+	size_t nChr = mtg.renameRedundantChroms();
+	if(nChr > 0)
+		cout << "Renamed " << nChr << " chromosome names at metagenome level due to redundancy" << endl;
+	mtg.updateIndex();
+
 	if(mtg.BDSize() != mtg1.BDSize() + mtg1.BDSize()) {
 		cerr << "Merged MetaGenome size doesn't match" << endl;
 		return EXIT_FAILURE;

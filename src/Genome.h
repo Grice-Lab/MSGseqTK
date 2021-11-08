@@ -155,6 +155,12 @@ public:
 	}
 
 	/**
+	 * remove redundant chromosomes that have identical names
+	 * @return  number of chromosomes removed
+	 */
+	size_t removeRedundantChroms();
+
+	/**
 	 * get chromosome index given a relative loc of this Genome
 	 * @param  i  0-based position relative to this Genome
 	 * @return  0-based relative order, or -1 if not exists

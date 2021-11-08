@@ -52,6 +52,7 @@ int main() {
 	FMDIndex fmdidx = fmdidx1 + fmdidx2;
 //	FMDIndex fmdidx = FMDIndex(mtg.getBDSeq(), true);
 	MetaGenome mtg = mtg1 + mtg2;
+	mtg.updateIndex();
 	fmdidx.buildSA();
 	cout << "fmdidx.getBWT():" << endl << fmdidx.getBWT() << endl;
 	cout << "fmdidx.getSeq():" << endl << fmdidx.getSeq() << endl;
