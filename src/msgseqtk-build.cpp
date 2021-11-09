@@ -292,7 +292,7 @@ int main(int argc, char* argv[]) {
 		/* load MetaGenome seq */
 		if(!mgsIn.bad())
 			mtg.loadSeq(mgsIn);
-		if(!mgsIn.bad()) {
+		if(mgsIn.bad()) {
 			cerr << "Unable to load '" << mgsFn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
@@ -353,6 +353,11 @@ int main(int argc, char* argv[]) {
 			debugLog << "  adding " << chrName << " with length " << chrSeq.length() << endl;
 			genome.addChrom(chrName, chrSeq);
 		}
+		/* check per-genome level chrom redundancy */
+		size_t nChr = genome.removeRedundantChroms();
+		if(nChr > 0)
+			warningLog << "Warning: removed " << nChr << " chromosomes with redundant names from genome "
+					<< genome.displayId() << endl;
 
 		/* add this genome */
 		mtg.addGenome(genome);
@@ -360,8 +365,14 @@ int main(int argc, char* argv[]) {
 		nProcessed++;
 	}
 
+	/* check metagenome-level chromosome redundancy again */
+	size_t nChr = mtg.renameRedundantChroms();
+	if(nChr > 0)
+		warningLog << "Warning: renamed " << nChr << " chromosome names at metagenome level to avoid redundancy"
+		<< endl << " you may need to modify your external GFF annotation files before using msgseqtk-anno tool" << endl;
+
 	/* update final index */
-	infoLog << "Updating MetaGenome" << endl;
+	infoLog << "Updating MetaGenome index" << endl;
 	mtg.updateIndex();
 	if(dbName == oldDBName && nProcessed == 0) {
 		infoLog << "No new genomes found, database not modified, quit updating" << endl;
@@ -432,7 +443,10 @@ void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size
 	for(size_t i = NC; i > 0; --i) {
 		blockStart = i - 1; // update blockStart
 		/* process block, if large enough */
-		if(mtg.getChromBDLoc(blockStart, blockEnd).length() >= blockSize || blockStart == 0) { /* first chrom or block is full */
+		if(blockStart == 0 /* first block */ ||
+				mtg.getChromBDLoc(blockStart, blockEnd).length() <= blockSize
+				&& mtg.getChromBDLoc(blockStart - 1, blockEnd).length() > blockSize) /* block is about to full */
+		{
 			DNAseq blockSeq = mtg.loadBDSeq(blockStart, blockEnd, mgsIn);
 			infoLog << "Adding " << (blockEnd - blockStart) << " chroms of "
 					<< blockSeq.length() << " bps in block " << ++blockId << " into FMD-index" << endl;

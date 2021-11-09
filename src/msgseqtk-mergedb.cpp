@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
 	/* variable declarations */
 	vector<string> inDBNames;
 	string dbName;
-	ofstream mtgOut, fmdidxOut;
+	ofstream mtgOut, mgsOut, fmdidxOut;
 
 	int saSampleRate = FMDIndex::SA_SAMPLE_RATE;
 	int nThreads = DEFAULT_NUM_THREADS;
@@ -138,12 +138,19 @@ int main(int argc, char* argv[]) {
 
 	/* set dbName */
 	string mtgFn = dbName + METAGENOME_FILE_SUFFIX;
+	string mgsFn = dbName + METAGENOME_SEQ_FILE_SUFFIX;
 	string fmdidxFn = dbName + FMDINDEX_FILE_SUFFIX;
 
 	/* open outputs */
 	mtgOut.open(mtgFn.c_str(), ios_base::out | ios_base::binary);
 	if(!mtgOut.is_open()) {
 		cerr << "Unable to write to '" << mtgFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+
+	mgsOut.open(mgsFn.c_str(), ios_base::out | ios_base::binary);
+	if(!mgsOut.is_open()) {
+		cerr << "Unable to write to '" << mgsFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -157,15 +164,22 @@ int main(int argc, char* argv[]) {
 	FMDIndex fmdidx;
 
 	/* process each database */
-	for(vector<string>::const_iterator inDB = inDBNames.begin(); inDB != inDBNames.end(); ++inDB) {
-		bool isLast = inDB == inDBNames.end() - 1;
+	for(vector<string>::const_reverse_iterator inDB = inDBNames.rbegin(); inDB != inDBNames.rend(); ++inDB) {
+		bool isFirst = inDB == inDBNames.rend() - 1;
 		string mtgInfn = *inDB + METAGENOME_FILE_SUFFIX;
+		string mgsInfn = *inDB + METAGENOME_SEQ_FILE_SUFFIX;
 		string fmdidxInfn = *inDB + FMDINDEX_FILE_SUFFIX;
 		string gffInfn = *inDB + GFF::GFF3_SUFFIX;
 		/* open DB files */
 		ifstream mtgIn(mtgInfn.c_str(), ios_base::binary);
 		if(!mtgIn.is_open()) {
 			cerr << "Unable to open '" << mtgInfn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
+
+		ifstream mgsIn(mgsInfn.c_str(), ios_base::binary);
+		if(!mgsIn.is_open()) {
+			cerr << "Unable to open '" << mgsInfn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
 
@@ -186,6 +200,11 @@ int main(int argc, char* argv[]) {
 			cerr << "Unable to load '" << mtgInfn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
+		mtgPart.loadSeq(mgsIn);
+		if(mgsIn.bad()) {
+			cerr << "Unable to load '" << mgsInfn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
 
 		loadProgInfo(fmdidxIn);
 		if(!fmdidxIn.bad())
@@ -196,15 +215,33 @@ int main(int argc, char* argv[]) {
 		}
 
 		/* incremental update */
-		if(!isLast)
+		if(!isFirst)
 			fmdidxPart.clearSA(); /* do not store SA info for intermediate parts */
 
-			infoLog << "Merging into new database" << endl;
-		mtg = mtgPart + mtg;
-		fmdidx = fmdidxPart + fmdidx;
+		infoLog << "Merging (prepending) into new database" << endl;
+
+		mtg.prepend(mtgPart);
+		/* check genome redundancy */
+		size_t nGenome = mtg.removeRedundantGenomes();
+		if(nGenome > 0) {
+			errorLog << "Error: found " << nGenome << " redundant genome ids in metagenome database '"
+					<< *inDB << "', aborting" << endl;
+			return EXIT_FAILURE;
+		}
+
+		fmdidx.prepend(fmdidxPart);
 		assert(mtg.BDSize() == fmdidx.length());
 		infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmdidx.length() << endl;
 	}
+
+	/* check metagenome-level chromosome redundancy again */
+	size_t nChr = mtg.renameRedundantChroms();
+	if(nChr > 0)
+		warningLog << "Warning: renamed " << nChr << " chromosome names at metagenome level to avoid redundancy"
+		<< endl << " you may need to modify your external GFF annotation files before using msgseqtk-anno tool" << endl;
+	infoLog << "Updating MetaGenome index" << endl;
+	mtg.updateIndex();
+
 	infoLog << "Building final Suffix-Array" << endl;
 	fmdidx.buildSA(saSampleRate);
 
@@ -218,6 +255,12 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 	infoLog << "MetaGenome info saved" << endl;
+	mtg.saveSeq(mgsOut);
+	if(mgsOut.bad()) {
+		cerr << "Unable to save MetaGenome seq: " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+	infoLog << "MetaGenome seq saved" << endl;
 
 	saveProgInfo(fmdidxOut);
 	fmdidx.save(fmdidxOut);

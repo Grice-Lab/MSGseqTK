@@ -457,9 +457,10 @@ int main(int argc, char* argv[]) {
 	SeqIO fwdI(dynamic_cast<istream*>(&fwdIn), fmt, fixQual);
 	SeqIO revI(dynamic_cast<istream*>(&revIn), fmt, fixQual);
 	string mtgFn = db + METAGENOME_FILE_SUFFIX;
+	string mgsFn = db + METAGENOME_SEQ_FILE_SUFFIX;
 	string fmdidxFn = db + FMDINDEX_FILE_SUFFIX;
 
-	ifstream mtgIn;
+	ifstream mtgIn, mgsIn;
 	ifstream fmdidxIn;
 
 	MetaGenome mtg;
@@ -468,6 +469,12 @@ int main(int argc, char* argv[]) {
 	mtgIn.open(mtgFn.c_str(), ios_base::binary);
 	if(!mtgIn.is_open()) {
 		cerr << "Unable to open '" << mtgFn << "': " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+
+	mgsIn.open(mgsFn.c_str(), ios_base::binary);
+	if(!mgsIn.is_open()) {
+		cerr << "Unable to open '" << mgsFn << "': " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -490,12 +497,19 @@ int main(int argc, char* argv[]) {
 	SAMfile out(outFn, mode);
 
 	/* load data */
-	infoLog << "Loading MetaGenome ..." << endl;
+	infoLog << "Loading MetaGenome info ..." << endl;
 	loadProgInfo(mtgIn);
 	if(!mtgIn.bad())
 		mtg.load(mtgIn);
 	if(mtgIn.bad()) {
-		cerr << "Unable to load MetaGenome: " << ::strerror(errno) << endl;
+		cerr << "Unable to load MetaGenome info: " << ::strerror(errno) << endl;
+		return EXIT_FAILURE;
+	}
+
+	infoLog << "Loading MetaGenome seq ..." << endl;
+	mtg.loadSeq(mgsIn);
+	if(mgsIn.bad()) {
+		cerr << "Unable to load MetaGenome seq: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
 
