@@ -317,6 +317,7 @@ int main(int argc, char* argv[]) {
 
 	/* read all genomic files */
 	size_t nProcessed = 0;
+	infoLog << "Reading " << genomeIds.size() << " genome sequence files" << endl;
 	for(const string& genomeId : genomeIds) {
 		const string& genomeFn = genomeId2Fn[genomeId];
 		const string& genomeName = genomeId2Name[genomeId];
@@ -344,13 +345,12 @@ int main(int argc, char* argv[]) {
 
 		/* read in genome sequences */
 		Genome genome(genomeId, genomeName);
-		infoLog << "Reading genome " << genome.displayId() << endl;
+		debugLog << "Reading genome " << genome.displayId() << endl;
 		SeqIO seqI(&genomeIn, fmt, maskLower);
 		while(seqI.hasNext()) {
 			const PrimarySeq& chr = seqI.nextSeq();
 			const string& chrName = chr.getName();
 			const DNAseq& chrSeq = chr.getSeq();
-			debugLog << "  adding " << chrName << " with length " << chrSeq.length() << endl;
 			genome.addChrom(chrName, chrSeq);
 		}
 		/* check per-genome level chrom redundancy */
@@ -361,7 +361,7 @@ int main(int argc, char* argv[]) {
 
 		/* add this genome */
 		mtg.addGenome(genome);
-		infoLog << "  genome " << genome.displayId() << " added" << endl;
+		debugLog << "  genome " << genome.displayId() << " added" << endl;
 		nProcessed++;
 	}
 
