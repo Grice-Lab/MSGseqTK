@@ -13,13 +13,6 @@
 #include "BitSeq.h"
 #include "BitStr.h"
 
-/*
- * new block implementation by Qi Zheng
- * block size can't be changed in this implementation
- * it would require more than just changing the constant
- */
-#define BLOCK_SIZE (15)
-
 namespace EGriceLab {
 namespace libSDS {
 
@@ -31,6 +24,13 @@ namespace libSDS {
  */
 class BitSeqRRR: public BitSeq {
 public:
+	/*
+	 * new block implementation by Qi Zheng
+	 * block size can't be changed in this implementation
+	 * it would require more than just changing the constant
+	 */
+	static constexpr int BLOCK_SIZE = 15;
+
 	/**
 	 * pre-computed table offsets used exclusively for BitSequenceRRR algorithm
 	 */

@@ -266,7 +266,7 @@ inline void WaveletTreeRRR::build(basic_string<uIntType>& src) {
 template<typename uIntType>
 inline void WaveletTreeRRR::build_level(vector<BitStr32>& bstrs, const basic_string<uIntType>& sym,
 		size_t level, size_t offset) {
-	if(level == height)
+	if(level == height || sym.empty())
 		return;
 	const size_t N = sym.length();
 	BitStr32& bs = bstrs[level];
@@ -290,14 +290,14 @@ inline void WaveletTreeRRR::build_level(vector<BitStr32>& bstrs, const basic_str
 			left[i++] = sym[k];
 
 	/* build level recursevely */
-	build_level(bstrs, static_cast<const basic_string<uIntType>&>(left), level + 1, offset);
-	build_level(bstrs, static_cast<const basic_string<uIntType>&>(right), level + 1, offset + left.length());
+	build_level(bstrs, left, level + 1, offset);
+	build_level(bstrs, right, level + 1, offset + left.length());
 }
 
 template<typename uIntType>
 inline void WaveletTreeRRR::build_level(vector<BitStr32>& bstrs, basic_string<uIntType>& sym,
 		size_t level, size_t offset) {
-	if(level == height)
+	if(level == height || sym.empty())
 		return;
 	const size_t N = sym.length();
 	BitStr32& bs = bstrs[level];
@@ -312,16 +312,19 @@ inline void WaveletTreeRRR::build_level(vector<BitStr32>& bstrs, basic_string<uI
 		}
 	}
 
-	basic_string<uIntType> left(N - nbits, 0);
+	const uIntType FLAG = std::numeric_limits<uIntType>::max();
+//	basic_string<uIntType> left(N - nbits, 0);
 	basic_string<uIntType> right(nbits, 0);
-	for(size_t k = 0, i = 0, j = 0; k < N; ++k)
-		if(test(sym[k], level))
+	for(size_t k = 0, j = 0; k < N; ++k) {
+		if(test(sym[k], level)) {
 			right[j++] = sym[k];
-		else
-			left[i++] = sym[k];
-	/* clear sym before go out of scope of the recursive call stack */
-	sym.clear();
-	sym.shrink_to_fit();
+			sym[k] = FLAG;
+		}
+	}
+	/* use sym itself as left partition */
+	basic_string<uIntType>& left = sym;
+	left.erase(std::remove(left.begin(), left.end(), FLAG), left.end());
+	left.shrink_to_fit();
 
 	/* build level recursevely */
 	build_level(bstrs, left, level + 1, offset);
