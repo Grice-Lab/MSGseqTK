@@ -51,8 +51,8 @@ using namespace EGriceLab;
 using namespace EGriceLab::MSGseqTK;
 
 static const int DEFAULT_NUM_THREADS = 1;
-static const size_t DEFAULT_BLOCK_SIZE = 8000;
-static const size_t BLOCK_UNIT = 1000000; // 1 Mbps
+static const size_t BLOCK_UNIT = (1 << 20); // 1 MB
+static const size_t DEFAULT_BLOCK_SIZE = (INT32_MAX + 1L) / BLOCK_UNIT;
 
 /**
  * Print introduction of this program
@@ -75,7 +75,7 @@ void printUsage(const string& progName) {
 		 << "Options:    -n  STR              : database name/prefix" << endl
 		 << "            -l  FILE             : tab-delimited genome list with 1st field unique genome IDs, 2nd filed genome names, 3nd field genomic sequence filenames; if provided, <SEQ-FILE> options are ignored" << ZLIB_SUPPORT << endl
 		 << "            -r|--update  STR     : update database based on this old DB, it can be the same name as -n, which will overwrite the old database" << endl
-		 << "            -b|--block  INT      : block size (in Mbps) for building FMD-index, larget block size is faster but uses more memory [" << DEFAULT_BLOCK_SIZE << "]" << endl
+		 << "            -b|--block  INT      : block size limit (< b in MB) for building FMD-index, larget block size is faster but uses more memory [" << DEFAULT_BLOCK_SIZE << "]" << endl
 		 << "            --sample-rate  INT   : sample rate for the Suffix-Array (SA), recommend use smaller value means faster location search but more RAM/disk usage when the reference genomes are highly redundant [" << FMDIndex::SA_SAMPLE_RATE << "]" << endl
 		 << "            --mask-lc  FLAG      : treat lower-case bases as repeats and mask as Ns" << endl
 #ifdef _OPENMP
@@ -406,7 +406,7 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 	/* build FMD-index */
-	if(mtg.BDSize() <= blockSize) // we can build the FMD-index in one step
+	if(mtg.BDSize() < blockSize) // we can build the FMD-index in one step
 		buildFMDIndex(mtg, mgsIn, fmdidx, saSampleRate);
 	else // build the FMD-index incrementally
 		buildFMDIndex(mtg, mgsIn, fmdidx, blockSize, saSampleRate);
@@ -444,8 +444,8 @@ void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size
 		blockStart = i - 1; // update blockStart
 		/* process block, if large enough */
 		if(blockStart == 0 /* first block */ ||
-				mtg.getChromBDLoc(blockStart, blockEnd).length() <= blockSize
-				&& mtg.getChromBDLoc(blockStart - 1, blockEnd).length() > blockSize) /* block is about to full */
+				mtg.getChromBDLoc(blockStart, blockEnd).length() < blockSize
+				&& mtg.getChromBDLoc(blockStart - 1, blockEnd).length() >= blockSize) /* block is about to full */
 		{
 			DNAseq blockSeq = mtg.loadBDSeq(blockStart, blockEnd, mgsIn);
 			infoLog << "Adding " << (blockEnd - blockStart) << " chroms of "
