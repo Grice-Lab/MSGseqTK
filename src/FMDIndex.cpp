@@ -25,36 +25,130 @@ using std::vector;
 using EGriceLab::libSDS::BitStr32;
 using EGriceLab::libSDS::BitSeqGGMN; // useful for temporary and fast BitSeq solution
 
-int32_t* FMDIndex::build32(const DNAseq& seq) {
+FMDIndex::FMDIndex(const DNAseq& seq, bool buildSAsampled, int saSampleRate) {
 	const int64_t N = seq.length();
-	/* build counts */
-	buildCounts(seq);
-
-	/* build SA */
-	int32_t* SA = new int32_t[N];
-	saint_t errn = divsufsort((const uint8_t*) seq.c_str(), (saidx_t*) SA, static_cast<saidx_t>(N)); // string.c_str guarantee a null terminal
-	if(errn != 0)
-		throw std::runtime_error("Error: Cannot build suffix-array on input DNAseq");
-
-	/* build BWT */
-	buildBWT(N, seq, SA); // build BWT
-	return SA; // delete temporary
+	if(N > INT32_MAX) { /* use 64bit build */
+		/* build SA */
+		int64_t* SA = new int64_t[N];
+		saint_t errn = divsufsort64((const sauchar_t*) seq.c_str(), (saidx64_t*) SA, (saidx64_t) N); // string.c_str guarantee a null terminal
+		if(errn != 0)
+			throw std::runtime_error("Error: Cannot build 64 bit suffix-array on input DNAseq");
+		/* build counts */
+		buildCounts(seq);
+		/* build BWT */
+		buildBWT(seq, SA);
+		/* build Gap */
+		buildGap(SA);
+		/* sample SA */
+		if(buildSAsampled)
+			sampleSA(SA, saSampleRate);
+		delete[] SA;
+	}
+	else { /* use 32bit build */
+		/* build SA */
+		int32_t* SA = new int32_t[N];
+		saint_t errn = divsufsort((const sauchar_t*) seq.c_str(), (saidx_t*) SA, (saidx_t) N); // string.c_str guarantee a null terminal
+		if(errn != 0)
+			throw std::runtime_error("Error: Cannot build 32 bit suffix-array on input DNAseq");
+		/* build counts */
+		buildCounts(seq);
+		/* build BWT */
+		buildBWT(seq, SA);
+		/* build Gap */
+		buildGap(SA);
+		/* sample SA */
+		if(buildSAsampled)
+			sampleSA(SA, saSampleRate);
+		delete[] SA;
+	}
 }
 
-int64_t* FMDIndex::build64(const DNAseq& seq) {
+FMDIndex::FMDIndex(DNAseq& seq, bool buildSAsampled, int saSampleRate) {
 	const int64_t N = seq.length();
-	assert(N <= INT32_MAX);
-	/* build counts */
-	buildCounts(seq);
-	/* build SA */
-	int64_t* SA = new int64_t[N];
-	saint_t errn = divsufsort64((const uint8_t*) seq.c_str(), (saidx64_t*) SA, N); // string.c_str guarantee a null terminal
-	if(errn != 0)
-		throw std::runtime_error("Error: Cannot build suffix-array on input DNAseq");
+	if(N > INT32_MAX) { /* use 64bit build */
+		/* build SA */
+		int64_t* SA = new int64_t[N];
+		saint_t errn = divsufsort64((const sauchar_t*) seq.c_str(), (saidx64_t*) SA, (saidx64_t) N); // string.c_str guarantee a null terminal
+		if(errn != 0)
+			throw std::runtime_error("Error: Cannot build 64 bit suffix-array on input DNAseq");
+		/* build counts */
+		buildCounts(seq);
+		/* build BWT */
+		buildBWT(seq, SA);
+		/* clear seq */
+		seq.clear();
+		seq.shrink_to_fit();
+		/* build Gap */
+		buildGap(SA);
+		/* sample SA */
+		if(buildSAsampled)
+			sampleSA(SA, saSampleRate);
+		delete[] SA;
+	}
+	else { /* use 32bit build */
+		/* build SA */
+		int32_t* SA = new int32_t[N];
+		saint_t errn = divsufsort((const sauchar_t*) seq.c_str(), (saidx_t*) SA, (saidx_t) N); // string.c_str guarantee a null terminal
+		if(errn != 0)
+			throw std::runtime_error("Error: Cannot build 32 bit suffix-array on input DNAseq");
+		/* build counts */
+		buildCounts(seq);
+		/* build BWT */
+		buildBWT(seq, SA);
+		/* clear seq */
+		seq.clear();
+		seq.shrink_to_fit();
+		/* build Gap */
+		buildGap(SA);
+		/* sample SA */
+		if(buildSAsampled)
+			sampleSA(SA, saSampleRate);
+		delete[] SA;
+	}
+}
 
-	/* build BWT */
-	buildBWT(N, seq, SA); // build BWT
-	return SA; // delete temporary
+FMDIndex::FMDIndex(DNAseq&& seq, bool buildSAsampled, int saSampleRate) {
+	const int64_t N = seq.length();
+	if(N > INT32_MAX) { /* use 64bit build */
+		/* build SA */
+		int64_t* SA = new int64_t[N];
+		saint_t errn = divsufsort64((const sauchar_t*) seq.c_str(), (saidx64_t*) SA, N); // string.c_str guarantee a null terminal
+		if(errn != 0)
+			throw std::runtime_error("Error: Cannot build 64 bit suffix-array on input DNAseq");
+		/* build counts */
+		buildCounts(seq);
+		/* build BWT */
+		buildBWT(seq, SA);
+		/* clear seq */
+		seq.clear();
+		seq.shrink_to_fit();
+		/* build Gap */
+		buildGap(SA);
+		/* sample SA */
+		if(buildSAsampled)
+			sampleSA(SA, saSampleRate);
+		delete[] SA;
+	}
+	else { /* use 32bit build */
+		/* build SA */
+		int32_t* SA = new int32_t[N];
+		saint_t errn = divsufsort((const sauchar_t*) seq.c_str(), (saidx_t*) SA, N); // string.c_str guarantee a null terminal
+		if(errn != 0)
+			throw std::runtime_error("Error: Cannot build 32 bit suffix-array on input DNAseq");
+		/* build counts */
+		buildCounts(seq);
+		/* build BWT */
+		buildBWT(seq, SA);
+		/* clear seq */
+		seq.clear();
+		seq.shrink_to_fit();
+		/* build Gap */
+		buildGap(SA);
+		/* sample SA */
+		if(buildSAsampled)
+			sampleSA(SA, saSampleRate);
+		delete[] SA;
+	}
 }
 
 void FMDIndex::buildCounts(const DNAseq& seq) {
@@ -169,6 +263,9 @@ FMDIndex& FMDIndex::prepend(const FMDIndex& other) {
 		*this = other;
 		return *this;
 	}
+	std::cerr << "prepending this FMDindex of bytes: " << getBytes()
+			<< " with other FMDindex of bytes: " << other.getBytes() << std::endl
+			<< " total bytes before merging: " << getBytes() + other.getBytes() << std::endl;
 
 	/* merge BWTs */
 #ifndef _OPENMP
@@ -200,6 +297,7 @@ FMDIndex& FMDIndex::prepend(const FMDIndex& other) {
 
 	/* merge counts */
     mergeCount(other);
+    std::cerr << "Total bytes after merging: " << getBytes() << std::endl;
 	return *this;
 }
 
@@ -232,9 +330,9 @@ DNAseq FMDIndex::getSeq() const {
 	return seq;
 }
 
-void FMDIndex::buildBWT(int64_t N, const DNAseq& seq, const int64_t* SA) {
+void FMDIndex::buildBWT(const DNAseq& seq, const int64_t* SA) {
 	assert(seq.back() == 0); // must be null-terminated
-	assert(N == seq.length());
+	const int64_t N = seq.length();
 	/* build uncompressed bwt */
 	DNAseq bwt(N, 0);
 #pragma omp parallel for
@@ -244,10 +342,10 @@ void FMDIndex::buildBWT(int64_t N, const DNAseq& seq, const int64_t* SA) {
     bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
 }
 
-void FMDIndex::buildBWT(int64_t N, const DNAseq& seq, const int32_t* SA) {
-	assert(N <= INT32_MAX);
+void FMDIndex::buildBWT(const DNAseq& seq, const int32_t* SA) {
 	assert(seq.back() == 0); // must be null-terminated
-	assert(N == seq.length());
+	const int64_t N = seq.length();
+	assert(N <= INT32_MAX);
 	/* build uncompressed bwt */
 	DNAseq bwt(N, 0);
 #pragma omp parallel for
@@ -269,7 +367,7 @@ void FMDIndex::buildGap(const int32_t* SA) {
 		gapSA[i] = SA[i];
 }
 
-FMDIndex& FMDIndex::buildSA(const int64_t* SA, int saSampleRate) {
+FMDIndex& FMDIndex::sampleSA(const int64_t* SA, int saSampleRate) {
 	const int64_t N = length();
 	BitStr32 bstr(N);
 	SAsampled.clear();
@@ -286,7 +384,7 @@ FMDIndex& FMDIndex::buildSA(const int64_t* SA, int saSampleRate) {
 	return *this;
 }
 
-FMDIndex& FMDIndex::buildSA(const int32_t* SA, int saSampleRate) {
+FMDIndex& FMDIndex::sampleSA(const int32_t* SA, int saSampleRate) {
 	const int64_t N = length();
 	assert(N <= INT32_MAX);
 	BitStr32 bstr(N);
