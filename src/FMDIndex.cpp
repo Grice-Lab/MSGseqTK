@@ -163,14 +163,10 @@ void FMDIndex::buildCounts(const DNAseq& seq) {
     	C[i] = S;
     	S += B[i];
     }
-    if(!isBiDirectional()) {
-    	std::cerr << "input seq is not bi-directional" << std::endl;
-    	abort();
-    }
-    if(getExtBaseCount() > 0) {
-    	std::cerr << "input seq does not allow IUPAC-extended bases" << std::endl;
-    	abort();
-    }
+    if(!isBiDirectional())
+    	throw std::invalid_argument("input seq is not bi-directional");
+    if(getExtBaseCount() > 0)
+    	throw std::invalid_argument("input seq does not allow IUPAC-extended bases");
 }
 
 bool FMDIndex::isBiDirectional() const {
@@ -223,6 +219,9 @@ FMDIndex& FMDIndex::append(const FMDIndex& other) {
 		return *this;
 	}
 
+    /* merge gap info */
+    gapSA = mergeGap(*this, other);
+
 	/* merge BWTs */
 #ifndef _OPENMP
 	{
@@ -233,9 +232,7 @@ FMDIndex& FMDIndex::append(const FMDIndex& other) {
 #else
 	int nThreads = 1;
 #pragma omp parallel
-	{
-		nThreads = omp_get_num_threads();
-	}
+	nThreads = omp_get_num_threads();
 	if(1 == nThreads) { // no parallelzation needed
 		DNAseq bwt = mergeBWT(*this, other, buildInterleavingBS(*this, other));
 		bwtRRR.reset();
@@ -248,11 +245,58 @@ FMDIndex& FMDIndex::append(const FMDIndex& other) {
 	}
 #endif
 
+	/* merge counts */
+    mergeCount(other);
+
+    /* clear SA */
+    clearSA();
+	return *this;
+}
+
+FMDIndex& FMDIndex::append(FMDIndex&& other) {
+	if(!other.isInitiated()) /* cannot merge */
+		return *this;
+	if(!isInitiated()) {
+		*this = other;
+		return *this;
+	}
+
     /* merge gap info */
-    prependGap(other);
+    gapSA = mergeGap(*this, other);
+
+	/* merge BWTs */
+#ifndef _OPENMP
+	{
+		DNAseq bwt = mergeBWT(*this, other, buildInterleavingBS(*this, other));
+		/* reset both this and othre bwtRRR */
+		other.bwtRRR.reset();
+		bwtRRR.reset();
+		bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+	}
+#else
+	int nThreads = 1;
+#pragma omp parallel
+	nThreads = omp_get_num_threads();
+	if(1 == nThreads) { // no parallelzation needed
+		DNAseq bwt = mergeBWT(*this, other, buildInterleavingBS(*this, other));
+		other.bwtRRR.reset();
+		bwtRRR.reset();
+	    bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+	}
+	else {
+		DNAseq bwt = mergeBWT(*this, other, BitSeqGGMN(buildInterleavingBS(*this, other)));
+		other.bwtRRR.reset();
+		bwtRRR.reset();
+	    bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+	}
+#endif
 
 	/* merge counts */
     mergeCount(other);
+
+    /* clear SA */
+    clearSA();
+
 	return *this;
 }
 
@@ -263,9 +307,9 @@ FMDIndex& FMDIndex::prepend(const FMDIndex& other) {
 		*this = other;
 		return *this;
 	}
-	std::cerr << "prepending this FMDindex of bytes: " << getBytes()
-			<< " with other FMDindex of bytes: " << other.getBytes() << std::endl
-			<< " total bytes before merging: " << getBytes() + other.getBytes() << std::endl;
+
+    /* merge gap info */
+    gapSA = mergeGap(other, *this);
 
 	/* merge BWTs */
 #ifndef _OPENMP
@@ -277,9 +321,7 @@ FMDIndex& FMDIndex::prepend(const FMDIndex& other) {
 #else
 	int nThreads = 1;
 #pragma omp parallel
-	{
-		nThreads = omp_get_num_threads();
-	}
+	nThreads = omp_get_num_threads();
 	if(1 == nThreads) { // no parallelzation needed
 		DNAseq bwt = mergeBWT(other, *this, buildInterleavingBS(other, *this));
 		bwtRRR.reset();
@@ -292,12 +334,58 @@ FMDIndex& FMDIndex::prepend(const FMDIndex& other) {
 	}
 #endif
 
+	/* merge counts */
+    mergeCount(other);
+
+    /* clear SA */
+    clearSA();
+
+	return *this;
+}
+
+FMDIndex& FMDIndex::prepend(FMDIndex&& other) {
+	if(!other.isInitiated()) /* cannot merge */
+		return *this;
+	if(!isInitiated()) {
+		*this = other;
+		return *this;
+	}
+
     /* merge gap info */
-    prependGap(other);
+    gapSA = mergeGap(other, *this);
+
+	/* merge BWTs */
+#ifndef _OPENMP
+	{
+		DNAseq bwt = mergeBWT(other, *this, buildInterleavingBS(other, *this));
+		other.bwtRRR.reset();
+		bwtRRR.reset();
+		bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+	}
+#else
+	int nThreads = 1;
+#pragma omp parallel
+	nThreads = omp_get_num_threads();
+	if(1 == nThreads) { // no parallelzation needed
+		DNAseq bwt = mergeBWT(other, *this, buildInterleavingBS(other, *this));
+		other.bwtRRR.reset();
+		bwtRRR.reset();
+	    bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+	}
+	else {
+		DNAseq bwt = mergeBWT(other, *this, BitSeqGGMN(buildInterleavingBS(other, *this)));
+		other.bwtRRR.reset();
+		bwtRRR.reset();
+	    bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+	}
+#endif
 
 	/* merge counts */
     mergeCount(other);
-    std::cerr << "Total bytes after merging: " << getBytes() << std::endl;
+
+    /* clear SA */
+    clearSA();
+
 	return *this;
 }
 
@@ -581,32 +669,6 @@ FMDIndex::GAParr_t FMDIndex::mergeGap(const FMDIndex& lhs, const FMDIndex& rhs) 
 	/* copy lhs gaps */
 	std::copy(lhs.gapSA.begin(), lhs.gapSA.end(), gapM.begin() + N2);
 	return gapM;
-}
-
-FMDIndex& FMDIndex::appendGap(const FMDIndex& other) {
-	const int64_t N1 = numGaps();
-	const int64_t N2 = other.numGaps();
-	const int64_t N = N1 + N2;
-	gapSA.resize(N);
-	/* move this gaps to the end */
-	std::copy_n(gapSA.begin(), N1, gapSA.begin() + N2);
-	/* copy other gaps with shift */
-	std::transform(other.gapSA.begin(), other.gapSA.end(), gapSA.begin(),
-			[&] (GAParr_t::value_type pos) { return pos + length(); } );
-	return *this;
-}
-
-FMDIndex& FMDIndex::prependGap(const FMDIndex& other) {
-	const int64_t N1 = other.numGaps();
-	const int64_t N2 = numGaps();
-	const int64_t N = N1 + N2;
-	gapSA.resize(N);
-	/* transfer this gaps with shift */
-	std::transform(gapSA.begin(), gapSA.end(), gapSA.begin(),
-			[&] (GAParr_t::value_type pos) { return pos + other.length(); } );
-	/* copy other gaps to the end */
-	std::copy(other.gapSA.begin(), other.gapSA.end(), gapSA.begin() + N2);
-	return *this;
 }
 
 FMDIndex& FMDIndex::mergeCount(const FMDIndex& other) {

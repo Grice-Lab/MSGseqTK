@@ -228,7 +228,7 @@ public:
 	 */
 	int64_t count(const DNAseq& pattern) const;
 
-	/** merge this RRFMIndex with another index with only very little overhead memory
+	/** append another FMDIndex to this object, using very little overhead memory
 	 * using the BWT-merge algorithm described in
 	 * Burrows-Wheeler transform for terabases, Jouni Sirén, 2016 Data Compression Conference
 	 * it does not update the SA (SAidx and SAsampled) automatically to save unnecessary update,
@@ -236,13 +236,24 @@ public:
 	 */
 	FMDIndex& append(const FMDIndex& other);
 
+	/** append another FMDIndex to this object, using very little overhead memory, rvalue version */
+	FMDIndex& append(FMDIndex&& other);
+
 	/** append another FMDindex to this one, alias to append */
 	FMDIndex& operator+=(const FMDIndex& other) {
 		return append(other);
 	}
 
+	/** append another FMDindex to this one, alias to append, rvalue version */
+	FMDIndex& operator+=(FMDIndex&& other) {
+		return append(std::move(other));
+	}
+
 	/** prepend another FMDindex to this FMDindex */
 	FMDIndex& prepend(const FMDIndex& other);
+
+	/** prepend another FMDindex to this FMDindex, r-value version */
+	FMDIndex& prepend(FMDIndex&& other);
 
 	/** locate all matches to given pattern */
 	vector<GLoc> locateAll(const DNAseq& pattern, GLoc::STRAND strand = GLoc::FWD) const {
@@ -269,7 +280,7 @@ public:
 	}
 
 	/* non-member functions */
-	friend FMDIndex operator+(FMDIndex lhs, const FMDIndex& rhs);
+	friend FMDIndex operator+(const FMDIndex& lhs, const FMDIndex& rhs);
 
 protected:
 	/* helper methods */
@@ -290,12 +301,6 @@ protected:
 
 	/** build gapSA, 32bit version */
 	void buildGap(const int32_t* SA);
-
-	/** append another FMD-index Gap to this */
-	FMDIndex& appendGap(const FMDIndex& other);
-
-	/** prepend another FMD-index Gap to this */
-	FMDIndex& prependGap(const FMDIndex& other);
 
 	/** merge counts with another FMD-index */
 	FMDIndex& mergeCount(const FMDIndex& other);
@@ -334,9 +339,10 @@ public:
 	static const int SA_SAMPLE_RATE = 32;  /* sample rate for SA */
 };
 
-inline FMDIndex operator+(FMDIndex lhs, const FMDIndex& rhs) {
-	lhs += rhs;
-	return lhs;
+inline FMDIndex operator+(const FMDIndex& lhs, const FMDIndex& rhs) {
+	FMDIndex fmd(lhs);
+	fmd += rhs;
+	return fmd;
 }
 
 } /* namespace MSGSeqClean */
