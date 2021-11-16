@@ -423,7 +423,6 @@ void FMDIndex::buildBWT(const DNAseq& seq, const int64_t* SA) {
 	const int64_t N = seq.length();
 	/* build uncompressed bwt */
 	DNAseq bwt(N, 0);
-#pragma omp parallel for
 	for(size_t i = 0; i < N; ++i)
 		bwt[i] = SA[i] == 0 ? 0 : seq[SA[i] - 1];
 	/* build BWTRRR */
@@ -436,7 +435,6 @@ void FMDIndex::buildBWT(const DNAseq& seq, const int32_t* SA) {
 	assert(N <= INT32_MAX);
 	/* build uncompressed bwt */
 	DNAseq bwt(N, 0);
-#pragma omp parallel for
 	for(size_t i = 0; i < N; ++i)
 		bwt[i] = SA[i] == 0 ? 0 : seq[SA[i] - 1];
 	/* build BWTRRR */
