@@ -13,6 +13,7 @@
 #include "StringUtils.h"
 #include "FMDIndex.h"
 #include "BitSeqGGMN.h"
+#include "MSGseqTK_main.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -87,23 +88,39 @@ FMDIndex::FMDIndex(DNAseq& seq, bool buildSAsampled, int saSampleRate) {
 	}
 	else { /* use 32bit build */
 		/* build SA */
+		std::cerr << "before construcing 32bit FMDIndex of " << (N * sizeof(uint32_t) >> 20) << " MB" << std::endl;
+		std::cerr << process_mem_usage() << std::endl;
 		int32_t* SA = new int32_t[N];
 		saint_t errn = divsufsort((const sauchar_t*) seq.c_str(), (saidx_t*) SA, (saidx_t) N); // string.c_str guarantee a null terminal
 		if(errn != 0)
 			throw std::runtime_error("Error: Cannot build 32 bit suffix-array on input DNAseq");
+		std::cerr << "before buildCounting 32bit FMDIndex of " << (N >> 20) << " MB" << std::endl;
+		std::cerr << process_mem_usage() << std::endl;
 		/* build counts */
 		buildCounts(seq);
+		std::cerr << "before buildBWT 32bit FMDIndex of " << (N >> 20) << " MB" << std::endl;
+		std::cerr << process_mem_usage() << std::endl;
 		/* build BWT */
 		buildBWT(seq, SA);
+		std::cerr << "before clearSeq FMDIndex of " << (N >> 20) << " MB" << std::endl;
+		std::cerr << process_mem_usage() << std::endl;
 		/* clear seq */
 		seq.clear();
 		seq.shrink_to_fit();
+		std::cerr << "before buildGap 32bit FMDIndex of " << (N >> 20) << " MB" << std::endl;
+		std::cerr << process_mem_usage() << std::endl;
 		/* build Gap */
 		buildGap(SA);
+		std::cerr << "before sampleSA 32bit FMDIndex of " << (N >> 20) << " MB" << std::endl;
+		std::cerr << process_mem_usage() << std::endl;
 		/* sample SA */
 		if(buildSAsampled)
 			sampleSA(SA, saSampleRate);
+		std::cerr << "before delete[] SA 32bit FMDIndex of " << (N >> 20) << " MB" << std::endl;
+		std::cerr << process_mem_usage() << std::endl;
 		delete[] SA;
+		std::cerr << "after  delete[] SA 32bit FMDIndex of " << (N * sizeof(uint32_t) >> 20) << " MB" << std::endl;
+		std::cerr << process_mem_usage() << std::endl;
 	}
 }
 
@@ -344,6 +361,11 @@ FMDIndex& FMDIndex::prepend(const FMDIndex& other) {
 }
 
 FMDIndex& FMDIndex::prepend(FMDIndex&& other) {
+	std::cerr << "prepending this FMDIndex of " << (getBytes() >> 20) << " MB with other FMDIndex of "
+			<< (other.getBytes() >> 20) << " with total of "
+			<< ((getBytes() + other.getBytes()) >> 20) << " MB" << std::endl;
+	std::cerr << process_mem_usage() << std::endl;
+
 	if(!other.isInitiated()) /* cannot merge */
 		return *this;
 	if(!isInitiated()) {
@@ -353,6 +375,11 @@ FMDIndex& FMDIndex::prepend(FMDIndex&& other) {
 
     /* merge gap info */
     gapSA = mergeGap(other, *this);
+
+	std::cerr << "after merging gaps of FMDIndex of " << (getBytes() >> 20) << " MB with other FMDIndex of "
+			<< (other.getBytes() >> 20) << " with total of "
+			<< ((getBytes() + other.getBytes()) >> 20) << " MB" << std::endl;
+	std::cerr << process_mem_usage() << std::endl;
 
 	/* merge BWTs */
 #ifndef _OPENMP
@@ -374,14 +401,31 @@ FMDIndex& FMDIndex::prepend(FMDIndex&& other) {
 	}
 	else {
 		DNAseq bwt = mergeBWT(other, *this, BitSeqGGMN(buildInterleavingBS(other, *this)));
+		std::cerr << "after merging BWTs of FMDIndex of " << (getBytes() >> 20) << " MB with other FMDIndex of "
+				<< (other.getBytes() >> 20) << " MB with total of "
+				<< ((getBytes() + other.getBytes()) >> 20) << " MB" << std::endl;
+		std::cerr << process_mem_usage() << std::endl;
 		other.bwtRRR.reset();
 		bwtRRR.reset();
+		std::cerr << "before building bwtRRR of FMDIndex of " << (getBytes() >> 20) << " MB with other FMDIndex of "
+				<< (other.getBytes() >> 20) << " MB with total of "
+				<< ((getBytes() + other.getBytes()) >> 20) << " MB" << std::endl;
+		std::cerr << process_mem_usage() << std::endl;
 	    bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE); // update bwtRRR
+		std::cerr << "after building bwtRRR of FMDIndex of " << (getBytes() >> 20) << " MB with other FMDIndex of "
+				<< (other.getBytes() >> 20) << " MB with total of "
+				<< ((getBytes() + other.getBytes()) >> 20) << " MB" << std::endl;
+		std::cerr << process_mem_usage() << std::endl;
 	}
 #endif
 
 	/* merge counts */
     mergeCount(other);
+
+	std::cerr << "after merging counts of FMDIndex of " << (getBytes() >> 20) << " MB with other FMDIndex of "
+			<< (other.getBytes() >> 20) << " MB with total of "
+			<< ((getBytes() + other.getBytes()) >> 20) << " MB" << std::endl;
+	std::cerr << process_mem_usage() << std::endl;
 
     /* clear SA */
     clearSA();
@@ -489,6 +533,8 @@ FMDIndex& FMDIndex::sampleSA(const int32_t* SA, int saSampleRate) {
 }
 
 FMDIndex& FMDIndex::buildSA(int saSampleRate) {
+	std::cerr << "before building final SA of " << (getBytes() >> 20) << " MB" << std::endl;
+	std::cerr << process_mem_usage() << std::endl;
 	const int64_t N = length();
 	DNAseq bwt(N, 0); // temporary storage of 1st-pass accessing values
 	{
@@ -503,6 +549,8 @@ FMDIndex& FMDIndex::buildSA(int saSampleRate) {
 		SAidx = BitSeqRRR(bstr, RRR_SAMPLE_RATE); /* reset the SAbit */
 	} /* intermediate bstr will be destoyed */
 	SAsampled.resize(SAidx.numOnes()); // enough to hold both peroid sampling and gaps
+	std::cerr << "after building final bwt of " << (N >> 20) << " MB" << std::endl;
+	std::cerr << process_mem_usage() << std::endl;
 	/* build SAsampled in the 2nd pass */
 #pragma omp parallel for schedule(dynamic)
 	for(int64_t i = 0; i < numGaps(); ++i) { // the i-th BWT segment
@@ -516,6 +564,8 @@ FMDIndex& FMDIndex::buildSA(int saSampleRate) {
 				SAsampled[SAidx.rank1(j) - 1] = sa;
 		}
 	}
+	std::cerr << "after samping final SA" << std::endl;
+	std::cerr << process_mem_usage() << std::endl;
 	return *this;
 }
 
@@ -634,6 +684,10 @@ BitStr32 FMDIndex::buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs)
 			bstrM.set(j + RA);
 		}
 	}
+	std::cerr << "after building interleavingBS of lhs of " << (lhs.getBytes() >> 20) << " MB with rhs of "
+			<< (rhs.getBytes() >> 20) << " MB with total of "
+			<< ((lhs.getBytes() + rhs.getBytes()) >> 20) << " MB" << std::endl;
+	std::cerr << process_mem_usage() << std::endl;
 	return bstrM;
 }
 
@@ -649,10 +703,24 @@ DNAseq FMDIndex::mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, const BitStr
 DNAseq FMDIndex::mergeBWT(const FMDIndex& lhs, const FMDIndex& rhs, const BitSeq& bsM) {
 	const int64_t N = lhs.length() + rhs.length();
 	assert(N == bsM.length());
+	std::cerr << "before merging BWT of lhs of " << (lhs.getBytes() >> 20) << " MB with rhs of "
+			<< (rhs.getBytes() >> 20) << " MB with total of "
+			<< ((lhs.getBytes() + rhs.getBytes()) >> 20) << " MB" << std::endl;
+	std::cerr << process_mem_usage() << std::endl;
 	DNAseq bwtM(N, 0); // merged BWT
+	std::cerr << "bwtM.size: " << (bwtM.size() >> 20) << " MB" << std::endl;
+	std::cerr << "bwtM.capacity: " << (bwtM.capacity() >> 20) << " MB" << std::endl;
+	std::cerr << "before filling BWT of lhs of " << (lhs.getBytes() >> 20) << " MB with rhs of "
+			<< (rhs.getBytes() >> 20) << " MB with total of "
+			<< ((lhs.getBytes() + rhs.getBytes()) >> 20) << " MB" << std::endl;
+	std::cerr << process_mem_usage() << std::endl;
 #pragma omp parallel for
 	for(size_t k = 0; k < N; ++k)
 		bwtM[k] = bsM.test(k) ? lhs.accessBWT(bsM.rank1(k) - 1) : rhs.accessBWT(bsM.rank0(k) - 1);
+	std::cerr << "after merging BWT of lhs of " << (lhs.getBytes() >> 20) << " MB with rhs of "
+			<< (rhs.getBytes() >> 20) << " MB with total of "
+			<< ((lhs.getBytes() + rhs.getBytes()) >> 20) << " MB" << std::endl;
+	std::cerr << process_mem_usage() << std::endl;
 	return bwtM;
 }
 

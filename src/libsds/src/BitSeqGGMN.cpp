@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <utility>
 #include "BitSeqGGMN.h"
 #include "libsdsBitBasic.h"
 
@@ -25,16 +26,16 @@ BitSeqGGMN::BitSeqGGMN(const BitStr32& bstr, size_t factor) : bstr(bstr) {
 	buildRank();
 }
 
-BitSeqGGMN::BitSeqGGMN(BitStr32&& bstr, size_t factor) {
-	this->bstr = bstr;
-	n = bstr.length();
-	ones = bstr.count();
+BitSeqGGMN::BitSeqGGMN(BitStr32&& bstr, size_t factor) : bstr(std::move(bstr)) {
+	n = this->bstr.length();
+	ones = this->bstr.count();
 	if(factor == 0)
 		factor = bits(n - 1);
 	this->factor = factor;
 	b = sizeof(data_type) * Wb;
 	s = b * factor;
 	nRs = numSuperBlocks() + 1;
+	std::cerr << "n: " << n << " ones: " << ones << " b: " << b << " s: " << s << " nRs: " << nRs << std::endl;
 	buildRank();
 }
 
