@@ -16,6 +16,7 @@
 #include "StringUtils.h"
 #include "ProgEnv.h"
 #include "MSGseqTKConst.h"
+#include "MSGseqTK_main.h"
 
 namespace EGriceLab {
 namespace MSGseqTK {
@@ -82,16 +83,33 @@ DNAseq MetaGenome::loadSeq(size_t tid, istream& in) const {
 
 DNAseq MetaGenome::loadBDSeq(size_t tStart, size_t tEnd, istream& in) const {
 	assert(tStart < tEnd);
-	DNAseq bdSeq;
-	bdSeq.reserve(getChromBDEnd(tEnd - 1) - getChromBDStart(tStart));
-	for(size_t tid = tStart; tid < tEnd; ++tid)
-		bdSeq += loadBDSeq(tid, in);
+	DNAseq bdSeq(getChromBDLength(tStart, tEnd), DNAalphabet::GAP_BASE);
+	DNAseq::iterator bdIt = bdSeq.begin();
+	for(size_t tid = tStart; tid < tEnd; ++tid) {
+		DNAseq seq = loadSeq(tid, in);
+		const DNAseq::size_type N = seq.length();
+		/* copy seq twice */
+		std::copy(seq.begin(), seq.end(), bdIt);
+		std::copy(seq.begin(), seq.end(), bdIt + N + 1);
+		/* to basic */
+		dna::toBasic(bdIt, bdIt + 2 * N + 1);
+		/* revcom */
+		dna::revcom(bdIt + N + 1, bdIt + 2 * N + 1);
+		/* update */
+		bdIt += 2 * N + 2;
+	}
 	return bdSeq;
 }
 
-DNAseq MetaGenome::getBDSeq(DNAseq seq) {
-	dna::toBasic(seq); // use only non-ambiguous bases
-	return seq + DNAalphabet::GAP_BASE + dna::revcom(static_cast<const DNAseq&>(seq)) + DNAalphabet::GAP_BASE;
+DNAseq MetaGenome::getBDSeq(const DNAseq& seq) {
+	const DNAseq::size_type N = seq.length();
+	DNAseq bdSeq(2 * (N + 1), DNAalphabet::GAP_BASE); /* including gaps */
+	/* copy seq twice */
+	std::copy(seq.begin(), seq.end(), bdSeq.begin());
+	std::copy(seq.begin(), seq.end(), bdSeq.begin() + N + 1);
+	dna::toBasic(bdSeq); // use only non-ambiguous bases
+	dna::revcom(bdSeq.begin() + N + 1, bdSeq.begin() + 2 * N + 1);
+	return bdSeq;
 }
 
 MetaGenome& MetaGenome::append(const MetaGenome& other) {

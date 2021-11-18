@@ -9,6 +9,7 @@
 #define SRC_MSGSEQTK_H_
 
 #include "MSGseqTKConst.h"
+#include "MSGseqTK_main.h"
 #include "DNAalphabet.h"
 #include "DNAseq.h"
 #include "PrimarySeq.h"

@@ -152,11 +152,17 @@ DNAseq revcom(const DNAseq& seq) {
 	return revcom(rcSeq);
 }
 
+/** transform a region of a DNAseq to basic bases */
+inline
+void toBasic(DNAseq::iterator first, DNAseq::iterator last) {
+	for(DNAseq::iterator it = first; it < last; ++it)
+		*it = DNAalphabet::toBasic(*it);
+}
+
 /** transform a DNAseq to basic-only */
 inline
 DNAseq& toBasic(DNAseq& seq) {
-	for(DNAseq::value_type& b : seq)
-		b = DNAalphabet::toBasic(b);
+	toBasic(seq.begin(), seq.end());
 	return seq;
 }
 

@@ -444,19 +444,24 @@ void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size
 		blockStart = i - 1; // update blockStart
 		/* process block, if large enough */
 		if(blockStart == 0 /* first block */ ||
-				mtg.getChromBDLoc(blockStart, blockEnd).length() < blockSize
-				&& mtg.getChromBDLoc(blockStart - 1, blockEnd).length() >= blockSize) /* block is about to full */
+				mtg.getChromBDLength(blockStart, blockEnd) < blockSize
+				&& mtg.getChromBDLength(blockStart - 1, blockEnd) >= blockSize) /* block is about to full */
 		{
-			DNAseq blockSeq = mtg.loadBDSeq(blockStart, blockEnd, mgsIn);
+			cerr << "before adding blockSeq" << endl;
+			std::cerr << process_mem_usage() << std::endl;
 			infoLog << "Adding " << (blockEnd - blockStart) << " chroms of "
-					<< blockSeq.length() << " bps in block " << ++blockId << " into FMD-index" << endl;
-			fmdidx.prepend(FMDIndex(blockSeq, false, saSampleRate)); /* prepend new FMDIndex, whose SA is never built */
+					<< mtg.getChromBDLength(blockStart, blockEnd)
+					<< " bps in block " << ++blockId << " into FMD-index" << endl;
+			std::cerr << process_mem_usage() << std::endl;
+			fmdidx.prepend(FMDIndex(mtg.loadBDSeq(blockStart, blockEnd, mgsIn), false, saSampleRate)); /* prepend new FMDIndex, whose SA is never built */
 			// update
 			blockEnd = blockStart;
 			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;
+			std::cerr << "Afer prepending bytes: " << (fmdidx.getBytes() >> 20) << " MB" << endl;
+			std::cerr << process_mem_usage() << std::endl;
 		}
 	}
 	infoLog << "Building sampled Suffix-Array (SA)" << endl;
-	fmdidx.buildSA(saSampleRate);
+//	fmdidx.buildSA(saSampleRate);
 	infoLog << "Overall sampled SA built" << endl;
 }

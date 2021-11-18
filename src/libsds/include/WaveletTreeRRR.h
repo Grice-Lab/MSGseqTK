@@ -252,6 +252,8 @@ inline void WaveletTreeRRR::build(basic_string<uIntType>& src) {
 
 	/* build levels */
 	build_level(bstrs, src, 0);
+	src.clear();
+	src.shrink_to_fit();
 
 	/* build the BitSeqs from BitStrs */
 	bseqs.reserve(height);
@@ -297,8 +299,13 @@ inline void WaveletTreeRRR::build_level(vector<BitStr32>& bstrs, const basic_str
 template<typename uIntType>
 inline void WaveletTreeRRR::build_level(vector<BitStr32>& bstrs, basic_string<uIntType>& sym,
 		size_t level, size_t offset) {
-	if(level == height || sym.empty())
+	if(sym.empty())
 		return;
+	if(level == height) {
+		sym.clear();
+		sym.shrink_to_fit();
+		return;
+	}
 	const size_t N = sym.length();
 	BitStr32& bs = bstrs[level];
 

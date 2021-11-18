@@ -31,6 +31,7 @@ AM_LDFLAGS = $(BOOST_LDFLAGS)
 noinst_LIBRARIES = libMSGseqTK.a
 
 libMSGseqTK_a_SOURCES = \
+MSGseqTK_main.cpp \
 DNAalphabet.cpp \
 DNAseq.cpp \
 QualStr.cpp \

@@ -260,6 +260,11 @@ public:
 		return getChromBDLoc(i).length();
 	}
 
+	/** get BD length of a region */
+	int64_t getChromBDLength(size_t tidStart, size_t tidEnd) const {
+		return getChromBDEnd(tidEnd - 1) - getChromBDStart(tidStart);
+	}
+
 	/** get the BD Loc of a region */
 	Loc getChromBDLoc(size_t tidStart, size_t tidEnd) const {
 		assert(tidStart < tidEnd);
@@ -438,7 +443,7 @@ public:
 	/** get bi-directional seq for a given seq
 	 * with forward and revcom seq separated by N, and all seq transfered to basic bases
 	 */
-	static DNAseq getBDSeq(DNAseq seq);
+	static DNAseq getBDSeq(const DNAseq& seq);
 };
 
 inline bool operator==(const MetaGenome& lhs, const MetaGenome& rhs) {

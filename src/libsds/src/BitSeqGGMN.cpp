@@ -35,7 +35,6 @@ BitSeqGGMN::BitSeqGGMN(BitStr32&& bstr, size_t factor) : bstr(std::move(bstr)) {
 	b = sizeof(data_type) * Wb;
 	s = b * factor;
 	nRs = numSuperBlocks() + 1;
-	std::cerr << "n: " << n << " ones: " << ones << " b: " << b << " s: " << s << " nRs: " << nRs << std::endl;
 	buildRank();
 }
 

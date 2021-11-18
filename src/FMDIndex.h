@@ -64,12 +64,6 @@ public:
 	 */
 	explicit FMDIndex(const DNAseq& seq, bool buildSAsampled = false, int saSampleRate = SA_SAMPLE_RATE);
 
-	/** Construct an FMDIndex from a given DNAseq, non-const version
-	 * it will build the counts and BWT,
-	 * and optionally build the SA (SAidx and SAsampled)
-	 */
-	explicit FMDIndex(DNAseq& seq, bool buildSAsampled = false, int saSampleRate = SA_SAMPLE_RATE);
-
 	/** Construct an FMDIndex from a given DNAseq, rvalue version
 	 * it will build the counts and BWT,
 	 * and optionally build the SA (SAidx and SAsampled)
@@ -294,7 +288,6 @@ protected:
 
 	/** build uncompressed BWT from a given seq and SA, 32bit version */
 	void buildBWT(const DNAseq& seq, const int32_t* SA);
-
 
 	/** build gapSA */
 	void buildGap(const int64_t* SA);
