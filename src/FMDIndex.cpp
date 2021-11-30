@@ -37,13 +37,14 @@ FMDIndex::FMDIndex(const DNAseq& seq, bool buildSAsampled, int saSampleRate) {
 		/* build counts */
 		buildCounts(seq);
 		/* build BWT */
-		buildBWT(seq, SA);
+		DNAseq bwt = buildBWT(seq, SA);
 		/* build Gap */
 		buildGap(SA);
-		/* sample SA */
 		if(buildSAsampled)
 			sampleSA(SA, saSampleRate);
 		delete[] SA;
+		/* build BWTRRR */
+		bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
 	}
 	else { /* use 32bit build */
 		/* build SA */
@@ -54,13 +55,15 @@ FMDIndex::FMDIndex(const DNAseq& seq, bool buildSAsampled, int saSampleRate) {
 		/* build counts */
 		buildCounts(seq);
 		/* build BWT */
-		buildBWT(seq, SA);
+		DNAseq bwt = buildBWT(seq, SA);
 		/* build Gap */
 		buildGap(SA);
 		/* sample SA */
 		if(buildSAsampled)
 			sampleSA(SA, saSampleRate);
 		delete[] SA;
+		/* build BWTRRR */
+		bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
 	}
 }
 
@@ -75,7 +78,7 @@ FMDIndex::FMDIndex(DNAseq&& seq, bool buildSAsampled, int saSampleRate) {
 		/* build counts */
 		buildCounts(seq);
 		/* build BWT */
-		buildBWT(seq, SA);
+		DNAseq bwt = buildBWT(seq, SA);
 		/* clear seq */
 		seq.clear();
 		seq.shrink_to_fit();
@@ -85,6 +88,8 @@ FMDIndex::FMDIndex(DNAseq&& seq, bool buildSAsampled, int saSampleRate) {
 		if(buildSAsampled)
 			sampleSA(SA, saSampleRate);
 		delete[] SA;
+		/* build BWTRRR */
+		bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
 	}
 	else { /* use 32bit build */
 		/* build SA */
@@ -95,7 +100,7 @@ FMDIndex::FMDIndex(DNAseq&& seq, bool buildSAsampled, int saSampleRate) {
 		/* build counts */
 		buildCounts(seq);
 		/* build BWT */
-		buildBWT(seq, SA);
+		DNAseq bwt = buildBWT(seq, SA);
 		/* clear seq */
 		seq.clear();
 		seq.shrink_to_fit();
@@ -105,6 +110,8 @@ FMDIndex::FMDIndex(DNAseq&& seq, bool buildSAsampled, int saSampleRate) {
 		if(buildSAsampled)
 			sampleSA(SA, saSampleRate);
 		delete[] SA;
+		/* build BWTRRR */
+		bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
 	}
 }
 
@@ -375,18 +382,17 @@ DNAseq FMDIndex::getSeq() const {
 	return seq;
 }
 
-void FMDIndex::buildBWT(const DNAseq& seq, const int64_t* SA) {
+DNAseq FMDIndex::buildBWT(const DNAseq& seq, const int64_t* SA) {
 	assert(seq.back() == 0); // must be null-terminated
 	const int64_t N = seq.length();
 	/* build uncompressed bwt */
 	DNAseq bwt(N, 0);
 	for(size_t i = 0; i < N; ++i)
 		bwt[i] = SA[i] == 0 ? 0 : seq[SA[i] - 1];
-	/* build BWTRRR */
-    bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
+	return bwt;
 }
 
-void FMDIndex::buildBWT(const DNAseq& seq, const int32_t* SA) {
+DNAseq FMDIndex::buildBWT(const DNAseq& seq, const int32_t* SA) {
 	assert(seq.back() == 0); // must be null-terminated
 	const int64_t N = seq.length();
 	assert(N <= INT32_MAX);
@@ -394,8 +400,7 @@ void FMDIndex::buildBWT(const DNAseq& seq, const int32_t* SA) {
 	DNAseq bwt(N, 0);
 	for(size_t i = 0; i < N; ++i)
 		bwt[i] = SA[i] == 0 ? 0 : seq[SA[i] - 1];
-	/* build BWTRRR */
-    bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
+	return bwt;
 }
 
 void FMDIndex::buildGap(const int64_t* SA) {

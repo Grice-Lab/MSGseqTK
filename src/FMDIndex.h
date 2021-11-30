@@ -284,10 +284,10 @@ protected:
 	void buildCounts(const DNAseq& seq);
 
 	/** build uncompressed BWT from a given seq and SA */
-	void buildBWT(const DNAseq& seq, const int64_t* SA);
+	static DNAseq buildBWT(const DNAseq& seq, const int64_t* SA);
 
 	/** build uncompressed BWT from a given seq and SA, 32bit version */
-	void buildBWT(const DNAseq& seq, const int32_t* SA);
+	static DNAseq buildBWT(const DNAseq& seq, const int32_t* SA);
 
 	/** build gapSA */
 	void buildGap(const int64_t* SA);
