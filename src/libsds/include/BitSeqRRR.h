@@ -104,6 +104,9 @@ public:
 	/** default constructor */
 	BitSeqRRR() = default;
 
+	/** virtual destructor */
+	virtual ~BitSeqRRR() {  }
+
 	/** construct a BitSeqRRR from a given BitStr with any type */
 	template<typename oIntType>
 	explicit BitSeqRRR(const BitStr<oIntType>& bstr, size_t sample_rate = DEFAULT_SAMPLE_RATE) : sample_rate(sample_rate) {

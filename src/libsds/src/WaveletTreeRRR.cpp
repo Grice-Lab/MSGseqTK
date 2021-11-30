@@ -148,5 +148,14 @@ size_t WaveletTreeRRR::select(size_t s, size_t r) const {
 	return i - 1;
 }
 
+void WaveletTreeRRR::build_bsRRR(vector<BitStr32>& bstrs) {
+	/* build the BitSeqs from BitStrs */
+	bseqs.reserve(height);
+	for(BitStr32& bs : bstrs) {
+		bseqs.push_back(BitSeqRRR(bs, sample_rate));
+		bs.reset(); /* clear bstr after convered to BitSeqRRR */
+	}
+}
+
 } /* namespace libSDS */
 } /* namespace EGriceLab */

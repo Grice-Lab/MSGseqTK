@@ -24,9 +24,6 @@ using std::basic_string;
 using std::string;
 using std::istream;
 using std::ostream;
-using std::cout;
-using std::endl;
-using std::cerr;
 
 /**
  * A BitStr is a dynamic array representation of bits for arbitrary unsigned integer types

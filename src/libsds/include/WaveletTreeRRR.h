@@ -43,28 +43,57 @@ public:
 	 * @param src  copy of input string
 	 */
 	template<typename uIntType>
-	WaveletTreeRRR(const basic_string<uIntType>& src, size_t min = -1, size_t max = -1, size_t sample_rate = BitSeqRRR::DEFAULT_SAMPLE_RATE)
-	: wid(sizeof(uIntType) * Wb), min(min), max(max), sample_rate(sample_rate) {
+	WaveletTreeRRR(const basic_string<uIntType>& src, size_t min = -1, size_t max = -1,
+			size_t sample_rate = BitSeqRRR::DEFAULT_SAMPLE_RATE)
+			: wid(sizeof(uIntType) * Wb), min(min), max(max), sample_rate(sample_rate) {
 		if(this->min == -1)
 			this->min = *std::min_element(src.begin(), src.end());
 		if(this->max == -1)
 			this->max = *std::max_element(src.begin(), src.end());
-		build(src);
+
+		/* build basic */
+		build_basic(src);
+
+		/* construct intermediate BitStrs */
+		vector<BitStr32> bstrs; /* intermediate BitStrs */
+		bstrs.reserve(height);
+		for(size_t i = 0; i < height; ++i)
+			bstrs.push_back(BitStr32(n));
+
+		/* build levels */
+		build_level(bstrs, src, 0, 0);
+
+		/* build bseqRRR */
+		build_bsRRR(bstrs);
 	}
 
-	/**
-	 * build a WaveletTree from a std::basic_string of any type in any alphabet, non-const version
-	 * @param src  copy of input string
-	 */
 	template<typename uIntType>
-	WaveletTreeRRR(basic_string<uIntType>& src, size_t min = -1, size_t max = -1, size_t sample_rate = BitSeqRRR::DEFAULT_SAMPLE_RATE)
-	: wid(sizeof(uIntType) * Wb), min(min), max(max), sample_rate(sample_rate) {
+	WaveletTreeRRR(basic_string<uIntType>& src, size_t min = -1, size_t max = -1,
+			size_t sample_rate = BitSeqRRR::DEFAULT_SAMPLE_RATE)
+			: wid(sizeof(uIntType) * Wb), min(min), max(max), sample_rate(sample_rate) {
 		if(this->min == -1)
 			this->min = *std::min_element(src.begin(), src.end());
 		if(this->max == -1)
 			this->max = *std::max_element(src.begin(), src.end());
-		build(src);
+
+		/* build basic */
+		build_basic(src);
+
+		/* construct intermediate BitStrs */
+		vector<BitStr32> bstrs; /* intermediate BitStrs */
+		bstrs.reserve(height);
+		for(size_t i = 0; i < height; ++i)
+			bstrs.push_back(BitStr32(n));
+
+		/* build levels */
+		build_level(bstrs, src, 0, 0);
+
+		/* build bseqRRR */
+		build_bsRRR(bstrs);
 	}
+
+	/* virtual destructor */
+	virtual ~WaveletTreeRRR() = default;
 
 	/* member methods */
 	/** test whether the i-th bit of val is set */
@@ -152,13 +181,7 @@ private:
 	 * build the basic fields from a copy of the input string
 	 */
 	template<typename uIntType>
-	void build(const basic_string<uIntType>& src);
-
-	/**
-	 * build the basic fields from a copy of the input string, non-cost version
-	 */
-	template<typename uIntType>
-	void build(basic_string<uIntType>& src);
+	void build_basic(const basic_string<uIntType>& src);
 
 	/**
 	 * recursively build Wavelet Tree bstrs of given level
@@ -167,7 +190,8 @@ private:
 	 * @param offset  offset relative to the original symbol
 	 */
 	template<typename uIntType>
-	void build_level(vector<BitStr32>& bstrs, const basic_string<uIntType>& sym,size_t level, size_t offset = 0);
+	void build_level(vector<BitStr32>& bstrs, const basic_string<uIntType>& sym,
+			size_t level, size_t offset);
 
 	/**
 	 * recursively build Wavelet Tree bstrs of given level, non-const version
@@ -176,7 +200,13 @@ private:
 	 * @param offset  offset relative to the original symbol
 	 */
 	template<typename uIntType>
-	void build_level(vector<BitStr32>& bstrs, basic_string<uIntType>& sym,size_t level, size_t offset = 0);
+	void build_level(vector<BitStr32>& bstrs, basic_string<uIntType>& sym, size_t level,
+			size_t from, size_t to);
+
+	/** build bseqRRRs using given bstrs */
+	void build_bsRRR(vector<BitStr32>& bstrs);
+
+	/** build OCC */
 
 	/* member fields */
 private:
@@ -200,7 +230,7 @@ public:
 };
 
 template<typename uIntType>
-inline void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
+inline void WaveletTreeRRR::build_basic(const basic_string<uIntType>& src) {
 	/* build basic fields */
 	n = src.length();
 	sigma = max - min + 1;
@@ -211,54 +241,6 @@ inline void WaveletTreeRRR::build(const basic_string<uIntType>& src) {
 	OCC[0] = 0;
 	for (uIntType ch : src)
         OCC[ch + 1]++; /* avoid zeros in OCC */
-
-	/* construct intermediate BitStrs */
-	vector<BitStr32> bstrs; /* intermediate BitStrs */
-	bstrs.reserve(height);
-	for(size_t i = 0; i < height; ++i)
-		bstrs.push_back(BitStr32(n));
-
-	/* build levels */
-	build_level(bstrs, src, 0);
-
-	/* build the BitSeqs from BitStrs */
-	bseqs.reserve(height);
-	for(const BitStr32& bs : bstrs)
-		bseqs.push_back(BitSeqRRR(bs, sample_rate));
-
-	/* build cumulative OCC */
-	for(size_t i = 1; i <= max + 1; ++i)
-		OCC[i] += OCC[i - 1];
-}
-
-template<typename uIntType>
-inline void WaveletTreeRRR::build(basic_string<uIntType>& src) {
-	/* build basic fields */
-	n = src.length();
-	sigma = max - min + 1;
-	height = bits(max);
-	OCC.resize(max + 2); /* 1-based occurence is dummy position */
-
-	/* get original OCC */
-	OCC[0] = 0;
-	for (uIntType ch : src)
-        OCC[ch + 1]++; /* avoid zeros in OCC */
-
-	/* construct intermediate BitStrs */
-	vector<BitStr32> bstrs; /* intermediate BitStrs */
-	bstrs.reserve(height);
-	for(size_t i = 0; i < height; ++i)
-		bstrs.push_back(BitStr32(n));
-
-	/* build levels */
-	build_level(bstrs, src, 0);
-	src.clear();
-	src.shrink_to_fit();
-
-	/* build the BitSeqs from BitStrs */
-	bseqs.reserve(height);
-	for(const BitStr32& bs : bstrs)
-		bseqs.push_back(BitSeqRRR(bs, sample_rate));
 
 	/* build cumulative OCC */
 	for(size_t i = 1; i <= max + 1; ++i)
@@ -293,49 +275,114 @@ inline void WaveletTreeRRR::build_level(vector<BitStr32>& bstrs, const basic_str
 
 	/* build level recursevely */
 	build_level(bstrs, left, level + 1, offset);
-	build_level(bstrs, right, level + 1, offset + left.length());
+	build_level(bstrs, right, level + 1, offset + N - nbits);
 }
 
 template<typename uIntType>
 inline void WaveletTreeRRR::build_level(vector<BitStr32>& bstrs, basic_string<uIntType>& sym,
-		size_t level, size_t offset) {
-	if(sym.empty())
+		size_t level, size_t from, size_t to) {
+	if(level == height || from >= to)
 		return;
-	if(level == height) {
-		sym.clear();
-		sym.shrink_to_fit();
-		return;
-	}
 	const size_t N = sym.length();
+	assert(N == length());
+	assert(bstrs.size() == height);
+
 	BitStr32& bs = bstrs[level];
 
-	assert(bs.length() == n);
-
+	basic_string<uIntType> sym0 = sym; /* make a copy */
 	size_t nbits = 0;
-	for (size_t i = 0; i < N; ++i) {
+	for (size_t i = from; i < to; ++i) {
 		if(test(sym[i], level)) {
-			bs.set(i + offset);
+			bs.set(i);
 			nbits++;
 		}
 	}
 
-	const uIntType FLAG = std::numeric_limits<uIntType>::max();
-//	basic_string<uIntType> left(N - nbits, 0);
-	basic_string<uIntType> right(nbits, 0);
-	for(size_t k = 0, j = 0; k < N; ++k) {
-		if(test(sym[k], level)) {
-			right[j++] = sym[k];
-			sym[k] = FLAG;
-		}
+	if(level + 1 == height) /* already at max level, no need to split to create useless temporaries */
+		return;
+
+	/* partition of the sym by using the upper 4-bits */
+	for(size_t k = from, i = from /* pos on left */, j = to - nbits /* pos on right */; k < to; ++k) {
+		uint8_t b = sym0[k];
+		if(test(b, level)) /* on right */
+			sym[j++] = b;
+		else /* on left */
+			sym[i++] = b;
 	}
-	/* use sym itself as left partition */
-	basic_string<uIntType>& left = sym;
-	left.erase(std::remove(left.begin(), left.end(), FLAG), left.end());
-	left.shrink_to_fit();
 
 	/* build level recursevely */
-	build_level(bstrs, left, level + 1, offset);
-	build_level(bstrs, right, level + 1, offset + N - nbits);
+	build_level(bstrs, sym, level + 1, from, to - nbits);
+	build_level(bstrs, sym, level + 1, to - nbits, to);
+}
+
+/* template specialization */
+template<>
+inline void WaveletTreeRRR::build_level(vector<BitStr32>& bstrs, basic_string<uint8_t>& sym, size_t level,
+		size_t from, size_t to) {
+	assert(height <= 4); // in-place partition can only work for <= 4-bits encoding
+	if(level == height || from >= to)
+		return;
+
+	const size_t N = sym.length();
+	assert(N == length()); /* sym will never be shrinked */
+	assert(bstrs.size() == height);
+	BitStr32& bs = bstrs[level];
+
+	size_t nbits = 0;
+	for (size_t i = from; i < to; ++i) {
+		if(test(sym[i], level)) {
+			bs.set(i);
+			nbits++;
+		}
+		/* move all values to upper bits */
+		sym[i] <<= 4;
+	}
+
+	if(level + 1 == height) /* already at max level, no need to split to create useless temporaries */
+		return;
+
+	/* in-place partition of the sym by using the upper 4-bits */
+	for(size_t k = from, i = from /* pos on left */, j = to - nbits /* pos on right */; k < to; ++k) {
+		uint8_t b = (sym[k] & (0xf << 4)) >> 4;
+		if(test(b, level)) /* on right */
+			sym[j++] |= b;
+		else /* on left */
+			sym[i++] |= b;
+	}
+
+	/* build level recursevely */
+	build_level(bstrs, sym, level + 1, from, to - nbits);
+	build_level(bstrs, sym, level + 1, to - nbits, to);
+}
+
+/* template specialization */
+template<>
+inline WaveletTreeRRR::WaveletTreeRRR(basic_string<uint8_t>& src, size_t min, size_t max,
+		size_t sample_rate)
+		: wid(sizeof(uint8_t) * Wb), min(min), max(max), sample_rate(sample_rate) {
+	if(this->min == -1)
+		this->min = *std::min_element(src.begin(), src.end());
+	if(this->max == -1)
+		this->max = *std::max_element(src.begin(), src.end());
+
+	/* build basic */
+	build_basic(src);
+
+	/* construct intermediate BitStrs */
+	vector<BitStr32> bstrs; /* intermediate BitStrs */
+	bstrs.reserve(height);
+	for(size_t i = 0; i < height; ++i)
+		bstrs.push_back(BitStr32(n));
+
+	/* build levels */
+	build_level(bstrs, src, 0, 0, src.length());
+
+	/* clear src */
+	src.clear();
+	src.shrink_to_fit();
+
+	/* build bseqRRR */
+	build_bsRRR(bstrs);
 }
 
 inline bool operator==(const WaveletTreeRRR& lhs, const WaveletTreeRRR& rhs) {
