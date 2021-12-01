@@ -155,7 +155,7 @@ public:
 
 	/** get baseCount of basic bases (A,T,C,G) */
 	int64_t getBasicBaseCount() const {
-		return B[DNAalphabet::A] + B[DNAalphabet::C] + B[DNAalphabet::G] + B[DNAalphabet::T] + B[DNAalphabet::N];
+		return B[DNAalphabet::A] + B[DNAalphabet::C] + B[DNAalphabet::G] + B[DNAalphabet::T];
 	}
 
 	/** get baseCount of extended/ambigous bases (IUPAC non-A,T,C,G,N and non-gap) */

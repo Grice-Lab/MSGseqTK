@@ -211,11 +211,12 @@ int main(int argc, char* argv[]) {
 
 	cout << "MetaGenome info: # of genomes: " << mtg.numGenomes() << " size: " << mtg.BDSize() << endl;
 	cout << "FMD-index info: length: " << fmdidx.length() << endl;
-	cout << "Basic base count:"
+	cout << "Base count:"
 			<< " A: " << fmdidx.getBaseCount(DNAalphabet::A)
 			<< " C: " << fmdidx.getBaseCount(DNAalphabet::C)
 			<< " G: " << fmdidx.getBaseCount(DNAalphabet::G)
 			<< " T: " << fmdidx.getBaseCount(DNAalphabet::T)
+			<< " IUPAC ambigous bases: " << fmdidx.getExtBaseCount()
 			<< endl;
 
 	/* if genomeOut is requested */
