@@ -89,12 +89,12 @@ void printUsage(const string& progName) {
 /**
  * build the FMD-index build in one general block, which should not exceeding the DEFAULT_BLOCK_SIZE
  */
-void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx, int saSampleRate);
+int buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx, int saSampleRate);
 
 /**
  * build the FMD-index incrementally, it will also shrink the MetaGenome on-the-fly to save RAM
  */
-void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blockSize, int saSampleRate);
+int buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blockSize, int saSampleRate);
 
 int main(int argc, char* argv[]) {
 	/* variable declarations */
@@ -400,8 +400,9 @@ int main(int argc, char* argv[]) {
 	const int64_t mtgSize = mtg.BDSize(); // store old size
 
 	/* build FMD-index */
+	int flag = 0;
 	if(mtg.BDSize() < blockSize) { // we can build the FMD-index in one step
-		buildFMDIndex(mtg, fmdidx, saSampleRate);
+		flag = buildFMDIndex(mtg, fmdidx, saSampleRate);
 	}
 	else { // build the FMD-index incrementally
 		mtg.clearSeq(); // clear MetaGenome seq to save memory
@@ -411,8 +412,13 @@ int main(int argc, char* argv[]) {
 			cerr << "Unable to open saved MetaGenome seq file '" << mgsFn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
-		buildFMDIndex(mtg, mgsIn, fmdidx, blockSize, saSampleRate);
+		flag = buildFMDIndex(mtg, mgsIn, fmdidx, blockSize, saSampleRate);
 	}
+	if(flag != 0) {
+		cerr << "Failed to build FMD-index" << endl;
+		return flag;
+	}
+
 	assert(mtgSize == fmdidx.length());
 
 	/* save FMDIndex */
@@ -431,56 +437,41 @@ int main(int argc, char* argv[]) {
 		infoLog << "Database built. Total # of genomes: " << mtg.numGenomes() << " BD-size: " << mtgSize << endl;
 }
 
-void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx, int saSampleRate) {
+int buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx, int saSampleRate) {
 	infoLog << "Building FMD-index" << endl;
 	fmdidx = FMDIndex(mtg.getBDSeq(), saSampleRate); // build whole metagenome FMDIndex in one step
+	return 0;
 }
 
-void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blockSize, int saSampleRate) {
+int buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blockSize, int saSampleRate) {
 	infoLog << "Building FMD-index incrementally" << endl;
 	const size_t NC = mtg.numChroms();
 	size_t blockId = 0;
 	size_t blockStart = 0; // block start index
 	size_t blockEnd = NC; // block end index
-	if(blockSize > INT32_MAX) { /* build 64-bit blocks */
-		for(size_t i = NC; i > 0; --i) {
-			blockStart = i - 1; // update blockStart
-			/* process block, if large enough */
-			if(blockStart == 0 /* first block */ ||
-					mtg.getChromBDLength(blockStart, blockEnd) < blockSize
-					&& mtg.getChromBDLength(blockStart - 1, blockEnd) >= blockSize || /* block is about to full */
-					blockStart + 1 == blockEnd && mtg.getChromBDLength(blockStart, blockEnd) >= blockSize /* one block is large enough */)
-			{
-				infoLog << "Adding " << (blockEnd - blockStart) << " chroms of "
-						<< mtg.getChromBDLength(blockStart, blockEnd)
-						<< " bps in block " << ++blockId << " into FMD-index" << endl;
-				fmdidx.prepend(FMDIndex(mtg.loadBDSeq(blockStart, blockEnd, mgsIn))); /* prepend new FMDIndex, whose SA is never built */
-				// update
-				blockEnd = blockStart;
-				infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;
-			}
+	for(size_t i = NC; i > 0; --i) {
+		if(mtg.getChromBDLength(i - 1) >= blockSize) {
+			cerr << "Found a chromosome " << mtg.getChromName(i) << " of BD-length " << mtg.getChromBDLength(i)
+								<< " greater than block size limit, please choose a larger -b|--block value" << endl;
+			return EXIT_FAILURE;
 		}
-	}
-	else { /* build 32-bit blocks */
-		for(size_t i = NC; i > 0; --i) {
-			blockStart = i - 1; // update blockStart
-			/* process block, if large enough */
-			if(blockStart == 0 /* first block */ ||
-					mtg.getChromBDLength(blockStart, blockEnd) < blockSize
-					&& mtg.getChromBDLength(blockStart - 1, blockEnd) >= blockSize || /* block is about to full */
-					blockStart + 1 == blockEnd && mtg.getChromBDLength(blockStart, blockEnd) >= blockSize /* one block is large enough */)
-			{
-				infoLog << "Adding " << (blockEnd - blockStart) << " chroms of "
-						<< mtg.getChromBDLength(blockStart, blockEnd)
-						<< " bps in block " << ++blockId << " into FMD-index" << endl;
-				fmdidx.prepend(FMDIndex(mtg.loadBDSeq(blockStart, blockEnd, mgsIn))); /* prepend new FMDIndex, whose SA is never built */
-				// update
-				blockEnd = blockStart;
-				infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;
-			}
+		blockStart = i - 1; // update blockStart
+		/* process block, if large enough */
+		if(blockStart == 0 /* first block */ ||
+				mtg.getChromBDLength(blockStart, blockEnd) < blockSize
+				&& mtg.getChromBDLength(blockStart - 1, blockEnd) >= blockSize) /* block is about to full */
+		{
+			infoLog << "Adding " << (blockEnd - blockStart) << " chroms of "
+					<< mtg.getChromBDLength(blockStart, blockEnd)
+					<< " bps in block " << ++blockId << " into FMD-index" << endl;
+			fmdidx.prepend(FMDIndex(mtg.loadBDSeq(blockStart, blockEnd, mgsIn))); /* prepend new FMDIndex, whose SA is never built */
+			// update
+			blockEnd = blockStart;
+			infoLog << "Currrent # of bases in FMD-index: " << fmdidx.length() << endl;
 		}
 	}
 	infoLog << "Building sampled Suffix-Array (SA)" << endl;
 	fmdidx.buildSA(saSampleRate);
 	infoLog << "Overall sampled SA built" << endl;
+	return 0;
 }
