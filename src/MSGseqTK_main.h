@@ -10,14 +10,8 @@
 #ifndef SRC_MSGSEQTK_MAIN_H_
 #define SRC_MSGSEQTK_MAIN_H_
 
-#include <string>
-
 namespace EGriceLab {
 namespace MSGseqTK {
-
-using std::string;
-
-string process_mem_usage();
 
 } /* namespace EGriceLab */
 } /* namespace MSGseqTK */
