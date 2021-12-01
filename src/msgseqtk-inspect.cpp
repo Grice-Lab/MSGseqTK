@@ -224,7 +224,7 @@ int main(int argc, char* argv[]) {
 		infoLog << "Writing genome list" << endl;
 		genomeOut << GENOME_TSV_HEADER << endl;
 		for(const Genome& genome : mtg.getGenomes())
-			genomeOut << genome.getId() << "\t" << genome.getName() << genome.size() << endl;
+			genomeOut << genome.getId() << "\t" << genome.getName() << "\t" << genome.size() << endl;
 	}
 
 	/* if chromOut is requested */

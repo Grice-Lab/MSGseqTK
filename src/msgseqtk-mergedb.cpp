@@ -29,6 +29,7 @@
 #include <string>
 #include <cstdlib>
 #include <algorithm>
+#include <unordered_map>
 #include <cassert>
 #include "EGUtil.h"
 #include "MSGseqTK.h"
@@ -58,6 +59,7 @@ void printUsage(const string& progName) {
 	cerr << "Usage:    " << progName << "  <DB1> <DB2> [DB3 ...] <-n DBNAME> [options]" << endl
 		 << "D1, D2, ...    STR               : database names need to be merged" << endl
 		 << "Options:    -n  STR              : new name for the merged database" << endl
+		 << "            --keep-order  FLAG   : keep the order of DB list, by default starting from the smallest DB for best merging speed" << endl
 		 << "            --sample-rate  INT   : sample rate for the Suffix-Array (SA), recommend use smaller value means faster location search but more RAM/disk usage when the reference genomes are highly redundant [" << FMDIndex::SA_SAMPLE_RATE << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel SA building [" << DEFAULT_NUM_THREADS << "]" << endl
@@ -67,10 +69,14 @@ void printUsage(const string& progName) {
 		 << "            -h|--help            : print this message and exit" << endl;
 }
 
+/* sort MSGseqTK database according to their sizes */
+int sort_DB(vector<string>& inDBNames);
+
 int main(int argc, char* argv[]) {
 	/* variable declarations */
 	vector<string> inDBNames;
 	string dbName;
+	bool keepOrder = false;
 	ofstream mtgOut, mgsOut, fmdidxOut;
 
 	int saSampleRate = FMDIndex::SA_SAMPLE_RATE;
@@ -98,6 +104,9 @@ int main(int argc, char* argv[]) {
 
 	if(cmdOpts.hasOpt("-n"))
 		dbName = cmdOpts.getOpt("-n");
+
+	if(cmdOpts.hasOpt("--keep-order"))
+		keepOrder = true;
 
 	if(cmdOpts.hasOpt("--sample-rate"))
 		saSampleRate = ::atoi(cmdOpts.getOptStr("--sample-rate"));
@@ -163,9 +172,16 @@ int main(int argc, char* argv[]) {
 	MetaGenome mtg;
 	FMDIndex fmdidx;
 
-	/* process each database */
-	for(vector<string>::const_reverse_iterator inDB = inDBNames.rbegin(); inDB != inDBNames.rend(); ++inDB) {
-		bool isFirst = inDB == inDBNames.rend() - 1;
+	if(!keepOrder) { /* sort DB names by their size */
+		int flag = sort_DB(inDBNames);
+		if(flag != 0) {
+			cerr << "Failed to sort input databses, aborting" << endl;
+			return EXIT_FAILURE;
+		}
+	}
+
+	for(vector<string>::const_iterator inDB = inDBNames.begin(); inDB != inDBNames.end(); ++inDB) {
+		bool isLast = inDB == inDBNames.end() - 1;
 		string mtgInfn = *inDB + METAGENOME_FILE_SUFFIX;
 		string mgsInfn = *inDB + METAGENOME_SEQ_FILE_SUFFIX;
 		string fmdidxInfn = *inDB + FMDINDEX_FILE_SUFFIX;
@@ -215,12 +231,12 @@ int main(int argc, char* argv[]) {
 		}
 
 		/* incremental update */
-		if(!isFirst)
+		if(!isLast)
 			fmdidxPart.clearSA(); /* do not store SA info for intermediate parts */
 
-		infoLog << "Merging (prepending) into new database" << endl;
+		infoLog << "Merging into new database" << endl;
 
-		mtg.prepend(mtgPart);
+		mtg += mtgPart;
 		/* check genome redundancy */
 		size_t nGenome = mtg.removeRedundantGenomes();
 		if(nGenome > 0) {
@@ -229,7 +245,7 @@ int main(int argc, char* argv[]) {
 			return EXIT_FAILURE;
 		}
 
-		fmdidx.prepend(fmdidxPart);
+		fmdidx += fmdidxPart;
 		assert(mtg.BDSize() == fmdidx.length());
 		infoLog << "Currrent # of genomes: " << mtg.numGenomes() << " # of bases: " << fmdidx.length() << endl;
 	}
@@ -269,4 +285,39 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 	infoLog << "FMD-index saved" << endl;
+}
+
+int sort_DB(vector<string>& inDBNames) {
+	infoLog << "Determing input DB size" << endl;
+	unordered_map<string, int64_t> inDBSizes;
+	for(const string& dbName : inDBNames) {
+		string mtgInfn = dbName + METAGENOME_FILE_SUFFIX;
+		/* open DB mtg file */
+		ifstream mtgIn(mtgInfn.c_str(), ios_base::binary);
+		if(!mtgIn.is_open()) {
+			cerr << "Unable to open '" << mtgInfn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
+		/* read in mtg file */
+		MetaGenome mtg;
+		loadProgInfo(mtgIn);
+		if(!mtgIn.bad())
+			mtg.load(mtgIn);
+		if(mtgIn.bad()) {
+			cerr << "Unable to load '" << mtgInfn << "': " << ::strerror(errno) << endl;
+			return EXIT_FAILURE;
+		}
+
+		/* record dbSizes */
+		int64_t dbSize = mtg.size();
+		debugLog << "  Database " << dbName << " size: " << dbSize << endl;
+		inDBSizes[dbName] = dbSize;
+	}
+
+	/* sort DB by sizes */
+	std::sort(inDBNames.begin(), inDBNames.end(),
+			[&] (const string& lhs, const string& rhs)->bool { return inDBSizes[lhs] < inDBSizes[rhs]; }
+	);
+
+	return 0;
 }
