@@ -434,7 +434,7 @@ int main(int argc, char* argv[]) {
 
 void buildFMDIndex(const MetaGenome& mtg, FMDIndex& fmdidx, int saSampleRate) {
 	infoLog << "Building FMD-index" << endl;
-	fmdidx = FMDIndex(mtg.getBDSeq(), saSampleRate); // build whole metagenome FMDIndex in one step
+	fmdidx = FMDIndex(mtg.getBDSeq(), true, saSampleRate); // build whole metagenome FMDIndex in one step
 }
 
 void buildFMDIndex(const MetaGenome& mtg, istream& mgsIn, FMDIndex& fmdidx, size_t blockSize, int saSampleRate) {
