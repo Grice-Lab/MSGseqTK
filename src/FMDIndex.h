@@ -304,6 +304,12 @@ protected:
 	/** build SAidx and SAsampled with given SA, 32bit version */
 	FMDIndex& sampleSA(const int32_t* SA, int saSampleRate = SA_SAMPLE_RATE);
 
+	/** build SAidx and SAsampled with given SA and bwt */
+	FMDIndex& sampleSA(const int64_t* SA, const DNAseq& bwt, int saSampleRate = SA_SAMPLE_RATE);
+
+	/** build SAidx and SAsampled with given SA and bwt, 32bit version */
+	FMDIndex& sampleSA(const int32_t* SA, const DNAseq& bwt, int saSampleRate = SA_SAMPLE_RATE);
+
 	/** build interleaving BitVector for two FMD-index */
 	static BitStr32 buildInterleavingBS(const FMDIndex& lhs, const FMDIndex& rhs);
 
