@@ -216,7 +216,6 @@ int main(int argc, char* argv[]) {
 			<< " C: " << fmdidx.getBaseCount(DNAalphabet::C)
 			<< " G: " << fmdidx.getBaseCount(DNAalphabet::G)
 			<< " T: " << fmdidx.getBaseCount(DNAalphabet::T)
-			<< " IUPAC ambigous bases: " << fmdidx.getExtBaseCount()
 			<< endl;
 
 	/* if genomeOut is requested */
