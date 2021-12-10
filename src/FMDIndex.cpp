@@ -109,6 +109,7 @@ FMDIndex::FMDIndex(DNAseq&& seq, bool buildSAsampled, int saSampleRate) {
 		/* sample SA */
 		if(buildSAsampled)
 			sampleSA(SA, bwt, saSampleRate);
+		std::cerr << "SA sampled" << std::endl;
 		delete[] SA;
 		/* build BWTRRR */
 		bwtRRR = WaveletTreeRRR(bwt, 0, DNAalphabet::NT16_MAX, RRR_SAMPLE_RATE);
@@ -415,11 +416,10 @@ void FMDIndex::buildGap(const int32_t* SA) {
 		gapSA[i] = SA[i];
 }
 
-FMDIndex& FMDIndex::sampleSA(const int64_t* SA, int saSampleRate) {
-	const int64_t N = length();
+FMDIndex& FMDIndex::sampleSA(const int64_t* SA, int64_t N, int saSampleRate) {
 	BitStr32 bstr(N);
 	SAsampled.clear();
-	SAsampled.reserve(N / saSampleRate + numGaps()); // enough to hold both peroid sampling and gaps
+	SAsampled.reserve((N + 1) / saSampleRate /* ceil(N / saSampleRate) */ + numGaps()); // enough to hold both peroid sampling and gaps
 	size_t k = 0; // SAsampled size
 	for(size_t i = 0; i < N; ++i) {
 		if(i % saSampleRate == 0 || accessBWT(i) == 0) { /* sample at all null characters */
@@ -432,12 +432,11 @@ FMDIndex& FMDIndex::sampleSA(const int64_t* SA, int saSampleRate) {
 	return *this;
 }
 
-FMDIndex& FMDIndex::sampleSA(const int32_t* SA, int saSampleRate) {
-	const int64_t N = length();
+FMDIndex& FMDIndex::sampleSA(const int32_t* SA, int64_t N, int saSampleRate) {
 	assert(N <= INT32_MAX);
 	BitStr32 bstr(N);
 	SAsampled.clear();
-	SAsampled.reserve(N / saSampleRate + numGaps()); // enough to hold both peroid sampling and gaps
+	SAsampled.reserve((N + 1) / saSampleRate /* ceil(N / saSampleRate) */ + numGaps()); // enough to hold both peroid sampling and gaps
 	size_t k = 0; // SAsampled size
 	for(size_t i = 0; i < N; ++i) {
 		if(i % saSampleRate == 0 || accessBWT(i) == 0) { /* sample at all null characters */
@@ -451,10 +450,10 @@ FMDIndex& FMDIndex::sampleSA(const int32_t* SA, int saSampleRate) {
 }
 
 FMDIndex& FMDIndex::sampleSA(const int64_t* SA, const DNAseq& bwt, int saSampleRate) {
-	const int64_t N = length();
+	const int64_t N = bwt.length();
 	BitStr32 bstr(N);
 	SAsampled.clear();
-	SAsampled.reserve(N / saSampleRate + numGaps()); // enough to hold both peroid sampling and gaps
+	SAsampled.reserve((N + 1) / saSampleRate /* ceil(N / saSampleRate) */ + numGaps()); // enough to hold both peroid sampling and gaps
 	size_t k = 0; // SAsampled size
 	for(size_t i = 0; i < N; ++i) {
 		if(i % saSampleRate == 0 || bwt[i] == 0) { /* sample at all null characters */
@@ -468,11 +467,11 @@ FMDIndex& FMDIndex::sampleSA(const int64_t* SA, const DNAseq& bwt, int saSampleR
 }
 
 FMDIndex& FMDIndex::sampleSA(const int32_t* SA, const DNAseq& bwt, int saSampleRate) {
-	const int64_t N = length();
+	const int64_t N = bwt.length();
 	assert(N <= INT32_MAX);
 	BitStr32 bstr(N);
 	SAsampled.clear();
-	SAsampled.reserve(N / saSampleRate + numGaps()); // enough to hold both peroid sampling and gaps
+	SAsampled.reserve((N + 1) / saSampleRate /* ceil(N / saSampleRate) */ + numGaps()); // enough to hold both peroid sampling and gaps
 	size_t k = 0; // SAsampled size
 	for(size_t i = 0; i < N; ++i) {
 		if(i % saSampleRate == 0 || bwt[i] == 0) { /* sample at all null characters */

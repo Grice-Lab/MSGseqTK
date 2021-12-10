@@ -76,6 +76,16 @@ public:
 		return !SAidx.empty();
 	}
 
+	/** get SAidx length */
+	int64_t getSAidxLength() const {
+		return SAidx.length();
+	}
+
+	/** get number of sampled SAidx */
+	int64_t numSASampled() const {
+		return SAsampled.size();
+	}
+
 	/** get number of gap bases */
 	int64_t numGaps() const {
 		return B[0];
@@ -299,10 +309,10 @@ protected:
 	FMDIndex& mergeCount(const FMDIndex& other);
 
 	/** build SAidx and SAsampled with given SA */
-	FMDIndex& sampleSA(const int64_t* SA, int saSampleRate = SA_SAMPLE_RATE);
+	FMDIndex& sampleSA(const int64_t* SA, int64_t N, int saSampleRate = SA_SAMPLE_RATE);
 
 	/** build SAidx and SAsampled with given SA, 32bit version */
-	FMDIndex& sampleSA(const int32_t* SA, int saSampleRate = SA_SAMPLE_RATE);
+	FMDIndex& sampleSA(const int32_t* SA, int64_t N, int saSampleRate = SA_SAMPLE_RATE);
 
 	/** build SAidx and SAsampled with given SA and bwt */
 	FMDIndex& sampleSA(const int64_t* SA, const DNAseq& bwt, int saSampleRate = SA_SAMPLE_RATE);

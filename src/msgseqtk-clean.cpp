@@ -361,6 +361,7 @@ int main(int argc, char* argv[]) {
 		cerr << "Unable to load reference MetaGenome: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
+	/* no need to load reference MetaGenome seq file for read cleaning */
 	infoLog << "Loading refrence FMD-index ..." << endl;
 	loadProgInfo(refFmdidxIn);
 	if(!refFmdidxIn.bad())
@@ -378,6 +379,7 @@ int main(int argc, char* argv[]) {
 		cerr << "Unable to load background MetaGenome: " << ::strerror(errno) << endl;
 		return EXIT_FAILURE;
 	}
+	/* no need to load background MetaGenome seq file for read cleaning */
 	infoLog << "Loading background FMD-index ..." << endl;
 	loadProgInfo(bgFmdidxIn);
 	if(!bgFmdidxIn.bad())

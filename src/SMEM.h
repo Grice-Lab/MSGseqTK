@@ -187,6 +187,10 @@ public:
 		return *this;
 	}
 
+	/** formatted output */
+	ostream& write(ostream& out) const;
+
+
 	/* static methods */
 	/**
 	 * find list of MEMS of a given seq starting at given position using forward/backward extension
@@ -209,8 +213,6 @@ private:
 public:
 	static const int64_t MAX_NSEED = 200; // maximum size (# of occurrence of a good SMEM)
 	/* non-member functions */
-	/** formated output */
-	friend ostream& operator<<(ostream& out, const SMEM& smem);
 
 	/** relationship operators */
 	friend bool operator<(const SMEM& lhs, const SMEM& rhs);
@@ -398,9 +400,13 @@ public:
 	static const double MAX_EVALUE;
 };
 
-inline ostream& operator<<(ostream& out, const SMEM& smem) {
-	out << smem.from << "-" << smem.to << ":" << smem.size << ":" << smem.fwdStart << ":" << smem.revStart << ":" << smem.logP;
+inline ostream& SMEM::write(ostream& out) const {
+	out << from << "-" << to << ":" << size << ":" << fwdStart << ":" << revStart << ":" << logP;
 	return out;
+}
+
+inline ostream& operator<<(ostream& out, const SMEM& smem) {
+	return smem.write(out);
 }
 
 inline bool operator<(const SMEM& lhs, const SMEM& rhs) {

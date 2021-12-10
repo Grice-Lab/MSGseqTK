@@ -199,6 +199,15 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
+	infoLog << "Checking FMD-index ..." << endl;
+	cout << "FMD-index length: " << fmdidx.length() << endl
+			<< "SAidx length: " << fmdidx.getSAidxLength() << endl
+			<< "Number of sampled SAidx: " << fmdidx.numSASampled() << endl;
+	if(fmdidx.length() != fmdidx.getSAidxLength()) {
+		cerr << "Error found in MSGseqTK database: FMD-index length does not match the SAidx length, aborting." << endl;
+		return EXIT_FAILURE;
+	}
+
 	infoLog << "Checking MetaGenome indices ..." << endl;
 	for(size_t tid = 0; tid < mtg.numChroms(); ++tid) {
 		string tname = mtg.getChromName(tid);
@@ -210,7 +219,6 @@ int main(int argc, char* argv[]) {
 	}
 
 	cout << "MetaGenome info: # of genomes: " << mtg.numGenomes() << " size: " << mtg.BDSize() << endl;
-	cout << "FMD-index info: length: " << fmdidx.length() << endl;
 	cout << "Base count:"
 			<< " A: " << fmdidx.getBaseCount(DNAalphabet::A)
 			<< " C: " << fmdidx.getBaseCount(DNAalphabet::C)
