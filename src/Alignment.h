@@ -610,14 +610,16 @@ inline void Alignment::calculateScoresNW(int64_t from, int64_t to, int64_t start
 	assert(isInitiated());
 	assert(qFrom <= from && to <= qTo);
 	assert(tStart <= start && end <= tEnd);
+	to = std::min(to, qTo - 1);
+	end = std::min(end, tEnd - 1);
 
 	double o = -ss.openGapPenalty();
 	double e = -ss.extGapPenalty();
 
 	const DNAseq& query = qStrand == GLoc::FWD ? read->getSeq() : rcRead->getSeq();
-	for(int64_t q = from; q <= to && q < qTo; ++q) {
+	for(int64_t q = from; q <= to; ++q) {
 		int32_t i = q - qFrom + 1; // relative to score matrices
-		for(int64_t t = start; t <= end && t < tEnd; ++t) {
+		for(int64_t t = start; t <= end; ++t) {
 			int32_t j = t - tStart + 1; // relative to score matrices
 			double s = ss.getScore(query[q], (*target)[t]);
 			M(i,j) = std::max({
@@ -641,14 +643,16 @@ inline void Alignment::calculateScoresSW(int64_t from, int64_t to, int64_t start
 	assert(isInitiated());
 	assert(qFrom <= from && to <= qTo);
 	assert(tStart <= start && end <= tEnd);
+	to = std::min(to, qTo - 1);
+	end = std::min(end, tEnd - 1);
 
 	double o = -ss.openGapPenalty();
 	double e = -ss.extGapPenalty();
 
 	const DNAseq& query = qStrand == GLoc::FWD ? read->getSeq() : rcRead->getSeq();
-	for(int64_t q = from; q <= to && q < qTo; ++q) {
+	for(int64_t q = from; q <= to; ++q) {
 		int32_t i = q - qFrom + 1; // relative to score matrices
-		for(int64_t t = start; t <= end && t < tEnd; ++t) {
+		for(int64_t t = start; t <= end; ++t) {
 			int32_t j = t - tStart + 1; // relative to score matrices
 			double s = ss.getScore(query[q], (*target)[t]);
 			M(i,j) = std::max({
