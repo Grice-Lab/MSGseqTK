@@ -4,6 +4,8 @@
  *  Created on: Mar 20, 2019
  *      Author: zhengqi
  */
+
+#include <cmath>
 #include <cassert>
 #include <unordered_set>
 #include "MSGseqTKConst.h"
@@ -81,7 +83,8 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 	/* forward extension */
 	while(smem.size >= minSize) {
 		smem.fwdExt();
-		if(smem.size != smem0.size && smem0.to >= minLen && (maxEvalue == inf || smem0.evalue(0, smem0.to) <= maxEvalue))
+		if(smem.size != smem0.size && smem0.to >= minLen
+				&& (!std::isfinite(maxEvalue) || smem0.evalue(0, smem0.to) <= maxEvalue))
 			prev.push_back(smem0);
 		smem0 = smem;
 	}

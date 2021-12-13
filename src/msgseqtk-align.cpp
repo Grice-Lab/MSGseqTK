@@ -365,11 +365,6 @@ int main(int argc, char* argv[]) {
 		cerr << "-o must be specified" << endl;
 		return EXIT_FAILURE;
 	}
-//
-//	if(!(maxSeeds > 0)) {
-//		cerr << "--max-seeds must be positive" << endl;
-//		return EXIT_FAILURE;
-//	}
 
 	if(!(maxReport >= 0)) {
 		cerr << "--max-report must be non-negagive" << endl;
