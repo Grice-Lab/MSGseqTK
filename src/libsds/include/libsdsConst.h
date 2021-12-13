@@ -15,13 +15,13 @@ namespace EGriceLab {
 namespace libSDS {
 
 /** number of bits in a word/bype */
-const size_t Wb = 8;
+constexpr int Wb = 8;
 
 /** number of bits in a uint32_t */
-const size_t W = 32;
+constexpr int W = 32;
 
 /** number of bits in a uint64_t */
-const size_t W64 = 64;
+constexpr int W64 = 64;
 
 /** mask for obtaining the first/lowest 5 bits */
 const size_t lowest5_mask = 0x1F;

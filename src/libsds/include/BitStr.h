@@ -209,11 +209,11 @@ public:
 	 * @param len  number of bits
 	 * @return value represented by these bits
 	 */
-	size_t getValue(size_type start, size_type len) const {
+	size_t getValue(size_type start, int len) const {
 //		assert(len <= wid);
 		start *= len; // use bit
 		size_type i = start / wid;
-		size_type j = start % wid;
+		int j = start % wid;
 		if (j + len <= wid)
 			return (data[i] << wid - j - len) >> (wid - len);
 		else
@@ -416,7 +416,7 @@ public:
 
 	/* member fields */
 private:
-	size_t wid = sizeof(uIntType) * Wb;    /* bit-width of a value_type */
+	int wid = sizeof(uIntType) * Wb;    /* bit-width of a value_type */
 	size_type nB = 0; /* number of bits */
 	size_type n = 0; /* number of values in value_type */
 	basic_string<uIntType> data; /* underlying data stored in std::basic_string, with length n */
