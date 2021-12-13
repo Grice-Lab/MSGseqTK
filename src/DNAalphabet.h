@@ -149,7 +149,7 @@ public:
 	/** test whether a base is basic base */
 	static bool isBasic(nt16_t b) {
 		switch(b) {
-		case A: case C: case G: case T: case N:
+		case A: case C: case G: case T:
 			return true;
 		default:
 			return false;
@@ -164,6 +164,22 @@ public:
 	/** decode a base to small int */
 	static int toInt(nt16_t b) {
 		return base2int[b];
+	}
+
+	/** encode a small int (0-4) to base */
+	static nt16_t encode(int i) {
+		switch(i) {
+		case 1:
+			return A;
+		case 2:
+			return C;
+		case 3:
+			return G;
+		case 4:
+			return T;
+		default:
+			return 0;
+		}
 	}
 
 	/** decode a symbol to small int */

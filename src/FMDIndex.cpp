@@ -575,36 +575,37 @@ vector<GLoc> FMDIndex::locateAllRev(const DNAseq& pattern) const {
 }
 
 int64_t FMDIndex::backExt(int64_t& p, int64_t& q, int64_t& s, nt16_t b) const {
-	if(DNAalphabet::isAmbiguous(b)) {
-		s = 0;
-		return s;
-	}
-	int64_t pN; // fwd strand backExt
-	array<int64_t, 16> qB;
-	array<int64_t, 16> sB;
+	if(DNAalphabet::isAmbiguous(b))
+		return (s = 0);
+
+	array<int64_t, 5> sB;
+	array<int64_t, 5> qB;
+	int c = DNAalphabet::toInt(b);
 	/* calculate new p and s */
 	int64_t O = bwtRRR.rank(b, p - 1);
-	pN = C[b] + O;
-	sB[b] = bwtRRR.rank(b, p + s - 1) - O;
+	sB[c] = bwtRRR.rank(b, p + s - 1) - O;
+
+	if(sB[c] <= 0)
+		return (s = sB[c]);
 
 	/* update q */
-	if(sB[b] != s) {
+	if(sB[c] != s) {
 		sB[0] = bwtRRR.rank(0, p + s - 1) - bwtRRR.rank(0, p - 1);
-		for(nt16_t j = b + 1; j <= DNAalphabet::T; ++j) { // search from b + 1 to T
-			sB[j] = !DNAalphabet::isAmbiguous(j) ? bwtRRR.rank(j, p + s - 1) - bwtRRR.rank(j, p - 1) : 0;
+		for(int j = c + 1; j <= 4 /* T */; ++j) { // search from b + 1 to T
+			sB[j] = bwtRRR.rank(DNAalphabet::encode(j), p + s - 1) - bwtRRR.rank(DNAalphabet::encode(j), p - 1);
 		}
 		/* new range of [q', q' + s' - 1] is a subrange of original [q, q + s] */
 		/* devide q + q + s */
 		qB[0] = q;
-		qB[DNAalphabet::T] = qB[0] + sB[0];
-		for(int j = DNAalphabet::T; j > b; --j) // only need to search till b (exclusive)
+		qB[4] = qB[0] + sB[0];
+		for(int j = 4; j > c; --j) // only need to search till b (exclusive)
 			qB[j - 1] = qB[j] + sB[j];
-		q = qB[b];
+		q = qB[c];
 	}
 
 	/* update p and s */
-	p = pN;
-	s = sB[b];
+	p = C[b] + O;
+	s = sB[c];
 	return s;
 }
 
