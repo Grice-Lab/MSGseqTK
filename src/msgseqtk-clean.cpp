@@ -77,7 +77,7 @@ void printUsage(const string& progName) {
 		 << "            -m  FILE             : output of cleaned mate/reverse reads" << ZLIB_SUPPORT << endl
 		 << "            -a  FILE             : write an additional TSV file with the detailed assignment information for each read" << ZLIB_SUPPORT << endl
 		 << "            -L|--lod  DBL        : minimum log-odd required to determine a read/pair as reference vs. background [" << DEFAULT_MIN_LOD << "]" << endl
-		 << "            --min-seed  INT      : mimimum length of an SMEM to be used as a seed [" << SMEM_LIST::MIN_LENGTH << "]" << endl
+		 << "            --min-seed  INT      : mimimum length of an SMEM to be used as a seed [" << SMEM::MIN_LENGTH << "]" << endl
 		 << "            --max-evalue  DBL    : maximum evalue of an SMEM to be used as a seed [" << DEFAULT_MAX_EVALUE << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl
@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
 	boost::iostreams::filtering_ostream assignOut;
 
 	double minLod = DEFAULT_MIN_LOD;
-	int64_t minSeed = SMEM_LIST::MIN_LENGTH;
+	int64_t minSeed = SMEM::MIN_LENGTH;
 	double maxEvalue = DEFAULT_MAX_EVALUE;
 	int nThreads = DEFAULT_NUM_THREADS;
 

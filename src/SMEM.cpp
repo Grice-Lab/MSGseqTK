@@ -14,7 +14,7 @@
 namespace EGriceLab {
 namespace MSGseqTK {
 
-const double SMEM_LIST::MAX_EVALUE = inf;
+const double SMEM::MAX_EVALUE = 0.01;
 
 SMEM& SMEM::evaluate() {
 	logP = 0;

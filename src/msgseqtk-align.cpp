@@ -59,7 +59,7 @@ using namespace EGriceLab::MSGseqTK;
 static const int DEFAULT_NUM_THREADS = 1;
 static const int DEFAULT_MAX_REPORT = 1;
 static const double DEFAULT_MIN_SCORE_RATE = 0.65;
-static const double DEFAULT_MAX_EVALUE = 0.01;
+static const double DEFAULT_MAX_EVALUE = SMEM::MAX_EVALUE;
 
 /**
  * Print introduction of this program
@@ -104,8 +104,8 @@ void printUsage(const string& progName) {
 		 << "            --no-overlap  FLAG   : not concordant when mates overlap" << endl
 		 << "            --max-npair  INT     : maximum number of pairs to for each forward/reverse mates, 0 for no limit [" << AlignmentPE::MAX_NPAIR << "]" << endl
 		 << "Other:" << endl
-		 << "            --min-seed  INT      : minimum length of an SMEM to be used as a seed [" << SMEM_LIST::MIN_LENGTH << "]" << endl
-		 << "            --max-seed  INT      : maximum length of an SMEM that will trigger re-seeding to avoid missed seeds, 0 for no-reseeding [" << SMEM_LIST::MAX_LENGTH << "]" << endl
+		 << "            --min-seed  INT      : minimum length of an SMEM to be used as a seed [" << SMEM::MIN_LENGTH << "]" << endl
+		 << "            --max-seed  INT      : maximum length of an SMEM that will trigger re-seeding to avoid missed seeds, 0 for no-reseeding [" << SMEM::MAX_LENGTH << "]" << endl
 		 << "            --max-evalue  DBL    : maximum evalue of an SMEM to be used as a seed, 0 for no limit [" << DEFAULT_MAX_EVALUE << "]" << endl
 		 << "            --max-nseed  INT     : maximum # of loci to check for each SMEM [" << SMEM::MAX_NSEED << "]" << endl
 //		 << "            --max-lod10  DBL     : maximum log10-liklihood odd (lod10) allowed for a good seed-chain compared to the best seed-chain [" << DEFAULT_MAX_LOD10 << "]" << endl
@@ -160,8 +160,8 @@ int main(int argc, char* argv[]) {
 
 	Alignment::MODE alnMode = Alignment::DEFAULT_MODE;
 	bool isPaired = false;
-	int64_t minSeed = SMEM_LIST::MIN_LENGTH;
-	int64_t maxSeed = SMEM_LIST::MAX_LENGTH;
+	int64_t minSeed = SMEM::MIN_LENGTH;
+	int64_t maxSeed = SMEM::MAX_LENGTH;
 	double maxEvalue = DEFAULT_MAX_EVALUE;
 	int64_t maxNSeed = SMEM::MAX_NSEED;
 //	double maxLod10 = DEFAULT_MAX_LOD10;

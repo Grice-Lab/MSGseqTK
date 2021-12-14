@@ -193,6 +193,11 @@ private:
 	double logP = 0; /* log-probability (loglik) of observing this SMEM by chance */
 
 public:
+	/* static fields */
+	static const int64_t MIN_LENGTH = 17; // minimum length for a significant SMEM
+	static const int64_t MAX_LENGTH = 0; // maximum length for a significant SMEM
+	static const int64_t MIN_SIZE = 1; // minimum size (# of occurrence of a significant SMEM)
+	static const double MAX_EVALUE;
 	static const int64_t MAX_NSEED = 200; // maximum size (# of occurrence of a good SMEM)
 	/* non-member functions */
 
@@ -258,7 +263,7 @@ public:
 	/**
 	 * filter this SMEMS list by evalue and size
 	 */
-	SMEM_LIST& filter(int64_t minLen = MIN_LENGTH) {
+	SMEM_LIST& filter(int64_t minLen = SMEM::MIN_LENGTH) {
 		erase(std::remove_if(begin(), end(),
 				[=](const SMEM& mem) { return !(minLen <= mem.length() ); }),
 				end());
@@ -314,7 +319,7 @@ public:
 	 * find longest SMEMS of a given seq using step-wise forward/backward searches
 	 */
 	static SMEM_LIST findMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t minLen = MIN_LENGTH, double maxEvalue = MAX_EVALUE);
+			int64_t minLen = SMEM::MIN_LENGTH, double maxEvalue = SMEM::MAX_EVALUE);
 
 	/**
 	 * find all SMEMS of a given seq starting at given position relative to the seq by forward/backward extensions
@@ -322,7 +327,7 @@ public:
 	 */
 	static SMEM_LIST findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t& from, int64_t& to,
-			int64_t minLen, double maxEvalue = MAX_EVALUE, int64_t minSize = MIN_SIZE);
+			int64_t minLen, double maxEvalue = SMEM::MAX_EVALUE, int64_t minSize = SMEM::MIN_SIZE);
 
 public:
 	/**
@@ -330,22 +335,22 @@ public:
 	 * @return SMEMS sorted by their loglik() smaller loglik near the beginning
 	 */
 	static SMEM_LIST findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t minLen = MIN_LENGTH, int64_t maxLen = MAX_LENGTH, double maxEvalue = MAX_EVALUE);
+			int64_t minLen = SMEM::MIN_LENGTH, int64_t maxLen = SMEM::MAX_LENGTH, double maxEvalue = SMEM::MAX_EVALUE);
 
 	/**
 	 * get a SeedList of a given seq using step-wise forward/backward searches
 	 * seeds will be filtered and sorted
 	 */
 	static SeedList findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t minLen = MIN_LENGTH, int64_t maxLen = MAX_LENGTH,
-			double maxEvalue = MAX_EVALUE, int64_t maxNSeed = SMEM::MAX_NSEED);
+			int64_t minLen = SMEM::MIN_LENGTH, int64_t maxLen = SMEM::MAX_LENGTH,
+			double maxEvalue = SMEM::MAX_EVALUE, int64_t maxNSeed = SMEM::MAX_NSEED);
 
 	/**
 	 * find MEMS_PE for paired-end reads
 	 */
 	static MEM_LIST_PE findMEMS_PE(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
 			const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t minLen = MIN_LENGTH, double maxEvalue = MAX_EVALUE) {
+			int64_t minLen = SMEM::MIN_LENGTH, double maxEvalue = SMEM::MAX_EVALUE) {
 		return MEM_LIST_PE(findMEMS(fwdSeq, mtg, fmdidx, minLen, maxEvalue),
 				findMEMS(revSeq, mtg, fmdidx, minLen, maxEvalue));
 	}
@@ -355,7 +360,7 @@ public:
 	 */
 	static SeedListPE findSeedsPE(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
 			 const MetaGenome* mtg, const FMDIndex* fmdidx,
-			 int64_t minLen = MIN_LENGTH, int64_t maxLen = MAX_LENGTH, double maxEvalue = MAX_EVALUE,
+			 int64_t minLen = SMEM::MIN_LENGTH, int64_t maxLen = SMEM::MAX_LENGTH, double maxEvalue = SMEM::MAX_EVALUE,
 			 int64_t maxNSeed = SMEM::MAX_NSEED) {
 		return SeedListPE(findSeeds(fwdSeq, mtg, fmdidx, minLen, maxLen, maxEvalue, maxNSeed),
 				findSeeds(revSeq, mtg, fmdidx, minLen, maxLen, maxEvalue, maxNSeed));
@@ -374,12 +379,6 @@ public:
 
 	/** non-member operators */
 	friend SMEM_LIST operator+(const SMEM_LIST& lhs, const SMEM_LIST& rhs);
-
-	/* static fields */
-	static const int64_t MIN_LENGTH = 17; // minimum length for a significant SMEM
-	static const int64_t MAX_LENGTH = 0; // maximum length for a significant SMEM
-	static const int64_t MIN_SIZE = 1; // minimum size (# of occurrence of a significant SMEM)
-	static const double MAX_EVALUE;
 };
 
 inline ostream& SMEM::write(ostream& out) const {
