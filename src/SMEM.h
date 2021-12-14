@@ -31,7 +31,7 @@ class SMEM;
 typedef SMEM MEM;
 
 /**
- * MEM: Maximum Exact Match between a PrimarySeq read and a MetaGenome/FMD-Iidex target that cannot extend to either end
+ * MEM: Maximum Exact Match between a PrimarySeq read and a MetaGenome/FMD-index target that cannot extend to either end
  * SMEM: Super MEM that is not contained in any other MEM
  */
 class SMEM {
@@ -138,15 +138,6 @@ public:
 	}
 
 	/**
-	 * get a copy of forward extension of this SMEM
-	 * @return  new SMEM with extended values
-	 */
-	SMEM fwdExt() const {
-		SMEM smemExt(*this);
-		return smemExt.fwdExt();
-	}
-
-	/**
 	 * backward extend this SMEM at current start
 	 * backward extension can be one pass seq start, which will be a null
 	 * @return  updated SMEM
@@ -159,15 +150,6 @@ public:
 	}
 
 	/**
-	 * get a copy of backward extension of this SMEM
-	 * @return  new SMEM with extended values
-	 */
-	SMEM backExt() const {
-		SMEM smemExt(*this);
-		return smemExt.backExt();
-	}
-
-	/**
 	 * evaluate the log-probality of this SMEM
 	 * @return  log-pvalue of observing this SMEM by chance, using base-frequency only
 	 */
@@ -175,15 +157,15 @@ public:
 
 	/** forward evaluation during forward extension */
 	SMEM& fwdEvaluate() {
-		assert(to <= seq->length());
-		logP += fmdidx->loglik(seq->getBase(to));
+		if(to < seq->length())
+			logP += fmdidx->loglik(seq->getBase(to));
 		return *this;
 	}
 
 	/** backward evaluation during backward extension */
 	SMEM& backEvaluate() {
-		assert(from >= 0);
-		logP += from > 0 ? fmdidx->loglik(seq->getBase(from - 1)) : fmdidx->loglik(DNAalphabet::GAP_BASE);
+		if(from > 0)
+			logP += fmdidx->loglik(seq->getBase(from - 1));
 		return *this;
 	}
 

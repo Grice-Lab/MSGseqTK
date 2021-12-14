@@ -25,7 +25,7 @@ SMEM& SMEM::evaluate() {
 
 double SMEM::loglik(int64_t from, int64_t to) const {
 	double ll = 0;
-	if(from <= this->from && to >= this->to) { // calculating in an extended range
+	if(from <= this->from && this->to <= to) { // calculating in an extended range
 		ll += loglik();
 		for(int64_t i = from; i < this->from; ++i)
 			ll += fmdidx->loglik(seq->getBase(i));
@@ -47,21 +47,16 @@ MEM SMEM::findMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* 
 
 	/* init */
 	MEM mem(seq, mtg, fmdidx, from, from + 1, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
-	MEM mem0;
+	MEM mem0(mem);
 	/* forward extension */
-	for(mem0 = mem; mem.size > 0; mem0 = mem) {
-		mem.fwdExt();
-		if(mem.size == 0)
-			break;
-	}
+	while(mem.fwdExt().size > 0)
+			mem0 = mem;
 	to = mem0.to;
 
 	/* backward extension */
-	for(mem = mem0; mem.size > 0; mem0 = mem) {
-		mem.backExt();
-		if(mem.size == 0)
-			break;
-	}
+	mem0 = mem;
+	while(mem.backExt().size > 0)
+		mem0 = mem;
 	from = mem0.from;
 	return mem0;
 }

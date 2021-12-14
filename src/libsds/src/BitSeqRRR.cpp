@@ -96,10 +96,10 @@ size_t BitSeqRRR::getBytes() const {
 }
 
 size_t BitSeqRRR::rank1(size_t i) const {
-	size_t nearest_sampled_value = i / BLOCK_SIZE / sample_rate;
+	size_t pos = i / BLOCK_SIZE;
+	size_t nearest_sampled_value = pos / sample_rate;
 	size_t sum = Csampled.getValue(nearest_sampled_value, wCsampled);
 	size_t posO = Osampled.getValue(nearest_sampled_value, wOsampled);
-	size_t pos = i / BLOCK_SIZE;
 	size_t k = nearest_sampled_value * sample_rate;
 	if(k % 2 == 1 && k < pos) {
 		size_t aux = C.getValue(k, wC);
