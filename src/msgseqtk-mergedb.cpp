@@ -43,7 +43,7 @@ using namespace EGriceLab;
 using namespace EGriceLab::MSGseqTK;
 using UCSC::GFF;
 
-static const int DEFAULT_NUM_THREADS = 1;
+static const int DEFAULT_NUM_THREADS = 4;
 
 /**
  * Print introduction of this program

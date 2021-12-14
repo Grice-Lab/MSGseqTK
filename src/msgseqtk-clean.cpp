@@ -48,7 +48,7 @@ using namespace EGriceLab::MSGseqTK;
 /* program default values */
 static const double DEFAULT_MIN_LOD = 0;
 static const string ASSIGNMENT_HEADER = "id\tdescription\tref_loglik\tbg_loglik\tLOD";
-static const int DEFAULT_NUM_THREADS = 1;
+static const int DEFAULT_NUM_THREADS = 4;
 static const double DEFAULT_MAX_EVALUE = 0.01;
 
 /**

@@ -50,7 +50,7 @@ using namespace std;
 using namespace EGriceLab;
 using namespace EGriceLab::MSGseqTK;
 
-static const int DEFAULT_NUM_THREADS = 1;
+static const int DEFAULT_NUM_THREADS = 4;
 static const size_t BLOCK_UNIT = (1 << 20); // 1 MB
 static const size_t DEFAULT_BLOCK_SIZE = (INT32_MAX + 1L) / BLOCK_UNIT;
 
