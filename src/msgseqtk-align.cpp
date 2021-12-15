@@ -94,7 +94,7 @@ void printUsage(const string& progName) {
 		 << "            -s/--min-score       : minimum score rate as a fraction of read-length * match-score [" << DEFAULT_MIN_SCORE_RATE << "]" << endl
 		 << "Paired-end:" << endl
 		 << "            -m/--mean-ins  DBL   : mean insert size, set to 0 to ignore pairing probabilities (uniform prior) [" << PairingScheme::DEFAULT_MEAN_INSERT << "]" << endl
-		 << "            -s/--sd-ins  DBL     : standard deviation of insert size [" << PairingScheme::DEFAULT_CV_INSERT << " * mean]" << endl
+		 << "            -d/--sd-ins  DBL     : standard deviation of insert size [" << PairingScheme::DEFAULT_CV_INSERT << " * mean]" << endl
 		 << "            -I/--min-ins  DBL    : minumum insert size [mean - " << PairingScheme::DEFAULT_OUTLIER_DIST << " * sd]" << endl
 		 << "            -X/--max-ins  DBL    : maximum insert size [mean + " << PairingScheme::DEFAULT_OUTLIER_DIST << " * sd]" << endl
 		 << "            --no-mixed  FLAG     : suppress unpaired alignments for paired reads" << endl
@@ -280,14 +280,14 @@ int main(int argc, char* argv[]) {
 		AlignmentPE::ps.setMean(meanIns);
 	}
 
-	if(cmdOpts.hasOpt({"-s", "--sd-ins"})) {
+	if(cmdOpts.hasOpt({"-d", "--sd-ins"})) {
 		double sdIns = 0;
-		if(cmdOpts.hasOpt("-s"))
-			sdIns = ::atof(cmdOpts.getOptStr("-s"));
+		if(cmdOpts.hasOpt("-d"))
+			sdIns = ::atof(cmdOpts.getOptStr("-d"));
 		if(cmdOpts.hasOpt("--sd-ins"))
 			sdIns = ::atof(cmdOpts.getOptStr("--sd-ins"));
 		if(!(sdIns > 0)) {
-			cerr << "-s/--sd-ins must be positive" << endl;
+			cerr << "-d/--sd-ins must be positive" << endl;
 			return EXIT_FAILURE;
 		}
 		AlignmentPE::ps.setSD(sdIns);
