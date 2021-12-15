@@ -117,7 +117,7 @@ size_t WaveletTreeRRR::rank(size_t s, size_t i) const {
 		}
 		else {
 			r = i - start + before - bseqs[level].rank1(i) + 1;
-			masked += (1 << (height - level - 1));
+//			masked += (1 << (height - level - 1));
 			i = r + start - 1;
 		}
 	}
