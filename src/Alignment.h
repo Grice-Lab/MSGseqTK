@@ -71,7 +71,10 @@ public:
 			MODE alnMode = DEFAULT_MODE, uint8_t mapQ = INVALID_MAP_Q)
 	: read(read), rcRead(rcRead), tid(tid), target(target), qStrand(qStrand),
 	  qFrom(qFrom), qTo(qTo), tStart(tStart), tEnd(tEnd),
-	  alnMode(alnMode), mapQ(mapQ)
+	  alnMode(alnMode), mapQ(mapQ),
+	  M(MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV)),
+	  I(MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV)),
+	  D(MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV))
 	{
 		assert(qFrom == 0 && qTo == read->length()); // cannot accept hard-clipped query
 		init();
@@ -81,9 +84,13 @@ public:
 	Alignment(const PrimarySeq* read, const PrimarySeq* rcRead, const MetaGenome& mtg,
 			const SeedChain& chain, MODE alnMode = DEFAULT_MODE, uint8_t mapQ = INVALID_MAP_Q)
 	: read(read), rcRead(rcRead), tid(chain.getTid()), target(&mtg.getSeq(tid)), qStrand(chain.getStrand()),
-	  qFrom(0), qTo(read->length()), alnMode(alnMode), mapQ(mapQ)
+	  qFrom(0), qTo(read->length()), tStart(initTStart(chain)), tEnd(initTEnd(mtg.getChromLength(tid), chain)),
+	  alnMode(alnMode), mapQ(mapQ),
+	  M(MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV)),
+	  I(MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV)),
+	  D(MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV))
 	{
-		init(mtg.getChromLength(tid), chain);
+		init();
 	}
 
 	/** construct an unmapped AlignmentSE with minimum fields */
@@ -187,6 +194,12 @@ public:
 
 	/** init Alignment with known chrom length and SeedChain */
 	Alignment& init(int64_t chrLen, const SeedChain& chain);
+
+	/** get tStart given a chain */
+	int64_t initTStart(const SeedChain& chain);
+
+	/** get tEnd given chrLen and a chain */
+	int64_t initTEnd(int64_t chrLen, const SeedChain& chain);
 
 	/** clear all scores to save storage (for copying/moving) */
 	Alignment& clearScores();
@@ -580,20 +593,16 @@ inline Alignment::CIGAR_OP_TYPE Alignment::delMax(double match, double del) {
 }
 
 inline Alignment& Alignment::initNW() {
-	M = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
-	I = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
-	D = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
+	/* init M */
 	M.row(0).setZero();
-	/* init first column of I */
+	/* init I */
 	for(MatrixXd::Index i = 0; i < I.rows(); ++i)
 		I(i, 0) = - ss.gapPenalty(i);
 	return *this;
 }
 
 inline Alignment& Alignment::initSW() {
-	M = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
-	I = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
-	D = MatrixXd::Constant(getQLen() + 1, getTLen() + 1, infV);
+	/* init M */
 	M.row(0).setZero();
 	M.col(0).setZero();
 	return *this;

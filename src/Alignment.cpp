@@ -43,12 +43,12 @@ const string Alignment::ALIGNMENT_POSTERIOR_PROB_TAG = "XP";
 //const string Alignment::NUM_INDEL_TAG = "ZG";
 //const string Alignment::ALIGNMENT_IDENTITY_TAG = "XI";
 
-Alignment& Alignment::init(int64_t chrLen, const SeedChain& chain) {
-	// set up tStart and tEnd
-	tStart = std::max<int64_t>(0, chain.getStart() - (1 + MAX_INDEL_RATE) * (chain.getFrom() - qFrom));
-	tEnd = std::min<int64_t>(chrLen, chain.getEnd() + (1 + MAX_INDEL_RATE) * (qTo - chain.getTo()));
-	init();
-	return *this;
+int64_t Alignment::initTStart(const SeedChain& chain) {
+	return std::max<int64_t>(0, chain.getStart() - (1 + MAX_INDEL_RATE) * (chain.getFrom() - qFrom));
+}
+
+int64_t Alignment::initTEnd(int64_t chrLen, const SeedChain& chain) {
+	return std::min<int64_t>(chrLen, chain.getEnd() + (1 + MAX_INDEL_RATE) * (qTo - chain.getTo()));
 }
 
 Alignment& Alignment::calculateScores(const SeedChain& chain) {
