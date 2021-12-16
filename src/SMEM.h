@@ -15,6 +15,7 @@
 #include <utility>
 #include <algorithm>
 #include <set>
+#include <unordered_map>
 #include "SeedPair.h"
 #include "PrimarySeq.h"
 #include "FMDIndex.h"
@@ -26,6 +27,7 @@ namespace MSGseqTK {
 using std::vector;
 using std::pair;
 using std::set;
+using std::unordered_map;
 
 class SMEM;
 typedef SMEM MEM;
@@ -36,6 +38,9 @@ typedef SMEM MEM;
  */
 class SMEM {
 public:
+	/* typedefs */
+	typedef unordered_map<int64_t, int64_t> SAmap_t;
+
 	/** default constructor */
 	SMEM() = default;
 
@@ -124,6 +129,12 @@ public:
 	 * @return  mapped seeds that always on FWD strand of target
 	 */
 	SeedList getSeeds(int64_t maxNSeed = MAX_NSEED) const;
+
+	/**
+	 * get SeedPairs of this SMEM using a cached unsorted_map for each read
+	 * @return  mapped seeds that always on FWD strand of target
+	 */
+	SeedList getSeeds(SAmap_t& SAcached, int64_t maxNSeed = MAX_NSEED) const;
 
 	/**
 	 * forward extend this SMEM at current end

@@ -15,6 +15,7 @@ namespace EGriceLab {
 namespace MSGseqTK {
 
 const double SMEM::MAX_EVALUE = 0.01;
+static const int64_t MIN_SA_CACHE_SIZE = 2; /* minimum SMEMS size to trigger using the cashe findSeeds */
 
 SMEM& SMEM::evaluate() {
 	logP = 0;
@@ -175,15 +176,51 @@ SeedList SMEM::getSeeds(int64_t maxNSeed) const {
 	return seeds;
 }
 
+SeedList SMEM::getSeeds(SAmap_t& SAcached, int64_t maxNSeed) const {
+	SeedList seeds;
+	const size_t N = std::min<size_t>(maxNSeed / 2, size); /* search up-to N / 2 forward + N / 2 reverse seeds */
+	seeds.reserve(2 * N);
+	for(size_t i = 0; i < N; ++i) {
+		{
+			int64_t bdStart = SAcached.count(fwdStart + i) > 0 ? SAcached.at(fwdStart + i) : (SAcached[fwdStart + i] = fmdidx->accessSA(fwdStart + i));
+			int64_t tid = mtg->getTid(bdStart);
+			int64_t start = mtg->getLoc(tid, bdStart);
+			assert(tid == mtg->getTid(bdStart + length()));
+			if(mtg->getStrand(tid, bdStart) == GLoc::FWD) { // always only search loc on fwd tStrand
+				seeds.push_back(SeedPair(from, start, length(), tid, GLoc::FWD, loglik()));
+			}
+		}
+		{
+			int64_t bdStart = SAcached.count(revStart + i) > 0 ? SAcached.at(revStart + i) : (SAcached[revStart + i] = fmdidx->accessSA(revStart + i));
+			int64_t tid = mtg->getTid(bdStart);
+			int64_t start = mtg->getLoc(tid, bdStart);
+			assert(tid == mtg->getTid(bdStart + length()));
+			if(mtg->getStrand(tid, bdStart) == GLoc::FWD) { // always only search loc on fwd tStrand
+				seeds.push_back(SeedPair(seq->length() - to, start, length(), tid, GLoc::REV, loglik()));
+			}
+		}
+	}
+	return seeds;
+}
+
 SeedList SMEM_LIST::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		int64_t minLen, int64_t maxLen, double maxEvalue, int64_t maxNSeed) {
 	const SMEM_LIST& smems = findAllSMEMS(seq, mtg, fmdidx, minLen, maxLen, maxEvalue);
-	/* get seeds */
+	/* get seeds using per-seq cache */
 	SeedList allSeeds;
 	allSeeds.reserve(maxNSeed * smems.size());
-	for(const SMEM& smem : smems) {
-		const SeedList& seeds = smem.getSeeds(maxNSeed);
-		allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
+	if(smems.size() < MIN_SA_CACHE_SIZE) {
+		for(const SMEM& smem : smems) {
+			const SeedList& seeds = smem.getSeeds(maxNSeed);
+			allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
+		}
+	}
+	else {
+		SMEM::SAmap_t SAcached;
+		for(const SMEM& smem : smems) {
+			const SeedList& seeds = smem.getSeeds(SAcached, maxNSeed);
+			allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
+		}
 	}
 	/* sort and get unique seeds */
 	std::sort(allSeeds.begin(), allSeeds.end());
