@@ -150,8 +150,8 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 
 SeedList SMEM::getSeeds(int64_t maxNSeed) const {
 	SeedList seeds;
-	const size_t N = std::min<size_t>(maxNSeed, size);
-	seeds.reserve(N);
+	const size_t N = std::min<size_t>(maxNSeed / 2, size); /* search up-to N / 2 forward + N / 2 reverse seeds */
+	seeds.reserve(2 * N);
 	for(size_t i = 0; i < N; ++i) {
 		{
 			int64_t bdStart = fmdidx->accessSA(fwdStart + i);
@@ -180,6 +180,7 @@ SeedList SMEM_LIST::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, cons
 	const SMEM_LIST& smems = findAllSMEMS(seq, mtg, fmdidx, minLen, maxLen, maxEvalue);
 	/* get seeds */
 	SeedList allSeeds;
+	allSeeds.reserve(maxNSeed * smems.size());
 	for(const SMEM& smem : smems) {
 		const SeedList& seeds = smem.getSeeds(maxNSeed);
 		allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
