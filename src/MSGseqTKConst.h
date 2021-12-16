@@ -32,7 +32,6 @@ const string SAM_SUFFIX = ".sam";
 const string BAM_SUFFIX = ".bam";
 
 const int MAX_NAME_LENGTH = 4096;
-const double PHRED_LOG_BASE = 10;
 
 const double MIN_LOGLIK_EXP = -256; // min loglik exp allowed to avoid numeric under-flow
 

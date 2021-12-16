@@ -34,6 +34,7 @@ const uint8_t MIN_Q_SCORE = 2; /* prevent Inf */
 const uint8_t INVALID_Q_SCORE = 0xFF;
 const uint8_t MAX_Q_SCORE = 250;
 const double PHRED_SCALE = -10;
+const double PHRED_LOGBASE = ::log(10.0);
 
 /** encode an ascii char to quality score */
 inline uint8_t encode(char c, uint8_t qShift = DEFAULT_Q_SHIFT) {
@@ -107,7 +108,7 @@ istream& operator>>(istream& in, QualStr& qual) {
 /* quality score transforming functions */
 inline
 double phredQ2P(double q) {
-	return ::pow(10.0, q / PHRED_SCALE);
+	return ::exp(PHRED_LOGBASE * q / PHRED_SCALE);
 }
 
 inline
