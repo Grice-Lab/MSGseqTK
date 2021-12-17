@@ -73,16 +73,14 @@ void Alignment::calculateScoresNW(int64_t from, int64_t to, int64_t start, int64
 	assert(isInitiated());
 	assert(qFrom <= from && to <= qTo);
 	assert(tStart <= start && end <= tEnd);
-	to = std::min(to, qTo - 1);
-	end = std::min(end, tEnd - 1);
 
 	double o = -ss.openGapPenalty();
 	double e = -ss.extGapPenalty();
 
 	const DNAseq& query = qStrand == GLoc::FWD ? read->getSeq() : rcRead->getSeq();
-	for(int64_t t = start; t <= end; ++t) {
+	for(int64_t t = start; t < end; ++t) {
 		int32_t j = t - tStart + 1; // relative to score matrices
-		for(int64_t q = from; q <= to; ++q) {
+		for(int64_t q = from; q < to; ++q) {
 			int32_t i = q - qFrom + 1; // relative to score matrices
 			double s = ss.getScore(query[q], (*target)[t]);
 			M(i,j) = std::max({
@@ -106,16 +104,14 @@ void Alignment::calculateScoresSW(int64_t from, int64_t to, int64_t start, int64
 	assert(isInitiated());
 	assert(qFrom <= from && to <= qTo);
 	assert(tStart <= start && end <= tEnd);
-	to = std::min(to, qTo - 1);
-	end = std::min(end, tEnd - 1);
 
 	double o = -ss.openGapPenalty();
 	double e = -ss.extGapPenalty();
 
 	const DNAseq& query = qStrand == GLoc::FWD ? read->getSeq() : rcRead->getSeq();
-	for(int64_t t = start; t <= end; ++t) {
+	for(int64_t t = start; t < end; ++t) {
 		int32_t j = t - tStart + 1; // relative to score matrices
-		for(int64_t q = from; q <= to; ++q) {
+		for(int64_t q = from; q < to; ++q) {
 			int32_t i = q - qFrom + 1; // relative to score matrices
 			double s = ss.getScore(query[q], (*target)[t]);
 			M(i,j) = std::max({
@@ -143,9 +139,10 @@ void Alignment::calculateScores(const SeedPair& pair) {
 	double e = -ss.extGapPenalty();
 	double s = ss.getMatchScore();
 	const DNAseq& query = qStrand == GLoc::FWD ? read->getSeq() : rcRead->getSeq();
+	M.block(pair.getFrom() - qFrom + 1, pair.getStart() - tStart + 1, pair.length(), pair.length()).setConstant(infV);
 	for(int32_t k = 0; k < pair.length(); ++k) {
-		int32_t i = pair.getFrom() + k - qFrom + 1;
-		int32_t j = pair.getStart() + k - tStart + 1;
+		int32_t i = pair.getFrom() + k - qFrom + 1; // relative to score matrices
+		int32_t j = pair.getStart() + k - tStart + 1; // relative to score matrices
 		if(k == 0) {
 			M(i,j) = std::max({
 				M(i-1,j-1) + s,
@@ -161,8 +158,9 @@ void Alignment::calculateScores(const SeedPair& pair) {
 	// process one row pass pair, if exist
 	int64_t i = pair.getTo() - qFrom + 1;
 	int64_t j = pair.getEnd() - tStart + 1;
-	if(i <= getQLen() && j <= getTLen())
+	if(i <= getQLen() && j <= getTLen()) {
 		M(i,j) = M(i-1,j-1) + s;
+	}
 	if(i <= getQLen()) {
 		I.row(i) = M.row(i - 1).array() + o;
 	}

@@ -209,7 +209,7 @@ public:
 	static const int64_t MAX_LENGTH = 0; // maximum length for a significant SMEM
 	static const int64_t MIN_SIZE = 1; // minimum size (# of occurrence of a significant SMEM)
 	static const double MAX_EVALUE;
-	static const int64_t MAX_NSEED = 200; // maximum size (# of occurrence of a good SMEM)
+	static const int64_t MAX_NSEED = 100; // maximum # of seeds to check for each SMEM
 	/* non-member functions */
 
 	/** relationship operators */

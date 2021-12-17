@@ -151,9 +151,8 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 
 SeedList SMEM::getSeeds(int64_t maxNSeed) const {
 	SeedList seeds;
-	const size_t N = std::min<size_t>(maxNSeed / 2, size); /* search up-to N / 2 forward + N / 2 reverse seeds */
-	seeds.reserve(2 * N);
-	for(size_t i = 0; i < N; ++i) {
+	seeds.reserve(std::min(maxNSeed, size));
+	for(size_t i = 0; i < size && seeds.size() < maxNSeed; ++i) {
 		{
 			int64_t bdStart = fmdidx->accessSA(fwdStart + i);
 			int64_t tid = mtg->getTid(bdStart);
@@ -178,9 +177,8 @@ SeedList SMEM::getSeeds(int64_t maxNSeed) const {
 
 SeedList SMEM::getSeeds(SAmap_t& SAcached, int64_t maxNSeed) const {
 	SeedList seeds;
-	const size_t N = std::min<size_t>(maxNSeed / 2, size); /* search up-to N / 2 forward + N / 2 reverse seeds */
-	seeds.reserve(2 * N);
-	for(size_t i = 0; i < N; ++i) {
+	seeds.reserve(std::min(maxNSeed, size));
+	for(size_t i = 0; i < size && seeds.size() < maxNSeed; ++i) {
 		{
 			int64_t bdStart = SAcached.count(fwdStart + i) > 0 ? SAcached.at(fwdStart + i) : (SAcached[fwdStart + i] = fmdidx->accessSA(fwdStart + i));
 			int64_t tid = mtg->getTid(bdStart);
