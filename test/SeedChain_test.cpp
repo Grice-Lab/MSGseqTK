@@ -35,7 +35,7 @@ int main() {
 
 	PrimarySeq read("ACGTAGTA", "seq1");
 	cout << "SMEM search between genome:" << endl << genomeSeq << endl << "seq1:" << endl << read.getSeq() << endl;
-	SeedList seeds = SMEM_LIST::findSeeds(&read, &mtg, &fmdidx, 4, 0, inf);
+	SeedList seeds = SMEM_LIST::findSeeds(&read, &mtg, &fmdidx, 4, inf);
 	cout << "found " << seeds.size() << " seeds:" << endl;
 	ChainList chains = SeedChain::getChains(seeds, read.length() * 0.2, read.length() * 0.1);
 	cout << "found " << chains.size() << " chains" << endl;

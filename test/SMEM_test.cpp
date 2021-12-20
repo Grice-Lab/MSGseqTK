@@ -73,7 +73,7 @@ int main() {
 	}
 
 	/* all SMEM/seed test */
-	SeedList seeds = SMEM_LIST::findSeeds(&read, &mtg, &fmdidx, 1, 0, inf);
+	SeedList seeds = SMEM_LIST::findSeeds(&read, &mtg, &fmdidx, 1, inf);
 	cout << "finding seeds for " << read.getSeq() << endl;
 	cout << "found " << seeds.size() << " all smems seeds" << endl;
 	for(const SeedPair& seed : seeds) {

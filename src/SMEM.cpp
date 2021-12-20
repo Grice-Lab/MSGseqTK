@@ -64,7 +64,7 @@ MEM SMEM::findMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* 
 
 SMEM_LIST SMEM_LIST::findFwdBackSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		int64_t& from, int64_t& to,
-		int64_t minLen, double maxEvalue, int64_t minSize) {
+		int64_t minLen, double maxEvalue) {
 	const size_t L = seq->length();
 	assert(from < L);
 	SMEM_LIST curr, prev;
@@ -77,7 +77,7 @@ SMEM_LIST SMEM_LIST::findFwdBackSMEMS(const PrimarySeq* seq, const MetaGenome* m
 	SMEM smem(seq, mtg, fmdidx, from, to, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
 	SMEM smem0 = smem;
 	/* forward extension */
-	while(smem.size >= minSize) {
+	while(smem.size > 0) {
 		smem.fwdExt();
 		if(smem.size != smem0.size && smem0.to >= minLen /* from begin to here is enough */
 			&& (!std::isfinite(maxEvalue) || smem0.evalue(0, smem0.to) <= maxEvalue) /* from begin to here is significant */)
@@ -99,9 +99,9 @@ SMEM_LIST SMEM_LIST::findFwdBackSMEMS(const PrimarySeq* seq, const MetaGenome* m
 		for(SMEM& smem : prev) {
 			smem0 = smem;
 			smem.backExt();
-			if(smem.size != smem0.size && smem0.size >= minSize && nValid == 0 && smem0.length() >= minLen && smem0.evalue() <= maxEvalue)
+			if(smem.size != smem0.size && smem0.size > 0 && nValid == 0 && smem0.length() >= minLen && smem0.evalue() <= maxEvalue)
 				curr.push_back(smem0);
-			if(smem.size >= minSize && smem.size != s0) { /* still a valid SMEM with size not seen */
+			if(smem.size > 0 && smem.size != s0) { /* still a valid SMEM with size not seen */
 				s0 = smem.size;
 				nValid++;
 			}
@@ -118,8 +118,7 @@ SMEM_LIST SMEM_LIST::findFwdBackSMEMS(const PrimarySeq* seq, const MetaGenome* m
 }
 
 SMEM_LIST SMEM_LIST::findBackFwdSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		int64_t& from, int64_t& to,
-		int64_t minLen, double maxEvalue, int64_t minSize) {
+		int64_t& from, int64_t& to, int64_t minLen, double maxEvalue) {
 	const size_t L = seq->length();
 	assert(from < L);
 	SMEM_LIST curr, prev;
@@ -132,7 +131,7 @@ SMEM_LIST SMEM_LIST::findBackFwdSMEMS(const PrimarySeq* seq, const MetaGenome* m
 	SMEM smem(seq, mtg, fmdidx, from, to, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
 	SMEM smem0 = smem;
 	/* back extension */
-	while(smem.size >= minSize) {
+	while(smem.size > 0) {
 		smem.backExt();
 		if(smem.size != smem0.size && L - smem0.from > minLen /* from here to end is enough */
 				&& (!std::isfinite(maxEvalue) || smem0.evalue(smem0.from, L) <= maxEvalue) /* from here to end is significant */)
@@ -154,10 +153,9 @@ SMEM_LIST SMEM_LIST::findBackFwdSMEMS(const PrimarySeq* seq, const MetaGenome* m
 		for(SMEM& smem : prev) {
 			smem0 = smem;
 			smem.fwdExt();
-//			std::cerr << "backexting smem0: " << smem0 << " smem: " << smem << std::endl;
-			if(smem.size != smem0.size && smem0.size >= minSize && nValid == 0 && smem0.length() >= minLen && smem0.evalue() <= maxEvalue)
+			if(smem.size != smem0.size && smem0.size > 0 && nValid == 0 && smem0.length() >= minLen && smem0.evalue() <= maxEvalue)
 				curr.push_back(smem0);
-			if(smem.size >= minSize && smem.size != s0) { /* still a valid SMEM with size not seen */
+			if(smem.size > 0 && smem.size != s0) { /* still a valid SMEM with size not seen */
 				s0 = smem.size;
 				nValid++;
 			}
@@ -186,7 +184,7 @@ MEM_LIST SMEM_LIST::findMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const
 }
 
 SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		int64_t minLen, int64_t maxLen, double maxEvalue) {
+		int64_t minLen, double maxEvalue) {
 	const int64_t L = seq->length();
 	SMEM_LIST curr, prev;
 	/* init SMEMS search from the mid-point */
@@ -264,8 +262,8 @@ SeedList SMEM::getSeeds(SAmap_t& SAcached, int64_t maxNSeed) const {
 }
 
 SeedList SMEM_LIST::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		int64_t minLen, int64_t maxLen, double maxEvalue, int64_t maxNSeed) {
-	SMEM_LIST smems = findAllSMEMS(seq, mtg, fmdidx, minLen, maxLen, maxEvalue);
+		int64_t minLen, double maxEvalue, int64_t maxNSeed) {
+	SMEM_LIST smems = findAllSMEMS(seq, mtg, fmdidx, minLen, maxEvalue);
 
 	/* get seeds using per-seq cache */
 	SeedList allSeeds;

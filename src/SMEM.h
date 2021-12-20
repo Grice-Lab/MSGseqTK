@@ -206,8 +206,6 @@ private:
 public:
 	/* static fields */
 	static const int64_t MIN_LENGTH = 17; // minimum length for a significant SMEM
-	static const int64_t MAX_LENGTH = 0; // maximum length for a significant SMEM
-	static const int64_t MIN_SIZE = 1; // minimum size (# of occurrence of a significant SMEM)
 	static const double MAX_EVALUE;
 	static const int64_t MAX_NSEED = 100; // maximum # of seeds to check for each SMEM
 	/* non-member functions */
@@ -328,7 +326,7 @@ public:
 	 */
 	static SMEM_LIST findFwdBackSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t& from, int64_t& to,
-			int64_t minLen, double maxEvalue = SMEM::MAX_EVALUE, int64_t minSize = SMEM::MIN_SIZE);
+			int64_t minLen = SMEM::MIN_LENGTH, double maxEvalue = SMEM::MAX_EVALUE);
 
 	/**
 	 * find all SMEMS of a given seq starting at given position relative to the seq by backward than forward extensions
@@ -336,7 +334,7 @@ public:
 	 */
 	static SMEM_LIST findBackFwdSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t& from, int64_t& to,
-			int64_t minLen, double maxEvalue = SMEM::MAX_EVALUE, int64_t minSize = SMEM::MIN_SIZE);
+			int64_t minLen = SMEM::MIN_LENGTH, double maxEvalue = SMEM::MAX_EVALUE);
 
 public:
 	/**
@@ -344,15 +342,14 @@ public:
 	 * @return SMEMS sorted by their loglik() smaller loglik near the beginning
 	 */
 	static SMEM_LIST findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t minLen = SMEM::MIN_LENGTH, int64_t maxLen = SMEM::MAX_LENGTH, double maxEvalue = SMEM::MAX_EVALUE);
+			int64_t minLen = SMEM::MIN_LENGTH, double maxEvalue = SMEM::MAX_EVALUE);
 
 	/**
 	 * get a SeedList of a given seq using step-wise forward/backward searches
 	 * seeds will be filtered and sorted
 	 */
 	static SeedList findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t minLen = SMEM::MIN_LENGTH, int64_t maxLen = SMEM::MAX_LENGTH,
-			double maxEvalue = SMEM::MAX_EVALUE, int64_t maxNSeed = SMEM::MAX_NSEED);
+			int64_t minLen = SMEM::MIN_LENGTH, double maxEvalue = SMEM::MAX_EVALUE, int64_t maxNSeed = SMEM::MAX_NSEED);
 
 	/**
 	 * find MEMS_PE for paired-end reads
@@ -369,10 +366,10 @@ public:
 	 */
 	static SeedListPE findSeedsPE(const PrimarySeq* fwdSeq, const PrimarySeq* revSeq,
 			 const MetaGenome* mtg, const FMDIndex* fmdidx,
-			 int64_t minLen = SMEM::MIN_LENGTH, int64_t maxLen = SMEM::MAX_LENGTH, double maxEvalue = SMEM::MAX_EVALUE,
+			 int64_t minLen = SMEM::MIN_LENGTH, double maxEvalue = SMEM::MAX_EVALUE,
 			 int64_t maxNSeed = SMEM::MAX_NSEED) {
-		return SeedListPE(findSeeds(fwdSeq, mtg, fmdidx, minLen, maxLen, maxEvalue, maxNSeed),
-				findSeeds(revSeq, mtg, fmdidx, minLen, maxLen, maxEvalue, maxNSeed));
+		return SeedListPE(findSeeds(fwdSeq, mtg, fmdidx, minLen, maxEvalue, maxNSeed),
+				findSeeds(revSeq, mtg, fmdidx, minLen, maxEvalue, maxNSeed));
 	}
 
 	/** get loglik for SMEMS_PE */
