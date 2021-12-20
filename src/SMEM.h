@@ -207,7 +207,7 @@ public:
 	/* static fields */
 	static const int64_t MIN_LENGTH = 17; // minimum length for a significant SMEM
 	static const double MAX_EVALUE;
-	static const int64_t MAX_NSEED = 100; // maximum # of seeds to check for each SMEM
+	static const int64_t MAX_NSEED = 50; // maximum # of seeds to check for each SMEM
 	/* non-member functions */
 
 	/** relationship operators */
