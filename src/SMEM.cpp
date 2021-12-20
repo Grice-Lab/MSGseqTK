@@ -86,6 +86,11 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 	}
 	to = smem.to - 1;
 
+	if(prev.empty()) {
+		from --;
+		return curr;
+	}
+
 	/* backward extension */
 	std::reverse(prev.begin(), prev.end()); // sort SMEM list by their length decreasingly
 	while(from >= 0 && !prev.empty()) {
@@ -129,21 +134,23 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 		int64_t minLen, int64_t maxLen, double maxEvalue) {
 	const int64_t L = seq->length();
 	SMEM_LIST curr, prev;
-	/* 1st-pass SMEMS search */
-	for(int64_t from = 0, to = 1; from < L; from = to + 1)
-		curr += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to, minLen, maxEvalue);
+	/* init SMEMS search from the mid-point */
+	int64_t from = L / 2;
+	int64_t to = from + 1;
+	curr += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to, minLen, maxEvalue);
 
-	/* 2nd-pass reseeding, if requested */
-	if(maxLen > 0) {
-		prev = curr; // copy 1st pass result
-		for(const SMEM& smem : prev) {
-			if(smem.length() > maxLen) {
-				int64_t from1 = (smem.from + smem.to + 1) / 2; // ceil((from + to) / 2)
-				int64_t to1 = from1 + 1;
-				curr += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from1, to1, minLen, maxEvalue, smem.size + 1);
-			}
-		}
+	while(from > 0 || to + 1 < L) {
+		int64_t from0 = to + 1;
+		int64_t to0 = to;
+		/* fwd search */
+		if(from0 < L)
+			curr += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from0, to, minLen, maxEvalue);
+		/* rev search */
+		from --;
+		if(from >= 0)
+			curr += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to0, minLen, maxEvalue);
 	}
+
 	std::sort(curr.begin(), curr.end(),
 			[](const SMEM& lhs, const SMEM& rhs) { return lhs.loglik() < rhs.loglik(); });
 	return curr;
@@ -203,7 +210,8 @@ SeedList SMEM::getSeeds(SAmap_t& SAcached, int64_t maxNSeed) const {
 
 SeedList SMEM_LIST::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		int64_t minLen, int64_t maxLen, double maxEvalue, int64_t maxNSeed) {
-	const SMEM_LIST& smems = findAllSMEMS(seq, mtg, fmdidx, minLen, maxLen, maxEvalue);
+	SMEM_LIST smems = findAllSMEMS(seq, mtg, fmdidx, minLen, maxLen, maxEvalue);
+
 	/* get seeds using per-seq cache */
 	SeedList allSeeds;
 	allSeeds.reserve(maxNSeed * smems.size());

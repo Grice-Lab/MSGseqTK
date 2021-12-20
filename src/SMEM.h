@@ -272,16 +272,6 @@ public:
 	}
 
 	/**
-	 * filter this SMEMS list by evalue and size
-	 */
-	SMEM_LIST& filter(int64_t minLen = SMEM::MIN_LENGTH) {
-		erase(std::remove_if(begin(), end(),
-				[=](const SMEM& mem) { return !(minLen <= mem.length() ); }),
-				end());
-		return *this;
-	}
-
-	/**
 	 * sort this SMEM_LIST
 	 */
 	SMEM_LIST& sort() {

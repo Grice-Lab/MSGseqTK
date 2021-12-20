@@ -61,7 +61,8 @@ int main() {
 
 	/* simple SMEM/seed test */
 	PrimarySeq read("ACGTAGTA", "seq1");
-	MEM_LIST mems = SMEM_LIST::findMEMS(&read, &mtg, &fmdidx, 1);
+	MEM_LIST mems = SMEM_LIST::findMEMS(&read, &mtg, &fmdidx, 1, inf);
+	cout << "finding MEMS for " << read.getSeq() << endl;
 	cout << "found " << mems.size() << " mems" << endl;
 	for(const MEM& mem : mems) {
 		cout << "mem: " << mem << endl;
@@ -72,7 +73,8 @@ int main() {
 	}
 
 	/* all SMEM/seed test */
-	SeedList seeds = SMEM_LIST::findSeeds(&read, &mtg, &fmdidx, 0);
+	SeedList seeds = SMEM_LIST::findSeeds(&read, &mtg, &fmdidx, 1, 0, inf);
+	cout << "finding seeds for " << read.getSeq() << endl;
 	cout << "found " << seeds.size() << " all smems seeds" << endl;
 	for(const SeedPair& seed : seeds) {
 		if(!isValidSeed(mtg.getSeq(seed.getTid()), read.getSeq(), seed))
