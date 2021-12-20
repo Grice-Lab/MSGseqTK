@@ -323,10 +323,18 @@ public:
 			int64_t minLen = SMEM::MIN_LENGTH, double maxEvalue = SMEM::MAX_EVALUE);
 
 	/**
-	 * find all SMEMS of a given seq starting at given position relative to the seq by forward/backward extensions
+	 * find all SMEMS of a given seq starting at given position relative to the seq by forward than backward extensions
 	 * @return  a SMEM_LIST overlappling position from that may contain duplicated copies
 	 */
-	static SMEM_LIST findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+	static SMEM_LIST findFwdBackSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+			int64_t& from, int64_t& to,
+			int64_t minLen, double maxEvalue = SMEM::MAX_EVALUE, int64_t minSize = SMEM::MIN_SIZE);
+
+	/**
+	 * find all SMEMS of a given seq starting at given position relative to the seq by backward than forward extensions
+	 * @return  a SMEM_LIST overlappling position from that may contain duplicated copies
+	 */
+	static SMEM_LIST findBackFwdSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t& from, int64_t& to,
 			int64_t minLen, double maxEvalue = SMEM::MAX_EVALUE, int64_t minSize = SMEM::MIN_SIZE);
 

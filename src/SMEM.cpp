@@ -62,7 +62,7 @@ MEM SMEM::findMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* 
 	return mem0;
 }
 
-SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+SMEM_LIST SMEM_LIST::findFwdBackSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		int64_t& from, int64_t& to,
 		int64_t minLen, double maxEvalue, int64_t minSize) {
 	const size_t L = seq->length();
@@ -79,8 +79,8 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 	/* forward extension */
 	while(smem.size >= minSize) {
 		smem.fwdExt();
-		if(smem.size != smem0.size && smem0.to >= minLen
-				&& (!std::isfinite(maxEvalue) || smem0.evalue(0, smem0.to) <= maxEvalue))
+		if(smem.size != smem0.size && smem0.to >= minLen /* from begin to here is enough */
+			&& (!std::isfinite(maxEvalue) || smem0.evalue(0, smem0.to) <= maxEvalue) /* from begin to here is significant */)
 			prev.push_back(smem0);
 		smem0 = smem;
 	}
@@ -99,7 +99,6 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 		for(SMEM& smem : prev) {
 			smem0 = smem;
 			smem.backExt();
-//			std::cerr << "backexting smem0: " << smem0 << " smem: " << smem << std::endl;
 			if(smem.size != smem0.size && smem0.size >= minSize && nValid == 0 && smem0.length() >= minLen && smem0.evalue() <= maxEvalue)
 				curr.push_back(smem0);
 			if(smem.size >= minSize && smem.size != s0) { /* still a valid SMEM with size not seen */
@@ -114,6 +113,62 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 				[](const SMEM& smem) { return !smem.isValid(); }), prev.end());
 		assert(prev.size() == nValid);
 		from--;
+	}
+	return curr;
+}
+
+SMEM_LIST SMEM_LIST::findBackFwdSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
+		int64_t& from, int64_t& to,
+		int64_t minLen, double maxEvalue, int64_t minSize) {
+	const size_t L = seq->length();
+	assert(from < L);
+	SMEM_LIST curr, prev;
+	nt16_t b = seq->getBase(from);
+	to = from + 1;
+	if(DNAalphabet::isAmbiguous(b))
+		return curr;
+
+	/* init SMEM */
+	SMEM smem(seq, mtg, fmdidx, from, to, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
+	SMEM smem0 = smem;
+	/* back extension */
+	while(smem.size >= minSize) {
+		smem.backExt();
+		if(smem.size != smem0.size && L - smem0.from > minLen /* from here to end is enough */
+				&& (!std::isfinite(maxEvalue) || smem0.evalue(smem0.from, L) <= maxEvalue) /* from here to end is significant */)
+			prev.push_back(smem0);
+		smem0 = smem;
+	}
+	from = smem.from;
+
+	if(prev.empty()) {
+		to++;
+		return curr;
+	}
+
+	/* forward extension */
+	std::reverse(prev.begin(), prev.end()); // sort SMEM list by their length decreasingly
+	while(from >= 0 && !prev.empty()) {
+		int64_t s0 = -1; // SMEM size in prev of each iteration should be mono decreasing
+		int64_t nValid = 0;
+		for(SMEM& smem : prev) {
+			smem0 = smem;
+			smem.fwdExt();
+//			std::cerr << "backexting smem0: " << smem0 << " smem: " << smem << std::endl;
+			if(smem.size != smem0.size && smem0.size >= minSize && nValid == 0 && smem0.length() >= minLen && smem0.evalue() <= maxEvalue)
+				curr.push_back(smem0);
+			if(smem.size >= minSize && smem.size != s0) { /* still a valid SMEM with size not seen */
+				s0 = smem.size;
+				nValid++;
+			}
+			else // mark this SMEM as not valid
+				smem.size = 0;
+		}
+		/* remove invalid SMEM */
+		prev.erase(std::remove_if(prev.begin(), prev.end(),
+				[](const SMEM& smem) { return !smem.isValid(); }), prev.end());
+		assert(prev.size() == nValid);
+		to++;
 	}
 	return curr;
 }
@@ -137,18 +192,18 @@ SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, 
 	/* init SMEMS search from the mid-point */
 	int64_t from = L / 2;
 	int64_t to = from + 1;
-	curr += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to, minLen, maxEvalue);
+	curr += SMEM_LIST::findFwdBackSMEMS(seq, mtg, fmdidx, from, to, minLen, maxEvalue);
 
 	while(from > 0 || to + 1 < L) {
 		int64_t from0 = to + 1;
 		int64_t to0 = to;
 		/* fwd search */
 		if(from0 < L)
-			curr += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from0, to, minLen, maxEvalue);
+			curr += SMEM_LIST::findFwdBackSMEMS(seq, mtg, fmdidx, from0, to, minLen, maxEvalue);
 		/* rev search */
 		from --;
 		if(from >= 0)
-			curr += SMEM_LIST::findAllSMEMS(seq, mtg, fmdidx, from, to0, minLen, maxEvalue);
+			curr += SMEM_LIST::findBackFwdSMEMS(seq, mtg, fmdidx, from, to0, minLen, maxEvalue);
 	}
 
 	std::sort(curr.begin(), curr.end(),
