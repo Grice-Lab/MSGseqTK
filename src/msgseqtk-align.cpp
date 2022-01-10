@@ -106,7 +106,7 @@ void printUsage(const string& progName) {
 		 << "Other:" << endl
 		 << "            --min-seed  INT      : minimum length of an SMEM to be used as a seed [" << SMEM::MIN_LENGTH << "]" << endl
 		 << "            --max-evalue  DBL    : maximum evalue of an SMEM to be used as a seed, 0 for no limit [" << DEFAULT_MAX_EVALUE << "]" << endl
-		 << "            --max-nseed  INT     : maximum # of loci to check for each SMEM [" << SMEM::MAX_NSEED << "]" << endl
+		 << "            --max-nseed  INT     : maximum # of seed allowed for each read [" << SMEM::MAX_NSEED << "]" << endl
 //		 << "            --max-lod10  DBL     : maximum log10-liklihood odd (lod10) allowed for a good seed-chain compared to the best seed-chain [" << DEFAULT_MAX_LOD10 << "]" << endl
 #ifdef _OPENMP
 		 << "            -p|--process INT     : number of threads/cpus for parallel processing [" << DEFAULT_NUM_THREADS << "]" << endl

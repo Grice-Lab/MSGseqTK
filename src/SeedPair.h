@@ -36,7 +36,8 @@ public:
 	SeedPair() = default;
 
 	/** construct from given values */
-	SeedPair(int64_t from, int64_t start, int64_t len, int64_t tid, GLoc::STRAND strand, double logP)
+	SeedPair(int64_t from, int64_t start, int64_t len,
+			int64_t tid = -1, GLoc::STRAND strand = GLoc::UNK, double logP = 0)
 	: from(from), to(from + len), start(start), end(start + len), tid(tid), strand(strand), logP(logP)
 	{  }
 

@@ -15,7 +15,6 @@ namespace EGriceLab {
 namespace MSGseqTK {
 
 const double SMEM::MAX_EVALUE = 0.01;
-static const int64_t MIN_SA_CACHE_SIZE = 2; /* minimum SMEMS size to trigger using the cashe findSeeds */
 
 SMEM& SMEM::evaluate() {
 	logP = 0;
@@ -64,7 +63,7 @@ MEM SMEM::findMEM(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* 
 
 SMEM_LIST SMEM_LIST::findFwdBackSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		int64_t& from, int64_t& to,
-		int64_t minLen, double maxEvalue) {
+		int64_t minLen, double maxEvalue, int64_t minSize) {
 	const size_t L = seq->length();
 	assert(from < L);
 	SMEM_LIST curr, prev;
@@ -77,17 +76,17 @@ SMEM_LIST SMEM_LIST::findFwdBackSMEMS(const PrimarySeq* seq, const MetaGenome* m
 	SMEM smem(seq, mtg, fmdidx, from, to, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
 	SMEM smem0 = smem;
 	/* forward extension */
-	while(smem.size > 0) {
+	while(smem.size >= minSize) {
 		smem.fwdExt();
 		if(smem.size != smem0.size && smem0.to >= minLen /* from begin to here is enough */
 			&& (!std::isfinite(maxEvalue) || smem0.evalue(0, smem0.to) <= maxEvalue) /* from begin to here is significant */)
 			prev.push_back(smem0);
 		smem0 = smem;
 	}
-	to = smem.to - 1;
+	to = smem.to;
 
 	if(prev.empty()) {
-		from --;
+		from--;
 		return curr;
 	}
 
@@ -99,9 +98,9 @@ SMEM_LIST SMEM_LIST::findFwdBackSMEMS(const PrimarySeq* seq, const MetaGenome* m
 		for(SMEM& smem : prev) {
 			smem0 = smem;
 			smem.backExt();
-			if(smem.size != smem0.size && smem0.size > 0 && nValid == 0 && smem0.length() >= minLen && smem0.evalue() <= maxEvalue)
+			if(smem.size != smem0.size && smem0.size >= minSize && nValid == 0 && smem0.length() >= minLen && smem0.evalue() <= maxEvalue)
 				curr.push_back(smem0);
-			if(smem.size > 0 && smem.size != s0) { /* still a valid SMEM with size not seen */
+			if(smem.size >= minSize && smem.size != s0) { /* still a valid SMEM with size not seen */
 				s0 = smem.size;
 				nValid++;
 			}
@@ -118,7 +117,8 @@ SMEM_LIST SMEM_LIST::findFwdBackSMEMS(const PrimarySeq* seq, const MetaGenome* m
 }
 
 SMEM_LIST SMEM_LIST::findBackFwdSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-		int64_t& from, int64_t& to, int64_t minLen, double maxEvalue) {
+		int64_t& from, int64_t& to,
+		int64_t minLen, double maxEvalue, int64_t minSize) {
 	const size_t L = seq->length();
 	assert(from < L);
 	SMEM_LIST curr, prev;
@@ -131,9 +131,9 @@ SMEM_LIST SMEM_LIST::findBackFwdSMEMS(const PrimarySeq* seq, const MetaGenome* m
 	SMEM smem(seq, mtg, fmdidx, from, to, fmdidx->getCumCount(b), fmdidx->getCumCount(DNAalphabet::complement(b)), fmdidx->getCumCount(b + 1) - fmdidx->getCumCount(b));
 	SMEM smem0 = smem;
 	/* back extension */
-	while(smem.size > 0) {
+	while(smem.size >= minSize) {
 		smem.backExt();
-		if(smem.size != smem0.size && L - smem0.from > minLen /* from here to end is enough */
+		if(smem.size != smem0.size && L - smem0.from >= minLen /* from here to end is enough */
 				&& (!std::isfinite(maxEvalue) || smem0.evalue(smem0.from, L) <= maxEvalue) /* from here to end is significant */)
 			prev.push_back(smem0);
 		smem0 = smem;
@@ -147,15 +147,15 @@ SMEM_LIST SMEM_LIST::findBackFwdSMEMS(const PrimarySeq* seq, const MetaGenome* m
 
 	/* forward extension */
 	std::reverse(prev.begin(), prev.end()); // sort SMEM list by their length decreasingly
-	while(from >= 0 && !prev.empty()) {
+	while(to <= L && !prev.empty()) {
 		int64_t s0 = -1; // SMEM size in prev of each iteration should be mono decreasing
 		int64_t nValid = 0;
 		for(SMEM& smem : prev) {
 			smem0 = smem;
 			smem.fwdExt();
-			if(smem.size != smem0.size && smem0.size > 0 && nValid == 0 && smem0.length() >= minLen && smem0.evalue() <= maxEvalue)
+			if(smem.size != smem0.size && smem0.size >= minSize && nValid == 0 && smem0.length() >= minLen && smem0.evalue() <= maxEvalue)
 				curr.push_back(smem0);
-			if(smem.size > 0 && smem.size != s0) { /* still a valid SMEM with size not seen */
+			if(smem.size >= minSize && smem.size != s0) { /* still a valid SMEM with size not seen */
 				s0 = smem.size;
 				nValid++;
 			}
@@ -186,33 +186,38 @@ MEM_LIST SMEM_LIST::findMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const
 SMEM_LIST SMEM_LIST::findAllSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		int64_t minLen, double maxEvalue) {
 	const int64_t L = seq->length();
-	SMEM_LIST curr, prev;
 	/* init SMEMS search from the mid-point */
 	int64_t from = L / 2;
 	int64_t to = from + 1;
-	curr += SMEM_LIST::findFwdBackSMEMS(seq, mtg, fmdidx, from, to, minLen, maxEvalue);
-
-	while(from > 0 || to + 1 < L) {
-		int64_t from0 = to + 1;
-		int64_t to0 = to;
+	SMEM_LIST curr = SMEM_LIST::findFwdBackSMEMS(seq, mtg, fmdidx, from, to, minLen, maxEvalue);
+	while(from > 0 || to < L) {
 		/* fwd search */
+		int64_t from0 = to;
 		if(from0 < L)
 			curr += SMEM_LIST::findFwdBackSMEMS(seq, mtg, fmdidx, from0, to, minLen, maxEvalue);
 		/* rev search */
-		from --;
+		int64_t to0 = --from + 1;
 		if(from >= 0)
 			curr += SMEM_LIST::findBackFwdSMEMS(seq, mtg, fmdidx, from, to0, minLen, maxEvalue);
 	}
 
-	std::sort(curr.begin(), curr.end(),
-			[](const SMEM& lhs, const SMEM& rhs) { return lhs.loglik() < rhs.loglik(); });
+	/* 2nd-pass re-seeding, if the least significant SMEM is still too large */
+//	SMEM_LIST prev = curr;
+//	for(const SMEM& smem : prev) {
+//		if(smem.length() > L - minLen && curr.totalSize() < maxNSeed) {
+//			int64_t from = (smem.from + smem.to) / 2;
+//			int64_t to = from + 1;
+//			curr += SMEM_LIST::findFwdBackSMEMS(seq, mtg, fmdidx, from, to, minLen, maxEvalue, smem.size + 1);
+//		}
+//	}
+
 	return curr;
 }
 
-SeedList SMEM::getSeeds(int64_t maxNSeed) const {
+SeedList SMEM::getSeeds() const {
 	SeedList seeds;
-	seeds.reserve(std::min(maxNSeed, size));
-	for(size_t i = 0; i < size && seeds.size() < maxNSeed; ++i) {
+	seeds.reserve(size);
+	for(size_t i = 0; i < size; ++i) {
 		{
 			int64_t bdStart = fmdidx->accessSA(fwdStart + i);
 			int64_t tid = mtg->getTid(bdStart);
@@ -232,13 +237,14 @@ SeedList SMEM::getSeeds(int64_t maxNSeed) const {
 			}
 		}
 	}
+	assert(seeds.size() == size);
 	return seeds;
 }
 
-SeedList SMEM::getSeeds(SAmap_t& SAcached, int64_t maxNSeed) const {
+SeedList SMEM::getSeeds(SAmap_t& SAcached) const {
 	SeedList seeds;
-	seeds.reserve(std::min(maxNSeed, size));
-	for(size_t i = 0; i < size && seeds.size() < maxNSeed; ++i) {
+	seeds.reserve(size);
+	for(size_t i = 0; i < size; ++i) {
 		{
 			int64_t bdStart = SAcached.count(fwdStart + i) > 0 ? SAcached.at(fwdStart + i) : (SAcached[fwdStart + i] = fmdidx->accessSA(fwdStart + i));
 			int64_t tid = mtg->getTid(bdStart);
@@ -258,6 +264,7 @@ SeedList SMEM::getSeeds(SAmap_t& SAcached, int64_t maxNSeed) const {
 			}
 		}
 	}
+	assert(seeds.size() == size);
 	return seeds;
 }
 
@@ -267,19 +274,14 @@ SeedList SMEM_LIST::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, cons
 
 	/* get seeds using per-seq cache */
 	SeedList allSeeds;
-	allSeeds.reserve(maxNSeed * smems.size());
-	if(smems.size() < MIN_SA_CACHE_SIZE) {
-		for(const SMEM& smem : smems) {
-			const SeedList& seeds = smem.getSeeds(maxNSeed);
-			allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
-		}
-	}
-	else {
-		SMEM::SAmap_t SAcached;
-		for(const SMEM& smem : smems) {
-			const SeedList& seeds = smem.getSeeds(SAcached, maxNSeed);
-			allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
-		}
+	int64_t N = smems.totalSize();
+	if(N > maxNSeed)
+		return allSeeds;
+	allSeeds.reserve(N);
+	SMEM::SAmap_t SAcached;
+	for(const SMEM& smem : smems) {
+		const SeedList& seeds = smem.getSeeds(SAcached);
+		allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
 	}
 	/* sort and get unique seeds */
 	std::sort(allSeeds.begin(), allSeeds.end());

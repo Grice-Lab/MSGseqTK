@@ -126,19 +126,15 @@ public:
 
 	/**
 	 * get SeedPairs of this SMEM
-	 * @return  mapped seeds that always on FWD strand of target
+	 * @return  raw seeds on FMDIndex locate
 	 */
-	SeedList getSeeds(int64_t maxNSeed = MAX_NSEED) const;
+	SeedList getSeeds() const;
 
-	/**
-	 * get SeedPairs of this SMEM using a cached unsorted_map for each read
-	 * @return  mapped seeds that always on FWD strand of target
-	 */
-	SeedList getSeeds(SAmap_t& SAcached, int64_t maxNSeed = MAX_NSEED) const;
+	SeedList getSeeds(SAmap_t& SAcached) const;
 
 	/**
 	 * forward extend this SMEM at current end
-	 * forward extension can be one pass the seq end, which guarenteed a null base
+	 * forward extension can be one pass the seq end, which guarenteed a gap base (0)
 	 * @return  updated SMEM
 	 */
 	SMEM& fwdExt() {
@@ -207,7 +203,8 @@ public:
 	/* static fields */
 	static const int64_t MIN_LENGTH = 17; // minimum length for a significant SMEM
 	static const double MAX_EVALUE;
-	static const int64_t MAX_NSEED = 50; // maximum # of seeds to check for each SMEM
+//	static const int64_t MAX_SIZE = 200; // maximum times of matched size to check for each SMEM
+	static const int64_t MAX_NSEED = 5000;
 	/* non-member functions */
 
 	/** relationship operators */
@@ -283,11 +280,29 @@ public:
 		return *this;
 	}
 
-	/** get from of an SMEM_LIST */
-	int64_t getFrom() const;
+	/** get from of an SMEM_LIST as the one with smallest from */
+	int64_t getFrom() const {
+		if(empty())
+			return -1;
+		return std::min_element(begin(), end(),
+				[](const SMEM& lhs, const SMEM& rhs) { return lhs.from < rhs.from; })->from;
+	}
 
-	/** get to of an SMEM_LIST */
-	int64_t getTo() const;
+	/** get to of an SMEM_LIST as the one with the largest to */
+	int64_t getTo() const {
+		if(empty())
+			return -1;
+		return std::max_element(begin(), end(),
+				[](const SMEM& lhs, const SMEM& rhs) { return lhs.to < rhs.to; })->to;
+	}
+
+	/** get total size of an SMEM_LIST */
+	int64_t totalSize() const {
+		int64_t size = 0;
+		std::for_each(begin(), end(),
+				[&](const SMEM& smem) { size += smem.size; });
+		return size;
+	}
 
 	/** get number of valid in this SMEM list */
 	size_t numValid() const {
@@ -326,7 +341,7 @@ public:
 	 */
 	static SMEM_LIST findFwdBackSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t& from, int64_t& to,
-			int64_t minLen = SMEM::MIN_LENGTH, double maxEvalue = SMEM::MAX_EVALUE);
+			int64_t minLen = SMEM::MIN_LENGTH, double maxEvalue = SMEM::MAX_EVALUE, int64_t minSize = 1);
 
 	/**
 	 * find all SMEMS of a given seq starting at given position relative to the seq by backward than forward extensions
@@ -334,7 +349,7 @@ public:
 	 */
 	static SMEM_LIST findBackFwdSMEMS(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 			int64_t& from, int64_t& to,
-			int64_t minLen = SMEM::MIN_LENGTH, double maxEvalue = SMEM::MAX_EVALUE);
+			int64_t minLen = SMEM::MIN_LENGTH, double maxEvalue = SMEM::MAX_EVALUE, int64_t minSize = 1);
 
 public:
 	/**
@@ -349,7 +364,8 @@ public:
 	 * seeds will be filtered and sorted
 	 */
 	static SeedList findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
-			int64_t minLen = SMEM::MIN_LENGTH, double maxEvalue = SMEM::MAX_EVALUE, int64_t maxNSeed = SMEM::MAX_NSEED);
+			int64_t minLen = SMEM::MIN_LENGTH, double maxEvalue = SMEM::MAX_EVALUE,
+			int64_t maxNSeed = SMEM::MAX_NSEED);
 
 	/**
 	 * find MEMS_PE for paired-end reads
