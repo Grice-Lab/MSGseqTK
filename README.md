@@ -22,32 +22,37 @@ You can clone or fork and pull the source codes from GitHub at: https://github.c
 Dependencies
 ------------
 MSGseqTK depends on the popular head-only C++ libraries Boost and Eigen3. They are available and often pre-installed on most Linux distributions, and can be easily installed on Windows and Mac OS X.
-The HTSLIB C library (from SAMtools) is dependent for directly writing alignment into SAM/BAM files. Many Linux OS have HTSLIB in their software repositories. Try your `yum`, `dnf` or `apt-get` for details.
+The HTSLIB C library (from SAMtools) is dependent for directly writing alignment into SAM/BAM files. Many Linux OS have HTSLIB in their software repositories. Try your `yum`, `dnf` or `apt-get` for details. For example, you can install it under CentOS by ```sudo yum install htslib```
 The ZLIB and Boost-IOSTREAMS libraries are optionally dependent for handling GZIP/GZIP2 compressed files, but are not required and can be disabled.
 
 Installation
 ------------
-1. Configure installation, by running the command
+1. Prepare configuration file using Linux AutoTools, by running the command
+```bash
+autoreconfig -iv
+```
+
+2. Configure installation, by running the command
 ```bash
 ./configure
 ```
 You may consider providing additional options, such as `--prefix`, `--exec-prefix`,
 `--with-zlib`, `--with-boost`, `--with-htslib`, etc.
 
-2. Compile and link, by running the command
+3. Compile and link, by running the command
 ```bash
 make
 ```
 Look for errors and try to resolve them yourself first (by Google).
 Contact us only if you are sure it is a bug in our programs.
 
-3. (Optionally) Test, by running the command
+4. (Optionally) Test, by running the command
 ```bash
 make check
 ```
 It may take a while depending on your processor's speed.
 
-4. Install
+5. Install
 ```bash
 make install
 ```
