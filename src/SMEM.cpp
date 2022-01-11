@@ -271,21 +271,36 @@ SeedList SMEM::getSeeds(SAmap_t& SAcached) const {
 SeedList SMEM_LIST::findSeeds(const PrimarySeq* seq, const MetaGenome* mtg, const FMDIndex* fmdidx,
 		int64_t minLen, double maxEvalue, int64_t maxNSeed) {
 	SMEM_LIST smems = findAllSMEMS(seq, mtg, fmdidx, minLen, maxEvalue);
+	/* sort SMEMs by size */
+	std::sort(smems.begin(), smems.end(),
+			[](const SMEM& lhs, const SMEM& rhs)->bool { return lhs.loglik() < rhs.loglik(); });
 
 	/* get seeds using per-seq cache */
 	SeedList allSeeds;
 	int64_t N = smems.totalSize();
-	if(N > maxNSeed)
-		return allSeeds;
+//	if(N > maxNSeed)
+//		return allSeeds;
 	allSeeds.reserve(N);
-	SMEM::SAmap_t SAcached;
-	for(const SMEM& smem : smems) {
-		const SeedList& seeds = smem.getSeeds(SAcached);
-		allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
+	if(smems.size() > 1) { /* redundant locate may exist */
+		SMEM::SAmap_t SAcached;
+		for(const SMEM& smem : smems) {
+			const SeedList& seeds = smem.getSeeds(SAcached);
+			allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
+			if(allSeeds.size() >= maxNSeed)
+				break;
+		}
 	}
-	/* sort and get unique seeds */
-	std::sort(allSeeds.begin(), allSeeds.end());
-	allSeeds.erase(std::unique(allSeeds.begin(), allSeeds.end()), allSeeds.end());
+	else {
+		for(const SMEM& smem : smems) {
+			const SeedList& seeds = smem.getSeeds();
+			allSeeds.insert(allSeeds.end(), seeds.begin(), seeds.end());
+			if(allSeeds.size() >= maxNSeed)
+				break;
+		}
+	}
+//	assert(allSeeds.size() == N);
+	/* remove redundant seeds */
+	SeedPair::removeRedundant(allSeeds);
 	return allSeeds;
 }
 

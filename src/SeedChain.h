@@ -86,6 +86,11 @@ public:
 		return std::exp(loglik());
 	}
 
+	/**
+	 * write this chain to text output
+	 */
+	ostream& write(ostream& out) const;
+
 private:
 	/* private util methods */
 	/**
@@ -103,9 +108,8 @@ public:
 	 */
 	static ChainList getChains(const SeedList& inputSeeds, int64_t maxMismatch, int64_t maxIndel);
 
-	/** test whether one chain containing another */
 	static bool containing(const SeedChain& lhs, const SeedChain& rhs) {
-		return  lhs.getTid() == rhs.getTid() &&
+		return lhs.getTid() == rhs.getTid() &&
 				lhs.getFrom() <= rhs.getFrom() && lhs.getTo() >= rhs.getTo() &&
 				lhs.getStart() <= rhs.getStart() && lhs.getEnd() >= rhs.getEnd();
 	}
@@ -114,6 +118,14 @@ public:
 	static bool contained(const SeedChain& lhs, const SeedChain& rhs) {
 		return containing(rhs, lhs);
 	}
+
+	/** test whether two chains are approximately equal */
+	static bool approxEqual(const SeedChain& lhs, const SeedChain& rhs) {
+		return containing(lhs, rhs) || contained(lhs, rhs);
+	}
+
+	/** remove redundant chains by remove chains that are contained in a bigger chain */
+	static ChainList& removeRedundant(ChainList& chains);
 
 	/** test whether two chain is overlapping */
 	static bool overlap(const SeedChain& lhs, const SeedChain& rhs) {
@@ -135,11 +147,6 @@ public:
 	}
 
 	/**
-	 * get unique ChainList by removing chains that are contained in a larger chain
-	 */
-	static ChainList& uniq(ChainList& chains);
-
-	/**
 	 * filter a ChainList by removing chains have log10lik smaller than the given odd of the best chain
 	 * return a ordered filtered chain list
 	 */
@@ -149,6 +156,11 @@ public:
 	/** relationship operators */
 	friend bool operator<(const SeedChain& lhs, const SeedChain& rhs);
 	friend bool operator==(const SeedChain& lhs, const SeedChain& rhs);
+
+	/** formated output */
+	friend ostream& operator<<(ostream& out, const SeedChain& chain) {
+		return chain.write(out);
+	}
 };
 
 inline bool operator<(const SeedChain& lhs, const SeedChain& rhs) {
@@ -160,9 +172,12 @@ inline bool operator<(const SeedChain& lhs, const SeedChain& rhs) {
 }
 
 inline bool operator==(const SeedChain& lhs, const SeedChain& rhs) {
-	return lhs.getFrom() == rhs.getFrom() && lhs.getTo() == rhs.getTo() &&
-			lhs.getTid() == rhs.getTid() &&
-			lhs.getStart() == rhs.getStart() && lhs.getEnd() && rhs.getEnd();
+	if(lhs.size() != rhs.size())
+		return false;
+	for(SeedChain::size_type i = 0; i < lhs.size(); ++i)
+		if(lhs[i] != rhs[i])
+			return false;
+	return true;
 }
 
 inline bool operator!=(const SeedChain& lhs, const SeedChain& rhs) {

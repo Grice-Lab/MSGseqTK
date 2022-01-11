@@ -622,8 +622,6 @@ uint64_t main_SE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& seqI, SAM
 						ChainList chains = SeedChain::getChains(seeds, maxMismatch, maxIndel);
 						/* filter chains by log10-odd (lod10) */
 //						SeedChain::filter(chains, maxLod10);
-						/* get unique chains */
-						SeedChain::uniq(chains);
 						/* get alignments from SeedMatchList */
 						ALIGN_LIST alnList = Alignment::buildAlignments(&read, &rcRead, mtg, chains, alnMode);
 						/* filter alignments */
@@ -699,9 +697,6 @@ uint64_t main_PE(const MetaGenome& mtg, const FMDIndex& fmdidx, SeqIO& fwdI, Seq
 						/* filter chains */
 //						SeedChain::filter(fwdChains, maxLod10);
 //						SeedChain::filter(revChains, maxLod10);
-						/* get unique chains */
-						SeedChain::uniq(fwdChains);
-						SeedChain::uniq(revChains);
 						/* get alignments */
 						ALIGN_LIST fwdAlnList = Alignment::buildAlignments(&fwdRead, &rcFwdRead, mtg, fwdChains, alnMode);
 						ALIGN_LIST revAlnList = Alignment::buildAlignments(&revRead, &rcRevRead, mtg, revChains, alnMode);

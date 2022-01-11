@@ -179,12 +179,20 @@ public:
 		return containing(rhs, lhs);
 	}
 
+	/** test whether two pairs is approximately equal (containing or contained) of another */
+	static bool approxEqual(const SeedPair& lhs, const SeedPair& rhs) {
+		return containing(lhs, rhs) || contained(lhs, rhs);
+	}
+
 	/** test whether two pair is overlapping */
 	static bool overlap(const SeedPair& lhs, const SeedPair& rhs) {
 		return lhs.tid == rhs.tid && (lhs.strand & rhs.strand) != 0 &&
 				lhs.from < rhs.to && lhs.to > rhs.from &&
 				lhs.start < rhs.end && lhs.end > rhs.start;
 	}
+
+	/** remove redundant seeds by remove seed that are contained in a bigger seed */
+	static SeedList& removeRedundant(SeedList& chains);
 
 	/** get overlap length on target of two Seed Chain */
 	static int64_t overLength(const SeedPair& lhs, const SeedPair& rhs) {
@@ -216,11 +224,11 @@ public:
 
 inline bool operator<(const SeedPair& lhs, const SeedPair& rhs) {
 	return lhs.from != rhs.from ? lhs.from < rhs.from :
-			lhs.to != rhs.to ? lhs.to > rhs.to :
+			lhs.to != rhs.to ? lhs.to < rhs.to :
 					lhs.tid != rhs.tid ? lhs.tid < rhs.tid :
 							lhs.strand != rhs.strand ? lhs.strand < rhs.strand :
 									lhs.start != rhs.start ? lhs.start < rhs.start :
-											lhs.end > rhs.end;
+											lhs.end < rhs.end;
 }
 
 inline bool operator==(const SeedPair& lhs, const SeedPair& rhs) {

@@ -126,7 +126,7 @@ public:
 
 	/**
 	 * get SeedPairs of this SMEM
-	 * @return  raw seeds on FMDIndex locate
+	 * @return  SeedPairs on BD-coordinates
 	 */
 	SeedList getSeeds() const;
 
@@ -204,7 +204,7 @@ public:
 	static const int64_t MIN_LENGTH = 17; // minimum length for a significant SMEM
 	static const double MAX_EVALUE;
 //	static const int64_t MAX_SIZE = 200; // maximum times of matched size to check for each SMEM
-	static const int64_t MAX_NSEED = 5000;
+	static const int64_t MAX_NSEED = 500;
 	/* non-member functions */
 
 	/** relationship operators */

@@ -31,6 +31,12 @@ int64_t SeedChain::length() const {
 	return len;
 }
 
+ostream& SeedChain::write(ostream& out) const {
+	for(const SeedPair& seed : *this)
+		out << seed << " -> ";
+	return out;
+}
+
 ChainList SeedChain::getChains(const SeedList& inputSeeds, int64_t maxMismatch, int64_t maxIndel) {
 	const size_t N = inputSeeds.size();
 	vector<bool> seedIdx(N);
@@ -66,24 +72,6 @@ void SeedChain::dfsSeeds(const SeedList& inputSeeds, size_t i, ChainList& output
 	chainIdx.pop_back();
 }
 
-ChainList& SeedChain::uniq(ChainList& chains) {
-	if(chains.size() <= 1)
-		return chains;
-	/* sort chains by loglik, so bad chains near the end */
-	std::sort(chains.begin(), chains.end(),
-			[](const SeedChain& lhs, const SeedChain& rhs) { return lhs.loglik() < rhs.loglik(); });
-	for(ChainList::iterator i = chains.end(); i > chains.begin(); --i) { // search backward
-		for(ChainList::iterator j = i - 1; j > chains.begin(); --j) {
-			if(contained(*(i - 1), *(j - 1))) { // a redundant chain
-				chains.erase(i - 1);
-				break;
-			}
-		}
-	}
-	assert(!chains.empty());
-	return chains;
-}
-
 ChainList& SeedChain::filter(ChainList& chains, double maxLod0) {
 	/* sort chains by loglik */
 	std::sort(chains.begin(), chains.end(),
@@ -92,6 +80,23 @@ ChainList& SeedChain::filter(ChainList& chains, double maxLod0) {
 	chains.erase(std::remove_if(chains.begin(), chains.end(),
 			[=](const SeedChain& chain) { return chain.log10lik() > bestLog10lik + maxLod0; }),
 			chains.end());
+	return chains;
+}
+
+ChainList& SeedChain::removeRedundant(ChainList& chains) {
+	/* sort chains by coordinates */
+	std::sort(chains.begin(), chains.end());
+	for(ChainList::size_type i = 0; i < chains.size() - 1; ++i) {
+		for(ChainList::size_type j = i + 1; j < chains.size(); ++j) {
+			if(contained(chains[i], chains[j])) { /* i is contained in j */
+				chains[i] = SeedChain(); /* replace with an empty chain */
+				break;
+			}
+		}
+	}
+	/* erase marked empty chains */
+	chains.erase(std::remove_if(chains.begin(), chains.end(),
+			[](const SeedChain& chain)->bool { return chain.empty(); }), chains.end());
 	return chains;
 }
 

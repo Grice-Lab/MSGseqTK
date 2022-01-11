@@ -68,5 +68,22 @@ double SeedPair::bestLoglik(const SeedList& seeds) {
 	return minLoglik;
 }
 
+SeedList& SeedPair::removeRedundant(SeedList& seeds) {
+	/* sort seeds by significance */
+	std::sort(seeds.begin(), seeds.end());
+	for(SeedList::size_type i = 0; i < seeds.size() - 1; ++i) {
+		for(SeedList::size_type j = i + 1; j < seeds.size(); ++j) {
+			if(approxEqual(seeds[i], seeds[j])) { /* i is equivalent to j */
+				seeds[i] = SeedPair(); /* replace with an empty seed */
+				break;
+			}
+		}
+	}
+	/* erase marked empty seeds */
+	seeds.erase(std::remove_if(seeds.begin(), seeds.end(),
+			[](const SeedPair& seed)->bool { return seed.empty(); }), seeds.end());
+	return seeds;
+}
+
 } /* namespace MSGseqTK */
 } /* namespace EGriceLab */

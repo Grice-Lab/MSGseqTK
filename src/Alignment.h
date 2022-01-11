@@ -176,6 +176,10 @@ public:
 		return tStart;
 	}
 
+	void setMapQ(uint8_t mapQ) {
+		this->mapQ = mapQ;
+	}
+
 	/** test whether this alignment is initiated */
 	bool isInitiated() const {
 		return read != nullptr && rcRead != nullptr && target != nullptr;
