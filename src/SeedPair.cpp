@@ -69,6 +69,8 @@ double SeedPair::bestLoglik(const SeedList& seeds) {
 }
 
 SeedList& SeedPair::removeRedundant(SeedList& seeds) {
+	if(seeds.size() <= 1)
+		return seeds;
 	/* sort seeds by significance */
 	std::sort(seeds.begin(), seeds.end());
 	for(SeedList::size_type i = 0; i < seeds.size() - 1; ++i) {
