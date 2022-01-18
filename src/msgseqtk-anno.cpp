@@ -187,7 +187,7 @@ int main(int argc, char* argv[]) {
 
 		const string& gffFn = genomeId2GffFn.at(genomeId);
 
-		infoLog << "Processing external GFF annotation in '" << gffFn << "' for " << genome.displayId() << endl;
+		debugLog << "Processing external GFF annotation in '" << gffFn << "' for " << genome.displayId() << endl;
 
 		GFF::Version extVer = GFF::UNK; /* GFF version for this gffFn */
 
@@ -218,11 +218,11 @@ int main(int argc, char* argv[]) {
 
 		/* read in all annotations in this external GFF file */
 		std::vector<GFF> gffRecords = MetaGenomeAnno::read(gffIn, extVer);
-		infoLog << "Read in " << gffRecords.size() << " external GFF annotations" << endl;
+		debugLog << "Read in " << gffRecords.size() << " external GFF annotations" << endl;
 
 		/* add metagenome ids */
 		MetaGenomeAnno::addMetagenomeTags(genome, gffRecords, featureTag);
-		infoLog << "Unique Metagenome IDs added for all features" << endl;
+		debugLog << "Unique Metagenome IDs added for all features" << endl;
 
 		/* write genome annotations */
 		size_t n = MetaGenomeAnno::writeGenomeAnnos(gffOut, genome, gffRecords);
