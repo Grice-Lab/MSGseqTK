@@ -211,7 +211,7 @@ int main(int argc, char* argv[]) {
 			cerr << "Unable to open GFF file '" << gffFn << "': " << ::strerror(errno) << endl;
 			return EXIT_FAILURE;
 		}
-		gffIn.push(boost::iostreams::file_source(gffFn));
+		gffIn.push(gffSrc);
 
 		if(extVer == GFF::UNK)
 			warningLog << "Unable to guess GFF version from filename '" << gffFn << "', trying reading its content" << endl;
